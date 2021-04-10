@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "OpenGL_Test active build file",
+			"command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+			"args": [
+				"-g",
+				"${workspaceFolder}/src/\\*.cpp",
+				"${workspaceFolder}/src/\\*.c",
+				"-I${workspaceFolder}/include",
+				"-L${workspaceFolder}/lib",
+				"-lglew32",
+				"-lglfw3dll",
+				"-l:libfreeglut.a",
+				"-static-libgcc",
+				"-static-libstdc++",
+				"-o",
+				"${workspaceFolder}/src/main.exe"
+			],
+			"options": {
+				"cwd": "C:\\msys64\\mingw64\\bin"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: C:\\msys64\\mingw64\\bin\\g++.exe"
+		}
+	]
+}
