@@ -53,13 +53,13 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     //Shaders
-    Shader shader("C:/Users/jackm/Documents/C++/Shadows_Test/src/shaders/4.6.shader.vs", "C:/Users/jackm/Documents/C++/Shadows_Test/src/shaders/4.6.shader.fs");
-    Shader dShader("C:/Users/jackm/Documents/C++/Shadows_Test/src/shaders/4.6.depth.shader.vs", "C:/Users/jackm/Documents/C++/Shadows_Test/src/shaders/4.6.depth.shader.fs");
-    Shader omniShader("C:/Users/jackm/Documents/C++/Shadows_Test/src/shaders/4.6.omni.depth.shader.vs", "C:/Users/jackm/Documents/C++/Shadows_Test/src/shaders/4.6.omni.depth.shader.gs", "C:/Users/jackm/Documents/C++/Shadows_Test/src/shaders/4.6.omni.depth.shader.fs");
+    Shader shader("C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.shader.vs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.shader.fs");
+    Shader dShader("C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.depth.shader.vs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.depth.shader.fs");
+    Shader omniShader("C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.omni.depth.shader.vs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.omni.depth.shader.gs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.omni.depth.shader.fs");
 
     //Models
-    Model cube("C:/Users/jackm/Documents/C++/Shadows_Test/resources/Cube/cube.obj");
-    Model floor("C:/Users/jackm/Documents/C++/Shadows_Test/resources/Floor/Floor.obj");
+    Model cube("C:/Users/jackm/Documents/General/OpenGL/resources/Cube/cube.obj");
+    Model floor("C:/Users/jackm/Documents/General/OpenGL/resources/Floor/Floor.obj");
 
     /*======DIRECTIONAL SHADOW MAPPING======*/
     unsigned int depthMapFBO;

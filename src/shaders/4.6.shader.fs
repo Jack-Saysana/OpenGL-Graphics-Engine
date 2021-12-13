@@ -203,7 +203,7 @@ float calcOmniShadow(vec3 lightPos)
     //pointing from the light (the center of the cube) to the fragment
     vec3 lightToFrag = FragPos - lightPos;
     //Gets the closest depth value from the cubemap
-    float closestDepth = texture(depthCubeMap, lightToFrag);
+    float closestDepth = texture(depthCubeMap, lightToFrag).r;
     //maps the depth value from [0, 1] to [0, far_plane]
     closestDepth *= far_plane;
     //Retrieve the length between the current fragment and the light source,
@@ -213,6 +213,6 @@ float calcOmniShadow(vec3 lightPos)
 
     float bias = 0.05;
     //Actual comparison to see if fragment is inside shadow
-    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = lengthToLight - bias > closestDepth ? 1.0 : 0.0;
     return shadow;
 }
