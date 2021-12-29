@@ -1,4 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
+#define ROOTDIR "C:/Users/Jack/Documents/GitHub/OpenGL-test"
+
 #include <iostream>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -52,14 +54,27 @@ int main()
     glfwSetCursorPosCallback(window, mouseCallback);
     glEnable(GL_DEPTH_TEST);
 
+    char shaderDirs[7][BUFSIZ];
+    sprintf(shaderDirs[0], "%s/src/shaders/4.6.shader.vs", ROOTDIR);
+    sprintf(shaderDirs[1], "%s/src/shaders/4.6.shader.fs", ROOTDIR);
+    sprintf(shaderDirs[2], "%s/src/shaders/4.6.depth.shader.vs", ROOTDIR);
+    sprintf(shaderDirs[3], "%s/src/shaders/4.6.depth.shader.fs", ROOTDIR);
+    sprintf(shaderDirs[4], "%s/src/shaders/4.6.omni.depth.shader.vs", ROOTDIR);
+    sprintf(shaderDirs[5], "%s/src/shaders/4.6.omni.depth.shader.gs", ROOTDIR);
+    sprintf(shaderDirs[6], "%s/src/shaders/4.6.omni.depth.shader.fs", ROOTDIR);
+
+    char modelDirs[2][BUFSIZ];
+    sprintf(modelDirs[0], "%s/resources/Cube/cube.obj", ROOTDIR);
+    sprintf(modelDirs[1], "%s/resources/Floor/Floor.obj", ROOTDIR);
+
     //Shaders
-    Shader shader("C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.shader.vs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.shader.fs");
-    Shader dShader("C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.depth.shader.vs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.depth.shader.fs");
-    Shader omniShader("C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.omni.depth.shader.vs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.omni.depth.shader.gs", "C:/Users/jackm/Documents/General/OpenGL/src/shaders/4.6.omni.depth.shader.fs");
+    Shader shader(shaderDirs[0], shaderDirs[1]);
+    Shader dShader(shaderDirs[2], shaderDirs[3]);
+    Shader omniShader(shaderDirs[4], shaderDirs[5], shaderDirs[6]);
 
     //Models
-    Model cube("C:/Users/jackm/Documents/General/OpenGL/resources/Cube/cube.obj");
-    Model floor("C:/Users/jackm/Documents/General/OpenGL/resources/Floor/Floor.obj");
+    Model cube(modelDirs[0]);
+    Model floor(modelDirs[1]);
 
     /*======DIRECTIONAL SHADOW MAPPING======*/
     unsigned int depthMapFBO;

@@ -127,7 +127,7 @@ vec4 calcPointLight(PointLight light, vec3 norm)
     //Multiply the diffuse and specular values by the shadow value
     //We omit the ambient values because if the fragment is inside a shadow, it should
     //still have a small amount of color
-    vec4 result = attenuation * (ambient + (shadow * (diffuse + specular)));
+    vec4 result = attenuation * (ambient + (/*shadow * */(diffuse + specular)));
 
     return(vec4(vec3(result), texture(texture_diffuse1, TexCoords).a));
 }
