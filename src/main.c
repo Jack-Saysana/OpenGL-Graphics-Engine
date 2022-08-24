@@ -2,7 +2,7 @@
 
 int main()
 {
-  GLFWwindow *window;
+/*  GLFWwindow *window;
 
   if (!glfwInit())
   {
@@ -25,6 +25,12 @@ int main()
 
   glViewport(0, 0, 640, 480);
 
+  unsigned int shader = init_shader_prog(
+      "/home/jack/projects/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
+      NULL,
+      "/home/jack/projects/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
+      );
+
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   while (!glfwWindowShouldClose(window))
   {
@@ -34,9 +40,13 @@ int main()
 
   glfwTerminate();
   return 0;
+*/
+  int model = load_model("/home/jack/projects/OpenGL-Graphics-Engine/resources/Cube/cube.obj");
+
+  return model;
 }
 
-int framebuffer_size_callback(GLFWwindow window, int width, int height)
+/*int framebuffer_size_callback(GLFWwindow window, int width, int height)
 {
   glViewport(0, 0, width, height);
-}
+}*/
