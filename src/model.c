@@ -1,25 +1,25 @@
 #include <model.h>
 
-float (*verticies)[NUM_VERT_COORDS] = NULL;
-size_t v_buff_len = VERTEX_BUFF_STARTING_LEN;
+float (*verticies)[3] = NULL;
+size_t v_buff_len = 0;
 size_t v_len = 0;
 
 float (*normals)[3] = NULL;
-size_t n_buff_len = NORMAL_BUFF_STARTING_LEN;
+size_t n_buff_len = 0;
 size_t n_len = 0;
 
-float (*tex_coords)[NUM_TEX_COORDS] = NULL;
-size_t t_buff_len = TEX_COORD_BUFF_STARTING_LEN;
+float (*tex_coords)[2] = NULL;
+size_t t_buff_len = 0;
 size_t t_len = 0;
 
 int (*vbo_index_combos)[3] = NULL;
 VBO *vertex_buffer = NULL;
-size_t vbo_buff_len = VBO_STARTING_LEN;
+size_t vbo_buff_len = 0;
 size_t vbo_len = 0;
 
 int (*indicies)[3] = NULL;
-//size_t i_buff_len = INDEX_BUFF_STARTING_LEN;
-//size_t i_len = 0;
+size_t i_buff_len = 0;
+size_t i_len = 0;
 
 int load_model(char *path) {
   LINE_BUFFER *line_buff = get_lines(path);
@@ -29,37 +29,80 @@ int load_model(char *path) {
   }
   line_buff->path = path;
 
-  V_DATA *v_data = parse_lines(line_buff);
-  if (v_data == NULL) {
+  if (strncmp("#PRE", line_buff->buffer[0], 4) != 0) {
+    preprocess_lines(line_buff);
+
+    line_buff = get_lines(path);
+    if (line_buff == NULL) {
+      printf("Unable to create line buffer\n");
+      return -1;
+    }
+    line_buff->path = path;
+  }
+
+  int status = parse_lines(line_buff);
+  if (status == -1) {
     printf("Unable to parse line buffer\n");
     return -1;
   }
 
+  /*unsigned int VAO;
+  glGenVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);
+
+  unsigned int VBO;
+  glGenBuffers(1, &VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * vbo_len, vertex_buffer,
+               GL_STATIC_DRAW);
+
+  unsigned int EBO;
+  glGenBuffers(1, &EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 3 * i_len, indicies,
+               GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                        (void *) 0);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                        (void *) (sizeof(float) * 3));
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                        (void *) (sizeof(float) * 6));
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(2);*/
   return 0;
 }
 
-V_DATA *parse_lines(LINE_BUFFER *lb) {
-  verticies = malloc(sizeof(float) * NUM_VERT_COORDS * V_BUFF_STARTING_LEN);
+int parse_lines(LINE_BUFFER *lb) {
+  verticies = malloc(sizeof(float) * 3 * VERTEX_BUFF_STARTING_LEN);
   if (verticies == NULL) {
     printf("Unable to allocate vertex buffer\n");
-    return NULL;
+    return -1;
   }
+  v_buff_len = VERTEX_BUFF_STARTING_LEN;
+  v_len = 0;
 
   normals = malloc(sizeof(float) * 3 * NORMAL_BUFF_STARTING_LEN);
   if (normals == NULL) {
     free(verticies);
     printf("Unable to allocate normal buffer\n");
-    return NULL;
+    return -1;
   }
+  n_buff_len = NORMAL_BUFF_STARTING_LEN;
+  n_len = 0;
 
-  tex_coords = malloc(sizeof(float) * NUM_TEX_COORDS *
+  tex_coords = malloc(sizeof(float) * 2 *
                       TEX_COORD_BUFF_STARTING_LEN);
   if (tex_coords == NULL) {
     free(verticies);
     free(normals);
     printf("Unable to allocate tex coord buffer\n");
-    return NULL;
+    return -1;
   }
+  t_buff_len = TEX_COORD_BUFF_STARTING_LEN;
+  t_len = 0;
 
   vbo_index_combos = malloc(sizeof(int) * 3 * VBO_STARTING_LEN);
   if (vbo_index_combos == NULL) {
@@ -67,7 +110,7 @@ V_DATA *parse_lines(LINE_BUFFER *lb) {
     free(normals);
     free(tex_coords);
     printf("Unable to allocate vbo index combos\n");
-    return NULL;
+    return -1;
   }
 
   vertex_buffer = malloc(sizeof(VBO) * VBO_STARTING_LEN);
@@ -77,8 +120,10 @@ V_DATA *parse_lines(LINE_BUFFER *lb) {
     free(tex_coords);
     free(vbo_index_combos);
     printf("Unable to allocate vbo\n");
-    return NULL;
+    return -1;
   }
+  vbo_buff_len = VBO_STARTING_LEN;
+  vbo_len = 0;
 
   indicies = malloc(sizeof(int) * 3 * INDEX_BUFF_STARTING_LEN);
   if (indicies == NULL) {
@@ -88,14 +133,15 @@ V_DATA *parse_lines(LINE_BUFFER *lb) {
     free(vbo_index_combos);
     free(vertex_buffer);
     printf("Unable to allocate index data\n");
-    return NULL;
+    return -1;
   }
+  i_buff_len = INDEX_BUFF_STARTING_LEN;
+  i_len = 0;
 
   char *cur_line = NULL;
   int status = 0;
   for (int i = 0; i < lb->len; i++) {
     cur_line = lb->buffer[i];
-    //printf("%d. %s\n", i + 1, cur_line);
     /*if (strncmp("mtllib", cur_line, 6) == 0) {
 
     } else if (strncmp("usemtl", cur_line, 6) == 0) {
@@ -145,66 +191,64 @@ V_DATA *parse_lines(LINE_BUFFER *lb) {
       free(vertex_buffer);
       free(indicies);
       printf("Parse error at line %d\n", i);
-      return NULL;
+      return -1;
     }
   }
 
-  printf("VERTEX LIST:\n");
-  for (int i = 0; i < v_len; i++) {
-    printf("%d. (%f, %f, %f)\n", i, verticies[i][0], verticies[i][1],
-           verticies[i][2]);
-  }
-
-  printf("TEX_COORD LIST:\n");
-  for (int i = 0; i < t_len; i++) {
-    printf("%d. (%f, %f)\n", i, tex_coords[i][0], tex_coords[i][1]);
-  }
-
-  printf("NORMAL LIST:\n");
-  for (int i = 0; i < n_len; i++) {
-    printf("%d. (%f, %f, %f)\n", i, normals[i][0], normals[i][1],
-           normals[i][2]);
-  }
-
-  printf("INDEX COMBOS:\n");
   for (int i = 0; i < vbo_len; i++) {
-    printf("[%d] ==========\n", i + 1);
-    printf("%d/%d/%d\n", vbo_index_combos[i][0] + 1,
-                         vbo_index_combos[i][1] + 1,
-                         vbo_index_combos[i][2] + 1);
+    printf("[%d]==========\n", i + 1);
+    printf("[ %f %f %f ]\n[ %f %f %f ]\n[ %f %f ]\n",
+           vertex_buffer[i].vertex[0], vertex_buffer[i].vertex[1],
+           vertex_buffer[i].vertex[2], vertex_buffer[i].normal[0],
+           vertex_buffer[i].normal[1], vertex_buffer[i].normal[2],
+           vertex_buffer[i].tex_coord[0], vertex_buffer[i].tex_coord[1]);
   }
 
-  printf("VBO:\n");
-  for (int i = 0; i < vbo_len; i++) {
-    printf("[%d] ==========\n", i + 1);
-    printf("  (%d)[%f, %f, %f]\n  (%d)[%f, %f]\n  (%d)[%f, %f, %f]\n",
-           vbo_index_combos[i][0] + 1,
-           vertex_buffer[i].vertex[0],
-           vertex_buffer[i].vertex[1],
-           vertex_buffer[i].vertex[2],
-           vbo_index_combos[i][1] + 1,
-           vertex_buffer[i].tex_coord[0],
-           vertex_buffer[i].tex_coord[1],
-           vbo_index_combos[i][2] + 1,
-           vertex_buffer[i].normal[0],
-           vertex_buffer[i].normal[1],
-           vertex_buffer[i].normal[2]);
+  printf("\nEBO:\n");
+  for (int i = 0; i < i_len; i++) {
+    printf("[ %d %d %d ]\n", indicies[i][0], indicies[i][1], indicies[i][2]);
   }
-  return NULL;
+
+  free_line_buffer(lb);
+  free(verticies);
+  free(normals);
+  free(tex_coords);
+  free(vbo_index_combos);
+  return 0;
 }
 
+/*
+ * ========== PARSE_FACE() ==========
+ *
+ * DESC:
+ * Parses an obj files face command by populating
+ * the vertex buffer with the appropriate vertex
+ * attributes and the index buffer with the
+ * appropriate triangle indicies
+ *
+ * ARGS:
+ * char *line: The line of the face command
+ *
+ * RETURNS:
+ * 0 if successful
+ * -1 if unsuccessful
+ *
+ * ==================================
+ */
 int parse_face(char *line) {
   int status = 0;
+  int *face = indicies[i_len];
+  int num_verts = 0;
   //                      v   t   n
   int index_combo[3] = { -1, -1, -1 };
   int cur_attrib = 0;
   char *cur_num = line;
   int read_index = 0;
-  int i = 0;
-  while (line[i] != '\0') {
+
+  int line_len = strlen(line) + 1;
+  for (int i = 0; i < line_len; i++) {
     if (line[i] == '/') {
       line[i] = '\0';
-//      printf("%s\n", cur_num);
       read_index = atoi(cur_num) - 1;
       cur_num = line + i + 1;
 
@@ -225,9 +269,8 @@ int parse_face(char *line) {
         return -1;
       }
       cur_attrib++;
-    } else if (line[i] == ' ') {
+    } else if (line[i] == ' ' || line[i] == '\0') {
       line[i] = '\0';
-//      printf("%s\n\n", cur_num);
       read_index = atoi(cur_num) - 1;
       cur_num = line + i + 1;
 
@@ -250,7 +293,14 @@ int parse_face(char *line) {
         if (vbo_index_combos[i][0] == index_combo[0] &&
             vbo_index_combos[i][1] == index_combo[1] &&
             vbo_index_combos[i][2] == index_combo[2]) {
-          found = i;
+          found = 1;
+          if (num_verts < 3) {
+            face[num_verts] = i;
+            num_verts++;
+          } else {
+            printf("Too many verticies specified\n");
+            return -1;
+          }
         }
       }
 
@@ -259,7 +309,13 @@ int parse_face(char *line) {
         if (status != 0) {
           return -1;
         }
-        found = vbo_len;
+        if (num_verts < 3) {
+          face[num_verts] = vbo_len - 1;
+          num_verts++;
+        } else {
+          printf("Too many verticies specified\n");
+          return -1;
+        }
       }
 
       cur_attrib = 0;
@@ -267,46 +323,54 @@ int parse_face(char *line) {
       index_combo[1] = -1;
       index_combo[2] = -1;
     }
-    i++;
   }
-//  printf("%s\n\n", cur_num);
-  read_index = atoi(cur_num) - 1;
 
-  if (cur_attrib == 0) {
-    if (read_index > v_len - 1) {
-      printf("Invalid vertex index\n");
-      return -1;
-    }
-    index_combo[0] = read_index;
+  if (num_verts < 3) {
+    printf("Too few verticies specified\n");
+    return -1;
   } else {
-    if (read_index > n_len - 1) {
-      printf("%d\n", read_index);
-      printf("%ld\n", n_len - 1);
-      printf("Invalid normal index\n");
-      return -1;
-    }
-    index_combo[2] = read_index;
-  }
-  int found = -1;
-  for (int i = 0; i < vbo_len && found == -1; i++) {
-    if (vbo_index_combos[i][0] == index_combo[0] &&
-        vbo_index_combos[i][1] == index_combo[1] &&
-        vbo_index_combos[i][2] == index_combo[2]) {
-      found = i;
-    }
-  }
+    i_len++;
 
-  if (found == -1) {
-    status = add_vertex_attrib(index_combo);
-    if (status != 0) {
-      return -1;
+    if (i_len == i_buff_len) {
+      status = double_buffer((void **) &indicies, &i_buff_len,
+                             sizeof(int) * 3);
+      if (status == -1) {
+        printf("Unable to reallocate index buffer\n");
+        return -1;
+      }
     }
-    found = vbo_len;
   }
 
   return 0;
 }
 
+/*
+ * ========== ADD_VERTEX_ATTRIB ==========
+ *
+ * DESC:
+ * Populate the vertex buffer array with a given
+ * group of vertex attributes
+ *
+ * ARGS:
+ * int *index_combo: Representing the structure of
+ * the vertex attribute to be added to the buffer.
+ *  -Structure:
+ *    = Array must be 3 integers long
+ *    - First element represents the index of the
+ *      vertex array element which corresponds to
+ *      the vertex attribute's geometric location
+ *    = Second element represents the index of the
+ *      tex_coord element which cooresponds to the
+ *      vertex attributes texture coordinate
+ *    - Third element represents the index of the
+ *      normal element which cooresponds to the
+ *      vertex attributes normal vector
+ *
+ * RETURNS:
+ * 0 if successful
+ * -1 if an error occurs
+ * =======================================
+ */
 int add_vertex_attrib(int *index_combo) {
   vbo_index_combos[vbo_len][0] = index_combo[0];
   vbo_index_combos[vbo_len][1] = index_combo[1];
@@ -359,6 +423,7 @@ int add_vertex_attrib(int *index_combo) {
 /*
  * ========== DOUBLE_BUFFER() ==========
  * DESC
+ * Doubles the given buffer
  *
  * ARGS
  * - void** buffer: Pointer to the buffer being doubled
@@ -371,7 +436,7 @@ int add_vertex_attrib(int *index_combo) {
  * =====================================
  */
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size) {
-  *buffer = realloc(*buffer, 2 * *buff_size * unit_size);
+  *buffer = realloc(*buffer, 2 * (*buff_size) * unit_size);
   if (*buffer == NULL) {
     return -1;
   }
@@ -397,6 +462,7 @@ int double_buffer(void **buffer, size_t *buff_size, size_t unit_size) {
  * =================================
  */
 LINE_BUFFER *get_lines(char *path) {
+  int status = 0;;
   FILE *file = fopen(path, "r");
   if (file == NULL) {
     printf("Unable to open object file\n");
@@ -415,7 +481,7 @@ LINE_BUFFER *get_lines(char *path) {
   fclose(file);
   file_contents[file_len - 1] = '\n';
 
-  LINE_BUFFER *lb = malloc(sizeof(lb));
+  LINE_BUFFER *lb = malloc(sizeof(LINE_BUFFER));
   if (lb == NULL) {
     free(file_contents);
     printf("Unable to allocate line buffer struct\n");
@@ -428,25 +494,25 @@ LINE_BUFFER *get_lines(char *path) {
     printf("Unable to allocate line buffer\n");
     return NULL;
   }
-  size_t line_buffer_max = sizeof(char *) * LINE_BUFF_STARTING_LEN;
+  size_t line_buffer_max = LINE_BUFF_STARTING_LEN;
   lb->len = 0;
 
   char *cur_line = file_contents;
   for (int i = 0; i < file_len; i++) {
     if (file_contents[i] == '\n') {
       file_contents[i] = '\0';
+      //printf("%s\n", cur_line);
       lb->buffer[lb->len] = cur_line;
       lb->len++;
       if (lb->len == line_buffer_max) {
-        lb->buffer = realloc(lb->buffer, line_buffer_max * 2);
-        if (lb->buffer == NULL) {
+        status = double_buffer((void **) &(lb->buffer), &line_buffer_max,
+                               sizeof(char *));
+        if (status != 0) {
           free(file_contents);
           free(lb);
           printf("Unable to reallocate line buffer\n");
           return NULL;
         }
-
-        line_buffer_max *= 2;
       }
 
       cur_line = file_contents + i + 1;

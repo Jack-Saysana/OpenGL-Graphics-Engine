@@ -43,6 +43,8 @@ int main()
 */
   int model = load_model("/home/jack/projects/OpenGL-Graphics-Engine/resources/Cube/cube.obj");
 
+  //int model = load_model("/home/jack/projects/OpenGL-Graphics-Engine/resources/Cube_2.0/Cube_2.0.obj");
+
   return model;
 }
 
