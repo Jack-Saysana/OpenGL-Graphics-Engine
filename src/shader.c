@@ -10,6 +10,7 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
     printf("Invalid vertex shader path\n");
     return -1;
   }
+  printf("%s:\n", v_path);
   vs = gen_shader(v_source, GL_VERTEX_SHADER);
   if (vs == -1) {
     free(v_source);
@@ -22,6 +23,7 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
     printf("Invalid fragment shader path\n");
     return -1;
   }
+  printf("%s:\n", f_path);
   fs = gen_shader(f_source, GL_FRAGMENT_SHADER);
   if (fs == -1) {
     free(f_source);
@@ -35,6 +37,7 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
       printf("Invalid geometry shader path\n");
       return -1;
     }
+    printf("%s:\n", g_path);
     gs = gen_shader(g_source, GL_GEOMETRY_SHADER);
     if (gs == -1) {
       free(g_source);

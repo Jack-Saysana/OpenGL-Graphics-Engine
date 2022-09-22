@@ -271,9 +271,9 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
   FACE_VERT *cur_vert = head;
   FACE_VERT *temp = NULL;
   while (verts_left > 3) {
-    cur_triangle[0] = cur_vert->prev->index;
+    cur_triangle[0] = cur_vert->next->index;
     cur_triangle[1] = cur_vert->index;
-    cur_triangle[2] = cur_vert->next->index;
+    cur_triangle[2] = cur_vert->prev->index;
 
     if (is_ear(cur_triangle, cur_vert, poly_normal) == 0) {
       write_triangle(file, cur_triangle);
@@ -289,9 +289,9 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
     }
   }
 
-  cur_triangle[0] = cur_vert->prev->index;
+  cur_triangle[0] = cur_vert->next->index;
   cur_triangle[1] = cur_vert->index;
-  cur_triangle[2] = cur_vert->next->index;
+  cur_triangle[2] = cur_vert->prev->index;
   write_triangle(file, cur_triangle);
 
   free(cur_vert->prev);
@@ -346,6 +346,7 @@ int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
 
   float a = 0.0;
   float b = 0.0;
+  float c = 0.0;
   float p[3] = { 0.0, 0.0, 0.0 };
 
   FACE_VERT *cur_vert = ref_vert->next->next;
@@ -354,22 +355,17 @@ int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
     p[1] = verticies[vbo_index_combos[cur_vert->index][0]][1] - coords[0][1];
     p[2] = verticies[vbo_index_combos[cur_vert->index][0]][2] - coords[0][2];
 
-/*
-        P(x)    P(x)V(x)U(y) - P(y)U(x)V(x)
-    a = ---  -  ---------------------------
-        U(x)    U(x)V(x)U(y) - U(x)U(x)V(y)
-*/
-    a = (p[0]/u[0]) -( ((p[0]*v[0]*u[1]) - (p[1]*u[0]*v[0])) /
-                       ((u[0]*v[0]*u[1]) - (u[0]*u[0]*v[1])) );
+    c = ((u[0]*v[1]*p[2])-(u[0]*v[2]*p[1])+(v[0]*u[2]*p[1])-(v[0]*u[1]*p[2])-(u[2]*v[1]*p[0])+(v[2]*u[1]*p[0])) /
+        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+(v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-(u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
 
-/*
-        P(x)U(y) - P(y)U(x)
-    b = -------------------
-        V(x)U(y) - U(x)V(y)
-*/
-    b = ((p[0]*u[1]) - (p[1]*u[0])) / ((v[0]*u[1]) - (u[0]*v[1]));
+    a = ((v[0]*u_cross_v[2]*p[1])+(v[0]*u_cross_v[1]*p[2])+(u_cross_v[0]*v[2]*p[1])-(u_cross_v[0]*v[1]*p[2])-(v[2]*u_cross_v[1]*p[0])+(u_cross_v[2]*v[1]*p[0])) /
+        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+(v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-(u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
 
-    if (a < 0.0 || a > 1.0 || b < 0.0 || b > 1.0 || a + b > 1.0) {
+    b = ((u[0]*u_cross_v[2]*p[1])-(u[0]*u_cross_v[1]*p[2])-(u_cross_v[0]*u[2]*p[1])+(u_cross_v[0]*u[1]*p[2])+(u[2]*u_cross_v[1]*p[0])-(u_cross_v[2]*u[1]*p[0])) /
+        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+(v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-(u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
+
+    if (c == 0.0 && a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 &&
+        a + b <= 1.0) {
       return -1;
     }
 
