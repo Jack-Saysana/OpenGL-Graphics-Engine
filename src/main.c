@@ -36,10 +36,20 @@ int main() {
       NULL,
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
       );
+  if (shader == -1) {
+    printf("Error loading shaders\n");
+    glfwTerminate();
+    return -1;
+  }
 
   MODEL *cube = load_model(
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/Cube/cube.obj"
       );
+  if (cube == NULL) {
+    printf("Unable to load model\n");
+    glfwTerminate();
+    return -1;
+  }
 
   mat4 projection = {
     { 1.0, 0.0, 0.0, 0.0 },
