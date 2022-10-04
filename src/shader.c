@@ -90,8 +90,12 @@ char *load_source(char *path) {
     return NULL;
   }
 
-  fseek(file, 0, SEEK_END);
-  long int file_size = ftell(file);
+  long int file_size = 0;
+  int c = fgetc(file);
+  while (c != EOF) {
+    file_size++;
+    c = fgetc(file);
+  }
   fseek(file, 0, SEEK_SET);
 
   char *source = malloc(file_size + 1);

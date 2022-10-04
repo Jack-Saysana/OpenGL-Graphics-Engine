@@ -32,9 +32,9 @@ int main() {
   glViewport(0, 0, 640, 480);
 
   unsigned int shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
       );
   if (shader == -1) {
     printf("Error loading shaders\n");
@@ -43,7 +43,7 @@ int main() {
   }
 
   MODEL *cube = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/Cube/cube.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/Cube/cube.obj"
       );
   if (cube == NULL) {
     printf("Unable to load model\n");
@@ -84,9 +84,9 @@ int main() {
     //printf("==========\npos: %f %f %f\ncenter: %f %f %f\nup: %f %f %f\n",
     //      camera_pos[0], camera_pos[1], camera_pos[2], center[0], center[1],
     //      center[2], camera_up[0], camera_up[1], camera_up[2]);
-    printf("==========\n%f %f %f\n% f %f %f\n%f %f %f\n", view[0][0],
+    /*printf("==========\n%f %f %f\n% f %f %f\n%f %f %f\n", view[0][0],
            view[0][1], view[0][2], view[1][0], view[1][1], view[1][2],
-           view[2][0], view[2][1], view[2][2]);
+           view[2][0], view[2][1], view[2][2]);*/
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
                        GL_FALSE, (float *)view);
 
