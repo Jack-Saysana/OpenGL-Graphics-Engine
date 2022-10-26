@@ -1,12 +1,13 @@
-#version 460
+#version 460 core
 
-in vec4 fragPos;
+out vec4 FragColor;
+/*in vec4 fragPos;
 in vec2 texCoords;
 in vec3 normal;
-in vec3 viewPos;
+in vec3 viewPos;*/
 
-out vec4 FragCol;
+uniform mat4 projection;
 
 void main() {
-  FragCol = vec4(1.0, 1.0, 1.0, 1.0);
+  FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

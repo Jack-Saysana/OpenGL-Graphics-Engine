@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 
 #define LINE_BUFF_STARTING_LEN (50)
+#define FILE_CONTENTS_STARTING_LEN (500)
 
 #define VERTEX_BUFF_STARTING_LEN (10)
 #define NORMAL_BUFF_STARTING_LEN (10)
@@ -25,7 +26,7 @@ typedef struct vbo {
 
 typedef struct model {
   unsigned int VAO;
-  unsigned int num_verts;
+  unsigned int num_indicies;
 } MODEL;
 
 extern float (*verticies)[3];

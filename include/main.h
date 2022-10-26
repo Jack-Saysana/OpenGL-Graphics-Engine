@@ -3,10 +3,11 @@
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
 #include <cglm/mat4.h>
+#include <math.h>
 
 typedef struct model {
   unsigned int VAO;
-  unsigned int num_verts;
+  unsigned int num_indicies;
 } MODEL;
 
 void framebuffer_size_callback(GLFWwindow *, int, int);

@@ -4,12 +4,14 @@ int preprocess_lines(LINE_BUFFER *lb) {
   FILE *file = fopen(lb->path, "w");
   if (file == NULL) {
     printf("Unable to open preprocessed file\n");
+    free_line_buffer(lb);
     return -1;
   }
   fprintf(file, "#PRE\n");
 
   verticies = malloc(sizeof(float) * 3 * VERTEX_BUFF_STARTING_LEN);
   if (verticies == NULL) {
+    free_line_buffer(lb);
     fclose(file);
     printf("Unable to allocate vertex buffer\n");
     return -1;
@@ -19,6 +21,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   normals = malloc(sizeof(float) * 3 * NORMAL_BUFF_STARTING_LEN);
   if (normals == NULL) {
+    free_line_buffer(lb);
     fclose(file);
     free(verticies);
     printf("Unable to allocate normal buffer\n");
@@ -29,6 +32,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   tex_coords = malloc(sizeof(float) * 2 * TEX_COORD_BUFF_STARTING_LEN);
   if (tex_coords == NULL) {
+    free_line_buffer(lb);
     fclose(file);
     free(verticies);
     free(normals);
@@ -40,6 +44,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   vbo_index_combos = malloc(sizeof(int) * 3 * VBO_STARTING_LEN);
   if (vbo_index_combos == NULL) {
+    free_line_buffer(lb);
     fclose(file);
     free(verticies);
     free(normals);
@@ -59,6 +64,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       status = preprocess_face(file, cur_line + 2);
     } else {
       fprintf(file, "%s\n", cur_line);
+      fflush(file);
 
       if (cur_line[0] == 'v' && cur_line[1] == 't') {
         sscanf(cur_line, "vt %f %f",
@@ -96,6 +102,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
 
     if (status != 0) {
+      free_line_buffer(lb);
       fclose(file);
       free(verticies);
       free(normals);
@@ -271,12 +278,31 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
   FACE_VERT *cur_vert = head;
   FACE_VERT *temp = NULL;
   while (verts_left > 3) {
+
+
+
+    /*printf("Verts left: %d\n", verts_left);
+    FACE_VERT *v = cur_vert;
+    for (int q = 0; q < verts_left; q++) {
+      printf("Cur vert: %d\n", v->index);
+      printf("( %f %f %f )\n",
+             verticies[vbo_index_combos[v->index][0]][0],
+             verticies[vbo_index_combos[v->index][0]][1],
+             verticies[vbo_index_combos[v->index][0]][2]);
+      v = v->next;
+    }
+    fflush(stdout);*/
+
+
+
+
     cur_triangle[0] = cur_vert->next->index;
     cur_triangle[1] = cur_vert->index;
     cur_triangle[2] = cur_vert->prev->index;
 
     if (is_ear(cur_triangle, cur_vert, poly_normal) == 0) {
       write_triangle(file, cur_triangle);
+      fflush(file);
 
       cur_vert->prev->next = cur_vert->next;
       cur_vert->next->prev = cur_vert->prev;
@@ -302,10 +328,36 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
 }
 
 int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
-  float *coords[3] = {
+  // Triangle[0]: Vertex A
+  // Triangle[1]: Focus of triangle
+  // Triangle[2]: Vertex B
+
+  float origin[3] = { 0.0, 0.0, 0.0 };
+  // Translate Vertex A as if focus was at the origin
+  float first_vert[3] = {
+    verticies[vbo_index_combos[triangle[0]][0]][0]-verticies[vbo_index_combos[triangle[1]][0]][0],
+    verticies[vbo_index_combos[triangle[0]][0]][1]-verticies[vbo_index_combos[triangle[1]][0]][1],
+    verticies[vbo_index_combos[triangle[0]][0]][2]-verticies[vbo_index_combos[triangle[1]][0]][2]
+  };
+  // Translate Vertex B as if focus was at origin
+  float second_vert[3] = {
+    verticies[vbo_index_combos[triangle[2]][0]][0]-verticies[vbo_index_combos[triangle[1]][0]][0],
+    verticies[vbo_index_combos[triangle[2]][0]][1]-verticies[vbo_index_combos[triangle[1]][0]][1],
+    verticies[vbo_index_combos[triangle[2]][0]][2]-verticies[vbo_index_combos[triangle[1]][0]][2]
+  };
+
+  //printf("A: ( %f %f %f )\n", first_vert[0], first_vert[1], first_vert[2]);
+  //printf("B: ( %f %f %f )\n", second_vert[0], second_vert[1], second_vert[2]);
+
+  /*float *coords[3] = {
     verticies[vbo_index_combos[triangle[1]][0]],
     verticies[vbo_index_combos[triangle[0]][0]],
     verticies[vbo_index_combos[triangle[2]][0]]
+  };*/
+  float *coords[3] = {
+    origin,
+    first_vert,
+    second_vert
   };
 
   float u[3] = {
@@ -326,7 +378,10 @@ int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
     (u[0] * v[1]) - (u[1] * v[0])
   };
 
-  float mult = 0;
+  //printf("u x v: ( %f %f %f )\n", u_cross_v[0], u_cross_v[1], u_cross_v[2]);
+  //printf("normal: ( %f %f %f )\n", polygon_normal[0], polygon_normal[1], polygon_normal[2]);
+
+  /*float mult = 0;
   if (u_cross_v[0] != 0) {
     mult = polygon_normal[0] / u_cross_v[0];
   } else if (u_cross_v[1] != 0) {
@@ -342,7 +397,7 @@ int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
     if (u_cross_v[i] * mult != polygon_normal[i]) {
       return -1;
     }
-  }
+  }*/
 
   float a = 0.0;
   float b = 0.0;
@@ -351,9 +406,16 @@ int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
 
   FACE_VERT *cur_vert = ref_vert->next->next;
   while (cur_vert != ref_vert->prev) {
-    p[0] = verticies[vbo_index_combos[cur_vert->index][0]][0] - coords[0][0];
-    p[1] = verticies[vbo_index_combos[cur_vert->index][0]][1] - coords[0][1];
-    p[2] = verticies[vbo_index_combos[cur_vert->index][0]][2] - coords[0][2];
+    p[0] = verticies[vbo_index_combos[cur_vert->index][0]][0] - verticies[vbo_index_combos[triangle[1]][0]][0] - coords[0][0];
+    p[1] = verticies[vbo_index_combos[cur_vert->index][0]][1] - verticies[vbo_index_combos[triangle[1]][0]][1] - coords[0][1];
+    p[2] = verticies[vbo_index_combos[cur_vert->index][0]][2] - verticies[vbo_index_combos[triangle[1]][0]][2] - coords[0][2];
+
+
+
+    //printf("p: ( %f %f %f )\n", p[0], p[1], p[2]);
+    //fflush(stdout);
+
+
 
     c = ((u[0]*v[1]*p[2])-(u[0]*v[2]*p[1])+(v[0]*u[2]*p[1])-(v[0]*u[1]*p[2])-(u[2]*v[1]*p[0])+(v[2]*u[1]*p[0])) /
         ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+(v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-(u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
@@ -366,7 +428,7 @@ int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
 
     if (c == 0.0 && a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 &&
         a + b <= 1.0) {
-      return -1;
+      return 0;
     }
 
     cur_vert = cur_vert->next;
@@ -397,6 +459,7 @@ int write_triangle(FILE *file, int *verticies) {
     }
   }
   fprintf(file, "\n");
+  fflush(file);
 
   return 0;
 }

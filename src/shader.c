@@ -52,6 +52,7 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
   if (gs != -1) {
     glAttachShader(program, gs);
   }
+  glLinkProgram(program);
 
   glDeleteShader(vs);
   glDeleteShader(fs);
