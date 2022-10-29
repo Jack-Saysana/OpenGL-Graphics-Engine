@@ -3,9 +3,6 @@
 #include <string.h>
 #include <glad/glad.h>
 
-#define LINE_BUFF_STARTING_LEN (50)
-#define FILE_CONTENTS_STARTING_LEN (500)
-
 #define VERTEX_BUFF_STARTING_LEN (10)
 #define NORMAL_BUFF_STARTING_LEN (10)
 #define TEX_COORD_BUFF_STARTING_LEN (10)
@@ -29,7 +26,7 @@ typedef struct model {
   unsigned int num_indicies;
 } MODEL;
 
-extern float (*verticies)[3];
+/*extern float (*verticies)[3];
 extern size_t v_buff_len;
 extern size_t v_len;
 
@@ -47,13 +44,13 @@ extern size_t vbo_len;
 
 extern int (*indicies)[3];
 extern size_t i_buff_len;
-extern size_t i_len;
+extern size_t i_len;*/
 
 MODEL *load_model(char *);
-int parse_lines(LINE_BUFFER *);
+//int parse_lines(LINE_BUFFER *);
 LINE_BUFFER *get_lines(char *);
 int preprocess_lines(LINE_BUFFER *);
 void free_line_buffer(LINE_BUFFER *);
 int double_buffer(void **, size_t *, size_t);
-int parse_face(char *);
-int add_vertex_attrib(int *index_combo);
+//int parse_face(char *);
+//int add_vertex_attrib(int *index_combo);

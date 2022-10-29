@@ -1,13 +1,16 @@
 #include <obj_preprocessor.h>
 
 int preprocess_lines(LINE_BUFFER *lb) {
-  FILE *file = fopen(lb->path, "w");
+  char *bin_path = malloc(strlen(lb->path) + 5);
+  sprintf(bin_path, "%s.bin", lb->path);
+
+  FILE *file = fopen(/*lb->path*/bin_path, "wb");
   if (file == NULL) {
     printf("Unable to open preprocessed file\n");
     free_line_buffer(lb);
     return -1;
   }
-  fprintf(file, "#PRE\n");
+  //fprintf(file, "#PRE\n");
 
   verticies = malloc(sizeof(float) * 3 * VERTEX_BUFF_STARTING_LEN);
   if (verticies == NULL) {
@@ -55,6 +58,20 @@ int preprocess_lines(LINE_BUFFER *lb) {
   vbo_buff_len = VBO_STARTING_LEN;
   vbo_len = 0;
 
+  faces = malloc(sizeof(int) * 3 * FACE_BUFF_STARTING_LEN);
+  if (faces == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    printf("Unable to allocate face buffer\n");
+    return -1;
+  }
+  face_buff_len = FACE_BUFF_STARTING_LEN;
+  f_len = 0;
+
   char *cur_line = NULL;
   int status = 0;
   for (int i = 0; i < lb->len; i++) {
@@ -63,8 +80,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
     if (cur_line[0] == 'f') {
       status = preprocess_face(file, cur_line + 2);
     } else {
-      fprintf(file, "%s\n", cur_line);
-      fflush(file);
+      //fprintf(file, "%s\n", cur_line);
+      //fflush(file);
 
       if (cur_line[0] == 'v' && cur_line[1] == 't') {
         sscanf(cur_line, "vt %f %f",
@@ -113,24 +130,37 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
+  //printf("File: %s\n", lb->path);
+  fwrite(&vbo_len, sizeof(size_t), 1, file);
+  fwrite(&f_len, sizeof(size_t), 1, file);
+  //printf("Preprocessed verticies (%lld):\n", vbo_len);
+  for (size_t i = 0; i < vbo_len; i++) {
+    fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);
+    fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, file);
+    fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, file);
+    /*printf("%f %f %f | %f %f %f | %f %f\n",
+           verticies[vbo_index_combos[i][0]][0],
+           verticies[vbo_index_combos[i][0]][1],
+           verticies[vbo_index_combos[i][0]][2],
+           normals[vbo_index_combos[i][2]][0],
+           normals[vbo_index_combos[i][2]][1],
+           normals[vbo_index_combos[i][2]][2],
+           tex_coords[vbo_index_combos[i][1]][0],
+           tex_coords[vbo_index_combos[i][1]][1]);*/
+  }
+  fwrite(faces, sizeof(int) * 3, f_len, file);
+  /*printf("Preprocessed indicies (%lld):\n", f_len);
+  for (int i = 0; i < f_len; i++) {
+    printf("%d %d %d\n", faces[i][0], faces[i][1], faces[i][2]);
+  }*/
+
   fclose(file);
   free_line_buffer(lb);
-
   free(verticies);
-  v_buff_len = 0;
-  v_len = 0;
-
   free(normals);
-  n_buff_len = 0;
-  n_len = 0;
-
   free(tex_coords);
-  t_buff_len = 0;
-  t_len = 0;
-
   free(vbo_index_combos);
-  vbo_buff_len = 0;
-  vbo_len = 0;
+  free(faces);
 
   return 0;
 }
@@ -243,13 +273,24 @@ int preprocess_face(FILE *file, char *line) {
   face_list_head->prev = face_list_tail;
 
   if (num_verts == 3) {
-    int face_verts[3] = {
+    /*int face_verts[3] = {
       face_list_head->prev->index,
       face_list_head->index,
       face_list_head->next->index
-    };
+    };*/
 
-    status = write_triangle(file, face_verts);
+    faces[f_len][0] = face_list_head->prev->index;
+    faces[f_len][1] = face_list_head->index;
+    faces[f_len][2] = face_list_head->next->index;
+    f_len++;
+    if (f_len == face_buff_len) {
+      status = double_buffer((void **) &faces, &face_buff_len, sizeof(int) * 3);
+      if (status != 0) {
+        printf("Unable to reallocate face buffer\n");
+        return -1;
+      }
+    }
+    //status = write_triangle(file, face_verts);
 
     face_list_tail->next = NULL;
     face_list_head->prev = NULL;
@@ -274,6 +315,8 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
 
   int verts_left = num_verts;
   int cur_triangle[3] = { -1, -1, -1 };
+
+  int status = 0;
 
   FACE_VERT *cur_vert = head;
   FACE_VERT *temp = NULL;
@@ -301,8 +344,19 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
     cur_triangle[2] = cur_vert->prev->index;
 
     if (is_ear(cur_triangle, cur_vert, poly_normal) == 0) {
-      write_triangle(file, cur_triangle);
-      fflush(file);
+      //write_triangle(file, cur_triangle);
+      //fflush(file);
+      faces[f_len][0] = cur_triangle[0];
+      faces[f_len][1] = cur_triangle[1];
+      faces[f_len][2] = cur_triangle[2];
+      f_len++;
+      if (f_len == face_buff_len) {
+        status = double_buffer((void **) &faces, &face_buff_len, sizeof(int) * 3);
+        if (status != 0) {
+          printf("Unable to reallocate face buffer\n");
+          return -1;
+        }
+      }
 
       cur_vert->prev->next = cur_vert->next;
       cur_vert->next->prev = cur_vert->prev;
@@ -315,10 +369,21 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
     }
   }
 
-  cur_triangle[0] = cur_vert->next->index;
-  cur_triangle[1] = cur_vert->index;
-  cur_triangle[2] = cur_vert->prev->index;
-  write_triangle(file, cur_triangle);
+  //cur_triangle[0] = cur_vert->next->index;
+  //cur_triangle[1] = cur_vert->index;
+  //cur_triangle[2] = cur_vert->prev->index;
+  //write_triangle(file, cur_triangle);
+  faces[f_len][0] = cur_vert->next->index;
+  faces[f_len][1] = cur_vert->index;
+  faces[f_len][2] = cur_vert->prev->index;
+  f_len++;
+  if (f_len == face_buff_len) {
+    status = double_buffer((void **) &faces, &face_buff_len, sizeof(int) * 3);
+    if (status != 0) {
+      printf("Unable to reallocate face buffer\n");
+      return -1;
+    }
+  }
 
   free(cur_vert->prev);
   free(cur_vert->next);
@@ -437,7 +502,7 @@ int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
   return 0;
 }
 
-int write_triangle(FILE *file, int *verticies) {
+/*int write_triangle(FILE *file, int *verticies) {
   fprintf(file, "f");
 
   int *index_combo = NULL;
@@ -462,4 +527,4 @@ int write_triangle(FILE *file, int *verticies) {
   fflush(file);
 
   return 0;
-}
+}*/

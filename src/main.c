@@ -64,14 +64,14 @@ int main() {
     return -1;
   }
 
-  MODEL *floor = load_model(
+  /*MODEL *floor = load_model(
       "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/Floor/floor.obj"
       );
   if (floor == NULL) {
     printf("Unable to load model\n");
     glfwTerminate();
     return -1;
-  }
+  }*/
 
   MODEL *cross = load_model(
       "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/Cross/cross.obj"
@@ -189,7 +189,10 @@ int main() {
   }
 
   free(cube);
-  free(floor);
+  free(cross);
+  free(dude);
+  free(pack);
+  //free(floor);
   glfwTerminate();
   return 0;
 }
