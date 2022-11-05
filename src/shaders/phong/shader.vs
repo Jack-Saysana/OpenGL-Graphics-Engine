@@ -7,6 +7,7 @@ layout (location = 2) in vec2 inTexCoords;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform vec3 viewPosition;
 
 out vec4 fragPos;
 out vec2 texCoords;
@@ -19,5 +20,5 @@ void main() {
   fragPos = model * vec4(inPos.x, inPos.y, inPos.z, 1.0);
   texCoords = inTexCoords;
   normal = inNormal;
-  viewPos = vec3(0.0, 0.0, 0.0);
+  viewPos = viewPos;
 }

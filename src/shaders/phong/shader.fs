@@ -22,15 +22,13 @@ uniform struct PointLight {
   vec3 col;
   vec3 pos;
   int a_consts[3];
-} p_lights[1];
+} /*p_lights[1]*/;
 
 vec3 calc_dir_light(DirLight light);
 vec3 calc_point_light(PointLight light);
 
 void main() {
-  //FragCol = vec4(calc_dir_light(d_light) + calc_point_light(p_lights[0]),
-  //                 1.0);
-  FragCol = vec4(1.0, 1.0, 1.0, 1.0);
+  FragCol = vec4(calc_dir_light(d_light)/* + calc_point_light(p_lights[0])*/, 1.0);
 }
 
 vec3 calc_dir_light(DirLight light) {

@@ -46,8 +46,10 @@ int main() {
 
   unsigned int shader = init_shader_prog(
       "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
       NULL,
       "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
       );
   if (shader == -1) {
     printf("Error loading shaders\n");
@@ -56,7 +58,7 @@ int main() {
   }
 
   MODEL *cube = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/Cube/cube.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
       );
   if (cube == NULL) {
     printf("Unable to load model\n");
@@ -74,7 +76,7 @@ int main() {
   }*/
 
   MODEL *cross = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/Cross/cross.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       );
   if (cross == NULL) {
     printf("Unable to load model\n");
@@ -83,7 +85,7 @@ int main() {
   }
 
   MODEL *dude = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/char/low_poly_new.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
       );
   if (dude == NULL) {
     printf("Unable to load model\n");
@@ -125,16 +127,12 @@ int main() {
     { 0.0, 0.0, 0.0, 1.0 }
   };
 
-  /*mat4 last = {
-    { 1.0, 0.0, 0.0, 0.0 },
-    { 0.0, 1.0, 0.0, 0.0 },
-    { 0.0, 0.0, 1.0, 0.0 },
-    { 0.0, 0.0, 0.0, 1.0 }
-  };*/
+  glEnable(GL_DEPTH_TEST);
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   while (!glfwWindowShouldClose(window)) {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     keyboard_input(window);
 
@@ -149,39 +147,14 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                        GL_FALSE, (float *) model);
 
-    /*printf("==========\npos: %f %f %f\ncenter: %f %f %f\nup: %f %f %f\n",
-          camera_pos[0], camera_pos[1], camera_pos[2], center[0], center[1],
-          center[2], camera_up[0], camera_up[1], camera_up[2]);*/
-
-    /*int equal = 1;
-    float *v = (float *) view;
-    float *l = (float *) last;
-    for (int i = 0; i < 16; i++) {
-      if (v[i] != l[i]) {
-        equal = 0;
-        l[i] = v[i];
-      }
-    }
-    if (equal == 0) {
-      printf("==========\n" \
-             "%f %f %f %f\n" \
-             "%f %f %f %f\n" \
-             "%f %f %f %f\n" \
-             "%f %f %f %f\n",
-             view[0][0], view[0][1], view[0][2], view[0][3], view[1][0],
-             view[1][1], view[1][2], view[1][3], view[2][0], view[2][1],
-             view[2][2], view[2][3], view[3][0], view[3][1], view[3][2],
-             view[3][3]);
-      fflush(stdout);
-    }*/
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
                        GL_FALSE, (float *) view);
 
-    //draw_model(cube);
-    //draw_model(floor);
-    //draw_model(cross);
-    //draw_model(dude);
-    draw_model(pack);
+    //draw_model(shader, cube);
+    //draw_model(shader, floor);
+    //draw_model(shader, cross);
+    //draw_model(shader, dude);
+    draw_model(shader, pack);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -226,9 +199,6 @@ void keyboard_input(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, 1);
   }
-
-  /*printf("Cam pos: %f, %f, %f\n", camera_pos[0], camera_pos[1],
-         camera_pos[2]);*/
 }
 
 void mouse_input(GLFWwindow *window, double xpos, double ypos) {

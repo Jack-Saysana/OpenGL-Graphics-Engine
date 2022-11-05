@@ -115,10 +115,27 @@ LINE_BUFFER *get_lines(char *path) {
   if (lb == NULL) {
     free(file_contents);
     printf("Unable to allocate line buffer struct\n");
+    return NULL;
+  }
+
+  lb->dir = malloc(strlen(path) + 1);
+  if (lb->dir == NULL) {
+    free(lb);
+    free(file_contents);
+    return NULL;
+  }
+  strncpy(lb->dir, path, strlen(path) + 1);
+  for (int i = strlen(lb->dir) - 1; i >= 0; i--) {
+    if (lb->dir[i] == '\\' || lb->dir[i] == '/') {
+      lb->dir[i] = '\0';
+      lb->filename = lb->dir + i + 1;
+      break;
+    }
   }
 
   lb->buffer = malloc(sizeof(char *) * LINE_BUFF_STARTING_LEN);
   if (lb->buffer == NULL) {
+    free(lb->dir);
     free(lb);
     free(file_contents);
     printf("Unable to allocate line buffer\n");
@@ -127,7 +144,7 @@ LINE_BUFFER *get_lines(char *path) {
   size_t line_buffer_max = LINE_BUFF_STARTING_LEN;
   lb->len = 0;
 
-  char *cur_line = file_contents;
+ char *cur_line = file_contents;
   for (int i = 0; i < contents_len; i++) {
     if (file_contents[i] == '\n') {
       file_contents[i] = '\0';
@@ -159,7 +176,64 @@ LINE_BUFFER *get_lines(char *path) {
  * ======================================
  */
 void free_line_buffer(LINE_BUFFER *lb) {
+  free(lb->dir);
   free(lb->buffer[0]);
   free(lb->buffer);
   free(lb);
+}
+
+/*
+ * ========= GET_HASH ==========
+ *
+ * Hash string to an integer
+ *
+ * =============================
+ */
+uint64_t get_hash(char *str) {
+  int weight = 17;
+  int str_len = strlen(str);
+
+  uint64_t hash = 0;
+  for (int i = 0; i < str_len && i < 10; i++) {
+    hash += (weight * str[i]);
+    weight *= weight;
+  }
+
+  uint64_t y;
+  uint64_t x = hash;
+  int n = 64;
+  y = x >> 32;
+  if (y != 0) {
+    n -= 32;
+    x = y;
+  }
+  y = x >> 16;
+  if (y != 0) {
+    n -= 16;
+    x = y;
+  }
+  y = x >> 8;
+  if (y != 0) {
+    n -= 8;
+    x = y;
+  }
+  y = x >> 4;
+  if (y != 0) {
+    n -= 4;
+    x = y;
+  }
+  y = x >> 2;
+  if (y != 0) {
+    n -= 2;
+    x = y;
+  }
+  y = x >> 1;
+  if (y != 0) {
+    n -= 1;
+  }
+
+  hash = hash << n;
+  hash = hash | str_len;
+
+  return hash;
 }
