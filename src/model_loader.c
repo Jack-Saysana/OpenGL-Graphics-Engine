@@ -80,13 +80,13 @@ MODEL *load_model(char *path) {
   model->VAO = VAO_id;
   model->num_indicies = i_len * 3;
 
-  for (int i = 0; i < NUM_PROPS; i++) {
-    if (obj_mat->mat_paths[i] != NULL) {
-      model->textures[i] = genTextureId(obj_mat->mat_paths[i]);
-    }
-  }
-
   if (obj_mat != NULL) {
+    for (int i = 0; i < NUM_PROPS; i++) {
+      if (obj_mat->mat_paths[i] != NULL) {
+        model->textures[i] = genTextureId(obj_mat->mat_paths[i]);
+      }
+    }
+
     free_materials(obj_mat, 1);
   }
   free(bin_path);

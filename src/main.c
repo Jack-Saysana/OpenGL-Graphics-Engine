@@ -45,10 +45,12 @@ int main() {
   glViewport(0, 0, 640, 480);
 
   unsigned int shader = init_shader_prog(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
       NULL,
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
       );
   if (shader == -1) {
@@ -58,7 +60,8 @@ int main() {
   }
 
   MODEL *cube = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
       );
   if (cube == NULL) {
     printf("Unable to load model\n");
@@ -66,17 +69,9 @@ int main() {
     return -1;
   }
 
-  /*MODEL *floor = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/Floor/floor.obj"
-      );
-  if (floor == NULL) {
-    printf("Unable to load model\n");
-    glfwTerminate();
-    return -1;
-  }*/
-
   MODEL *cross = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       );
   if (cross == NULL) {
     printf("Unable to load model\n");
@@ -85,18 +80,10 @@ int main() {
   }
 
   MODEL *dude = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
       );
   if (dude == NULL) {
-    printf("Unable to load model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *pack = load_model(
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/backpack/backpack.obj"
-      );
-  if (pack == NULL) {
     printf("Unable to load model\n");
     glfwTerminate();
     return -1;
@@ -150,11 +137,9 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
                        GL_FALSE, (float *) view);
 
-    //draw_model(shader, cube);
-    //draw_model(shader, floor);
+    draw_model(shader, cube);
     //draw_model(shader, cross);
     //draw_model(shader, dude);
-    draw_model(shader, pack);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -164,8 +149,7 @@ int main() {
   free(cube);
   free(cross);
   free(dude);
-  free(pack);
-  //free(floor);
+
   glfwTerminate();
   return 0;
 }
