@@ -17,3 +17,4 @@ void framebuffer_size_callback(GLFWwindow *, int, int);
 unsigned int init_shader_prog(char *, char *, char *);
 MODEL *load_model(char *path);
 void draw_model(unsigned int shader, MODEL *model);
+void free_model(MODEL *model);

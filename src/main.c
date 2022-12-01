@@ -69,7 +69,7 @@ int main() {
     return -1;
   }
 
-  MODEL *cross = load_model(
+  /*MODEL *cross = load_model(
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       );
@@ -87,6 +87,15 @@ int main() {
     printf("Unable to load model\n");
     glfwTerminate();
     return -1;
+  }*/
+
+  MODEL *test = load_model(
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      );
+  if (test == NULL) {
+    printf("Unable to load model\n");
+    glfwTerminate();
+    return -1;
   }
 
   mat4 projection = {
@@ -100,23 +109,9 @@ int main() {
   glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
-  mat4 view = {
-    { 1.0, 0.0, 0.0, 0.0 },
-    { 0.0, 1.0, 0.0, 0.0 },
-    { 0.0, 0.0, 1.0, 0.0 },
-    { 0.0, 0.0, 0.0, 1.0 }
-  };
-
-  mat4 model = {
-    { 1.0, 0.0, 0.0, 0.0 },
-    { 0.0, 1.0, 0.0, 0.0 },
-    { 0.0, 0.0, 1.0, 0.0 },
-    { 0.0, 0.0, 0.0, 1.0 }
-  };
-
   glEnable(GL_DEPTH_TEST);
 
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -125,19 +120,34 @@ int main() {
 
     // Render
     glUseProgram(shader);
+
+    mat4 view = {
+      { 1.0, 0.0, 0.0, 0.0 },
+      { 0.0, 1.0, 0.0, 0.0 },
+      { 0.0, 0.0, 1.0, 0.0 },
+      { 0.0, 0.0, 0.0, 1.0 }
+    };
     glm_vec3_add(camera_front, camera_pos, center);
     glm_lookat(camera_pos, center, camera_up, view);
 
-    //vec3 translation = { 2.0, 2.0, 2.0 };
+    mat4 model = {
+      { 1.0, 0.0, 0.0, 0.0 },
+      { 0.0, 1.0, 0.0, 0.0 },
+      { 0.0, 0.0, 1.0, 0.0 },
+      { 0.0, 0.0, 0.0, 1.0 }
+    };
+    vec3 translation = { 0.25, 0.25, 0.25 };
+    glm_scale(model, translation);
     //glm_translate(model, translation);
-    //glm_scale(model, translation);
+
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                        GL_FALSE, (float *) model);
 
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
                        GL_FALSE, (float *) view);
 
-    draw_model(shader, cube);
+    draw_model(shader, test);
+    //draw_model(shader, cube);
     //draw_model(shader, cross);
     //draw_model(shader, dude);
 
@@ -146,9 +156,8 @@ int main() {
     glfwPollEvents();
   }
 
-  free(cube);
-  free(cross);
-  free(dude);
+  free_model(cube);
+  free_model(test);
 
   glfwTerminate();
   return 0;

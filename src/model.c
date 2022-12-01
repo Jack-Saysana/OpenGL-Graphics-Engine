@@ -19,3 +19,8 @@ void draw_model(unsigned int shader, MODEL *model) {
   glDrawElements(GL_TRIANGLES, model->num_indicies, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }
+
+void free_model(MODEL *model) {
+  free(model->bones);
+  free(model);
+}

@@ -3,12 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#define VERTEX_BUFF_STARTING_LEN (10)
-#define NORMAL_BUFF_STARTING_LEN (10)
-#define TEX_COORD_BUFF_STARTING_LEN (10)
-#define VBO_STARTING_LEN (10)
-#define FACE_BUFF_STARTING_LEN (10)
-#define MATERIAL_BUFF_STARTING_LEN (10)
+#define BUFF_STARTING_LEN (10)
 #define NUM_PROPS (5)
 
 typedef struct material {
@@ -16,11 +11,6 @@ typedef struct material {
   char *mat_paths[NUM_PROPS];
 } MATERIAL;
 
-/*typedef struct line_buffer {
-  char *path;
-  char **buffer;
-  size_t len;
-} LINE_BUFFER;*/
 typedef struct line_buffer {
   char *dir;
   char *filename;
@@ -33,6 +23,18 @@ typedef struct face_vert {
   struct face_vert *next;
   int index;
 } FACE_VERT;
+
+typedef struct bone {
+  float coords[3];
+  int num_children;
+} BONE;
+
+BONE *bones;
+size_t b_buff_len;
+size_t b_len;
+
+int (*bone_ids)[4];
+float (*bone_weights)[4];
 
 float (*verticies)[3];
 size_t v_buff_len;
@@ -60,7 +62,6 @@ size_t mat_len;
 
 int preprocess_lines(LINE_BUFFER *);
 int preprocess_face(FILE *, char *);
-//int write_triangle(FILE *, int *);
 int triangulate_polygon(FILE *, FACE_VERT *, size_t);
 int is_ear(int *, FACE_VERT *, float *);
 uint64_t get_hash(char *str);

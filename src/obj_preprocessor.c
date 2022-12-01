@@ -14,56 +14,100 @@ int preprocess_lines(LINE_BUFFER *lb) {
     return -1;
   }
 
-  verticies = malloc(sizeof(float) * 3 * VERTEX_BUFF_STARTING_LEN);
+  bones = malloc(sizeof(BONE) * BUFF_STARTING_LEN);
+  if (bones == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    printf("Unable to allocate bone buffer\n");
+    return -1;
+  }
+  b_buff_len = BUFF_STARTING_LEN;
+  b_len = 0;
+
+  bone_ids = malloc(sizeof(int) * 4 * BUFF_STARTING_LEN);
+  if (bone_ids == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    printf("Unable to allocate bone id buffer\n");
+    return -1;
+  }
+
+  bone_weights = malloc(sizeof(float) * 4 * BUFF_STARTING_LEN);
+  if (bone_weights == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    printf("Unable to allocate bone weight buffer\n");
+    return -1;
+  }
+
+  verticies = malloc(sizeof(float) * 3 * BUFF_STARTING_LEN);
   if (verticies == NULL) {
     free_line_buffer(lb);
     fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
     printf("Unable to allocate vertex buffer\n");
     return -1;
   }
-  v_buff_len = VERTEX_BUFF_STARTING_LEN;
+  v_buff_len = BUFF_STARTING_LEN;
   v_len = 0;
 
-  normals = malloc(sizeof(float) * 3 * NORMAL_BUFF_STARTING_LEN);
+  normals = malloc(sizeof(float) * 3 * BUFF_STARTING_LEN);
   if (normals == NULL) {
     free_line_buffer(lb);
     fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
     free(verticies);
     printf("Unable to allocate normal buffer\n");
     return -1;
   }
-  n_buff_len = NORMAL_BUFF_STARTING_LEN;
+  n_buff_len = BUFF_STARTING_LEN;
   n_len = 0;
 
-  tex_coords = malloc(sizeof(float) * 2 * TEX_COORD_BUFF_STARTING_LEN);
+  tex_coords = malloc(sizeof(float) * 2 * BUFF_STARTING_LEN);
   if (tex_coords == NULL) {
     free_line_buffer(lb);
     fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
     free(verticies);
     free(normals);
     printf("Unable to allocate tex coord buffer\n");
     return -1;
   }
-  t_buff_len = TEX_COORD_BUFF_STARTING_LEN;
+  t_buff_len = BUFF_STARTING_LEN;
   t_len = 0;
 
-  vbo_index_combos = malloc(sizeof(int) * 3 * VBO_STARTING_LEN);
+  vbo_index_combos = malloc(sizeof(int) * 3 * BUFF_STARTING_LEN);
   if (vbo_index_combos == NULL) {
     free_line_buffer(lb);
     fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
     free(verticies);
     free(normals);
     free(tex_coords);
     printf("Unable to allocate vbo index combos\n");
     return -1;
   }
-  vbo_buff_len = VBO_STARTING_LEN;
+  vbo_buff_len = BUFF_STARTING_LEN;
   vbo_len = 0;
 
-  faces = malloc(sizeof(int) * 3 * FACE_BUFF_STARTING_LEN);
+  faces = malloc(sizeof(int) * 3 * BUFF_STARTING_LEN);
   if (faces == NULL) {
     free_line_buffer(lb);
     fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -71,13 +115,16 @@ int preprocess_lines(LINE_BUFFER *lb) {
     printf("Unable to allocate face buffer\n");
     return -1;
   }
-  face_buff_len = FACE_BUFF_STARTING_LEN;
+  face_buff_len = BUFF_STARTING_LEN;
   f_len = 0;
 
-  materials = malloc(sizeof(MATERIAL) * MATERIAL_BUFF_STARTING_LEN);
+  materials = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
   if (materials == NULL) {
     free_line_buffer(lb);
     fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -86,7 +133,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     printf("Unable to allocate material buffer\n");
     return -1;
   }
-  mat_buff_len = MATERIAL_BUFF_STARTING_LEN;
+  mat_buff_len = BUFF_STARTING_LEN;
   mat_len = 0;
 
   MATERIAL *cur_mat = NULL;
@@ -97,10 +144,19 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
     if (cur_line[0] == 'f') {
       status = preprocess_face(file, cur_line + 2);
+    } else if (cur_line[0] == 'b') {
+      sscanf(cur_line, "b %f %f %f %d", bones[b_len].coords,
+                                        bones[b_len].coords + 1,
+                                        bones[b_len].coords + 2,
+                                        &(bones[b_len].num_children));
+      b_len++;
+      if (b_len == b_buff_len) {
+        status = double_buffer((void **) &bones, &b_buff_len, sizeof(BONE));
+      }
     } else if (cur_line[0] == 'v' && cur_line[1] == 't' && cur_line[2] == ' ') {
       sscanf(cur_line, "vt %f %f",
-            &(tex_coords[t_len][0]),
-            &(tex_coords[t_len][1])
+            tex_coords[t_len],
+            tex_coords[t_len] + 1
           );
       t_len++;
       if (t_len == t_buff_len) {
@@ -109,9 +165,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'v' && cur_line[1] == 'n' && cur_line[2] == ' ') {
       sscanf(cur_line, "vn %f %f %f",
-            &(normals[n_len][0]),
-            &(normals[n_len][1]),
-            &(normals[n_len][2])
+            normals[n_len],
+            normals[n_len] + 1,
+            normals[n_len] + 2
           );
       n_len++;
       if (n_len == n_buff_len) {
@@ -119,15 +175,34 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                sizeof(float) * 3);
       }
     } else if (cur_line[0] == 'v' && cur_line[1] == ' ') {
-      sscanf(cur_line, "v %f %f %f",
-            &(verticies[v_len][0]),
-            &(verticies[v_len][1]),
-            &(verticies[v_len][2])
+      sscanf(cur_line, "v %f %f %f %d:%f %d:%f %d:%f %d:%f",
+            verticies[v_len],
+            verticies[v_len] + 1,
+            verticies[v_len] + 2,
+            bone_ids[v_len],
+            bone_weights[v_len],
+            bone_ids[v_len] + 1,
+            bone_weights[v_len] + 1,
+            bone_ids[v_len] + 2,
+            bone_weights[v_len] + 2,
+            bone_ids[v_len] + 3,
+            bone_weights[v_len] + 3
           );
       v_len++;
       if (v_len == v_buff_len) {
         status = double_buffer((void **) &verticies, &v_buff_len,
                                sizeof(float) * 3);
+        if (status == 0) {
+          v_buff_len /= 2;
+          status = double_buffer((void **) &bone_ids, &v_buff_len,
+                                 sizeof(int) * 4);
+        }
+
+        if (status == 0) {
+          v_buff_len /= 2;
+          status = double_buffer((void **) &bone_weights, &v_buff_len,
+                                 sizeof(float) * 4);
+        }
       }
     } else if (cur_line[0] == 'm' && cur_line[1] == 't' && cur_line[2] == 'l'
                && cur_line[3] == 'l' && cur_line[4] == 'i' && cur_line[5] =='b'
@@ -149,6 +224,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
     if (status != 0) {
       free_line_buffer(lb);
       fclose(file);
+      free(bones);
+      free(bone_ids);
+      free(bone_weights);
       free(verticies);
       free(normals);
       free(tex_coords);
@@ -162,6 +240,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   int material_flag = cur_mat != NULL;
   int cur_path_len = 0;
 
+  fwrite(&b_len, sizeof(size_t), 1, file);
   fwrite(&vbo_len, sizeof(size_t), 1, file);
   fwrite(&f_len, sizeof(size_t), 1, file);
   fwrite(&material_flag, sizeof(material_flag), 1, file);
@@ -178,15 +257,25 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     }
   }
+
+  for (size_t i = 0; i < b_len; i++) {
+    fwrite(bones + i, sizeof(BONE), 1, file);
+  }
+
   for (size_t i = 0; i < vbo_len; i++) {
     fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);
     fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, file);
     fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, file);
+    fwrite(bone_ids[vbo_index_combos[i][0]], sizeof(int), 4, file);
+    fwrite(bone_weights[vbo_index_combos[i][0]], sizeof(float), 4, file);
   }
   fwrite(faces, sizeof(int) * 3, f_len, file);
 
   fclose(file);
   free_line_buffer(lb);
+  free(bones);
+  free(bone_ids);
+  free(bone_weights);
   free(verticies);
   free(normals);
   free(tex_coords);

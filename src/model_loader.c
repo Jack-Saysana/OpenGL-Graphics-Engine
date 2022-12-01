@@ -21,8 +21,10 @@ MODEL *load_model(char *path) {
     }
   }
 
+  size_t b_len;
   size_t v_len;
   size_t i_len;
+  fread(&b_len, sizeof(size_t), 1, file);
   fread(&v_len, sizeof(size_t), 1, file);
   fread(&i_len, sizeof(size_t), 1, file);
 
@@ -43,9 +45,11 @@ MODEL *load_model(char *path) {
     }
   }
 
-  float *verticies = malloc(sizeof(float) * 8 * v_len);
+  BONE *bones = malloc(sizeof(BONE) * b_len);
+  VBO *vertices = malloc(sizeof(VBO) * v_len);
   int *indicies = malloc(sizeof(int) * 3 * i_len);
-  fread(verticies, sizeof(float) * 8, v_len, file);
+  fread(bones, sizeof(BONE), b_len, file);
+  fread(vertices, sizeof(VBO), v_len, file);
   fread(indicies, sizeof(int) * 3, i_len, file);
   fclose(file);
 
@@ -56,7 +60,7 @@ MODEL *load_model(char *path) {
   unsigned int VBO_id;
   glGenBuffers(1, &VBO_id);
   glBindBuffer(GL_ARRAY_BUFFER, VBO_id);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8 * v_len, verticies, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * v_len, vertices, GL_STATIC_DRAW);
 
   unsigned int EBO_id;
   glGenBuffers(1, &EBO_id);
@@ -64,12 +68,17 @@ MODEL *load_model(char *path) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 3 * i_len, indicies,
               GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+  int stride = (12 * sizeof(float)) + (4 * sizeof(int));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
                         (void *) 0);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
                         (void *) (sizeof(float) * 3));
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride,
                         (void *) (sizeof(float) * 6));
+  glVertexAttribPointer(3, 4, GL_INT, GL_FALSE, stride,
+                        (void *) (sizeof(float) * 8));
+  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, stride,
+                        (void *) ((sizeof(float) * 8) + (sizeof(int) * 4)));
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
@@ -78,6 +87,8 @@ MODEL *load_model(char *path) {
 
   MODEL *model = malloc(sizeof(MODEL));
   model->VAO = VAO_id;
+  model->bones = bones;
+  model->num_bones = b_len;
   model->num_indicies = i_len * 3;
 
   if (obj_mat != NULL) {
@@ -90,7 +101,7 @@ MODEL *load_model(char *path) {
     free_materials(obj_mat, 1);
   }
   free(bin_path);
-  free(verticies);
+  free(vertices);
   free(indicies);
 
   return model;
