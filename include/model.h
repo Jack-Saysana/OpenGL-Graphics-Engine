@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 
@@ -25,4 +26,5 @@ typedef struct model {
 } MODEL;
 
 void draw_model(unsigned int shader, MODEL *model);
+void draw_bones(MODEL *model);
 void free_model(MODEL *model);

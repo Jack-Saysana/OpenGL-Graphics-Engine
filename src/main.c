@@ -59,6 +59,17 @@ int main() {
     return -1;
   }
 
+  unsigned int b_shader = init_shader_prog(
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      NULL,
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      );
+  if (b_shader == -1) {
+    printf("Error loading bone shaders\n");
+    glfwTerminate();
+    return -1;
+  }
+
   MODEL *cube = load_model(
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
@@ -69,7 +80,7 @@ int main() {
     return -1;
   }
 
-  /*MODEL *cross = load_model(
+  MODEL *cross = load_model(
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       );
@@ -87,7 +98,7 @@ int main() {
     printf("Unable to load model\n");
     glfwTerminate();
     return -1;
-  }*/
+  }
 
   MODEL *test = load_model(
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
@@ -96,6 +107,10 @@ int main() {
     printf("Unable to load model\n");
     glfwTerminate();
     return -1;
+  }
+  for (int i = 0; i < test->num_bones; i++) {
+    printf("%f %f %f\n", test->bones[i].coords[0], test->bones[i].coords[1],
+                         test->bones[i].coords[2]);
   }
 
   mat4 projection = {
@@ -107,6 +122,10 @@ int main() {
   glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
   glUseProgram(shader);
   glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1,
+                     GL_FALSE, (float *)projection);
+
+  glUseProgram(b_shader);
+  glUniformMatrix4fv(glGetUniformLocation(b_shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
   glEnable(GL_DEPTH_TEST);
@@ -151,6 +170,14 @@ int main() {
     //draw_model(shader, cross);
     //draw_model(shader, dude);
 
+    glUseProgram(b_shader);
+    glUniformMatrix4fv(glGetUniformLocation(b_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    glUniformMatrix4fv(glGetUniformLocation(b_shader, "view"), 1,
+                       GL_FALSE, (float *) view);
+    glPointSize(2.0);
+    draw_bones(test);
+
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -158,6 +185,8 @@ int main() {
 
   free_model(cube);
   free_model(test);
+  free_model(cross);
+  free_model(dude);
 
   glfwTerminate();
   return 0;
