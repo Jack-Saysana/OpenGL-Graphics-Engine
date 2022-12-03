@@ -221,6 +221,18 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     }
 
+
+    /*else if (cur_line[0] == 'a') {
+
+    } else if (cur_line[0] == 'l') {
+
+    } else if (cur_line[0] == 'r') {
+
+    } else if (cur_line[0] == 's') {
+
+    }*/
+
+
     if (status != 0) {
       free_line_buffer(lb);
       fclose(file);
