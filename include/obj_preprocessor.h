@@ -6,6 +6,12 @@
 #define BUFF_STARTING_LEN (10)
 #define NUM_PROPS (5)
 
+typedef enum chain_type {
+  LOCATION = 0,
+  ROTATION = 1,
+  SCALE = 2
+} C_TYPE;
+
 typedef struct material {
   uint64_t name;
   char *mat_paths[NUM_PROPS];
@@ -29,9 +35,38 @@ typedef struct bone {
   int num_children;
 } BONE;
 
+
+
+
+typedef struct animation {
+  K_CHAIN *keyframe_chains;
+  size_t num_chains;
+} ANIMATION;
+
+typedef struct keyframe_chain {
+  KEYFRAME *chain;
+  size_t num_frames;
+  unsigned int b_id;
+  C_TYPE type;
+  unsigned int start_frame;
+} K_CHAIN;
+
+typedef struct keyframe {
+  float offset[4];
+  unsigned int frame;
+} KEYFRAME;
+
+
+
+
+
 BONE *bones;
 size_t b_buff_len;
 size_t b_len;
+
+ANIMATION *animations;
+size_t a_buff_len;
+size_t a_len;
 
 int (*bone_ids)[4];
 float (*bone_weights)[4];
@@ -69,4 +104,5 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
                  char *dir, char *lib);
 void free_line_buffer(LINE_BUFFER *);
 void free_materials(void *buffer, size_t buf_len);
+void free_animations(ANIMATION *animations, size_t a_len);
 int double_buffer(void **, size_t *, size_t);

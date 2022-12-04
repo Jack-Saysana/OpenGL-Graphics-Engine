@@ -136,6 +136,31 @@ int preprocess_lines(LINE_BUFFER *lb) {
   mat_buff_len = BUFF_STARTING_LEN;
   mat_len = 0;
 
+  animations = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
+  if (animations == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free(materials);
+    printf("Unable to allocate animations buffer\n");
+    return -1;
+  }
+  a_buff_len = BUFF_STARTING_LEN;
+  a_len = 0;
+
+  ANIMATION *cur_anim = NULL;
+  size_t cur_anim_buff_len = 0;
+
+  K_CHAIN *cur_chain = NULL;
+  size_t cur_chain_buff_len = 0;
+
   MATERIAL *cur_mat = NULL;
   char *cur_line = NULL;
   int status = 0;
@@ -222,15 +247,98 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
 
 
-    /*else if (cur_line[0] == 'a') {
 
-    } else if (cur_line[0] == 'l') {
 
-    } else if (cur_line[0] == 'r') {
+// NEW CONTENT
+    else if (cur_line[0] == 'a') {
+      cur_anim = animations + a_len;
+      cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
+      cur_anim->num_chains = 0;
+      cur_anim_buff_len = BUFF_STARTING_LEN;
+      if (cur_anim->keyframe_chains == NULL) {
+        printf("Unable to allocate keyframe chains for animation\n");
+        status = -1;
+      }
 
-    } else if (cur_line[0] == 's') {
+      if (status == 0) {
+        a_len++;
+        if (a_len == a_buff_len) {
+          status = double_buffer((void **) &animations, &a_buff_len,
+                                 sizeof(ANIMATION));
+        }
+      }
+    } else if (cur_line[0] == 'c' && (cur_line[1] == 'l' || cur_line[1] == 'r'
+               || cur_line[1] == 's')) {
+      if (cur_anim == NULL) {
+        printf("No animation defined\n");
+        status = -1;
+      }
 
-    }*/
+      if (status == 0) {
+        cur_chain = cur_anim->keyframe_chains + cur_anim->num_chains;
+
+        cur_chain->type = LOCATION; 
+        if (cur_line[1] == 'r') {
+          cur_chain->type = ROTATION;
+        } else if (cur_line[1] == 's') {
+          cur_chain->type = SCALE;
+        }
+
+        sscanf(cur_line, "c%c %d", cur_line[1], &cur_chain->b_id);
+        
+        cur_chain->chain = malloc(sizeof(KEYFRAME) * BUFF_STARTING_LEN);
+        cur_chain->num_frames = 0;
+        cur_chain_buff_len = BUFF_STARTING_LEN;
+        if (cur_chain->chain == NULL) {
+          printf("Unable to allocate keyframes of current chain\n");
+          status = -1;
+        }
+      }
+
+      if (status == 0) {
+        (cur_anim->num_chains)++
+        if (cur_anim->num_chains == cur_anim_buff_len) {
+          status = double_buffer((void **) &(cur_anim->keyframe_chains), 
+                                 &cur_anim_buff_len, sizeof(K_CHAIN));
+        }
+      }
+    } else if (cur_line[0] == 'k' && cur_line[1] == 'p') {
+      if (cur_chain == NULL) {
+        printf("No keyframe chain defined\n");
+        status = -1;
+      }
+
+      if (status == 0) {
+        size_t frame_index = cur_chain->num_frames;
+        if (cur_chain->type == ROTATION) {
+          sscanf(cur_line, "kp %d %f %f %f %f",
+                 &(cur_chain->chain[frame_index].frame),
+                 cur_chain->chain[frame_index].offset,
+                 cur_chain->chain[frame_index].offset + 1,
+                 cur_chain->chain[frame_index].offset + 2,
+                 cur_chain->chain[frame_index].offset + 3);
+        } else {
+          sscanf(cur_line, "kp %d %f %f %f",
+                 &(cur_chain->chain[frame_index].frame),
+                 cur_chain->chain[frame_index].offset,
+                 cur_chain->chain[frame_index].offset + 1,
+                 cur_chain->chain[frame_index].offset + 2);
+        }
+        if (frame_index == 0) {
+          cur_chain->start_frame = cur_chain->chain[0].frame;
+        }
+
+        (cur_chain->num_frames)++;
+        if (cur_chain->num_frames == cur_chain_buff_len) {
+          status = double_buffer((void **) &(cur_chain->chain),
+                                 &cur_chain_buff_len, sizeof(KEYFRAME));
+        }
+      }
+    }
+// END NEW CONTENT
+
+
+
 
 
     if (status != 0) {
@@ -244,6 +352,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(tex_coords);
       free(vbo_index_combos);
       free_materials(materials, mat_len);
+      free_animations(animations, a_len);
       printf("Parse error at line %d\n", i);
       return -1;
     }
@@ -255,6 +364,11 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fwrite(&b_len, sizeof(size_t), 1, file);
   fwrite(&vbo_len, sizeof(size_t), 1, file);
   fwrite(&f_len, sizeof(size_t), 1, file);
+
+// NEW WRITE
+  fwrite(&a_len, sizeof(size_t), 1, file);
+// END NEW WRITE
+  
   fwrite(&material_flag, sizeof(material_flag), 1, file);
   if (material_flag) {
     for (int i = 0; i < NUM_PROPS; i++) {
@@ -283,6 +397,16 @@ int preprocess_lines(LINE_BUFFER *lb) {
   }
   fwrite(faces, sizeof(int) * 3, f_len, file);
 
+
+// NEW WRITE
+  for (size_t i = 0; i < a_len; i++) {
+    fwrite(&(animations[i].num_chains), sizeof(size_t), 1, file);
+    for (size_t j = 0; j < animations[i].num_chains; j++) {
+      
+    }
+  }
+// END NEW WRITE
+
   fclose(file);
   free_line_buffer(lb);
   free(bones);
@@ -294,6 +418,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   free(vbo_index_combos);
   free(faces);
   free_materials(materials, mat_len);
+  free_animations(animations, a_len);
 
   return 0;
 }
