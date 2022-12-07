@@ -267,6 +267,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                  sizeof(ANIMATION));
         }
       }
+
+      //printf("New Animation added, cur_len: %lld, buff_len: %lld\n", a_len, a_buff_len);
+      //fflush(stdout);
     } else if (cur_line[0] == 'c' && (cur_line[1] == 'l' || cur_line[1] == 'r'
                || cur_line[1] == 's')) {
       if (cur_anim == NULL) {
@@ -277,15 +280,18 @@ int preprocess_lines(LINE_BUFFER *lb) {
       if (status == 0) {
         cur_chain = cur_anim->keyframe_chains + cur_anim->num_chains;
 
-        cur_chain->type = LOCATION; 
+        cur_chain->type = LOCATION;
         if (cur_line[1] == 'r') {
           cur_chain->type = ROTATION;
+          sscanf(cur_line, "cr %d", &cur_chain->b_id);
         } else if (cur_line[1] == 's') {
           cur_chain->type = SCALE;
+          sscanf(cur_line, "cs %d", &cur_chain->b_id);
+        } else {
+          sscanf(cur_line, "cl %d", &cur_chain->b_id);
         }
 
-        sscanf(cur_line, "c%c %d", cur_line[1], &cur_chain->b_id);
-        
+
         cur_chain->chain = malloc(sizeof(KEYFRAME) * BUFF_STARTING_LEN);
         cur_chain->num_frames = 0;
         cur_chain_buff_len = BUFF_STARTING_LEN;
@@ -296,12 +302,16 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
 
       if (status == 0) {
-        (cur_anim->num_chains)++
+        (cur_anim->num_chains)++;
         if (cur_anim->num_chains == cur_anim_buff_len) {
-          status = double_buffer((void **) &(cur_anim->keyframe_chains), 
+          status = double_buffer((void **) &(cur_anim->keyframe_chains),
                                  &cur_anim_buff_len, sizeof(K_CHAIN));
         }
       }
+
+      //printf("New chain added, type: %d, bone: %d, num_chains: %lld, buff_len: %lld\n",
+      //       cur_chain->type, cur_chain->b_id, cur_anim->num_chains, cur_anim_buff_len);
+      //fflush(stdout);
     } else if (cur_line[0] == 'k' && cur_line[1] == 'p') {
       if (cur_chain == NULL) {
         printf("No keyframe chain defined\n");
@@ -334,6 +344,15 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                  &cur_chain_buff_len, sizeof(KEYFRAME));
         }
       }
+
+      /*printf("New keyframe added to chain, frame: %d, offset: %f %f %f %f, num_frames: %lld, buff_len: %lld\n",
+             cur_chain->chain[cur_chain->num_frames - 1].frame,
+             cur_chain->chain[cur_chain->num_frames - 1].offset[0],
+             cur_chain->chain[cur_chain->num_frames - 1].offset[1],
+             cur_chain->chain[cur_chain->num_frames - 1].offset[2],
+             cur_chain->chain[cur_chain->num_frames - 1].offset[3],
+             cur_chain->num_frames, cur_chain_buff_len);
+      fflush(stdout);*/
     }
 // END NEW CONTENT
 
@@ -368,7 +387,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 // NEW WRITE
   fwrite(&a_len, sizeof(size_t), 1, file);
 // END NEW WRITE
-  
+
   fwrite(&material_flag, sizeof(material_flag), 1, file);
   if (material_flag) {
     for (int i = 0; i < NUM_PROPS; i++) {
@@ -402,7 +421,15 @@ int preprocess_lines(LINE_BUFFER *lb) {
   for (size_t i = 0; i < a_len; i++) {
     fwrite(&(animations[i].num_chains), sizeof(size_t), 1, file);
     for (size_t j = 0; j < animations[i].num_chains; j++) {
-      
+      K_CHAIN cur = animations[i].keyframe_chains[j];
+      fwrite(&(cur.b_id), sizeof(unsigned int), 1, file);
+      fwrite(&(cur.start_frame), sizeof(unsigned int), 1, file);
+      fwrite(&(cur.type), sizeof(C_TYPE), 1, file);
+      fwrite(&(cur.num_frames), sizeof(size_t), 1, file);
+      for (size_t k = 0; k < cur.num_frames; k++) {
+        fwrite(cur.chain[k].offset, sizeof(float), 4, file);
+        fwrite(&(cur.chain[k].frame), sizeof(unsigned int), 1, file);
+      }
     }
   }
 // END NEW WRITE

@@ -45,12 +45,12 @@ int main() {
   glViewport(0, 0, 640, 480);
 
   unsigned int shader = init_shader_prog(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
       NULL,
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
       );
   if (shader == -1) {
@@ -60,11 +60,11 @@ int main() {
   }
 
   unsigned int b_shader = init_shader_prog(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
       NULL,
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
       );
   if (b_shader == -1) {
     printf("Error loading bone shaders\n");
@@ -73,8 +73,8 @@ int main() {
   }
 
   MODEL *cube = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
       );
   if (cube == NULL) {
     printf("Unable to load model\n");
@@ -83,8 +83,8 @@ int main() {
   }
 
   MODEL *cross = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       );
   if (cross == NULL) {
     printf("Unable to load model\n");
@@ -93,8 +93,8 @@ int main() {
   }
 
   MODEL *dude = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
       );
   if (dude == NULL) {
     printf("Unable to load model\n");
@@ -103,8 +103,8 @@ int main() {
   }
 
   MODEL *test = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
       );
   if (test == NULL) {
     printf("Unable to load model\n");

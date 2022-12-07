@@ -6,6 +6,6 @@ void free_animations(ANIMATION *animations, size_t a_len) {
       free(animations[i].keyframe_chains[j].chain);
     }
     free(animations[i].keyframe_chains);
-  } 
+  }
   free(animations);
 }

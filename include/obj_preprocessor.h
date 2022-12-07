@@ -38,10 +38,10 @@ typedef struct bone {
 
 
 
-typedef struct animation {
-  K_CHAIN *keyframe_chains;
-  size_t num_chains;
-} ANIMATION;
+typedef struct keyframe {
+  float offset[4];
+  unsigned int frame;
+} KEYFRAME;
 
 typedef struct keyframe_chain {
   KEYFRAME *chain;
@@ -51,10 +51,10 @@ typedef struct keyframe_chain {
   unsigned int start_frame;
 } K_CHAIN;
 
-typedef struct keyframe {
-  float offset[4];
-  unsigned int frame;
-} KEYFRAME;
+typedef struct animation {
+  K_CHAIN *keyframe_chains;
+  size_t num_chains;
+} ANIMATION;
 
 
 

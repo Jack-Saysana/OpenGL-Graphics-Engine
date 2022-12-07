@@ -20,6 +20,16 @@ typedef enum {
   BUMP = 4
 } TEX_TYPE;
 
+
+
+typedef enum chain_type {
+  LOCATION = 0,
+  ROTATION = 1,
+  SCALE = 2
+} C_TYPE;
+
+
+
 typedef struct material {
   uint64_t name;
   char *mat_paths[NUM_PROPS];
@@ -36,6 +46,34 @@ typedef struct bone {
   float coords[3];
   int num_children;
 } BONE;
+
+
+
+
+
+typedef struct keyframe {
+  float offset[4];
+  unsigned int frame;
+} KEYFRAME;
+
+typedef struct keyframe_chain {
+  KEYFRAME *chain;
+  size_t num_frames;
+  unsigned int b_id;
+  C_TYPE type;
+  unsigned int start_frame;
+} K_CHAIN;
+
+typedef struct animation {
+  K_CHAIN *keyframe_chains;
+  size_t num_chains;
+} ANIMATION;
+
+
+
+
+
+
 
 typedef struct vbo {
   float vertex[3];
