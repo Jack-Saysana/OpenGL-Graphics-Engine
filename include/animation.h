@@ -25,4 +25,5 @@ typedef struct animation {
   size_t num_chains;
 } ANIMATION;
 
+int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void free_animations(ANIMATION *animations, size_t a_len);

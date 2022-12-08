@@ -35,9 +35,6 @@ typedef struct bone {
   int num_children;
 } BONE;
 
-
-
-
 typedef struct keyframe {
   float offset[4];
   unsigned int frame;
@@ -55,10 +52,6 @@ typedef struct animation {
   K_CHAIN *keyframe_chains;
   size_t num_chains;
 } ANIMATION;
-
-
-
-
 
 BONE *bones;
 size_t b_buff_len;

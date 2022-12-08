@@ -111,10 +111,6 @@ int main() {
     glfwTerminate();
     return -1;
   }
-  for (int i = 0; i < test->num_bones; i++) {
-    printf("%f %f %f\n", test->bones[i].coords[0], test->bones[i].coords[1],
-                         test->bones[i].coords[2]);
-  }
 
   mat4 projection = {
     { 1.0, 0.0, 0.0, 0.0 },

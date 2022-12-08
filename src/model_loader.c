@@ -29,7 +29,6 @@ MODEL *load_model(char *path) {
   fread(&v_len, sizeof(size_t), 1, file);
   fread(&i_len, sizeof(size_t), 1, file);
   fread(&a_len, sizeof(size_t), 1, file);
-  printf("a_len: %lld\n", a_len);
   fflush(stdout);
 
   int material_flag;
@@ -59,8 +58,6 @@ MODEL *load_model(char *path) {
 
   for (int i = 0; i < a_len; i++) {
     fread(&(animations[i].num_chains), sizeof(size_t), 1, file);
-    printf("Animation %d with %lld chains:\n", i + 1, animations[i].num_chains);
-    fflush(stdout);
     animations[i].keyframe_chains = malloc(sizeof(K_CHAIN) * animations[i].num_chains);
     for (int j = 0; j < animations[i].num_chains; j++) {
       K_CHAIN *cur = animations[i].keyframe_chains + j;
@@ -69,17 +66,9 @@ MODEL *load_model(char *path) {
       fread(&(cur->type), sizeof(C_TYPE), 1, file);
       fread(&(cur->num_frames), sizeof(size_t), 1, file);
       cur->chain = malloc(sizeof(KEYFRAME) * cur->num_frames);
-      printf("  Chain on bone %d of type %d with %lld frames:\n", cur->b_id, cur->type, cur->num_frames);
-      fflush(stdout);
       for (int k = 0; k < cur->num_frames; k++) {
         fread(cur->chain[k].offset, sizeof(float), 4, file);
         fread(&(cur->chain[k].frame), sizeof(unsigned int), 1, file);
-        printf("    Frame: %d, offset: %f %f %f %f\n", cur->chain[k].frame,
-               cur->chain[k].offset[0],
-               cur->chain[k].offset[1],
-               cur->chain[k].offset[2],
-               cur->chain[k].offset[3]);
-        fflush(stdout);
       }
     }
   }
@@ -119,7 +108,9 @@ MODEL *load_model(char *path) {
 
   MODEL *model = malloc(sizeof(MODEL));
   model->VAO = VAO_id;
+  model->animations = animations;
   model->bones = bones;
+  model->num_animations = a_len;
   model->num_bones = b_len;
   model->num_indicies = i_len * 3;
 

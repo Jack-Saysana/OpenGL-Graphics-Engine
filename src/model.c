@@ -42,6 +42,7 @@ void draw_bones(MODEL *model) {
 }
 
 void free_model(MODEL *model) {
+  free_animations(model->animations, model->num_animations);
   free(model->bones);
   free(model);
 }

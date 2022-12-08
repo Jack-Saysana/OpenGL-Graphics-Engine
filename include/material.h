@@ -15,11 +15,6 @@ typedef enum {
 
 #define NUM_PROPS (5)
 
-/*typedef struct line_buffer {
-  char *path;
-  char **buffer;
-  size_t len;
-} LINE_BUFFER;*/
 typedef struct line_buffer {
   char *dir;
   char *filename;
