@@ -4,6 +4,7 @@
 #include <cglm/cam.h>
 #include <cglm/mat4.h>
 #include <math.h>
+#include <stdlib.h>
 
 #define NUM_PROPS (5)
 
@@ -36,6 +37,12 @@ typedef struct bone {
   int num_children;
 } BONE;
 
+typedef struct chain_queue {
+  K_CHAIN **buffer;
+  size_t queue_size;
+  size_t queue_len;
+} C_QUEUE;
+
 typedef struct model {
   ANIMATION *animations;
   BONE *bones;
@@ -49,6 +56,11 @@ typedef struct model {
 void framebuffer_size_callback(GLFWwindow *, int, int);
 unsigned int init_shader_prog(char *, char *, char *);
 MODEL *load_model(char *path);
+C_QUEUE *begin_animation(ANIMATION *anim);
+K_CHAIN *dequeue_chain(C_QUEUE *queue);
+void calc_bone_mats(MODEL *model, mat4 *bone_mats, unsigned int bone_id,
+                    unsigned int frame, KEYFRAME *prev, KEYFRAME *next);
 void draw_bones(MODEL *model);
 void draw_model(unsigned int shader, MODEL *model);
 void free_model(MODEL *model);
+void free_queue(C_QUEUE *queue);

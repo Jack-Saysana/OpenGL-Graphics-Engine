@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <cglm/mat4.h>
 
 typedef enum chain_type {
   LOCATION = 0,
@@ -25,5 +26,17 @@ typedef struct animation {
   size_t num_chains;
 } ANIMATION;
 
-int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
+typedef struct chain_queue {
+  K_CHAIN **buffer;
+  size_t queue_size;
+  size_t queue_len;
+} C_QUEUE;
+
+C_QUEUE *begin_animation(ANIMATION *anim);
+int enqueue_chain(C_QUEUE *queue, K_CHAIN *chain);
+K_CHAIN *dequeue_chain(C_QUEUE *queue);
+void calc_bone_mats(MODEL *model, mat4 *bone_mats, unsigned int bone_id,
+                    unsigned int frame, KEYFRAME *prev, KEYFRAME *next);
+void free_queue(C_QUEUE *queue);
 void free_animations(ANIMATION *animations, size_t a_len);
+int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);

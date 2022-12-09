@@ -3,6 +3,9 @@
 void keyboard_input(GLFWwindow *window);
 void mouse_input(GLFWwindow *window, double xpos, double ypos);
 
+float delta_time = 0.0;
+float last_frame = 0.0;
+
 vec3 camera_pos = { 0.0, 0.0, 3.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_up = { 0.0, 1.0, 0.0 };
@@ -112,6 +115,25 @@ int main() {
     return -1;
   }
 
+
+
+// NEW ANIM FUNCTIONALITY
+  C_QUEUE *queue = begin_animation(test->animations + 1);
+  K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * queue->queue_len);
+  int *current_key = malloc(sizeof(int) * queue->queue_len);
+  mat4 *bone_transformations = malloc(sizeof(float) * 16 * test->num_bones);
+  size_t num_active = 0;
+  int cur_frame = 0;
+  if (queue == NULL) {
+    printf("Unable to begin animation\n");
+    glfwTerminate();
+    return -1;
+  }
+// END NEW
+
+
+
+
   mat4 projection = {
     { 1.0, 0.0, 0.0, 0.0 },
     { 0.0, 1.0, 0.0, 0.0 },
@@ -128,13 +150,47 @@ int main() {
                      GL_FALSE, (float *)projection);
 
   glEnable(GL_DEPTH_TEST);
+void free_queue(C_QUEUE *queue);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    float current_time = glfwGetTime();
+    delta_time = current_time - last_frame;
+    last_frame = current_time;
+
     keyboard_input(window);
+
+
+
+
+    // NEW ANIM FUNCTIONALITY
+    while (queue->queue_len > 0 && queue->buffer[0]->start_frame == cur_frame) {
+      active_chains[num_active] = dequeue_chain(queue);
+      current_key[num_active] = 0;
+      num_active++;
+    }
+    for (int i = 0; i < num_active; i++) {
+      K_CHAIN *cur_chain = active_chains[i];
+      int cur_key = current_key[i];
+      if (cur_key < cur_chain->num_frames - 1) {
+
+
+        // Calc bone mats
+
+
+        if (cur_chain->chain[cur_key + 1].frame == cur_frame) {
+          current_key[i]++;
+        }
+      }
+    }
+    cur_frame++;
+    // END NEW
+
+
+
 
     // Render
     glUseProgram(shader);
@@ -182,6 +238,7 @@ int main() {
     glfwPollEvents();
   }
 
+  free_queue(queue);
   free_model(cube);
   free_model(test);
   free_model(cross);
@@ -196,25 +253,26 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void keyboard_input(GLFWwindow *window) {
+  float cam_speed = 2.5 * delta_time;
   vec3 movement = { 0.0, 0.0, 0.0 };
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-    glm_vec3_scale(camera_front, 0.005, movement);
+    glm_vec3_scale(camera_front, cam_speed, movement);
     glm_vec3_add(camera_pos, movement, camera_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-    glm_vec3_scale(camera_front, 0.005, movement);
+    glm_vec3_scale(camera_front, cam_speed, movement);
     glm_vec3_sub(camera_pos, movement, camera_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
     glm_vec3_cross(camera_front, camera_up, movement);
     glm_vec3_normalize(movement);
-    glm_vec3_scale(movement, 0.005, movement);
+    glm_vec3_scale(movement, cam_speed, movement);
     glm_vec3_sub(camera_pos, movement, camera_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
     glm_vec3_cross(camera_front, camera_up, movement);
     glm_vec3_normalize(movement);
-    glm_vec3_scale(movement, 0.005, movement);
+    glm_vec3_scale(movement, cam_speed, movement);
     glm_vec3_add(camera_pos, movement, camera_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
