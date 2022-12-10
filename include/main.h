@@ -34,6 +34,7 @@ typedef struct animation {
 
 typedef struct bone {
   float coords[3];
+  int parent;
   int num_children;
 } BONE;
 

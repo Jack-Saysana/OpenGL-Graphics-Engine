@@ -52,6 +52,7 @@ MODEL *load_model(char *path) {
   VBO *vertices = malloc(sizeof(VBO) * v_len);
   int *indicies = malloc(sizeof(int) * 3 * i_len);
   ANIMATION *animations = malloc(sizeof(ANIMATION) * a_len);
+
   fread(bones, sizeof(BONE), b_len, file);
   fread(vertices, sizeof(VBO), v_len, file);
   fread(indicies, sizeof(int) * 3, i_len, file);

@@ -170,9 +170,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     if (cur_line[0] == 'f') {
       status = preprocess_face(file, cur_line + 2);
     } else if (cur_line[0] == 'b') {
-      sscanf(cur_line, "b %f %f %f %d", bones[b_len].coords,
+      sscanf(cur_line, "b %f %f %f %d %d", bones[b_len].coords,
                                         bones[b_len].coords + 1,
                                         bones[b_len].coords + 2,
+                                        &(bones[b_len].parent),
                                         &(bones[b_len].num_children));
       b_len++;
       if (b_len == b_buff_len) {
@@ -244,9 +245,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
           cur_mat = materials + i;
         }
       }
-    }
-
-    else if (cur_line[0] == 'a') {
+    } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;

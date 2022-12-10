@@ -29,7 +29,7 @@ C_QUEUE *begin_animation(ANIMATION *anim) {
       printf("NULL ");
       fflush(stdout);
     } else {
-      printf("%d ", (queue->buffer)[i]->start_frame);
+      printf("%d:%d ", queue->buffer[i]->start_frame, queue->buffer[i]->b_id);
       fflush(stdout);
     }
   }
@@ -44,11 +44,12 @@ C_QUEUE *begin_animation(ANIMATION *anim) {
         printf("NULL ");
         fflush(stdout);
       } else {
-        printf("%d ", (queue->buffer)[j]->start_frame);
+        printf("%d:%d ", queue->buffer[j]->start_frame, queue->buffer[j]->b_id);
         fflush(stdout);
       }
     }
     printf("\n");
+    fflush(stdout);
   }*/
 
   return queue;
@@ -58,8 +59,11 @@ int enqueue_chain(C_QUEUE *queue, K_CHAIN *chain) {
   queue->buffer[queue->queue_len] = chain;
   size_t index = queue->queue_len;
   size_t parent = (index - 1) / 2;
-  while (index > 0 && queue->buffer[index]->start_frame <
-         queue->buffer[parent]->start_frame) {
+  while (index > 0 && (queue->buffer[index]->start_frame <
+         queue->buffer[parent]->start_frame ||
+         (queue->buffer[index]->start_frame ==
+          queue->buffer[parent]->start_frame && queue->buffer[index]->b_id <
+          queue->buffer[parent]->b_id))) {
     queue->buffer[index] = queue->buffer[parent];
     queue->buffer[parent] = chain;
     index = parent;
@@ -89,45 +93,87 @@ K_CHAIN *dequeue_chain(C_QUEUE *queue) {
 
     size_t index = 0;
     size_t left_child = (2 * index) + 1;
-    size_t right_child = (2 * index) + 2;
+    size_t right_child = left_child + 1;
+
+    unsigned int cur_start = -1;
+    unsigned int cur_id = -1;
+    if (queue->queue_len > 0) {
+      cur_start = queue->buffer[index]->start_frame;
+      cur_id = queue->buffer[index]->b_id;
+    }
+
+    unsigned int left_start = -1;
+    unsigned int left_id = -1;
+    if (left_child < queue->queue_len) {
+      left_start = queue->buffer[left_child]->start_frame;
+      left_id = queue->buffer[left_child]->b_id;
+    }
+
+    unsigned int right_start = -1;
+    unsigned int right_id = -1;
+    if (right_child < queue->queue_len) {
+      right_start = queue->buffer[right_child]->start_frame;
+      right_id = queue->buffer[right_child]->b_id;
+    }
+
+    size_t next = -1;
     K_CHAIN *temp = NULL;
-    while ((left_child < queue->queue_len &&
-            queue->buffer[left_child]->start_frame <
-            queue->buffer[index]->start_frame) ||
-           (right_child < queue->queue_len &&
-            queue->buffer[right_child]->start_frame <
-            queue->buffer[index]->start_frame)) {
+    while ((left_child < queue->queue_len && (left_start < cur_start ||
+           (left_start == cur_start && left_id < cur_id))) ||
+           (right_child < queue->queue_len && (right_start < cur_start ||
+           (right_start == cur_start && right_id < cur_id)))) {
       if(left_child < queue->queue_len && right_child < queue->queue_len) {
-        if (queue->buffer[left_child]->start_frame <
-            queue->buffer[right_child]->start_frame) {
+        if (left_start < right_start || (left_start == right_start &&
+            left_id < right_id)) {
           temp = queue->buffer[left_child];
           queue->buffer[left_child] = queue->buffer[index];
+          next = left_child;
         } else {
           temp = queue->buffer[right_child];
           queue->buffer[right_child] = queue->buffer[index];
+          next = right_child;
         }
       } else if (left_child < queue->queue_len) {
         temp = queue->buffer[left_child];
         queue->buffer[left_child] = queue->buffer[index];
+        next = left_child;
       } else {
         temp = queue->buffer[right_child];
         queue->buffer[right_child] = queue->buffer[index];
+        next = right_child;
       }
       queue->buffer[index] = temp;
+
+      index = next;
+      left_child = (2 * index) + 1;
+      right_child = left_child + 1;
+
+      cur_start = queue->buffer[index]->start_frame;
+      cur_id = queue->buffer[index]->b_id;
+
+      if (left_child < queue->queue_len) {
+        left_start = queue->buffer[left_child]->start_frame;
+        left_id = queue->buffer[left_child]->b_id;
+      }
+
+      if (right_child < queue->queue_len) {
+        right_start = queue->buffer[right_child]->start_frame;
+        right_id = queue->buffer[right_child]->b_id;
+      }
     }
   }
 
   return chain;
 }
 
-void calc_bone_mats(MODEL *model, mat4 *bone_mats, unsigned int bone_id,
+/*void calc_bone_mats(MODEL *model, mat4 *bone_mats, unsigned int bone_id,
                     unsigned int frame, KEYFRAME *prev, KEYFRAME *next) {
   BONE *stack = malloc(sizeof(BONE) * model->num_bones);
   if (stack == NULL) {
     printf("Unable to allocate stack\n");
     return;
   }
-}
+}*/
 
 void free_queue(C_QUEUE *queue) {
   free(queue->buffer);

@@ -119,11 +119,11 @@ int main() {
 
 // NEW ANIM FUNCTIONALITY
   C_QUEUE *queue = begin_animation(test->animations + 1);
-  K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * queue->queue_len);
+  /*K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * queue->queue_len);
   int *current_key = malloc(sizeof(int) * queue->queue_len);
   mat4 *bone_transformations = malloc(sizeof(float) * 16 * test->num_bones);
   size_t num_active = 0;
-  int cur_frame = 0;
+  int cur_frame = 0;*/
   if (queue == NULL) {
     printf("Unable to begin animation\n");
     glfwTerminate();
@@ -166,8 +166,8 @@ void free_queue(C_QUEUE *queue);
 
 
 
-    // NEW ANIM FUNCTIONALITY
-    while (queue->queue_len > 0 && queue->buffer[0]->start_frame == cur_frame) {
+// NEW ANIM FUNCTIONALITY
+    /*while (queue->queue_len > 0 && queue->buffer[0]->start_frame == cur_frame) {
       active_chains[num_active] = dequeue_chain(queue);
       current_key[num_active] = 0;
       num_active++;
@@ -186,8 +186,8 @@ void free_queue(C_QUEUE *queue);
         }
       }
     }
-    cur_frame++;
-    // END NEW
+    cur_frame++;*/
+// END NEW
 
 
 
@@ -238,7 +238,7 @@ void free_queue(C_QUEUE *queue);
     glfwPollEvents();
   }
 
-  free_queue(queue);
+  //free_queue(queue);
   free_model(cube);
   free_model(test);
   free_model(cross);
