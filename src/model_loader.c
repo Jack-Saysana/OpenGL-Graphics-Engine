@@ -105,6 +105,8 @@ MODEL *load_model(char *path) {
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glEnableVertexAttribArray(2);
+  glEnableVertexAttribArray(3);
+  glEnableVertexAttribArray(4);
   glBindVertexArray(0);
 
   MODEL *model = malloc(sizeof(MODEL));

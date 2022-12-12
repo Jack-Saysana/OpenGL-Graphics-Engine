@@ -117,12 +117,16 @@ int main() {
 
 
 
+
 // NEW ANIM FUNCTIONALITY
   C_QUEUE *queue = begin_animation(test->animations + 1);
-  /*K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * queue->queue_len);
-  int *current_key = malloc(sizeof(int) * queue->queue_len);
+
+  /*K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * test->num_bones);
+  for (int i = 0; i < test->num_bones; i++) {
+    active_chains[i] = NULL;
+  }
+  int *current_key = malloc(sizeof(int) * test->num_bones);
   mat4 *bone_transformations = malloc(sizeof(float) * 16 * test->num_bones);
-  size_t num_active = 0;
   int cur_frame = 0;*/
   if (queue == NULL) {
     printf("Unable to begin animation\n");
@@ -134,12 +138,7 @@ int main() {
 
 
 
-  mat4 projection = {
-    { 1.0, 0.0, 0.0, 0.0 },
-    { 0.0, 1.0, 0.0, 0.0 },
-    { 0.0, 0.0, 1.0, 0.0 },
-    { 0.0, 0.0, 0.0, 1.0 }
-  };
+  mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
   glUseProgram(shader);
   glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1,
@@ -150,9 +149,24 @@ int main() {
                      GL_FALSE, (float *)projection);
 
   glEnable(GL_DEPTH_TEST);
-void free_queue(C_QUEUE *queue);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+  float point[] = { 0.0, 0.0, 0.0 };
+  unsigned int pt_VAO;
+  glGenVertexArrays(1, &pt_VAO);
+  glBindVertexArray(pt_VAO);
+
+  unsigned int pt_VBO;
+  glGenBuffers(1, &pt_VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, pt_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3, point, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                        (void *) 0);
+  glEnableVertexAttribArray(0);
+  glBindVertexArray(0);
+
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -168,21 +182,22 @@ void free_queue(C_QUEUE *queue);
 
 // NEW ANIM FUNCTIONALITY
     /*while (queue->queue_len > 0 && queue->buffer[0]->start_frame == cur_frame) {
-      active_chains[num_active] = dequeue_chain(queue);
-      current_key[num_active] = 0;
-      num_active++;
+      active_chains[queue->buffer[0]->b_id] = dequeue_chain(queue);
+      current_key[queue->buffer[0]->b_id] = 0;
     }
-    for (int i = 0; i < num_active; i++) {
-      K_CHAIN *cur_chain = active_chains[i];
-      int cur_key = current_key[i];
-      if (cur_key < cur_chain->num_frames - 1) {
+    for (int i = 0; i < test->num_bones; i++) {
+      if (active_chains[i] != NULL) {
+        K_CHAIN *cur_chain = active_chains[i];
+        int cur_key = current_key[i];
+        if (cur_key < cur_chain->num_frames - 1) {
 
 
-        // Calc bone mats
+          // Calc bone mats
 
 
-        if (cur_chain->chain[cur_key + 1].frame == cur_frame) {
-          current_key[i]++;
+          if (cur_chain->chain[cur_key + 1].frame == cur_frame) {
+            current_key[i]++;
+          }
         }
       }
     }
@@ -195,21 +210,11 @@ void free_queue(C_QUEUE *queue);
     // Render
     glUseProgram(shader);
 
-    mat4 view = {
-      { 1.0, 0.0, 0.0, 0.0 },
-      { 0.0, 1.0, 0.0, 0.0 },
-      { 0.0, 0.0, 1.0, 0.0 },
-      { 0.0, 0.0, 0.0, 1.0 }
-    };
+    mat4 view = GLM_MAT4_IDENTITY_INIT;
     glm_vec3_add(camera_front, camera_pos, center);
     glm_lookat(camera_pos, center, camera_up, view);
 
-    mat4 model = {
-      { 1.0, 0.0, 0.0, 0.0 },
-      { 0.0, 1.0, 0.0, 0.0 },
-      { 0.0, 0.0, 1.0, 0.0 },
-      { 0.0, 0.0, 0.0, 1.0 }
-    };
+    mat4 model = GLM_MAT4_IDENTITY_INIT;
     vec3 translation = { 0.25, 0.25, 0.25 };
     glm_scale(model, translation);
     //glm_translate(model, translation);
@@ -226,19 +231,26 @@ void free_queue(C_QUEUE *queue);
     //draw_model(shader, dude);
 
     glUseProgram(b_shader);
+    glUniform4f(glGetUniformLocation(b_shader, "col"), 1.0, 0.0, 0.0, 1.0);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "view"), 1,
                        GL_FALSE, (float *) view);
     glPointSize(2.0);
-    draw_bones(test);
+
+    glBindVertexArray(pt_VAO);
+    glDrawArrays(GL_POINTS, 0, 1);
+    glBindVertexArray(0);
+
+    glUniform4f(glGetUniformLocation(b_shader, "col"), 0.0, 0.0, 1.0, 1.0);
+    //draw_bones(test);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
-  //free_queue(queue);
+  free_queue(queue);
   free_model(cube);
   free_model(test);
   free_model(cross);

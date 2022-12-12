@@ -166,12 +166,41 @@ K_CHAIN *dequeue_chain(C_QUEUE *queue) {
   return chain;
 }
 
-/*void calc_bone_mats(MODEL *model, mat4 *bone_mats, unsigned int bone_id,
-                    unsigned int frame, KEYFRAME *prev, KEYFRAME *next) {
-  BONE *stack = malloc(sizeof(BONE) * model->num_bones);
-  if (stack == NULL) {
-    printf("Unable to allocate stack\n");
-    return;
+/*void calc_bone_mats(MODEL *model, mat4 **bone_mats, unsigned int bone_id,
+                    C_TYPE type, unsigned int frame, KEYFRAME *prev,
+                    KEYFRAME *next) {
+  mat4 transformed = GLM_MAT4_IDENTITY;
+  versor quat = GLM_QUAT_IDENTITY;
+  vec4 offset_next = { next->offset[0], next->offset[1], next->offset[2],
+                       next->offset[3] };
+  vec4 offset_prev = { prev->offset[0], prev->offset[1], prev->offset[2],
+                       prev->offset[3] };
+  float ratio = (frame - prev->frame) / (next->frame - prev->frame);
+  vec4 offset_lerp = GLM_VEC4_ZERO;
+  vec3 offset_vec3_lerp = GLM_VEC3_ZERO;
+  glm_vec4_lerp(offset_prev, offset_next, ratio, offset_lerp);
+  glm_vec3(offset_lerp, offset_vec3_lerp);
+
+  if (type == LOCATION) {
+    glm_translate(transformed, offset_vec3_lerp);
+  } else if (type == ROTATION) {
+    quat[0] += offset_lerp[0];
+    quat[1] += offset_lerp[1];
+    quat[2] += offset_lerp[2];
+    quat[3] += offset_lerp[3];
+    glm_quat_mat4(quat, transformed);
+  } else if (type == SCALE) {
+    glm_scale(transformed, offset_vec3_lerp);
+  }
+
+  int cur = model->bones[bone_id].parent;
+  while (cur != -1) {
+    if (type == ROTATION) {
+      // transformed = (revert origin) * (rotation about parent) * (Origin to parent bone) * transformed;
+    } else {
+      // transformed = (scale/move parent) * transformed;
+    }
+    cur = model->bones[cur].parent;
   }
 }*/
 

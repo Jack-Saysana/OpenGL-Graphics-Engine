@@ -2,8 +2,8 @@
 
 out vec4 FragColor;
 
-uniform mat4 projection;
+uniform vec4 col;
 
 void main() {
-  FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+  FragColor = col;
 }
