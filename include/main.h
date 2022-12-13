@@ -59,7 +59,7 @@ unsigned int init_shader_prog(char *, char *, char *);
 MODEL *load_model(char *path);
 C_QUEUE *begin_animation(ANIMATION *anim);
 K_CHAIN *dequeue_chain(C_QUEUE *queue);
-void calc_bone_mats(MODEL *model, mat4 *bone_mats, unsigned int bone_id,
+void calc_bone_mats(mat4 (*bone_mats)[3], unsigned int bone_id, C_TYPE type,
                     unsigned int frame, KEYFRAME *prev, KEYFRAME *next);
 void draw_bones(MODEL *model);
 void draw_model(unsigned int shader, MODEL *model);

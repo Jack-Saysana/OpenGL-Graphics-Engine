@@ -120,19 +120,20 @@ int main() {
 
 // NEW ANIM FUNCTIONALITY
   C_QUEUE *queue = begin_animation(test->animations + 1);
-
-  /*K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * test->num_bones);
-  for (int i = 0; i < test->num_bones; i++) {
-    active_chains[i] = NULL;
-  }
-  int *current_key = malloc(sizeof(int) * test->num_bones);
-  mat4 *bone_transformations = malloc(sizeof(float) * 16 * test->num_bones);
-  int cur_frame = 0;*/
   if (queue == NULL) {
     printf("Unable to begin animation\n");
     glfwTerminate();
     return -1;
   }
+
+  K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * queue->queue_len);
+  size_t num_active = 0;
+
+  mat4 (*bone_transformations)[3] = malloc(sizeof(mat4) * 3 * test->num_bones);
+
+  int *current_key = malloc(sizeof(int) * queue->queue_len);
+
+  int cur_frame = 0;
 // END NEW
 
 
@@ -181,27 +182,30 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-    /*while (queue->queue_len > 0 && queue->buffer[0]->start_frame == cur_frame) {
-      active_chains[queue->buffer[0]->b_id] = dequeue_chain(queue);
-      current_key[queue->buffer[0]->b_id] = 0;
+    while (queue->queue_len > 0 && queue->buffer[0]->start_frame == cur_frame) {
+      active_chains[num_active] = dequeue_chain(queue);
+      current_key[num_active] = 0;
+      num_active++;
     }
     for (int i = 0; i < test->num_bones; i++) {
-      if (active_chains[i] != NULL) {
-        K_CHAIN *cur_chain = active_chains[i];
-        int cur_key = current_key[i];
-        if (cur_key < cur_chain->num_frames - 1) {
+      glm_mat4_identity(bone_transformations[i][0]);
+      glm_mat4_identity(bone_transformations[i][1]);
+      glm_mat4_identity(bone_transformations[i][2]);
+    }
+    for (int i = 0; i < num_active; i++) {
+      K_CHAIN cur_chain = *(active_chains[i]);
+      int cur_key = current_key[i];
+      if (cur_key < cur_chain.num_frames - 1) {
+        calc_bone_mats(bone_transformations, cur_chain.b_id, cur_chain.type,
+                       cur_frame, &(cur_chain.chain[cur_key]),
+                       &(cur_chain.chain[cur_key + 1]));
 
-
-          // Calc bone mats
-
-
-          if (cur_chain->chain[cur_key + 1].frame == cur_frame) {
-            current_key[i]++;
-          }
+        if (cur_chain.chain[cur_key + 1].frame == cur_frame) {
+          current_key[i]++;
         }
       }
     }
-    cur_frame++;*/
+    cur_frame++;
 // END NEW
 
 
@@ -231,6 +235,21 @@ int main() {
     //draw_model(shader, dude);
 
     glUseProgram(b_shader);
+
+    for (int i = 0; i < test->num_bones; i++) {
+      char var_name[50];
+      sprintf(var_name, "bones[%d].coords", i);
+      glUniform3f(glGetUniformLocation(b_shader, var_name),
+                  test->bones[i].coords[0], test->bones[i].coords[1],
+                  test->bones[i].coords[2]);
+      sprintf(var_name, "bones[%d].parent", i);
+      glUniform1i(glGetUniformLocation(b_shader, var_name),
+                   test->bones[i].parent);
+    }
+    glUniformMatrix4fv(glGetUniformLocation(b_shader, "bone_mats"),
+                       test->num_bones, GL_FALSE,
+                       (float *) bone_transformations);
+
     glUniform4f(glGetUniformLocation(b_shader, "col"), 1.0, 0.0, 0.0, 1.0);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "model"), 1,
                        GL_FALSE, (float *) model);
@@ -243,7 +262,7 @@ int main() {
     glBindVertexArray(0);
 
     glUniform4f(glGetUniformLocation(b_shader, "col"), 0.0, 0.0, 1.0, 1.0);
-    //draw_bones(test);
+    draw_bones(test);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
