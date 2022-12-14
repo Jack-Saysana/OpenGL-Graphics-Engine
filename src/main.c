@@ -119,7 +119,7 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-  C_QUEUE *queue = begin_animation(test->animations + 1);
+  C_QUEUE *queue = begin_animation(test->animations);
   if (queue == NULL) {
     printf("Unable to begin animation\n");
     glfwTerminate();
@@ -199,12 +199,12 @@ int main() {
         calc_bone_mats(bone_transformations, cur_chain.b_id, cur_chain.type,
                        cur_frame, &(cur_chain.chain[cur_key]),
                        &(cur_chain.chain[cur_key + 1]));
-
         if (cur_chain.chain[cur_key + 1].frame == cur_frame) {
           current_key[i]++;
         }
       }
     }
+
     cur_frame++;
 // END NEW
 
@@ -245,21 +245,23 @@ int main() {
       sprintf(var_name, "bones[%d].parent", i);
       glUniform1i(glGetUniformLocation(b_shader, var_name),
                    test->bones[i].parent);
+
+      sprintf(var_name, "bone_mats[%d]", i);
+      glUniformMatrix4fv(glGetUniformLocation(b_shader, var_name),
+                         3, GL_FALSE,
+                         (float *) bone_transformations[i]);
     }
-    glUniformMatrix4fv(glGetUniformLocation(b_shader, "bone_mats"),
-                       test->num_bones, GL_FALSE,
-                       (float *) bone_transformations);
 
     glUniform4f(glGetUniformLocation(b_shader, "col"), 1.0, 0.0, 0.0, 1.0);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "view"), 1,
                        GL_FALSE, (float *) view);
-    glPointSize(2.0);
+    glPointSize(10.0);
 
-    glBindVertexArray(pt_VAO);
+    /*glBindVertexArray(pt_VAO);
     glDrawArrays(GL_POINTS, 0, 1);
-    glBindVertexArray(0);
+    glBindVertexArray(0);*/
 
     glUniform4f(glGetUniformLocation(b_shader, "col"), 0.0, 0.0, 1.0, 1.0);
     draw_bones(test);

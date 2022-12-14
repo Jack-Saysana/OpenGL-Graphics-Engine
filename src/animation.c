@@ -173,7 +173,7 @@ void calc_bone_mats(mat4 (*bone_mats)[3], unsigned int bone_id, C_TYPE type,
                        next->offset[3] };
   vec4 offset_prev = { prev->offset[0], prev->offset[1], prev->offset[2],
                        prev->offset[3] };
-  float ratio = (frame - prev->frame) / (next->frame - prev->frame);
+  float ratio = (float) (frame - prev->frame) / (float) (next->frame - prev->frame);
   vec4 offset_lerp = GLM_VEC4_ZERO_INIT;
   vec3 offset_vec3_lerp = GLM_VEC3_ZERO_INIT;
   glm_vec4_lerp(offset_prev, offset_next, ratio, offset_lerp);
