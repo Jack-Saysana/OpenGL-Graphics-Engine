@@ -168,27 +168,33 @@ K_CHAIN *dequeue_chain(C_QUEUE *queue) {
 
 void calc_bone_mats(mat4 (*bone_mats)[3], unsigned int bone_id, C_TYPE type,
                     unsigned int frame, KEYFRAME *prev, KEYFRAME *next) {
-  versor quat = GLM_QUAT_IDENTITY_INIT;
-  vec4 offset_next = { next->offset[0], next->offset[1], next->offset[2],
-                       next->offset[3] };
-  vec4 offset_prev = { prev->offset[0], prev->offset[1], prev->offset[2],
-                       prev->offset[3] };
   float ratio = (float) (frame - prev->frame) / (float) (next->frame - prev->frame);
-  vec4 offset_lerp = GLM_VEC4_ZERO_INIT;
-  vec3 offset_vec3_lerp = GLM_VEC3_ZERO_INIT;
-  glm_vec4_lerp(offset_prev, offset_next, ratio, offset_lerp);
-  glm_vec3(offset_lerp, offset_vec3_lerp);
 
-  if (type == LOCATION) {
-    glm_translate(bone_mats[bone_id][type], offset_vec3_lerp);
-  } else if (type == ROTATION) {
-    quat[0] += offset_lerp[0];
-    quat[1] += offset_lerp[1];
-    quat[2] += offset_lerp[2];
-    quat[3] += offset_lerp[3];
+  if (type == ROTATION) {
+    versor quat_next = GLM_QUAT_IDENTITY_INIT;
+    versor quat_prev = GLM_QUAT_IDENTITY_INIT;
+    versor quat = GLM_QUAT_IDENTITY_INIT;
+
+    glm_quat_init(quat_next, next->offset[0], next->offset[1], next->offset[2],
+                  next->offset[3]);
+    glm_quat_init(quat_prev, prev->offset[0], prev->offset[1], prev->offset[2],
+                  prev->offset[3]);
+
+    glm_quat_slerp(quat_prev, quat_next, ratio, quat);
+
     glm_quat_mat4(quat, bone_mats[bone_id][type]);
-  } else if (type == SCALE) {
-    glm_scale(bone_mats[bone_id][type], offset_vec3_lerp);
+  } else {
+    vec3 offset_next = { next->offset[0], next->offset[1], next->offset[2] };
+    vec3 offset_prev = { prev->offset[0], prev->offset[1], prev->offset[2] };
+
+    vec3 offset_lerp = GLM_VEC3_ZERO_INIT;
+    glm_vec3_lerp(offset_prev, offset_next, ratio, offset_lerp);
+
+    if (type == LOCATION) {
+      glm_translate(bone_mats[bone_id][type], offset_lerp);
+    } else {
+      glm_scale(bone_mats[bone_id][type], offset_lerp);
+    }
   }
 }
 

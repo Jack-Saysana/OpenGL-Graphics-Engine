@@ -119,7 +119,7 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-  C_QUEUE *queue = begin_animation(test->animations);
+  C_QUEUE *queue = begin_animation(test->animations + 2);
   if (queue == NULL) {
     printf("Unable to begin animation\n");
     glfwTerminate();
@@ -205,7 +205,14 @@ int main() {
       }
     }
 
-    cur_frame++;
+    if (cur_frame == 70) {
+      for (int i = 0; i < num_active; i++) {
+        current_key[i] = 0;
+      }
+      cur_frame = 0;
+    } else {
+      cur_frame++;
+    }
 // END NEW
 
 

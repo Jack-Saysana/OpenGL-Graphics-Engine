@@ -94,27 +94,9 @@ mat4 parent_transformation() {
                              vec4(0.0, 1.0, 0.0, 0.0),
                              vec4(0.0, 0.0, 1.0, 0.0),
                              vec4(0.0, 0.0, 0.0, 1.0));
-  vec3 pos_offset;
-  mat4 to_parent;
-  mat4 from_parent;
-  mat4 rotation;
-
   while (cur != -1) {
-    pos_offset = in_pos - bones[cur].coords;
-
-    to_parent = mat4(vec4(1.0, 0.0, 0.0, pos_offset.x),
-                     vec4(0.0, 1.0, 0.0, pos_offset.y),
-                     vec4(0.0, 0.0, 1.0, pos_offset.z),
-                     vec4(0.0, 0.0, 0.0, 1.0));
-
-    from_parent = mat4(vec4(1.0, 0.0, 0.0, -1.0 * pos_offset.x),
-                       vec4(0.0, 1.0, 0.0, -1.0 * pos_offset.y),
-                       vec4(0.0, 0.0, 1.0, -1.0 * pos_offset.z),
-                       vec4(0.0, 0.0, 0.0, 1.0));
-
-    rotation = from_parent * bone_mats[cur][ROTATION] * to_parent;
-
-    transformation = bone_mats[cur][LOCATION] * transformation;
+    transformation = bone_mats[cur][ROTATION] * bone_mats[cur][LOCATION] *
+                     bone_mats[cur][SCALE] * transformation;
     cur = bones[cur].parent;
   }
 
