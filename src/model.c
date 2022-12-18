@@ -26,8 +26,8 @@ void draw_bones(MODEL *model) {
   glBindVertexArray(VAO);
 
   typedef struct b_vbo {
-    GLfloat coords[3];
-    GLint bone_id;
+    float coords[3];
+    int bone_id;
   } B_VBO;
 
   B_VBO *bone_data = malloc(sizeof(B_VBO) * model->num_bones);
@@ -60,6 +60,9 @@ void draw_bones(MODEL *model) {
 
 void free_model(MODEL *model) {
   free_animations(model->animations, model->num_animations);
+  glDeleteVertexArrays(1, &(model->VAO));
+  glDeleteBuffers(1, &(model->VBO));
+  glDeleteBuffers(1, &(model->EBO));
   free(model->bones);
   free(model);
 }

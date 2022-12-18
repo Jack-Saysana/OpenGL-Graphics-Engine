@@ -77,6 +77,8 @@ typedef struct model {
   size_t num_bones;
   unsigned int textures[NUM_PROPS];
   unsigned int VAO;
+  unsigned int VBO;
+  unsigned int EBO;
   unsigned int num_indicies;
 } MODEL;
 

@@ -119,7 +119,7 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-  C_QUEUE *queue = begin_animation(test->animations + 2);
+  C_QUEUE *queue = begin_animation(test->animations);
   if (queue == NULL) {
     printf("Unable to begin animation\n");
     glfwTerminate();
@@ -229,6 +229,23 @@ int main() {
     vec3 translation = { 0.25, 0.25, 0.25 };
     glm_scale(model, translation);
     //glm_translate(model, translation);
+
+    for (int i = 0; i < test->num_bones; i++) {
+      char var_name[50];
+      sprintf(var_name, "bones[%d].coords", i);
+      glUniform3f(glGetUniformLocation(shader, var_name),
+                  test->bones[i].coords[0], test->bones[i].coords[1],
+                  test->bones[i].coords[2]);
+      sprintf(var_name, "bones[%d].parent", i);
+      glUniform1i(glGetUniformLocation(shader, var_name),
+                   test->bones[i].parent);
+
+      sprintf(var_name, "bone_mats[%d]", i);
+      glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
+                         3, GL_FALSE,
+                         (float *) bone_transformations[i]);
+    }
+
 
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                        GL_FALSE, (float *) model);

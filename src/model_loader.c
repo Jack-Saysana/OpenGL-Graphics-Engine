@@ -88,18 +88,17 @@ MODEL *load_model(char *path) {
   glGenBuffers(1, &EBO_id);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_id);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 3 * i_len, indicies,
-              GL_STATIC_DRAW);
+               GL_STATIC_DRAW);
 
-  int stride = (12 * sizeof(float)) + (4 * sizeof(int));
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) 0);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) (sizeof(float) * 3));
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride,
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) (sizeof(float) * 6));
-  glVertexAttribPointer(3, 4, GL_INT, GL_FALSE, stride,
+  glVertexAttribIPointer(3, 4, GL_INT, sizeof(VBO),
                         (void *) (sizeof(float) * 8));
-  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, stride,
+  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) ((sizeof(float) * 8) + (sizeof(int) * 4)));
 
   glEnableVertexAttribArray(0);
@@ -111,6 +110,8 @@ MODEL *load_model(char *path) {
 
   MODEL *model = malloc(sizeof(MODEL));
   model->VAO = VAO_id;
+  model->VBO = VBO_id;
+  model->EBO = EBO_id;
   model->animations = animations;
   model->bones = bones;
   model->num_animations = a_len;

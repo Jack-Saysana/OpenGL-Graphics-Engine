@@ -24,31 +24,31 @@ uniform mat4 projection;
 
 //out vec4 fragPos;
 out vec2 texCoords;
+out vec3 test_col;
 //out vec3 normal;
 //out vec3 viewPos;
 
 mat4 hierarchy_transform(int id);
-mat4 get_bone_transformation();
+vec4 get_bone_transformation();
 
 void main() {
-  mat4 bone_transformation = get_bone_transformation();
+  vec4 bone_transformation = get_bone_transformation();
 
-  gl_Position = projection * view * model * vec4(in_pos.x, in_pos.y, in_pos.z, 1.0);
+  gl_Position = projection * view * model * bone_transformation;
 
   //fragPos = model * vec4(inPos.x, inPos.y, inPos.z, 1.0);
-  texCoords = inTexCoords;
+  texCoords = in_tex_coords;
   //normal = inNormal;
 }
 
-mat4 get_bone_transformation() {
-  mat4 transformation = mat4(vec4(1.0, 0.0, 0.0, 0.0),
-                             vec4(0.0, 1.0, 0.0, 0.0),
-                             vec4(0.0, 0.0, 1.0, 0.0),
-                             vec4(0.0, 0.0, 0.0, 1.0));
+vec4 get_bone_transformation() {
+  vec4 total = vec4(0.0);
 
   for (int i = 0; i < 4 && in_bone_ids[i] != -1; i++) {
-    transformation = in_weights[i] * hierarchy_transform(in_bone_ids[i]) * transformation;
+    total += in_weights[i] * (hierarchy_transform(in_bone_ids[i]) * vec4(in_pos, 1.0));
   }
+
+  return total;
 }
 
 mat4 hierarchy_transform(int id) {
@@ -57,4 +57,12 @@ mat4 hierarchy_transform(int id) {
                              vec4(0.0, 1.0, 0.0, 0.0),
                              vec4(0.0, 0.0, 1.0, 0.0),
                              vec4(0.0, 0.0, 0.0, 1.0));
+
+  while (cur != -1) {
+    transformation = bone_mats[cur][ROTATION] * bone_mats[cur][LOCATION] *
+                     bone_mats[cur][SCALE] * transformation;
+    cur = bones[cur].parent;
+  }
+
+  return transformation;
 }
