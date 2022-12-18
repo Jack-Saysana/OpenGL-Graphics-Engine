@@ -119,7 +119,7 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-  C_QUEUE *queue = begin_animation(test->animations);
+  C_QUEUE *queue = begin_animation(test->animations + 2);
   if (queue == NULL) {
     printf("Unable to begin animation\n");
     glfwTerminate();
@@ -205,7 +205,7 @@ int main() {
       }
     }
 
-    if (cur_frame == 70) {
+    if (cur_frame == 200) {
       for (int i = 0; i < num_active; i++) {
         current_key[i] = 0;
       }
@@ -244,6 +244,24 @@ int main() {
       glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
                          3, GL_FALSE,
                          (float *) bone_transformations[i]);
+      /*printf("%d\n", i);
+      for (int j = 0; j < 4; j++) {
+        printf("|%f %f %f %f|%f %f %f %f|%f %f %f %f|\n",
+               bone_transformations[i][0][j][0],
+               bone_transformations[i][0][j][1],
+               bone_transformations[i][0][j][2],
+               bone_transformations[i][0][j][3],
+               bone_transformations[i][1][j][0],
+               bone_transformations[i][1][j][1],
+               bone_transformations[i][1][j][2],
+               bone_transformations[i][1][j][3],
+               bone_transformations[i][2][j][0],
+               bone_transformations[i][2][j][1],
+               bone_transformations[i][2][j][2],
+               bone_transformations[i][2][j][3]);
+      }
+      printf("\n");
+      fflush(stdout);*/
     }
 
 

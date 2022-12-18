@@ -24,7 +24,6 @@ uniform mat4 projection;
 
 //out vec4 fragPos;
 out vec2 texCoords;
-out vec3 test_col;
 //out vec3 normal;
 //out vec3 viewPos;
 
@@ -44,8 +43,12 @@ void main() {
 vec4 get_bone_transformation() {
   vec4 total = vec4(0.0);
 
-  for (int i = 0; i < 4 && in_bone_ids[i] != -1; i++) {
-    total += in_weights[i] * (hierarchy_transform(in_bone_ids[i]) * vec4(in_pos, 1.0));
+  int i = 0;
+  int cur = in_bone_ids[i];
+  while (i < 4 && cur != -1) {
+    total += (in_weights[i] * hierarchy_transform(cur) * vec4(in_pos, 1.0));
+    i++;
+    cur = in_bone_ids[i];
   }
 
   return total;
