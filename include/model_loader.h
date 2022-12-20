@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
+#include <cglm/mat4.h>
 
 #define VERTEX_BUFF_STARTING_LEN (10)
 #define NORMAL_BUFF_STARTING_LEN (10)
@@ -51,15 +52,16 @@ typedef struct keyframe {
 
 typedef struct keyframe_chain {
   KEYFRAME *chain;
+  int *sled;
   size_t num_frames;
-  unsigned int b_id;
   C_TYPE type;
-  unsigned int start_frame;
+  unsigned int b_id;
 } K_CHAIN;
 
 typedef struct animation {
   K_CHAIN *keyframe_chains;
   size_t num_chains;
+  size_t duration;
 } ANIMATION;
 
 typedef struct vbo {
@@ -72,7 +74,11 @@ typedef struct vbo {
 
 typedef struct model {
   ANIMATION *animations;
+  K_CHAIN *k_chain_block;
+  KEYFRAME *keyframe_block;
+  int *sled_block;
   BONE *bones;
+  mat4 (*bone_mats)[3];
   size_t num_animations;
   size_t num_bones;
   unsigned int textures[NUM_PROPS];

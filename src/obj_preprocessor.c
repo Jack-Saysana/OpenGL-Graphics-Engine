@@ -155,6 +155,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
   a_buff_len = BUFF_STARTING_LEN;
   a_len = 0;
 
+  size_t total_chains = 0;
+  size_t total_keyframes = 0;
+  size_t total_frames = 0;
+
   ANIMATION *cur_anim = NULL;
   size_t cur_anim_buff_len = 0;
 
@@ -247,6 +251,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
+      sscanf(cur_line, "a %lld", &(cur_anim->duration));
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;
@@ -321,9 +326,6 @@ int preprocess_lines(LINE_BUFFER *lb) {
                  cur_chain->chain[frame_index].offset + 1,
                  cur_chain->chain[frame_index].offset + 2);
         }
-        if (frame_index == 0) {
-          cur_chain->start_frame = cur_chain->chain[0].frame;
-        }
 
         (cur_chain->num_frames)++;
         if (cur_chain->num_frames == cur_chain_buff_len) {
@@ -344,9 +346,25 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(tex_coords);
       free(vbo_index_combos);
       free_materials(materials, mat_len);
-      free_animations(animations, a_len);
+
+      for (int i = 0; i < a_len; i++) {
+        for (int j = 0; j < animations[i].num_chains; j++) {
+          free(animations[i].keyframe_chains[j].chain);
+        }
+        free(animations[i].keyframe_chains);
+      }
+      free(animations);
+
       printf("Parse error at line %d\n", i);
       return -1;
+    }
+  }
+
+  for (int i = 0; i < a_len; i++) {
+    total_chains += animations[i].num_chains;
+    total_frames += (animations[i].duration * animations[i].num_chains);
+    for (int j = 0; j < animations[i].num_chains; j++) {
+      total_keyframes += animations[i].keyframe_chains[j].num_frames;
     }
   }
 
@@ -358,6 +376,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fwrite(&f_len, sizeof(size_t), 1, file);
 
   fwrite(&a_len, sizeof(size_t), 1, file);
+
+  fwrite(&total_chains, sizeof(size_t), 1, file);
+  fwrite(&total_keyframes, sizeof(size_t), 1, file);
+  fwrite(&total_frames, sizeof(size_t), 1, file);
 
   fwrite(&material_flag, sizeof(material_flag), 1, file);
   if (material_flag) {
@@ -389,10 +411,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   for (size_t i = 0; i < a_len; i++) {
     fwrite(&(animations[i].num_chains), sizeof(size_t), 1, file);
+    fwrite(&(animations[i].duration), sizeof(size_t), 1, file);
     for (size_t j = 0; j < animations[i].num_chains; j++) {
       K_CHAIN cur = animations[i].keyframe_chains[j];
       fwrite(&(cur.b_id), sizeof(unsigned int), 1, file);
-      fwrite(&(cur.start_frame), sizeof(unsigned int), 1, file);
       fwrite(&(cur.type), sizeof(C_TYPE), 1, file);
       fwrite(&(cur.num_frames), sizeof(size_t), 1, file);
       for (size_t k = 0; k < cur.num_frames; k++) {
@@ -413,7 +435,14 @@ int preprocess_lines(LINE_BUFFER *lb) {
   free(vbo_index_combos);
   free(faces);
   free_materials(materials, mat_len);
-  free_animations(animations, a_len);
+
+  for (int i = 0; i < a_len; i++) {
+    for (int j = 0; j < animations[i].num_chains; j++) {
+      free(animations[i].keyframe_chains[j].chain);
+    }
+    free(animations[i].keyframe_chains);
+  }
+  free(animations);
 
   return 0;
 }

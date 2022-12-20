@@ -59,10 +59,14 @@ void draw_bones(MODEL *model) {
 }
 
 void free_model(MODEL *model) {
-  free_animations(model->animations, model->num_animations);
   glDeleteVertexArrays(1, &(model->VAO));
   glDeleteBuffers(1, &(model->VBO));
   glDeleteBuffers(1, &(model->EBO));
+  free(model->k_chain_block);
+  free(model->keyframe_block);
+  free(model->sled_block);
+  free(model->animations);
   free(model->bones);
+  free(model->bone_mats);
   free(model);
 }

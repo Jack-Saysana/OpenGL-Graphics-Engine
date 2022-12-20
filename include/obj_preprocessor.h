@@ -43,16 +43,18 @@ typedef struct keyframe {
 
 typedef struct keyframe_chain {
   KEYFRAME *chain;
+  int *sled;
   size_t num_frames;
-  unsigned int b_id;
   C_TYPE type;
-  unsigned int start_frame;
+  unsigned int b_id;
 } K_CHAIN;
 
 typedef struct animation {
   K_CHAIN *keyframe_chains;
   size_t num_chains;
+  size_t duration;
 } ANIMATION;
+
 
 BONE *bones;
 size_t b_buff_len;
@@ -98,5 +100,4 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
                  char *dir, char *lib);
 void free_line_buffer(LINE_BUFFER *);
 void free_materials(void *buffer, size_t buf_len);
-void free_animations(ANIMATION *animations, size_t a_len);
 int double_buffer(void **, size_t *, size_t);

@@ -48,12 +48,12 @@ int main() {
   glViewport(0, 0, 640, 480);
 
   unsigned int shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
       );
   if (shader == -1) {
@@ -63,11 +63,11 @@ int main() {
   }
 
   unsigned int b_shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
       );
   if (b_shader == -1) {
     printf("Error loading bone shaders\n");
@@ -76,8 +76,8 @@ int main() {
   }
 
   MODEL *cube = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
       );
   if (cube == NULL) {
     printf("Unable to load model\n");
@@ -86,8 +86,8 @@ int main() {
   }
 
   MODEL *cross = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       );
   if (cross == NULL) {
     printf("Unable to load model\n");
@@ -96,8 +96,8 @@ int main() {
   }
 
   MODEL *dude = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
       );
   if (dude == NULL) {
     printf("Unable to load model\n");
@@ -106,8 +106,8 @@ int main() {
   }
 
   MODEL *test = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
       );
   if (test == NULL) {
     printf("Unable to load model\n");
@@ -119,20 +119,32 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-  C_QUEUE *queue = begin_animation(test->animations + 2);
-  if (queue == NULL) {
-    printf("Unable to begin animation\n");
-    glfwTerminate();
-    return -1;
+  /*for (int i = 0; i < test->num_animations; i++) {
+    printf("Animation %d: %lld chains, %lld frames\n", i,
+           test->animations[i].num_chains, test->animations[i].duration);
+    for (int j = 0; j < test->animations[i].num_chains; j++) {
+      printf("  Chain of type %d with %lld frames on bone: %d\n",
+             test->animations[i].keyframe_chains[j].type,
+             test->animations[i].keyframe_chains[j].num_frames,
+             test->animations[i].keyframe_chains[j].b_id
+             );
+      printf("  ");
+      for (int k = 0; k < test->animations[i].duration; k++) {
+        printf("%d ", test->animations[i].keyframe_chains[j].sled[k]);
+      }
+      printf("\n  ");
+      for (int k = 0; k < test->animations[i].keyframe_chains[j].num_frames; k++) {
+        printf("%d:(%f %f %f %f) ",
+               test->animations[i].keyframe_chains[j].chain[k].frame,
+               test->animations[i].keyframe_chains[j].chain[k].offset[0],
+               test->animations[i].keyframe_chains[j].chain[k].offset[1],
+               test->animations[i].keyframe_chains[j].chain[k].offset[2],
+               test->animations[i].keyframe_chains[j].chain[k].offset[3]);
+      }
+      printf("\n");
+    }
   }
-
-  K_CHAIN **active_chains = malloc(sizeof(K_CHAIN *) * queue->queue_len);
-  size_t num_active = 0;
-
-  mat4 (*bone_transformations)[3] = malloc(sizeof(mat4) * 3 * test->num_bones);
-
-  int *current_key = malloc(sizeof(int) * queue->queue_len);
-
+  fflush(stdout);*/
   int cur_frame = 0;
 // END NEW
 
@@ -168,6 +180,7 @@ int main() {
   glEnableVertexAttribArray(0);
   glBindVertexArray(0);
 
+  float until_next = 0.0;
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -176,42 +189,18 @@ int main() {
     delta_time = current_time - last_frame;
     last_frame = current_time;
 
+    until_next += delta_time;
+
     keyboard_input(window);
 
 
 
 
 // NEW ANIM FUNCTIONALITY
-    while (queue->queue_len > 0 && queue->buffer[0]->start_frame == cur_frame) {
-      active_chains[num_active] = dequeue_chain(queue);
-      current_key[num_active] = 0;
-      num_active++;
-    }
-    for (int i = 0; i < test->num_bones; i++) {
-      glm_mat4_identity(bone_transformations[i][0]);
-      glm_mat4_identity(bone_transformations[i][1]);
-      glm_mat4_identity(bone_transformations[i][2]);
-    }
-    for (int i = 0; i < num_active; i++) {
-      K_CHAIN cur_chain = *(active_chains[i]);
-      int cur_key = current_key[i];
-      if (cur_key < cur_chain.num_frames - 1) {
-        calc_bone_mats(bone_transformations, cur_chain.b_id, cur_chain.type,
-                       cur_frame, &(cur_chain.chain[cur_key]),
-                       &(cur_chain.chain[cur_key + 1]));
-        if (cur_chain.chain[cur_key + 1].frame == cur_frame) {
-          current_key[i]++;
-        }
-      }
-    }
-
-    if (cur_frame == 200) {
-      for (int i = 0; i < num_active; i++) {
-        current_key[i] = 0;
-      }
-      cur_frame = 0;
-    } else {
+    animate(test, 1, cur_frame);
+    if (until_next >= 0.125) {
       cur_frame++;
+      until_next = 0.0;
     }
 // END NEW
 
@@ -243,7 +232,7 @@ int main() {
       sprintf(var_name, "bone_mats[%d]", i);
       glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
                          3, GL_FALSE,
-                         (float *) bone_transformations[i]);
+                         (float *) test->bone_mats[i]);
       /*printf("%d\n", i);
       for (int j = 0; j < 4; j++) {
         printf("|%f %f %f %f|%f %f %f %f|%f %f %f %f|\n",
@@ -291,7 +280,7 @@ int main() {
       sprintf(var_name, "bone_mats[%d]", i);
       glUniformMatrix4fv(glGetUniformLocation(b_shader, var_name),
                          3, GL_FALSE,
-                         (float *) bone_transformations[i]);
+                         (float *) test->bone_mats[i]);
     }
 
     glUniform4f(glGetUniformLocation(b_shader, "col"), 1.0, 0.0, 0.0, 1.0);
@@ -313,13 +302,13 @@ int main() {
     glfwPollEvents();
   }
 
-  free_queue(queue);
   free_model(cube);
   free_model(test);
   free_model(cross);
   free_model(dude);
 
   glfwTerminate();
+
   return 0;
 }
 

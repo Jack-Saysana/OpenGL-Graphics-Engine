@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cglm/mat4.h>
 
 #define NUM_PROPS (5)
 
@@ -25,15 +26,16 @@ typedef struct keyframe {
 
 typedef struct keyframe_chain {
   KEYFRAME *chain;
+  int *sled;
   size_t num_frames;
-  unsigned int b_id;
   C_TYPE type;
-  unsigned int start_frame;
+  unsigned int b_id;
 } K_CHAIN;
 
 typedef struct animation {
   K_CHAIN *keyframe_chains;
   size_t num_chains;
+  size_t duration;
 } ANIMATION;
 
 typedef struct bone {
@@ -44,7 +46,11 @@ typedef struct bone {
 
 typedef struct model {
   ANIMATION *animations;
+  K_CHAIN *k_chain_block;
+  KEYFRAME *keyframe_block;
+  int *sled_block;
   BONE *bones;
+  mat4 (*bone_mats)[3];
   size_t num_animations;
   size_t num_bones;
   unsigned int textures[NUM_PROPS];
@@ -56,5 +62,4 @@ typedef struct model {
 
 void draw_model(unsigned int shader, MODEL *model);
 void draw_bones(MODEL *model);
-void free_animations(ANIMATION *animations, size_t a_len);
 void free_model(MODEL *model);

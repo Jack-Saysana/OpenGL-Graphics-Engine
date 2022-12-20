@@ -25,10 +25,16 @@ MODEL *load_model(char *path) {
   size_t v_len;
   size_t i_len;
   size_t a_len;
+  size_t total_chains;
+  size_t total_keyframes;
+  size_t total_frames;
   fread(&b_len, sizeof(size_t), 1, file);
   fread(&v_len, sizeof(size_t), 1, file);
   fread(&i_len, sizeof(size_t), 1, file);
   fread(&a_len, sizeof(size_t), 1, file);
+  fread(&total_chains, sizeof(size_t), 1, file);
+  fread(&total_keyframes, sizeof(size_t), 1, file);
+  fread(&total_frames, sizeof(size_t), 1, file);
   fflush(stdout);
 
   int material_flag;
@@ -49,9 +55,106 @@ MODEL *load_model(char *path) {
   }
 
   BONE *bones = malloc(sizeof(BONE) * b_len);
+  if (bones == NULL) {
+    fclose(file);
+    printf("Unable to allocate bone buffer\n");
+    return NULL;
+  }
+
   VBO *vertices = malloc(sizeof(VBO) * v_len);
+  if (vertices == NULL) {
+    fclose(file);
+    free(bones);
+    printf("Unable to allocate vertex buffer\n");
+    return NULL;
+  }
+
   int *indicies = malloc(sizeof(int) * 3 * i_len);
+  if (indicies == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    printf("Unable to allocate indicies buffer\n");
+    return NULL;
+  }
+
   ANIMATION *animations = malloc(sizeof(ANIMATION) * a_len);
+  if (animations == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    printf("Unable to allocate animation buffer\n");
+    return NULL;
+  }
+
+  mat4 (*bone_mats)[3] = malloc(sizeof(mat4) * 3 * b_len);
+  if (bone_mats == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    free(animations);
+    printf("Unable to allocate bone matrix buffer\n");
+    return NULL;
+  }
+
+  MODEL *model = malloc(sizeof(MODEL));
+  if (model == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    free(animations);
+    free(bone_mats);
+    printf("Unable to allocate model\n");
+    return NULL;
+  }
+
+  K_CHAIN *k_chain_block = malloc(sizeof(K_CHAIN) * total_chains);
+  size_t next_chain = 0;
+  if (k_chain_block == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    free(animations);
+    free(bone_mats);
+    free(model);
+    printf("Unable to allocate keyframe chains\n");
+    return NULL;
+  }
+
+  KEYFRAME *keyframe_block = malloc(sizeof(KEYFRAME) * total_keyframes);
+  size_t next_keyframe = 0;
+  if (keyframe_block == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    free(animations);
+    free(bone_mats);
+    free(model);
+    free(k_chain_block);
+    printf("Unable to allocate keyframes\n");
+    return NULL;
+  }
+
+  int *sled_block = malloc(sizeof(int) * total_frames);
+  size_t next_sled = 0;
+  if (sled_block == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    free(animations);
+    free(bone_mats);
+    free(model);
+    free(k_chain_block);
+    free(keyframe_block);
+    printf("Unable to allocate keyframe sled\n");
+    return NULL;
+  }
 
   fread(bones, sizeof(BONE), b_len, file);
   fread(vertices, sizeof(VBO), v_len, file);
@@ -59,17 +162,39 @@ MODEL *load_model(char *path) {
 
   for (int i = 0; i < a_len; i++) {
     fread(&(animations[i].num_chains), sizeof(size_t), 1, file);
-    animations[i].keyframe_chains = malloc(sizeof(K_CHAIN) * animations[i].num_chains);
+    fread(&(animations[i].duration), sizeof(size_t), 1, file);
+
+    animations[i].keyframe_chains = k_chain_block + next_chain;
+    next_chain += animations[i].num_chains;
+
     for (int j = 0; j < animations[i].num_chains; j++) {
       K_CHAIN *cur = animations[i].keyframe_chains + j;
       fread(&(cur->b_id), sizeof(unsigned int), 1, file);
-      fread(&(cur->start_frame), sizeof(unsigned int), 1, file);
       fread(&(cur->type), sizeof(C_TYPE), 1, file);
       fread(&(cur->num_frames), sizeof(size_t), 1, file);
-      cur->chain = malloc(sizeof(KEYFRAME) * cur->num_frames);
+
+
+      cur->chain = keyframe_block + next_keyframe;
+      next_keyframe += cur->num_frames;
+
       for (int k = 0; k < cur->num_frames; k++) {
         fread(cur->chain[k].offset, sizeof(float), 4, file);
         fread(&(cur->chain[k].frame), sizeof(unsigned int), 1, file);
+      }
+
+      cur->sled = sled_block + next_sled;
+      next_sled += animations[i].duration;
+
+      int cur_frame = -1;
+      if (cur->chain[0].frame == 0) {
+        cur_frame = 0;
+      }
+      for (int k = 0; k < animations[i].duration; k++) {
+        cur->sled[k] = cur_frame;
+        if (cur_frame < cur->num_frames &&
+            k == cur->chain[cur_frame + 1].frame) {
+          cur_frame++;
+        }
       }
     }
   }
@@ -108,12 +233,15 @@ MODEL *load_model(char *path) {
   glEnableVertexAttribArray(4);
   glBindVertexArray(0);
 
-  MODEL *model = malloc(sizeof(MODEL));
   model->VAO = VAO_id;
   model->VBO = VBO_id;
   model->EBO = EBO_id;
   model->animations = animations;
+  model->k_chain_block = k_chain_block;
+  model->keyframe_block = keyframe_block;
+  model->sled_block = sled_block;
   model->bones = bones;
+  model->bone_mats = bone_mats;
   model->num_animations = a_len;
   model->num_bones = b_len;
   model->num_indicies = i_len * 3;
