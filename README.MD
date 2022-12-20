@@ -1,29 +1,15 @@
 # OpenGL Rendering Engine
 
-## Compilation and Running
-
-**Important:** In order to compile the program, you must have a C compiler such as gcc
-
-From inside the repo directory run the following command:
-
-`make arch`
-
-Once the program is compiled, a `main` executable should appear in the repo's root directory of the project. Run `main` in order to start the program.
-
 ## Overview:
 
-This repository is currently being refactored to be purely built in C to improve performance and development. Furthermore, model loading will also be built from scratch, without usage of assimp. The below features will still be included.
+This repositoy serves as a codebase for my OpenGL based graphics engine, initially built using C++ via a variety of libraries, but now refactored for full development in C. Currently, this project supports a variety of features such as:
 
-~~This repository serves as a codebase for my OpenGl based graphics engine, built in C++ using, most notably, assimp, GLFW, glad and cglm. Currently, the project supports a variety of features such as:~~
- - ~~Shader support~~
- - ~~2D Textures~~
- - ~~A configurable camera~~
- - ~~Model importing and loading~~
- - ~~Cubemap usage~~
- - ~~Instancing~~
- - ~~Blinn-Phong based lighting~~
- - ~~Directional shadow mapping~~
+- A custom-built model loading and rendering system, independent of libraries such as assimp
+- A 3d skeletal animation system
 
-~~## In Progress:~~
+In progress / future plans:
 
- - ~~Omni-directional shadow mapping~~
+- Physics implementation (collision, inverse kinematics, etc...)
+- Different camera implementations
+- More complex lighting models
+- More shaders (pixelized, cell-shading, etc...)
