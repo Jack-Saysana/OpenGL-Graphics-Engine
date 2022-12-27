@@ -1,8 +1,10 @@
 #version 430
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec2 inTexCoords;
+layout (location = 0) in vec3 in_pos;
+layout (location = 1) in vec3 in_normal;
+layout (location = 2) in vec2 in_tex_coords;
+layout (location = 3) in ivec4 in_bone_ids;
+layout (location = 4) in vec4 in_weights;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -16,9 +18,9 @@ out vec3 viewPos;
 
 void main() {
   gl_Position = projection * view * model *
-                vec4(inPos.x, inPos.y, inPos.z, 1.0);
-  fragPos = model * vec4(inPos.x, inPos.y, inPos.z, 1.0);
-  texCoords = inTexCoords;
-  normal = inNormal;
+                vec4(in_pos, 1.0);
+  fragPos = model * vec4(in_pos, 1.0);
+  texCoords = in_tex_coords;
+  normal = in_normal;
   viewPos = viewPos;
 }

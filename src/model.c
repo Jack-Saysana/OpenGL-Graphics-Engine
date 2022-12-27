@@ -31,12 +31,16 @@ void draw_bones(MODEL *model) {
   } B_VBO;
 
   B_VBO *bone_data = malloc(sizeof(B_VBO) * model->num_bones);
+  //printf("%lld\n", model->num_bones);
   for (int i = 0; i < model->num_bones; i++) {
     bone_data[i].coords[0] = model->bones[i].coords[0];
     bone_data[i].coords[1] = model->bones[i].coords[1];
     bone_data[i].coords[2] = model->bones[i].coords[2];
     bone_data[i].bone_id = i;
+    //printf("[%f %f %f][%d]\n", bone_data[i].coords[0], bone_data[i].coords[1],
+    //       bone_data[i].coords[2], bone_data[i].bone_id);
   }
+  //printf("\n");
 
   unsigned int VBO;
   glGenBuffers(1, &VBO);

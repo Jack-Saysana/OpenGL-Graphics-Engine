@@ -19,6 +19,12 @@ float yaw = 0;
 
 int firstMouse = 1;
 
+int cur_frame = 0;
+float last_push = 0.0;
+
+int toggled = 1;
+int draw = 0;
+
 int main() {
   GLFWwindow *window;
 
@@ -119,33 +125,33 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-  /*for (int i = 0; i < test->num_animations; i++) {
+  /*for (int i = 0; i < dude->num_animations; i++) {
     printf("Animation %d: %lld chains, %lld frames\n", i,
-           test->animations[i].num_chains, test->animations[i].duration);
-    for (int j = 0; j < test->animations[i].num_chains; j++) {
+           dude->animations[i].num_chains, dude->animations[i].duration);
+    for (int j = 0; j < dude->animations[i].num_chains; j++) {
       printf("  Chain of type %d with %lld frames on bone: %d\n",
-             test->animations[i].keyframe_chains[j].type,
-             test->animations[i].keyframe_chains[j].num_frames,
-             test->animations[i].keyframe_chains[j].b_id
+             dude->animations[i].keyframe_chains[j].type,
+             dude->animations[i].keyframe_chains[j].num_frames,
+             dude->animations[i].keyframe_chains[j].b_id
              );
       printf("  ");
-      for (int k = 0; k < test->animations[i].duration; k++) {
-        printf("%d ", test->animations[i].keyframe_chains[j].sled[k]);
+      for (int k = 0; k < dude->animations[i].duration; k++) {
+        printf("%d ", dude->animations[i].keyframe_chains[j].sled[k]);
       }
       printf("\n  ");
-      for (int k = 0; k < test->animations[i].keyframe_chains[j].num_frames; k++) {
+      for (int k = 0; k < dude->animations[i].keyframe_chains[j].num_frames; k++) {
         printf("%d:(%f %f %f %f) ",
-               test->animations[i].keyframe_chains[j].chain[k].frame,
-               test->animations[i].keyframe_chains[j].chain[k].offset[0],
-               test->animations[i].keyframe_chains[j].chain[k].offset[1],
-               test->animations[i].keyframe_chains[j].chain[k].offset[2],
-               test->animations[i].keyframe_chains[j].chain[k].offset[3]);
+               dude->animations[i].keyframe_chains[j].chain[k].frame,
+               dude->animations[i].keyframe_chains[j].chain[k].offset[0],
+               dude->animations[i].keyframe_chains[j].chain[k].offset[1],
+               dude->animations[i].keyframe_chains[j].chain[k].offset[2],
+               dude->animations[i].keyframe_chains[j].chain[k].offset[3]);
       }
       printf("\n");
     }
   }
   fflush(stdout);*/
-  int cur_frame = 0;
+  //int cur_frame = 0;
 // END NEW
 
 
@@ -197,11 +203,16 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-    animate(test, 1, cur_frame);
-    if (until_next >= 0.125) {
+    animate(dude, 2, cur_frame);
+    /*if (until_next >= 0.125) {
       cur_frame++;
       until_next = 0.0;
-    }
+    }*/
+    /*for (int i = 0; i < dude->num_bones; i++) {
+      glm_mat4_identity(dude->bone_mats[i][0]);
+      glm_mat4_identity(dude->bone_mats[i][1]);
+      glm_mat4_identity(dude->bone_mats[i][2]);
+    }*/
 // END NEW
 
 
@@ -215,39 +226,41 @@ int main() {
     glm_lookat(camera_pos, center, camera_up, view);
 
     mat4 model = GLM_MAT4_IDENTITY_INIT;
-    vec3 translation = { 0.25, 0.25, 0.25 };
-    glm_scale(model, translation);
+    //vec3 translation = { 0.25, 0.25, 0.25 };
+    //glm_scale(model, translation);
     //glm_translate(model, translation);
 
-    for (int i = 0; i < test->num_bones; i++) {
+    for (int i = 0; i < dude->num_bones; i++) {
       char var_name[50];
       sprintf(var_name, "bones[%d].coords", i);
       glUniform3f(glGetUniformLocation(shader, var_name),
-                  test->bones[i].coords[0], test->bones[i].coords[1],
-                  test->bones[i].coords[2]);
+                  dude->bones[i].coords[0], dude->bones[i].coords[1],
+                  dude->bones[i].coords[2]);
       sprintf(var_name, "bones[%d].parent", i);
       glUniform1i(glGetUniformLocation(shader, var_name),
-                   test->bones[i].parent);
+                   dude->bones[i].parent);
 
       sprintf(var_name, "bone_mats[%d]", i);
       glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
                          3, GL_FALSE,
-                         (float *) test->bone_mats[i]);
-      /*printf("%d\n", i);
+                         (float *) dude->bone_mats[i]);
+      /*printf("%s: %d\n", var_name, glGetUniformLocation(shader, var_name));
+      fflush(stdout);
+      printf("%d\n", i);
       for (int j = 0; j < 4; j++) {
         printf("|%f %f %f %f|%f %f %f %f|%f %f %f %f|\n",
-               bone_transformations[i][0][j][0],
-               bone_transformations[i][0][j][1],
-               bone_transformations[i][0][j][2],
-               bone_transformations[i][0][j][3],
-               bone_transformations[i][1][j][0],
-               bone_transformations[i][1][j][1],
-               bone_transformations[i][1][j][2],
-               bone_transformations[i][1][j][3],
-               bone_transformations[i][2][j][0],
-               bone_transformations[i][2][j][1],
-               bone_transformations[i][2][j][2],
-               bone_transformations[i][2][j][3]);
+               dude->bone_mats[i][0][j][0],
+               dude->bone_mats[i][0][j][1],
+               dude->bone_mats[i][0][j][2],
+               dude->bone_mats[i][0][j][3],
+               dude->bone_mats[i][1][j][0],
+               dude->bone_mats[i][1][j][1],
+               dude->bone_mats[i][1][j][2],
+               dude->bone_mats[i][1][j][3],
+               dude->bone_mats[i][2][j][0],
+               dude->bone_mats[i][2][j][1],
+               dude->bone_mats[i][2][j][2],
+               dude->bone_mats[i][2][j][3]);
       }
       printf("\n");
       fflush(stdout);*/
@@ -260,27 +273,29 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
                        GL_FALSE, (float *) view);
 
-    draw_model(shader, test);
+    //draw_model(shader, test);
     //draw_model(shader, cube);
     //draw_model(shader, cross);
-    //draw_model(shader, dude);
+    if (draw) {
+      draw_model(shader, dude);
+    }
 
     glUseProgram(b_shader);
 
-    for (int i = 0; i < test->num_bones; i++) {
+    for (int i = 0; i < dude->num_bones; i++) {
       char var_name[50];
       sprintf(var_name, "bones[%d].coords", i);
       glUniform3f(glGetUniformLocation(b_shader, var_name),
-                  test->bones[i].coords[0], test->bones[i].coords[1],
-                  test->bones[i].coords[2]);
+                  dude->bones[i].coords[0], dude->bones[i].coords[1],
+                  dude->bones[i].coords[2]);
       sprintf(var_name, "bones[%d].parent", i);
       glUniform1i(glGetUniformLocation(b_shader, var_name),
-                   test->bones[i].parent);
+                   dude->bones[i].parent);
 
       sprintf(var_name, "bone_mats[%d]", i);
       glUniformMatrix4fv(glGetUniformLocation(b_shader, var_name),
                          3, GL_FALSE,
-                         (float *) test->bone_mats[i]);
+                         (float *) dude->bone_mats[i]);
     }
 
     glUniform4f(glGetUniformLocation(b_shader, "col"), 1.0, 0.0, 0.0, 1.0);
@@ -295,7 +310,7 @@ int main() {
     glBindVertexArray(0);*/
 
     glUniform4f(glGetUniformLocation(b_shader, "col"), 0.0, 0.0, 1.0, 1.0);
-    draw_bones(test);
+    draw_bones(dude);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -341,6 +356,24 @@ void keyboard_input(GLFWwindow *window) {
   }
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, 1);
+  }
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+    if (glfwGetTime() - last_push >= 0.125) {
+      cur_frame++;
+      last_push = glfwGetTime();
+    }
+  }
+  if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+    if (toggled) {
+      if (draw == 1) {
+        draw = 0;
+      } else {
+        draw = 1;
+      }
+      toggled = 0;
+    }
+  } else {
+    toggled = 1;
   }
 }
 

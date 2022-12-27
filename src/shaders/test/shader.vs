@@ -15,8 +15,8 @@ struct BONE {
   int parent;
 };
 
-uniform BONE bones[9];
-uniform mat4 bone_mats[9][3];
+uniform BONE bones[26];
+uniform mat4 bone_mats[26][3];
 
 uniform mat4 model;
 uniform mat4 view;
@@ -26,6 +26,11 @@ uniform mat4 projection;
 out vec2 texCoords;
 //out vec3 normal;
 //out vec3 viewPos;
+
+mat4 reflect = mat4(vec4(1.0, 0.0, 0.0, 0.0),
+                    vec4(0.0, 1.0, 0.0, 0.0),
+                    vec4(0.0, 0.0, -1.0, 0.0),
+                    vec4(0.0, 0.0, 0.0, 1.0));
 
 mat4 hierarchy_transform(int id);
 vec4 get_bone_transformation();
@@ -46,7 +51,7 @@ vec4 get_bone_transformation() {
   int i = 0;
   int cur = in_bone_ids[i];
   while (i < 4 && cur != -1) {
-    total += (in_weights[i] * hierarchy_transform(cur) * vec4(in_pos, 1.0));
+    total += (in_weights[i] * hierarchy_transform(cur) * reflect * vec4(in_pos, 1.0));
     i++;
     cur = in_bone_ids[i];
   }
@@ -62,8 +67,17 @@ mat4 hierarchy_transform(int id) {
                              vec4(0.0, 0.0, 0.0, 1.0));
 
   while (cur != -1) {
-    transformation = bone_mats[cur][ROTATION] * bone_mats[cur][LOCATION] *
-                     bone_mats[cur][SCALE] * transformation;
+    mat4 to_parent = mat4(vec4(1.0, 0.0, 0.0, bones[cur].coords.x),
+                          vec4(0.0, 1.0, 0.0, bones[cur].coords.y),
+                          vec4(0.0, 0.0, 1.0, bones[cur].coords.z),
+                          vec4(0.0, 0.0, 0.0, 1.0));
+    mat4 from_parent = mat4(vec4(1.0, 0.0, 0.0, bones[cur].coords.x * -1.0),
+                            vec4(0.0, 1.0, 0.0, bones[cur].coords.y * -1.0),
+                            vec4(0.0, 0.0, 1.0, bones[cur].coords.z * -1.0),
+                            vec4(0.0, 0.0, 0.0, 1.0));
+
+    transformation = to_parent * bone_mats[cur][ROTATION] * from_parent *
+                     bone_mats[cur][LOCATION] * bone_mats[cur][SCALE] * transformation;
     cur = bones[cur].parent;
   }
 

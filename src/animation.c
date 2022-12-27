@@ -24,6 +24,7 @@ int animate(MODEL *model, unsigned int animation_index, unsigned int frame) {
     if (frame < animation.duration) {
       prev = cur_chain.sled[frame];
     }
+
     if (prev != -1 && prev < cur_chain.num_frames - 1) {
       calc_bone_mats(model->bone_mats, cur_chain.b_id, cur_chain.type,
                      frame, cur_chain.chain + prev,
@@ -34,6 +35,7 @@ int animate(MODEL *model, unsigned int animation_index, unsigned int frame) {
                     cur_chain.chain[prev].offset[1],
                     cur_chain.chain[prev].offset[2],
                     cur_chain.chain[prev].offset[3]);
+      glm_quat_mat4(quat, model->bone_mats[cur_chain.b_id][cur_chain.type]);
     } else if (prev != -1) {
       vec3 offset = { cur_chain.chain[prev].offset[0],
                       cur_chain.chain[prev].offset[1],
