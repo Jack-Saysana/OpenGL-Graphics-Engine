@@ -218,7 +218,7 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-    animate(dude, 0, cur_frame);
+    animate(dude, 2, cur_frame);
     /*if (until_next >= 0.125) {
       cur_frame++;
       until_next = 0.0;

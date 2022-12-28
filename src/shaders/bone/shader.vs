@@ -79,8 +79,9 @@ mat4 parent_transformation() {
                             vec4(0.0, 0.0, 1.0, 0.0),
                             vec4(-ref_coords.x, -ref_coords.y, -ref_coords.z, 1.0));
 
-    transformation = to_parent * bone_mats[cur][ROTATION] * from_parent *
-                     bone_mats[cur][LOCATION] * bone_mats[cur][SCALE] * transformation;
+    transformation = bone_mats[cur][LOCATION] *
+                     to_parent * bone_mats[cur][ROTATION] * from_parent *
+                     bone_mats[cur][SCALE] * transformation;
     cur = bones[cur].parent;
   }
 
