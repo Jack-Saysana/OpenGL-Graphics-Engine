@@ -67,14 +67,15 @@ mat4 hierarchy_transform(int id) {
                              vec4(0.0, 0.0, 0.0, 1.0));
 
   while (cur != -1) {
-    mat4 to_parent = mat4(vec4(1.0, 0.0, 0.0, bones[cur].coords.x),
-                          vec4(0.0, 1.0, 0.0, bones[cur].coords.y),
-                          vec4(0.0, 0.0, 1.0, bones[cur].coords.z),
-                          vec4(0.0, 0.0, 0.0, 1.0));
-    mat4 from_parent = mat4(vec4(1.0, 0.0, 0.0, bones[cur].coords.x * -1.0),
-                            vec4(0.0, 1.0, 0.0, bones[cur].coords.y * -1.0),
-                            vec4(0.0, 0.0, 1.0, bones[cur].coords.z * -1.0),
-                            vec4(0.0, 0.0, 0.0, 1.0));
+    vec4 ref_coords = reflect * vec4(bones[cur].coords, 1.0);
+    mat4 to_parent = mat4(vec4(1.0, 0.0, 0.0, 0.0),
+                          vec4(0.0, 1.0, 0.0, 0.0),
+                          vec4(0.0, 0.0, 1.0, 0.0),
+                          vec4(ref_coords.x, ref_coords.y, ref_coords.z, 1.0));
+    mat4 from_parent = mat4(vec4(1.0, 0.0, 0.0, 0.0),
+                            vec4(0.0, 1.0, 0.0, 0.0),
+                            vec4(0.0, 0.0, 1.0, 0.0),
+                            vec4(-ref_coords.x, -ref_coords.y, -ref_coords.z, 1.0));
 
     transformation = to_parent * bone_mats[cur][ROTATION] * from_parent *
                      bone_mats[cur][LOCATION] * bone_mats[cur][SCALE] * transformation;

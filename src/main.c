@@ -54,12 +54,12 @@ int main() {
   glViewport(0, 0, 640, 480);
 
   unsigned int shader = init_shader_prog(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
       NULL,
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
       );
   if (shader == -1) {
@@ -69,11 +69,11 @@ int main() {
   }
 
   unsigned int b_shader = init_shader_prog(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
       NULL,
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
       );
   if (b_shader == -1) {
     printf("Error loading bone shaders\n");
@@ -81,9 +81,20 @@ int main() {
     return -1;
   }
 
+  unsigned int origin_shader = init_shader_prog(
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/origin/shader.vs",
+      NULL,
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/origin/shader.fs"
+      );
+  if (origin_shader == -1) {
+    printf("Error loading origin shaders\n");
+    glfwTerminate();
+    return -1;
+  }
+
   MODEL *cube = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
       );
   if (cube == NULL) {
     printf("Unable to load model\n");
@@ -92,8 +103,8 @@ int main() {
   }
 
   MODEL *cross = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
       );
   if (cross == NULL) {
     printf("Unable to load model\n");
@@ -102,8 +113,8 @@ int main() {
   }
 
   MODEL *dude = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
       );
   if (dude == NULL) {
     printf("Unable to load model\n");
@@ -112,8 +123,8 @@ int main() {
   }
 
   MODEL *test = load_model(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
-      "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
       );
   if (test == NULL) {
     printf("Unable to load model\n");
@@ -167,6 +178,10 @@ int main() {
   glUniformMatrix4fv(glGetUniformLocation(b_shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
+  glUseProgram(origin_shader);
+  glUniformMatrix4fv(glGetUniformLocation(origin_shader, "projection"), 1,
+                     GL_FALSE, (float *)projection);
+
   glEnable(GL_DEPTH_TEST);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -203,7 +218,7 @@ int main() {
 
 
 // NEW ANIM FUNCTIONALITY
-    animate(dude, 2, cur_frame);
+    animate(dude, 0, cur_frame);
     /*if (until_next >= 0.125) {
       cur_frame++;
       until_next = 0.0;
@@ -280,8 +295,21 @@ int main() {
       draw_model(shader, dude);
     }
 
-    glUseProgram(b_shader);
+    /* Origin */
 
+    glPointSize(10.0);
+    glUseProgram(origin_shader);
+    glUniformMatrix4fv(glGetUniformLocation(origin_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    glUniformMatrix4fv(glGetUniformLocation(origin_shader, "view"), 1,
+                       GL_FALSE, (float *) view);
+    glBindVertexArray(pt_VAO);
+    glDrawArrays(GL_POINTS, 0, 1);
+    glBindVertexArray(0);
+
+    /* Bones */
+
+    glUseProgram(b_shader);
     for (int i = 0; i < dude->num_bones; i++) {
       char var_name[50];
       sprintf(var_name, "bones[%d].coords", i);
@@ -297,19 +325,10 @@ int main() {
                          3, GL_FALSE,
                          (float *) dude->bone_mats[i]);
     }
-
-    glUniform4f(glGetUniformLocation(b_shader, "col"), 1.0, 0.0, 0.0, 1.0);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "view"), 1,
                        GL_FALSE, (float *) view);
-    glPointSize(10.0);
-
-    /*glBindVertexArray(pt_VAO);
-    glDrawArrays(GL_POINTS, 0, 1);
-    glBindVertexArray(0);*/
-
-    glUniform4f(glGetUniformLocation(b_shader, "col"), 0.0, 0.0, 1.0, 1.0);
     draw_bones(dude);
 
     // Swap Buffers and Poll Events
@@ -357,9 +376,17 @@ void keyboard_input(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, 1);
   }
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&
+      glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
     if (glfwGetTime() - last_push >= 0.125) {
       cur_frame++;
+      last_push = glfwGetTime();
+    }
+  } else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+             glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS &&
+             cur_frame > 0) {
+    if (glfwGetTime() - last_push >= 0.125) {
+      cur_frame--;
       last_push = glfwGetTime();
     }
   }
