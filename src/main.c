@@ -54,13 +54,13 @@ int main() {
   glViewport(0, 0, 640, 480);
 
   unsigned int shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.vs",
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/cell_shader/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/phong/shader.fs"
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/cell_shader/shader.fs"
       );
   if (shader == -1) {
     printf("Error loading shaders\n");
@@ -132,42 +132,6 @@ int main() {
     return -1;
   }
 
-
-
-
-// NEW ANIM FUNCTIONALITY
-  /*for (int i = 0; i < dude->num_animations; i++) {
-    printf("Animation %d: %lld chains, %lld frames\n", i,
-           dude->animations[i].num_chains, dude->animations[i].duration);
-    for (int j = 0; j < dude->animations[i].num_chains; j++) {
-      printf("  Chain of type %d with %lld frames on bone: %d\n",
-             dude->animations[i].keyframe_chains[j].type,
-             dude->animations[i].keyframe_chains[j].num_frames,
-             dude->animations[i].keyframe_chains[j].b_id
-             );
-      printf("  ");
-      for (int k = 0; k < dude->animations[i].duration; k++) {
-        printf("%d ", dude->animations[i].keyframe_chains[j].sled[k]);
-      }
-      printf("\n  ");
-      for (int k = 0; k < dude->animations[i].keyframe_chains[j].num_frames; k++) {
-        printf("%d:(%f %f %f %f) ",
-               dude->animations[i].keyframe_chains[j].chain[k].frame,
-               dude->animations[i].keyframe_chains[j].chain[k].offset[0],
-               dude->animations[i].keyframe_chains[j].chain[k].offset[1],
-               dude->animations[i].keyframe_chains[j].chain[k].offset[2],
-               dude->animations[i].keyframe_chains[j].chain[k].offset[3]);
-      }
-      printf("\n");
-    }
-  }
-  fflush(stdout);*/
-  //int cur_frame = 0;
-// END NEW
-
-
-
-
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
   glUseProgram(shader);
@@ -184,7 +148,7 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
 
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   float point[] = { 0.0, 0.0, 0.0 };
   unsigned int pt_VAO;
@@ -203,7 +167,7 @@ int main() {
 
   float until_next = 0.0;
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     float current_time = glfwGetTime();
@@ -214,24 +178,7 @@ int main() {
 
     keyboard_input(window);
 
-
-
-
-// NEW ANIM FUNCTIONALITY
     animate(dude, 2, cur_frame);
-    /*if (until_next >= 0.125) {
-      cur_frame++;
-      until_next = 0.0;
-    }*/
-    /*for (int i = 0; i < dude->num_bones; i++) {
-      glm_mat4_identity(dude->bone_mats[i][0]);
-      glm_mat4_identity(dude->bone_mats[i][1]);
-      glm_mat4_identity(dude->bone_mats[i][2]);
-    }*/
-// END NEW
-
-
-
 
     // Render
     glUseProgram(shader);
@@ -259,26 +206,6 @@ int main() {
       glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
                          3, GL_FALSE,
                          (float *) dude->bone_mats[i]);
-      /*printf("%s: %d\n", var_name, glGetUniformLocation(shader, var_name));
-      fflush(stdout);
-      printf("%d\n", i);
-      for (int j = 0; j < 4; j++) {
-        printf("|%f %f %f %f|%f %f %f %f|%f %f %f %f|\n",
-               dude->bone_mats[i][0][j][0],
-               dude->bone_mats[i][0][j][1],
-               dude->bone_mats[i][0][j][2],
-               dude->bone_mats[i][0][j][3],
-               dude->bone_mats[i][1][j][0],
-               dude->bone_mats[i][1][j][1],
-               dude->bone_mats[i][1][j][2],
-               dude->bone_mats[i][1][j][3],
-               dude->bone_mats[i][2][j][0],
-               dude->bone_mats[i][2][j][1],
-               dude->bone_mats[i][2][j][2],
-               dude->bone_mats[i][2][j][3]);
-      }
-      printf("\n");
-      fflush(stdout);*/
     }
 
 
