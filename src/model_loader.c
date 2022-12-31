@@ -173,13 +173,12 @@ MODEL *load_model(char *path) {
       fread(&(cur->type), sizeof(C_TYPE), 1, file);
       fread(&(cur->num_frames), sizeof(size_t), 1, file);
 
-
       cur->chain = keyframe_block + next_keyframe;
       next_keyframe += cur->num_frames;
 
       for (int k = 0; k < cur->num_frames; k++) {
         fread(cur->chain[k].offset, sizeof(float), 4, file);
-        fread(&(cur->chain[k].frame), sizeof(unsigned int), 1, file);
+        fread(&(cur->chain[k].frame), sizeof(int), 1, file);
       }
 
       cur->sled = sled_block + next_sled;
@@ -191,7 +190,7 @@ MODEL *load_model(char *path) {
       }
       for (int k = 0; k < animations[i].duration; k++) {
         cur->sled[k] = cur_frame;
-        if (cur_frame < cur->num_frames &&
+        if (cur_frame + 1 < cur->num_frames &&
             k == cur->chain[cur_frame + 1].frame) {
           cur_frame++;
         }

@@ -265,6 +265,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
         if (a_len == a_buff_len) {
           status = double_buffer((void **) &animations, &a_buff_len,
                                  sizeof(ANIMATION));
+          if (status == 0) {
+            cur_anim = animations + a_len - 1;
+          }
         }
       }
     } else if (cur_line[0] == 'c' && (cur_line[1] == 'l' || cur_line[1] == 'r'
@@ -302,6 +305,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
         if (cur_anim->num_chains == cur_anim_buff_len) {
           status = double_buffer((void **) &(cur_anim->keyframe_chains),
                                  &cur_anim_buff_len, sizeof(K_CHAIN));
+          if (status == 0) {
+            cur_chain = cur_anim->keyframe_chains + cur_anim->num_chains - 1;
+          }
         }
       }
     } else if (cur_line[0] == 'k' && cur_line[1] == 'p') {
@@ -419,7 +425,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       fwrite(&(cur.num_frames), sizeof(size_t), 1, file);
       for (size_t k = 0; k < cur.num_frames; k++) {
         fwrite(cur.chain[k].offset, sizeof(float), 4, file);
-        fwrite(&(cur.chain[k].frame), sizeof(unsigned int), 1, file);
+        fwrite(&(cur.chain[k].frame), sizeof(int), 1, file);
       }
     }
   }

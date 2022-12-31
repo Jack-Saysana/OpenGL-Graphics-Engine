@@ -27,11 +27,6 @@ out vec2 tex_coords;
 out vec3 normal;
 out vec3 view_pos;
 
-mat4 reflect = mat4(vec4(1.0, 0.0, 0.0, 0.0),
-                    vec4(0.0, 1.0, 0.0, 0.0),
-                    vec4(0.0, 0.0, -1.0, 0.0),
-                    vec4(0.0, 0.0, 0.0, 1.0));
-
 mat4 hierarchy_transform(int id);
 vec4 get_bone_transformation();
 
@@ -51,7 +46,7 @@ vec4 get_bone_transformation() {
   int i = 0;
   int cur = in_bone_ids[i];
   while (i < 4 && cur != -1) {
-    total += (in_weights[i] * hierarchy_transform(cur) * reflect * vec4(in_pos, 1.0));
+    total += (in_weights[i] * hierarchy_transform(cur) * vec4(in_pos, 1.0));
     i++;
     cur = in_bone_ids[i];
   }
@@ -67,7 +62,7 @@ mat4 hierarchy_transform(int id) {
                              vec4(0.0, 0.0, 0.0, 1.0));
 
   while (cur != -1) {
-    vec4 ref_coords = reflect * vec4(bones[cur].coords, 1.0);
+    vec4 ref_coords = vec4(bones[cur].coords, 1.0);
     mat4 to_parent = mat4(vec4(1.0, 0.0, 0.0, 0.0),
                           vec4(0.0, 1.0, 0.0, 0.0),
                           vec4(0.0, 0.0, 1.0, 0.0),

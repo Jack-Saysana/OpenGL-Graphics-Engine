@@ -6,6 +6,7 @@ void mouse_input(GLFWwindow *window, double xpos, double ypos);
 float delta_time = 0.0;
 float last_frame = 0.0;
 
+vec3 camera_offset = { 0.0, 0.0, -3.0 };
 vec3 camera_pos = { 0.0, 0.0, 3.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_up = { 0.0, 1.0, 0.0 };
@@ -178,19 +179,22 @@ int main() {
 
     keyboard_input(window);
 
-    animate(dude, 2, cur_frame);
+    animate(dude, 0, cur_frame);
 
     // Render
     glUseProgram(shader);
 
     mat4 view = GLM_MAT4_IDENTITY_INIT;
+    //glm_translate(view, camera_offset);
+    //glm_rotate_y(view, glm_rad(yaw), view);
+    //glm_rotate_x(view, glm_rad(pitch), view);
     glm_vec3_add(camera_front, camera_pos, center);
     glm_lookat(camera_pos, center, camera_up, view);
 
     mat4 model = GLM_MAT4_IDENTITY_INIT;
-    //vec3 translation = { 0.25, 0.25, 0.25 };
-    //glm_scale(model, translation);
+    //vec3 translation = { 0.0, 0.0, -4.0 };
     //glm_translate(model, translation);
+    //glm_rotate_y(model, glm_rad(-90.0), model);
 
     for (int i = 0; i < dude->num_bones; i++) {
       char var_name[50];
@@ -207,7 +211,6 @@ int main() {
                          3, GL_FALSE,
                          (float *) dude->bone_mats[i]);
     }
-
 
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                        GL_FALSE, (float *) model);
@@ -306,6 +309,9 @@ void keyboard_input(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&
       glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
     if (glfwGetTime() - last_push >= 0.125) {
+      if (cur_frame == 39) {
+        cur_frame = 0;
+      }
       cur_frame++;
       last_push = glfwGetTime();
     }

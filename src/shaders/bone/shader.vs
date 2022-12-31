@@ -24,11 +24,6 @@ out vec3 test_col;
 mat4 parent_transformation();
 int equiv_mats(mat4 a, mat4 b);
 
-mat4 reflect = mat4(vec4(1.0, 0.0, 0.0, 0.0),
-                    vec4(0.0, 1.0, 0.0, 0.0),
-                    vec4(0.0, 0.0, -1.0, 0.0),
-                    vec4(0.0, 0.0, 0.0, 1.0));
-
 void main() {
   mat4 transformation = bone_mats[bone_id][LOCATION] /** bone_mats[bone_id][ROTATION]*/ *
                         bone_mats[bone_id][SCALE];
@@ -46,7 +41,7 @@ void main() {
 
   test_col = vec3(0.0, 0.0, 1.0);
 
-  gl_Position = projection * view * model * transformation * reflect * vec4(in_pos, 1.0);
+  gl_Position = projection * view * model * transformation * vec4(in_pos, 1.0);
 }
 
 int equiv_mats(mat4 a, mat4 b) {
@@ -69,7 +64,7 @@ mat4 parent_transformation() {
                              vec4(0.0, 0.0, 1.0, 0.0),
                              vec4(0.0, 0.0, 0.0, 1.0));
   while (cur != -1) {
-    vec4 ref_coords = reflect * vec4(bones[cur].coords, 1.0);
+    vec4 ref_coords = vec4(bones[cur].coords, 1.0);
     mat4 to_parent = mat4(vec4(1.0, 0.0, 0.0, 0.0),
                           vec4(0.0, 1.0, 0.0, 0.0),
                           vec4(0.0, 0.0, 1.0, 0.0),
