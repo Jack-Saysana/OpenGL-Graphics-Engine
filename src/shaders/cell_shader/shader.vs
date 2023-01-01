@@ -21,6 +21,7 @@ uniform mat4 bone_mats[26][3];
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform vec3 camera_pos;
 
 out vec4 frag_pos;
 out vec2 tex_coords;
@@ -32,12 +33,16 @@ vec4 get_bone_transformation();
 
 void main() {
   vec4 bone_transformation = get_bone_transformation();
+  if (bone_transformation.w == 0.0) {
+    bone_transformation = vec4(in_pos, 1.0);
+  }
 
   gl_Position = projection * view * model * bone_transformation;
 
   frag_pos = model * bone_transformation;
   tex_coords = in_tex_coords;
   normal = in_normal;
+  view_pos = camera_pos;
 }
 
 vec4 get_bone_transformation() {

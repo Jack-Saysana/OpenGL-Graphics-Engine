@@ -35,6 +35,7 @@ int animate(MODEL *model, unsigned int animation_index, unsigned int frame) {
                     cur_chain.chain[prev].offset[1],
                     cur_chain.chain[prev].offset[2],
                     cur_chain.chain[prev].offset[3]);
+      glm_quat_normalize(quat);
       glm_quat_mat4(quat, model->bone_mats[cur_chain.b_id][cur_chain.type]);
     } else if (prev != -1) {
       vec3 offset = { cur_chain.chain[prev].offset[0],

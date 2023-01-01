@@ -37,8 +37,8 @@ void main() {
 }
 
 vec3 calc_dir_light(struct DIR_LIGHT light) {
-  //vec3 col = texture(material.diff_map, texCoords);
-  vec3 col = vec3(1.0, 0.0, 0.0);
+  vec3 col = vec3(texture(material.diff_map, tex_coords));
+  //vec3 col = vec3(1.0, 0.0, 0.0);
 
   vec3 ambient = light.col * 0.05;
 

@@ -2,15 +2,18 @@
 
 void keyboard_input(GLFWwindow *window);
 void mouse_input(GLFWwindow *window, double xpos, double ypos);
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+
+vec3 up = { 0.0, 1.0, 0.0 };
 
 float delta_time = 0.0;
 float last_frame = 0.0;
 
-vec3 camera_offset = { 0.0, 0.0, -3.0 };
-vec3 camera_pos = { 0.0, 0.0, 3.0 };
+vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
-vec3 camera_up = { 0.0, 1.0, 0.0 };
-vec3 center = { 0.0, 0.0, 0.0 };
+vec3 camera_pos = { 0.0, 0.0, 0.0 };
+vec3 camera_model_pos = { 0.0, 0.0, 0.0 };
+float camera_model_rot = 0.0;
 
 float lastX = 400;
 float lastY = 300;
@@ -43,6 +46,7 @@ int main() {
 
   glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window, mouse_input);
+  glfwSetScrollCallback(window, scroll_callback);
 
   glfwMakeContextCurrent(window);
 
@@ -133,7 +137,20 @@ int main() {
     return -1;
   }
 
+  MODEL *floor = load_model(
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/floor/floor.obj"
+      );
+  if (floor == NULL) {
+    printf("Unable to load model\n");
+    glfwTerminate();
+    return -1;
+  }
+
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+  mat4 view = GLM_MAT4_IDENTITY_INIT;
+
+
   glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
   glUseProgram(shader);
   glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1,
@@ -168,7 +185,7 @@ int main() {
 
   float until_next = 0.0;
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     float current_time = glfwGetTime();
@@ -182,48 +199,26 @@ int main() {
     animate(dude, 0, cur_frame);
 
     // Render
-    glUseProgram(shader);
 
-    mat4 view = GLM_MAT4_IDENTITY_INIT;
-    //glm_translate(view, camera_offset);
-    //glm_rotate_y(view, glm_rad(yaw), view);
-    //glm_rotate_x(view, glm_rad(pitch), view);
-    glm_vec3_add(camera_front, camera_pos, center);
-    glm_lookat(camera_pos, center, camera_up, view);
+    /* Camera */
 
-    mat4 model = GLM_MAT4_IDENTITY_INIT;
-    //vec3 translation = { 0.0, 0.0, -4.0 };
-    //glm_translate(model, translation);
-    //glm_rotate_y(model, glm_rad(-90.0), model);
+    vec3 translation = { -camera_model_pos[0], 0.0, -camera_model_pos[2] };
 
-    for (int i = 0; i < dude->num_bones; i++) {
-      char var_name[50];
-      sprintf(var_name, "bones[%d].coords", i);
-      glUniform3f(glGetUniformLocation(shader, var_name),
-                  dude->bones[i].coords[0], dude->bones[i].coords[1],
-                  dude->bones[i].coords[2]);
-      sprintf(var_name, "bones[%d].parent", i);
-      glUniform1i(glGetUniformLocation(shader, var_name),
-                   dude->bones[i].parent);
+    glm_mat4_identity(view);
+    camera_offset[1] = -dude->bones[18].coords[1];
+    glm_translate(view, camera_offset);
+    glm_rotate_x(view, glm_rad(pitch), view);
+    glm_rotate_y(view, glm_rad(yaw), view);
+    glm_translate(view, translation);
 
-      sprintf(var_name, "bone_mats[%d]", i);
-      glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
-                         3, GL_FALSE,
-                         (float *) dude->bone_mats[i]);
-    }
+    mat4 rot_mat = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_inv_fast(view, rot_mat);
+    glm_vec3_zero(camera_pos);
+    glm_mat4_mulv3(rot_mat, camera_pos, 1.0, camera_pos);
 
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                       GL_FALSE, (float *) model);
+    /* Models */
 
-    glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
-                       GL_FALSE, (float *) view);
-
-    //draw_model(shader, test);
-    //draw_model(shader, cube);
-    //draw_model(shader, cross);
-    if (draw) {
-      draw_model(shader, dude);
-    }
+    glm_mat4_identity(model);
 
     /* Origin */
 
@@ -238,6 +233,9 @@ int main() {
     glBindVertexArray(0);
 
     /* Bones */
+
+    glm_translate(model, camera_model_pos);
+    glm_rotate_y(model, camera_model_rot, model);
 
     glUseProgram(b_shader);
     for (int i = 0; i < dude->num_bones; i++) {
@@ -260,6 +258,49 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "view"), 1,
                        GL_FALSE, (float *) view);
     draw_bones(dude);
+
+    glUseProgram(shader);
+
+    for (int i = 0; i < dude->num_bones; i++) {
+      char var_name[50];
+      sprintf(var_name, "bones[%d].coords", i);
+      glUniform3f(glGetUniformLocation(shader, var_name),
+                  dude->bones[i].coords[0], dude->bones[i].coords[1],
+                  dude->bones[i].coords[2]);
+      sprintf(var_name, "bones[%d].parent", i);
+      glUniform1i(glGetUniformLocation(shader, var_name),
+                   dude->bones[i].parent);
+
+      sprintf(var_name, "bone_mats[%d]", i);
+      glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
+                         3, GL_FALSE,
+                         (float *) dude->bone_mats[i]);
+    }
+
+    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+
+    glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
+                       GL_FALSE, (float *) view);
+    glUniform3f(glGetUniformLocation(shader, "camera_pos"), camera_pos[0],
+                camera_pos[1], camera_pos[2]);
+
+    //draw_model(shader, test);
+    //draw_model(shader, cube);
+    //draw_model(shader, cross);
+    if (draw) {
+      draw_model(shader, dude);
+    }
+
+    glm_mat4_identity(model);
+    glm_vec3_zero(translation);
+    translation[0] = 50.0;
+    translation[1] = 50.0;
+    translation[2] = 50.0;
+    glm_scale(model, translation);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    draw_model(shader, floor);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -284,24 +325,32 @@ void keyboard_input(GLFWwindow *window) {
   float cam_speed = 2.5 * delta_time;
   vec3 movement = { 0.0, 0.0, 0.0 };
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    camera_model_rot = glm_rad(-yaw + 180.0);
+
     glm_vec3_scale(camera_front, cam_speed, movement);
-    glm_vec3_add(camera_pos, movement, camera_pos);
+    glm_vec3_add(camera_model_pos, movement, camera_model_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-    glm_vec3_scale(camera_front, cam_speed, movement);
-    glm_vec3_sub(camera_pos, movement, camera_pos);
+    camera_model_rot = glm_rad(-yaw);
+
+    glm_vec3_scale(camera_front, -cam_speed, movement);
+    glm_vec3_add(camera_model_pos, movement, camera_model_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-    glm_vec3_cross(camera_front, camera_up, movement);
+    camera_model_rot = glm_rad(-yaw -90.0);
+
+    glm_vec3_cross(up, camera_front, movement);
     glm_vec3_normalize(movement);
     glm_vec3_scale(movement, cam_speed, movement);
-    glm_vec3_sub(camera_pos, movement, camera_pos);
+    glm_vec3_add(camera_model_pos, movement, camera_model_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-    glm_vec3_cross(camera_front, camera_up, movement);
+    camera_model_rot = glm_rad(-yaw + 90.0);
+
+    glm_vec3_cross(camera_front, up, movement);
     glm_vec3_normalize(movement);
     glm_vec3_scale(movement, cam_speed, movement);
-    glm_vec3_add(camera_pos, movement, camera_pos);
+    glm_vec3_add(camera_model_pos, movement, camera_model_pos);
   }
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, 1);
@@ -363,8 +412,17 @@ void mouse_input(GLFWwindow *window, double xpos, double ypos) {
     pitch = -89.0f;
   }
 
-  camera_front[0] = cos(glm_rad(yaw)) * cos(glm_rad(pitch));
-  camera_front[1] = sin(glm_rad(pitch));
-  camera_front[2] = sin(glm_rad(yaw)) * cos(glm_rad(pitch));
+  camera_front[0] = sin(glm_rad(yaw));
+  camera_front[2] = -cos(glm_rad(yaw));
   glm_vec3_normalize(camera_front);
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+  camera_offset[2] += yoffset;
+  if (camera_offset[2] < -8.0) {
+    camera_offset[2] = -8.0;
+  }
+  if (camera_offset[2] > -3.0) {
+    camera_offset[2] = -3.0;
+  }
 }

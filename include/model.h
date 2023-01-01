@@ -21,7 +21,7 @@ typedef enum chain_type {
 
 typedef struct keyframe {
   float offset[4];
-  unsigned int frame;
+  int frame;
 } KEYFRAME;
 
 typedef struct keyframe_chain {
