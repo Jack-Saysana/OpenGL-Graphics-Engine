@@ -64,6 +64,11 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
 }
 
 long gen_shader(const char *source, GLenum type) {
+  if (source == NULL) {
+    printf("Invalid shader source code\n");
+    return -1;
+  }
+
   int source_len = strlen(source);
   unsigned int shader = glCreateShader(type);
   glShaderSource(shader, 1, &source, &source_len);
@@ -76,6 +81,11 @@ long gen_shader(const char *source, GLenum type) {
   if (compilation_status == GL_FALSE) {
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_len);
     info_log = malloc(info_log_len);
+    if (info_log == NULL) {
+      printf("Shader error. Unable to allocate info log.\n");
+      return -1;
+    }
+
     glGetShaderInfoLog(shader, info_log_len, &info_log_len, info_log);
     printf("%s\n", info_log);
     free(info_log);
@@ -86,6 +96,10 @@ long gen_shader(const char *source, GLenum type) {
 }
 
 char *load_source(char *path) {
+  if (path == NULL) {
+    return NULL;
+  }
+
   FILE *file = fopen(path, "r");
   if (file == NULL) {
     return NULL;
@@ -100,6 +114,10 @@ char *load_source(char *path) {
   fseek(file, 0, SEEK_SET);
 
   char *source = malloc(file_size + 1);
+  if (source == NULL) {
+    printf("Unable to allocate shader program memory\n");
+    return NULL;
+  }
   fread(source, file_size, 1, file);
   source[file_size] = '\0';
 
