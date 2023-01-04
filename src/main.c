@@ -97,6 +97,17 @@ int main() {
     return -1;
   }
 
+  unsigned int test_shader = init_shader_prog(
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/cell_shader/shader.vs",
+      NULL,
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      );
+  if (test_shader == -1) {
+    printf("Error loading test shaders\n");
+    glfwTerminate();
+    return -1;
+  }
+
   MODEL *cube = load_model(
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
@@ -164,6 +175,10 @@ int main() {
   glUniformMatrix4fv(glGetUniformLocation(origin_shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
+  glUseProgram(test_shader);
+  glUniformMatrix4fv(glGetUniformLocation(test_shader, "projection"), 1,
+                     GL_FALSE, (float *)projection);
+
   glEnable(GL_DEPTH_TEST);
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -172,16 +187,52 @@ int main() {
   unsigned int pt_VAO;
   glGenVertexArrays(1, &pt_VAO);
   glBindVertexArray(pt_VAO);
-
   unsigned int pt_VBO;
   glGenBuffers(1, &pt_VBO);
   glBindBuffer(GL_ARRAY_BUFFER, pt_VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3, point, GL_STATIC_DRAW);
-
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
                         (void *) 0);
   glEnableVertexAttribArray(0);
   glBindVertexArray(0);
+
+  COLLIDER box1;
+  box1.verts[0][0] = 1.0;
+  box1.verts[0][1] = 1.0;
+  box1.verts[0][2] = 1.0;
+  box1.verts[1][0] = 1.0;
+  box1.verts[1][1] = 1.0;
+  box1.verts[1][2] = -1.0;
+  box1.verts[2][0] = 1.0;
+  box1.verts[2][1] = -1.0;
+  box1.verts[2][2] = 1.0;
+  box1.verts[3][0] = 1.0;
+  box1.verts[3][1] = -1.0;
+  box1.verts[3][2] = -1.0;
+  box1.verts[4][0] = -1.0;
+  box1.verts[4][1] = 1.0;
+  box1.verts[4][2] = 1.0;
+  box1.verts[5][0] = -1.0;
+  box1.verts[5][1] = 1.0;
+  box1.verts[5][2] = -1.0;
+  box1.verts[6][0] = -1.0;
+  box1.verts[6][1] = -1.0;
+  box1.verts[6][2] = 1.0;
+  box1.verts[7][0] = -1.0;
+  box1.verts[7][1] = -1.0;
+  box1.verts[7][2] = -1.0;
+  box1.num_used = 8;
+
+  COLLIDER box2;
+  glm_vec3_copy(box1.verts[0], box2.verts[0]);
+  glm_vec3_copy(box1.verts[1], box2.verts[1]);
+  glm_vec3_copy(box1.verts[2], box2.verts[2]);
+  glm_vec3_copy(box1.verts[3], box2.verts[3]);
+  glm_vec3_copy(box1.verts[4], box2.verts[4]);
+  glm_vec3_copy(box1.verts[5], box2.verts[5]);
+  glm_vec3_copy(box1.verts[6], box2.verts[6]);
+  glm_vec3_copy(box1.verts[7], box2.verts[7]);
+  box2.num_used = 8;
 
   float until_next = 0.0;
   while (!glfwWindowShouldClose(window)) {
@@ -285,12 +336,21 @@ int main() {
     glUniform3f(glGetUniformLocation(shader, "camera_pos"), camera_pos[0],
                 camera_pos[1], camera_pos[2]);
 
-    //draw_model(shader, test);
-    //draw_model(shader, cube);
-    //draw_model(shader, cross);
     if (draw) {
       draw_model(shader, dude);
     }
+
+    glm_mat4_identity(model);
+    glm_scale_uni(model, 32.0);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    draw_model(shader, cube);
+
+    glm_mat4_identity(model);
+    glm_translate_z(model, 32.0);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    draw_model(shader, dude);
 
     glm_mat4_identity(model);
     glm_vec3_zero(translation);
@@ -301,6 +361,36 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(shader, floor);
+
+    /* Tests */
+
+    glUseProgram(test_shader);
+
+    glm_mat4_identity(model);
+    glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    glUniformMatrix4fv(glGetUniformLocation(test_shader, "view"), 1,
+                       GL_FALSE, (float *) view);
+    draw_model(test_shader, cube);
+
+    glm_translate_x(model, 2.1);
+    glm_rotate_y(model, glm_rad(glfwGetTime()), model);
+    glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+
+    for (int i = 0; i < box2.num_used; i++) {
+      glm_mat4_mulv3(model, box1.verts[i], 1.0, box2.verts[i]);
+    }
+
+    if (collision_check(&box1, &box2)) {
+      glUniform3f(glGetUniformLocation(test_shader, "test_col"),
+                  1.0, 0.0, 0.0);
+    } else {
+      glUniform3f(glGetUniformLocation(test_shader, "test_col"),
+                  0.0, 0.0, 0.0);
+    }
+
+    draw_model(test_shader, cube);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);

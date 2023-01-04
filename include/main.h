@@ -14,6 +14,11 @@ typedef enum chain_type {
   SCALE = 2
 } C_TYPE;
 
+typedef struct collider {
+  vec3 verts[8];
+  unsigned int num_used;
+} COLLIDER;
+
 typedef struct keyframe {
   float offset[4];
   int frame;
@@ -63,3 +68,7 @@ int animate(MODEL *model, unsigned int animation_index, unsigned int frame);
 void draw_bones(MODEL *model);
 void draw_model(unsigned int shader, MODEL *model);
 void free_model(MODEL *model);
+
+
+
+int collision_check(COLLIDER *a, COLLIDER *b);
