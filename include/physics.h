@@ -29,6 +29,7 @@ typedef struct oct_tree_node {
 } OCT_NODE;
 
 typedef struct oct_tree {
+  OCT_NODE *root;
   OCT_NODE *node_buffer;
   size_t buff_len;
   size_t buff_size;
