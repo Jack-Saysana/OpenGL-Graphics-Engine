@@ -14,8 +14,8 @@ typedef struct line_buffer {
 } LINE_BUFFER;
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
-int double_complex_buffer(void **buffer, size_t *buff_size, size_t buff_len,
-                          size_t unit_size, void free_buff(void *, size_t));
+//int double_complex_buffer(void **buffer, size_t *buff_size, size_t buff_len,
+//                          size_t unit_size, void free_buff(void *, size_t));
 uint64_t get_hash(char *str);
 LINE_BUFFER *get_lines(char *);
 void free_line_buffer(LINE_BUFFER *);

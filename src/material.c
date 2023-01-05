@@ -3,11 +3,14 @@
 int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
                  char *dir, char *lib) {
   char *lib_path = malloc(strlen(dir) + strlen(lib) + 2);
+  if (lib_path == NULL) {
+    printf("Unable to allocate mtllib path\n");
+    return -1;
+  }
   sprintf(lib_path, "%s/%s", dir, lib);
 
   LINE_BUFFER *lib_lines = get_lines(lib_path);
   free(lib_path);
-
   if (lib_lines == NULL) {
     printf("Unable to get mtllib line buffer\n");
     return -1;
@@ -31,9 +34,7 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
 
       (*mat_len)++;
       if (*mat_len == *mat_buff_len) {
-        status = double_complex_buffer((void **) &materials, mat_buff_len,
-                                       *mat_len, sizeof(MATERIAL),
-                                       free_materials);
+        status = double_buffer((void **) &materials, mat_buff_len);
         if (status != 0) {
           free_line_buffer(lib_lines);
           printf("Unable to reallocate material buffer\n");
@@ -83,8 +84,8 @@ PROP_TYPE get_op(char **cur_line) {
   return op;
 }
 
-void free_materials(void *buffer, size_t buff_len) {
-  MATERIAL *materials = (MATERIAL *) buffer;
+void free_materials(MATERIAL *buffer, size_t buff_len) {
+  MATERIAL *materials = buffer;
   for (int i = 0; i < buff_len; i++) {
     for (int j = 0; j < NUM_PROPS; j++) {
       if (materials[i].mat_paths[j] != NULL) {

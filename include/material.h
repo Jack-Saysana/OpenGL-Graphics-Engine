@@ -30,11 +30,9 @@ typedef struct material {
 int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
                  char *dir, char *lib);
 PROP_TYPE get_op(char **cur_line);
-void free_materials(void *buffer, size_t buf_len);
+void free_materials(MATERIAL *buffer, size_t buf_len);
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
-int double_complex_buffer(void **buffer, size_t *buff_size, size_t buff_len,
-                          size_t unit_size, void free_buff(void *, size_t));
 LINE_BUFFER *get_lines(char *);
 void free_line_buffer(LINE_BUFFER *);
 uint64_t get_hash(char *str);

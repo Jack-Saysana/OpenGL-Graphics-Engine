@@ -351,6 +351,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(normals);
       free(tex_coords);
       free(vbo_index_combos);
+      free(faces);
       free_materials(materials, mat_len);
 
       for (int i = 0; i < a_len; i++) {

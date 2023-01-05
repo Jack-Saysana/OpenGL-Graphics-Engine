@@ -2,6 +2,9 @@
 
 /*
  * ========== DOUBLE_BUFFER() ==========
+ *
+ * IMPORTANT! IF THE FUNCTION FAILS, THE BUFFER IS NOT DEALLOCATED
+ *
  * DESC
  * Doubles the given buffer
  *
@@ -18,7 +21,6 @@
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size) {
   void *new_buff = realloc(*buffer, 2 * (*buff_size) * unit_size);
   if (new_buff == NULL) {
-    free(*buffer);
     return -1;
   }
   (*buffer) = new_buff;
@@ -46,7 +48,7 @@ int double_buffer(void **buffer, size_t *buff_size, size_t unit_size) {
  * -1 if an error has occured
  * =====================================
  */
-int double_complex_buffer(void **buffer, size_t *buff_size, size_t buff_len,
+/*int double_complex_buffer(void **buffer, size_t *buff_size, size_t buff_len,
                           size_t unit_size, void free_buff(void *, size_t)) {
   void *new_buff = realloc(*buffer, 2 * (*buff_size) * unit_size);
   if (new_buff == NULL) {
@@ -56,7 +58,7 @@ int double_complex_buffer(void **buffer, size_t *buff_size, size_t buff_len,
   (*buffer) = new_buff;
   *buff_size = 2 * *buff_size;
   return 0;
-}
+}*/
 
 /*
  * ========== GET_LINES() ==========
@@ -100,6 +102,7 @@ LINE_BUFFER *get_lines(char *path) {
       status = double_buffer((void **) &file_contents, &contents_buffer_len,
                              sizeof(char));
       if (status != 0) {
+        free(file_contents);
         fclose(file);
         printf("Unable to allocate file contents\n");
         return NULL;
@@ -154,8 +157,10 @@ LINE_BUFFER *get_lines(char *path) {
         status = double_buffer((void **) &(lb->buffer), &line_buffer_max,
                                sizeof(char *));
         if (status != 0) {
-          free(file_contents);
+          free(lb->buffer);
+          free(lb->dir);
           free(lb);
+          free(file_contents);
           printf("Unable to reallocate line buffer\n");
           return NULL;
         }
