@@ -34,7 +34,8 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
 
       (*mat_len)++;
       if (*mat_len == *mat_buff_len) {
-        status = double_buffer((void **) &materials, mat_buff_len);
+        status = double_buffer((void **) &materials, mat_buff_len,
+                               sizeof(MATERIAL));
         if (status != 0) {
           free_line_buffer(lib_lines);
           printf("Unable to reallocate material buffer\n");

@@ -1,9 +1,5 @@
 #include <main.h>
 
-void keyboard_input(GLFWwindow *window);
-void mouse_input(GLFWwindow *window, double xpos, double ypos);
-void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
-
 vec3 up = { 0.0, 1.0, 0.0 };
 
 float delta_time = 0.0;
@@ -12,7 +8,7 @@ float last_frame = 0.0;
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
-vec3 camera_model_pos = { 0.0, 0.0, 0.0 };
+vec3 camera_model_pos = { 5.0, 0.0, 5.0 };
 float camera_model_rot = 0.0;
 
 float lastX = 400;
@@ -157,6 +153,74 @@ int main() {
     return -1;
   }
 
+  OCT_TREE *tree = init_tree();
+  if (tree == NULL) {
+    printf("Unable to load oct-tree\n");
+    glfwTerminate();
+    return -1;
+  }
+
+  /*COLLIDER dude_hb = {{{ 0.20, 1.75, 0.1 },
+                       { 0.20, 1.75, -0.1 },
+                       { -0.20, 1.75, 0.1 },
+                       { -0.20, 1.75, -0.1 },
+                       { 0.20, 0.0, 0.1 },
+                       { 0.20, 0.0, -0.1 },
+                       { -0.20, 0.0, 0.1 },
+                       { -0.20, 0.0, -0.1}
+                      }, 8};*/
+
+  COLLIDER dude_hb = {{{ 0.20, 1.75, 0.1 },
+                       { 0.20, 1.75, -0.1 },
+                       { -0.20, 1.75, 0.1 },
+                       { -0.20, 1.75, -0.1 },
+                       { 0.20, 0.0, 0.1 },
+                       { 0.20, 0.0, -0.1 },
+                       { -0.20, 0.0, 0.1 },
+                       { -0.20, 0.0, -0.1}
+                      }, 8};
+  for (int i = 0; i < 8; i++) {
+    glm_vec3_add(dude_hb.verts[i], camera_model_pos, dude_hb.verts[i]);
+    /*printf("%f %f %f\n",
+           dude_hb.verts[i][0],
+           dude_hb.verts[i][1],
+           dude_hb.verts[i][2]);*/
+  }
+  //fflush(stdout);
+
+  PHYS_OBJ dude1 = { 0, 0, dude_hb };
+
+  vec3 temp = { 5.0, 10.0, -15.0 };
+  COLLIDER dude2_hb = {{{ 0.20, 1.75, 0.1 },
+                       { 0.20, 1.75, -0.1 },
+                       { -0.20, 1.75, 0.1 },
+                       { -0.20, 1.75, -0.1 },
+                       { 0.20, 0.0, 0.1 },
+                       { 0.20, 0.0, -0.1 },
+                       { -0.20, 0.0, 0.1 },
+                       { -0.20, 0.0, -0.1}
+                      }, 8};
+  for (int i = 0; i < 8; i++) {
+    glm_vec3_add(dude2_hb.verts[i], temp, dude2_hb.verts[i]);
+    /*printf("%f %f %f\n",
+           dude2_hb.verts[i][0],
+           dude2_hb.verts[i][1],
+           dude2_hb.verts[i][2]);*/
+  }
+  //fflush(stdout);
+
+  PHYS_OBJ dude2 = { 0, 0, dude2_hb };
+
+  int status = oct_tree_insert(tree, &dude1);
+  if (status != 0) {
+    printf("Failed to insert dude1\n");
+  }
+
+  status = oct_tree_insert(tree, &dude2);
+  if (status != 0) {
+    printf("Failed to insert dude2\n");
+  }
+
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   mat4 view = GLM_MAT4_IDENTITY_INIT;
@@ -181,7 +245,7 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
 
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   float point[] = { 0.0, 0.0, 0.0 };
   unsigned int pt_VAO;
@@ -196,47 +260,9 @@ int main() {
   glEnableVertexAttribArray(0);
   glBindVertexArray(0);
 
-  COLLIDER box1;
-  box1.verts[0][0] = 1.0;
-  box1.verts[0][1] = 1.0;
-  box1.verts[0][2] = 1.0;
-  box1.verts[1][0] = 1.0;
-  box1.verts[1][1] = 1.0;
-  box1.verts[1][2] = -1.0;
-  box1.verts[2][0] = 1.0;
-  box1.verts[2][1] = -1.0;
-  box1.verts[2][2] = 1.0;
-  box1.verts[3][0] = 1.0;
-  box1.verts[3][1] = -1.0;
-  box1.verts[3][2] = -1.0;
-  box1.verts[4][0] = -1.0;
-  box1.verts[4][1] = 1.0;
-  box1.verts[4][2] = 1.0;
-  box1.verts[5][0] = -1.0;
-  box1.verts[5][1] = 1.0;
-  box1.verts[5][2] = -1.0;
-  box1.verts[6][0] = -1.0;
-  box1.verts[6][1] = -1.0;
-  box1.verts[6][2] = 1.0;
-  box1.verts[7][0] = -1.0;
-  box1.verts[7][1] = -1.0;
-  box1.verts[7][2] = -1.0;
-  box1.num_used = 8;
-
-  COLLIDER box2;
-  glm_vec3_copy(box1.verts[0], box2.verts[0]);
-  glm_vec3_copy(box1.verts[1], box2.verts[1]);
-  glm_vec3_copy(box1.verts[2], box2.verts[2]);
-  glm_vec3_copy(box1.verts[3], box2.verts[3]);
-  glm_vec3_copy(box1.verts[4], box2.verts[4]);
-  glm_vec3_copy(box1.verts[5], box2.verts[5]);
-  glm_vec3_copy(box1.verts[6], box2.verts[6]);
-  glm_vec3_copy(box1.verts[7], box2.verts[7]);
-  box2.num_used = 8;
-
   float until_next = 0.0;
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     float current_time = glfwGetTime();
@@ -282,6 +308,8 @@ int main() {
     glBindVertexArray(pt_VAO);
     glDrawArrays(GL_POINTS, 0, 1);
     glBindVertexArray(0);
+
+    /* Oct-Tree */
 
     /* Bones */
 
@@ -340,14 +368,18 @@ int main() {
       draw_model(shader, dude);
     }
 
-    glm_mat4_identity(model);
+    /*glm_mat4_identity(model);
     glm_scale_uni(model, 32.0);
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                        GL_FALSE, (float *) model);
-    draw_model(shader, cube);
+    draw_model(shader, cube);*/
 
     glm_mat4_identity(model);
-    glm_translate_z(model, 32.0);
+    glm_vec3_zero(translation);
+    translation[0] = 5.0;
+    translation[1] = 10.0;
+    translation[2] = -15.0;
+    glm_translate(model, translation);
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(shader, dude);
@@ -365,32 +397,12 @@ int main() {
     /* Tests */
 
     glUseProgram(test_shader);
+    glUniformMatrix4fv(glGetUniformLocation(test_shader, "view"), 1, GL_FALSE,
+                       (float *) view);
+    glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 0.0);
 
-    glm_mat4_identity(model);
-    glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-    glUniformMatrix4fv(glGetUniformLocation(test_shader, "view"), 1,
-                       GL_FALSE, (float *) view);
-    draw_model(test_shader, cube);
-
-    glm_translate_x(model, 2.1);
-    glm_rotate_y(model, glm_rad(glfwGetTime()), model);
-    glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-
-    for (int i = 0; i < box2.num_used; i++) {
-      glm_mat4_mulv3(model, box1.verts[i], 1.0, box2.verts[i]);
-    }
-
-    if (collision_check(&box1, &box2)) {
-      glUniform3f(glGetUniformLocation(test_shader, "test_col"),
-                  1.0, 0.0, 0.0);
-    } else {
-      glUniform3f(glGetUniformLocation(test_shader, "test_col"),
-                  0.0, 0.0, 0.0);
-    }
-
-    draw_model(test_shader, cube);
+    vec3 pos = { 0.0, 0.0, 0.0 };
+    draw_oct_tree(cube, tree, pos, 16.0, test_shader, 0, 1);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -402,9 +414,46 @@ int main() {
   free_model(cross);
   free_model(dude);
 
+  free_oct_tree(tree);
+
   glfwTerminate();
 
   return 0;
+}
+
+vec3 quad_translate[8] = {
+                       { 1.0, 1.0, 1.0 }, //  X, Y, Z
+                       { 1.0, 1.0, -1.0 }, //  X, Y,-Z
+                       { 1.0, -1.0, 1.0 }, //  X,-Y, Z
+                       { 1.0, -1.0, -1.0 }, //  X,-Y,-Z
+                       { -1.0, 1.0, 1.0 }, // -X, Y, Z
+                       { -1.0, 1.0, -1.0 }, // -X, Y,-Z
+                       { -1.0, -1.0, 1.0 }, // -X,-Y, Z
+                       { -1.0, -1.0, -1.0 }  // -X,-Y,-Z
+                      };
+void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
+                   unsigned int shader, size_t offset, int depth) {
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+  glm_translate(model, pos);
+  glm_scale_uni(model, scale);
+  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+                     GL_FALSE, (float *) model);
+  draw_model(shader, cube);
+
+  vec3 temp = { 0.0, 0.0, 0.0 };
+  if (tree->node_buffer[offset].next_offset != -1 && depth < 5) {
+    for (int i = 0; i < 8; i++) {
+      if (i == 0 || i == 7) {
+        glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 0.0, 0.0);
+      } else {
+        glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 1.0, 0.0);
+      }
+      glm_vec3_scale(quad_translate[i], scale / 2.0, temp);
+      glm_vec3_add(pos, temp, temp);
+      draw_oct_tree(cube, tree, temp, scale / 2.0, shader,
+                    tree->node_buffer[offset].next_offset + i, depth + 1);
+    }
+  }
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -412,7 +461,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void keyboard_input(GLFWwindow *window) {
-  float cam_speed = 2.5 * delta_time;
+  float cam_speed = 5.0 * delta_time;
   vec3 movement = { 0.0, 0.0, 0.0 };
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera_model_rot = glm_rad(-yaw + 180.0);
