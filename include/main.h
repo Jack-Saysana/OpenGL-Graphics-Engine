@@ -20,6 +20,9 @@ typedef struct collider {
 } COLLIDER;
 
 typedef struct physics_object {
+  //MODEL *model;
+  size_t model_offset;
+  size_t node_offset;
   size_t next_offset;
   size_t prev_offset;
   COLLIDER collider;
@@ -78,9 +81,12 @@ typedef struct model {
   KEYFRAME *keyframe_block;
   int *sled_block;
   BONE *bones;
+  COLLIDER *colliders;
+  int *collider_bone_links;
   mat4 (*bone_mats)[3];
   size_t num_animations;
   size_t num_bones;
+  size_t num_colliders;
   unsigned int textures[NUM_PROPS];
   unsigned int VAO;
   unsigned int VBO;

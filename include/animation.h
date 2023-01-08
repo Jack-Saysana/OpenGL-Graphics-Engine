@@ -25,6 +25,11 @@ typedef struct keyframe_chain {
   unsigned int b_id;
 } K_CHAIN;
 
+typedef struct collider {
+  vec3 verts[8];
+  unsigned int num_used;
+} COLLIDER;
+
 typedef struct animation {
   K_CHAIN *keyframe_chains;
   size_t num_chains;
@@ -43,9 +48,12 @@ typedef struct model {
   KEYFRAME *keyframe_block;
   int *sled_block;
   BONE *bones;
+  COLLIDER *colliders;
+  int *collider_bone_links;
   mat4 (*bone_mats)[3];
   size_t num_animations;
   size_t num_bones;
+  size_t num_colliders;
   unsigned int textures[NUM_PROPS];
   unsigned int VAO;
   unsigned int VBO;

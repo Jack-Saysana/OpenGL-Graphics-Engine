@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <cglm/vec3.h>
 
 #define BUFF_STARTING_LEN (10)
 #define NUM_PROPS (5)
@@ -11,6 +12,11 @@ typedef enum chain_type {
   ROTATION = 1,
   SCALE = 2
 } C_TYPE;
+
+typedef struct collider {
+  vec3 verts[8];
+  unsigned int num_used;
+} COLLIDER;
 
 typedef struct material {
   uint64_t name;
@@ -55,7 +61,6 @@ typedef struct animation {
   size_t duration;
 } ANIMATION;
 
-
 BONE *bones;
 size_t b_buff_len;
 size_t b_len;
@@ -90,6 +95,11 @@ size_t f_len;
 MATERIAL *materials;
 size_t mat_buff_len;
 size_t mat_len;
+
+COLLIDER *colliders;
+int *bone_links;
+size_t col_buff_len;
+size_t col_len;
 
 int preprocess_lines(LINE_BUFFER *);
 int preprocess_face(FILE *, char *);

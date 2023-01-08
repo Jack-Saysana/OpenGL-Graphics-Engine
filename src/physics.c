@@ -59,7 +59,7 @@ int oct_tree_insert(OCT_TREE *tree, PHYS_OBJ *obj) {
   while (inserting) {
     if (depth == MAX_DEPTH) {
       inserting = 0;
-      status = append_list(tree, tree->node_buffer + cur_offset, obj);
+      status = append_list(tree, cur_offset, obj);
       if (status != 0) {
         printf("Unable to allocate tree data\n");
         return -1;
@@ -68,7 +68,7 @@ int oct_tree_insert(OCT_TREE *tree, PHYS_OBJ *obj) {
       cur_oct = detect_octant(min_extent, max_extent, max_extents, &oct_len);
       if (cur_oct == MULTIPLE) {
         inserting = 0;
-        status = append_list(tree, tree->node_buffer + cur_offset, obj);
+        status = append_list(tree, cur_offset, obj);
         if (status != 0) {
           printf("Unable to allocate tree data\n");
           return -1;
@@ -121,11 +121,17 @@ int oct_tree_delete(OCT_TREE *tree, size_t node_offset, size_t obj_offset) {
 
     tree->data_buffer[obj->prev_offset].next_offset = obj_offset;
     tree->data_buffer[obj->next_offset].prev_offset = obj_offset;
+    // UPDATE LATER
+    // obj->model.colliders[obj->model_offset] = obj_offset;
 
+    //obj->model = tree->data_buffer[end_offset].model;
+    obj->model_offset = tree->data_buffer[end_offset].model_offset;
+    obj->node_offset = tree->data_buffer[end_offset].node_offset;
     obj->collider = tree->data_buffer[end_offset].collider;
   }
 
   // Delete node
+  tree->data_buffer[end_offset].node_offset = 0xBA53BA11;
   tree->data_buffer[end_offset].next_offset = 0xBA53BA11;
   tree->data_buffer[end_offset].prev_offset = 0xBA53BA11;
   (tree->data_buff_len)--;
@@ -377,8 +383,9 @@ int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
   return 0;
 }
 
-int append_list(OCT_TREE *tree, OCT_NODE *node, PHYS_OBJ *obj) {
+int append_list(OCT_TREE *tree, size_t node_offset, PHYS_OBJ *obj) {
   size_t buff_len = tree->data_buff_len;
+  OCT_NODE *node = tree->node_buffer + node_offset;
   if (node->empty) {
     node->head_offset = buff_len;
     node->tail_offset = buff_len;
@@ -393,7 +400,12 @@ int append_list(OCT_TREE *tree, OCT_NODE *node, PHYS_OBJ *obj) {
     node->tail_offset = buff_len;
   }
 
+  tree->data_buffer[node->tail_offset].node_offset = node_offset;
   tree->data_buffer[node->tail_offset].collider = obj->collider;
+  tree->data_buffer[node->tail_offset].model_offset = obj->model_offset;
+  // UPDATE LATER
+  // tree->data_buffer[node->tail_offset].model = obj->model;
+  // obj->model->colliders[obj->model_offset] = node->tail_offset;
 
   (tree->data_buff_len)++;
   if (tree->data_buff_len == tree->data_buff_size) {

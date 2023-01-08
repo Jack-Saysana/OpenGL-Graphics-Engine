@@ -155,6 +155,44 @@ int preprocess_lines(LINE_BUFFER *lb) {
   a_buff_len = BUFF_STARTING_LEN;
   a_len = 0;
 
+  colliders = malloc(sizeof(COLLIDER) * BUFF_STARTING_LEN);
+  if (colliders == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free(materials);
+    free(animations);
+    printf("Unable to allocate colliders buffer\n");
+    return -1;
+  }
+  bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
+  if (bone_links == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free(materials);
+    free(animations);
+    free(colliders);
+    printf("Unable to allocate bone_links buffer\n");
+    return -1;
+  }
+  col_buff_len = BUFF_STARTING_LEN;
+  col_len = 0;
+
   size_t total_chains = 0;
   size_t total_keyframes = 0;
   size_t total_frames = 0;
@@ -182,6 +220,58 @@ int preprocess_lines(LINE_BUFFER *lb) {
       b_len++;
       if (b_len == b_buff_len) {
         status = double_buffer((void **) &bones, &b_buff_len, sizeof(BONE));
+      }
+    } else if (cur_line[0] == 'h' && cur_line[1] == 'b' &&
+               cur_line[3] == ' ') {
+      COLLIDER collider;
+      sscanf(cur_line, "hb %d %d %f %f %f \
+                                 %f %f %f \
+                                 %f %f %f \
+                                 %f %f %f \
+                                 %f %f %f \
+                                 %f %f %f \
+                                 %f %f %f \
+                                 %f %f %f", bone_links + col_len,
+                                 &(colliders[col_len].num_used),
+                                 collider.verts[0],
+                                 collider.verts[0]+1,
+                                 collider.verts[0]+2,
+                                 collider.verts[1],
+                                 collider.verts[1]+1,
+                                 collider.verts[1]+2,
+                                 collider.verts[2],
+                                 collider.verts[2]+1,
+                                 collider.verts[2]+2,
+                                 collider.verts[3],
+                                 collider.verts[3]+1,
+                                 collider.verts[3]+2,
+                                 collider.verts[4],
+                                 collider.verts[4]+1,
+                                 collider.verts[4]+2,
+                                 collider.verts[5],
+                                 collider.verts[5]+1,
+                                 collider.verts[5]+2,
+                                 collider.verts[6],
+                                 collider.verts[6]+1,
+                                 collider.verts[6]+2,
+                                 collider.verts[7],
+                                 collider.verts[7]+1,
+                                 collider.verts[7]+2);
+      for (int i = 0; i < colliders[col_len].num_used; i++) {
+        colliders[col_len].verts[i][0] = collider.verts[i][0];
+        colliders[col_len].verts[i][1] = collider.verts[i][1];
+        colliders[col_len].verts[i][2] = collider.verts[i][2];
+      }
+
+      col_len++;
+      if (col_len == col_buff_len) {
+        size_t old_buff_len = col_buff_len;
+        status = double_buffer((void **) &colliders, &col_buff_len,
+                               sizeof(COLLIDER));
+        if (status == 0) {
+          status = double_buffer((void **) &bone_links, &old_buff_len,
+                                 sizeof(int));
+        }
       }
     } else if (cur_line[0] == 'v' && cur_line[1] == 't' && cur_line[2] == ' ') {
       sscanf(cur_line, "vt %f %f",
@@ -353,6 +443,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(vbo_index_combos);
       free(faces);
       free_materials(materials, mat_len);
+      free(colliders);
+      free(bone_links);
 
       for (int i = 0; i < a_len; i++) {
         for (int j = 0; j < animations[i].num_chains; j++) {
@@ -379,6 +471,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   int cur_path_len = 0;
 
   fwrite(&b_len, sizeof(size_t), 1, file);
+  fwrite(&col_len, sizeof(size_t), 1, file);
   fwrite(&vbo_len, sizeof(size_t), 1, file);
   fwrite(&f_len, sizeof(size_t), 1, file);
 
@@ -405,6 +498,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   for (size_t i = 0; i < b_len; i++) {
     fwrite(bones + i, sizeof(BONE), 1, file);
+  }
+
+  for (size_t i = 0; i < col_len; i++) {
+    fwrite(colliders + i, sizeof(COLLIDER), 1, file);
+  }
+  for (size_t i = 0; i < col_len; i++) {
+    fwrite(bone_links + i, sizeof(int), 1, file);
   }
 
   for (size_t i = 0; i < vbo_len; i++) {
@@ -442,6 +542,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
   free(vbo_index_combos);
   free(faces);
   free_materials(materials, mat_len);
+  free(colliders);
+  free(bone_links);
 
   for (int i = 0; i < a_len; i++) {
     for (int j = 0; j < animations[i].num_chains; j++) {

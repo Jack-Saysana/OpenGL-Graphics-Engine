@@ -5,6 +5,7 @@
 #define MAX_DEPTH (5)
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
+#define NUM_PROPS (5)
 
 typedef enum {
   LINE = 2,
@@ -24,12 +25,21 @@ typedef enum {
   MULTIPLE = -1
 } OCTANT;
 
+typedef enum chain_type {
+  LOCATION = 0,
+  ROTATION = 1,
+  SCALE = 2
+} C_TYPE;
+
 typedef struct collider {
   vec3 verts[8];
   unsigned int num_used;
 } COLLIDER;
 
 typedef struct physics_object {
+  //MODEL *model;
+  size_t model_offset;
+  size_t node_offset;
   size_t next_offset;
   size_t prev_offset;
   COLLIDER collider;
@@ -57,6 +67,50 @@ typedef struct collision_result {
   size_t list_buff_size;
 } COLLISION_RES;
 
+typedef struct keyframe {
+  float offset[4];
+  int frame;
+} KEYFRAME;
+
+typedef struct keyframe_chain {
+  KEYFRAME *chain;
+  int *sled;
+  size_t num_frames;
+  C_TYPE type;
+  unsigned int b_id;
+} K_CHAIN;
+
+typedef struct animation {
+  K_CHAIN *keyframe_chains;
+  size_t num_chains;
+  size_t duration;
+} ANIMATION;
+
+typedef struct bone {
+  float coords[3];
+  int parent;
+  int num_children;
+} BONE;
+
+typedef struct model {
+  ANIMATION *animations;
+  K_CHAIN *k_chain_block;
+  KEYFRAME *keyframe_block;
+  int *sled_block;
+  BONE *bones;
+  COLLIDER *colliders;
+  int *collider_bone_links;
+  mat4 (*bone_mats)[3];
+  size_t num_animations;
+  size_t num_bones;
+  size_t num_colliders;
+  unsigned int textures[NUM_PROPS];
+  unsigned int VAO;
+  unsigned int VBO;
+  unsigned int EBO;
+  unsigned int num_indicies;
+} MODEL;
+
 vec3 X = { 1.0, 0.0, 0.0 };
 vec3 NEG_X = { -1.0, 0.0, 0.0 };
 vec3 Y = { 0.0, 1.0, 0.0 };
@@ -80,7 +134,7 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest);
 int init_node(OCT_TREE *tree, OCT_NODE *parent);
 int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
-int append_list(OCT_TREE *tree, OCT_NODE *node, PHYS_OBJ *obj);
+int append_list(OCT_TREE *tree, size_t node_offset, PHYS_OBJ *obj);
 OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *ebj_extents,
                      float *oct_len);
 int max_dot(COLLIDER *a, vec3 dir);

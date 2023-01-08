@@ -71,6 +71,8 @@ void free_model(MODEL *model) {
   free(model->sled_block);
   free(model->animations);
   free(model->bones);
+  free(model->colliders);
+  free(model->collider_bone_links);
   free(model->bone_mats);
   free(model);
 }

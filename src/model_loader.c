@@ -22,6 +22,7 @@ MODEL *load_model(char *path) {
   }
 
   size_t b_len;
+  size_t col_len;
   size_t v_len;
   size_t i_len;
   size_t a_len;
@@ -29,13 +30,13 @@ MODEL *load_model(char *path) {
   size_t total_keyframes;
   size_t total_frames;
   fread(&b_len, sizeof(size_t), 1, file);
+  fread(&col_len, sizeof(size_t), 1, file);
   fread(&v_len, sizeof(size_t), 1, file);
   fread(&i_len, sizeof(size_t), 1, file);
   fread(&a_len, sizeof(size_t), 1, file);
   fread(&total_chains, sizeof(size_t), 1, file);
   fread(&total_keyframes, sizeof(size_t), 1, file);
   fread(&total_frames, sizeof(size_t), 1, file);
-  fflush(stdout);
 
   int material_flag;
   int path_len;
@@ -156,7 +157,41 @@ MODEL *load_model(char *path) {
     return NULL;
   }
 
+  COLLIDER *colliders = malloc(sizeof(COLLIDER) * col_len);
+  if (colliders == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    free(animations);
+    free(bone_mats);
+    free(model);
+    free(k_chain_block);
+    free(keyframe_block);
+    free(sled_block);
+    printf("Unable to allocate colliders\n");
+    return NULL;
+  }
+  int *bone_links = malloc(sizeof(int) * col_len);
+  if (bone_links == NULL) {
+    fclose(file);
+    free(bones);
+    free(vertices);
+    free(indicies);
+    free(animations);
+    free(bone_mats);
+    free(model);
+    free(k_chain_block);
+    free(keyframe_block);
+    free(sled_block);
+    free(colliders);
+    printf("Unable to allocate bone links\n");
+    return NULL;
+  }
+
   fread(bones, sizeof(BONE), b_len, file);
+  fread(colliders, sizeof(COLLIDER), col_len, file);
+  fread(bone_links, sizeof(int), col_len, file);
   fread(vertices, sizeof(VBO), v_len, file);
   fread(indicies, sizeof(int) * 3, i_len, file);
 
@@ -240,9 +275,12 @@ MODEL *load_model(char *path) {
   model->keyframe_block = keyframe_block;
   model->sled_block = sled_block;
   model->bones = bones;
+  model->colliders = colliders;
+  model->collider_bone_links = bone_links;
   model->bone_mats = bone_mats;
   model->num_animations = a_len;
   model->num_bones = b_len;
+  model->num_colliders = col_len;
   model->num_indicies = i_len * 3;
 
   if (obj_mat != NULL) {

@@ -181,14 +181,10 @@ int main() {
                       }, 8};
   for (int i = 0; i < 8; i++) {
     glm_vec3_add(dude_hb.verts[i], camera_model_pos, dude_hb.verts[i]);
-    /*printf("%f %f %f\n",
-           dude_hb.verts[i][0],
-           dude_hb.verts[i][1],
-           dude_hb.verts[i][2]);*/
   }
   //fflush(stdout);
 
-  PHYS_OBJ dude1 = { 0, 0, dude_hb };
+  PHYS_OBJ dude1 = { 0, 0, 0, 0, dude_hb };
 
   vec3 temp = { 5.0, 10.0, -15.0 };
   COLLIDER dude2_hb = {{{ 0.20, 1.75, 0.1 },
@@ -209,7 +205,7 @@ int main() {
   }
   //fflush(stdout);
 
-  PHYS_OBJ dude2 = { 0, 0, dude2_hb };
+  PHYS_OBJ dude2 = { 0, 0, 0, 0, dude2_hb };
 
   int status = oct_tree_insert(tree, &dude1);
   if (status != 0) {
