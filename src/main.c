@@ -182,11 +182,8 @@ int main() {
   for (int i = 0; i < 8; i++) {
     glm_vec3_add(dude_hb.verts[i], camera_model_pos, dude_hb.verts[i]);
   }
-  //fflush(stdout);
 
-  PHYS_OBJ dude1 = { 0, 0, 0, 0, dude_hb };
-
-  vec3 temp = { 5.0, 10.0, -15.0 };
+  /*vec3 temp = { 5.0, 10.0, -15.0 };
   COLLIDER dude2_hb = {{{ 0.20, 1.75, 0.1 },
                        { 0.20, 1.75, -0.1 },
                        { -0.20, 1.75, 0.1 },
@@ -198,24 +195,17 @@ int main() {
                       }, 8};
   for (int i = 0; i < 8; i++) {
     glm_vec3_add(dude2_hb.verts[i], temp, dude2_hb.verts[i]);
-    /*printf("%f %f %f\n",
-           dude2_hb.verts[i][0],
-           dude2_hb.verts[i][1],
-           dude2_hb.verts[i][2]);*/
-  }
-  //fflush(stdout);
+  }*/
 
-  PHYS_OBJ dude2 = { 0, 0, 0, 0, dude2_hb };
-
-  int status = oct_tree_insert(tree, &dude1);
+  int status = oct_tree_insert(tree, &dude_hb, dude, 0);
   if (status != 0) {
     printf("Failed to insert dude1\n");
   }
 
-  status = oct_tree_insert(tree, &dude2);
+  /*status = oct_tree_insert(tree, &dude2_hb, 0);
   if (status != 0) {
     printf("Failed to insert dude2\n");
-  }
+  }*/
 
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;
