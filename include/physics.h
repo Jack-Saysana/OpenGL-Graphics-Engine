@@ -27,14 +27,14 @@ typedef enum {
 
 typedef struct entity {
   MODEL *model;
+  size_t *tree_offsets;
   mat4 (*bone_mats)[3];
   mat4 model_mat;
 } ENTITY;
 
 typedef struct physics_object {
   ENTITY *entity;
-  COLLIDER *collider;
-  size_t model_offset;
+  size_t collider_offset;
   size_t node_offset;
   size_t next_offset;
   size_t prev_offset;
@@ -72,8 +72,7 @@ vec3 NEG_Z = { 0.0, 0.0, -1.0 };
 // FRONT FACING
 
 OCT_TREE *init_tree();
-int oct_tree_insert(OCT_TREE *tree, COLLIDER *obj, ENTITY *entity,
-                    size_t model_offset);
+int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 int oct_tree_delete(OCT_TREE *tree, size_t node_offset, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
@@ -86,8 +85,8 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest);
 int init_node(OCT_TREE *tree, OCT_NODE *parent);
 int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
-int append_list(OCT_TREE *tree, size_t node_offset, COLLIDER *obj,
-                ENTITY *entity, size_t model_offset);
+int append_list(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
+                size_t collider_offset);
 OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *ebj_extents,
                      float *oct_len);
 int max_dot(COLLIDER *a, vec3 dir);

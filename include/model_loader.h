@@ -43,6 +43,7 @@ typedef struct vbo {
 
 typedef struct entity {
   MODEL *model;
+  size_t *tree_offsets;
   mat4 (*bone_mats)[3];
   mat4 model_mat;
 } ENTITY;

@@ -10,11 +10,20 @@ ENTITY *init_entity(MODEL *model) {
     return NULL;
   }
 
-  ent->model = model;
+  if (model->num_colliders > 0) {
+    ent->tree_offsets = malloc(sizeof(size_t) * model->num_colliders);
+    if (ent->tree_offsets == NULL) {
+      free(ent);
+      return NULL;
+    }
+  } else {
+    ent->tree_offsets = NULL;
+  }
 
   if (model->num_bones > 0) {
     ent->bone_mats = malloc(sizeof(mat4) * 3 * model->num_bones);
     if (ent->bone_mats == NULL) {
+      free(ent->tree_offsets);
       free(ent);
       return NULL;
     }
@@ -23,6 +32,8 @@ ENTITY *init_entity(MODEL *model) {
   } else {
     ent->bone_mats = NULL;
   }
+
+  ent->model = model;
 
   glm_mat4_identity(ent->model_mat);
 
@@ -90,7 +101,12 @@ void free_entity(ENTITY *entity) {
   if (entity->model->ref_count > 0) {
     entity->model->ref_count--;
   }
+  if (entity->tree_offsets) {
+    free(entity->tree_offsets);
+  }
+  if (entity->bone_mats) {
+    free(entity->bone_mats);
+  }
 
-  free(entity->bone_mats);
   free(entity);
 }

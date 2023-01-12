@@ -191,15 +191,14 @@ int main() {
     glm_vec3_add(dude_hb.verts[i], camera_model_pos, dude_hb.verts[i]);
   }
 
-  int status = oct_tree_insert(tree, &dude_hb, player, 0);
+  /* Experimental, never directly modify model's colliders */
+  dude->colliders[0] = dude_hb;
+  /* --- */
+
+  int status = oct_tree_insert(tree, player, 0);
   if (status != 0) {
     printf("Failed to insert dude1\n");
   }
-
-  /*status = oct_tree_insert(tree, &dude2_hb, 0);
-  if (status != 0) {
-    printf("Failed to insert dude2\n");
-  }*/
 
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;

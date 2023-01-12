@@ -222,7 +222,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
         status = double_buffer((void **) &bones, &b_buff_len, sizeof(BONE));
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 'b' &&
-               cur_line[3] == ' ') {
+               cur_line[2] == ' ') {
       COLLIDER collider;
       sscanf(cur_line, "hb %d %d %f %f %f \
                                  %f %f %f \
