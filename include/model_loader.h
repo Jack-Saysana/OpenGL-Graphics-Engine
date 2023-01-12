@@ -5,13 +5,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include <cglm/mat4.h>
+#include <model_str.h>
 
 #define VERTEX_BUFF_STARTING_LEN (10)
 #define NORMAL_BUFF_STARTING_LEN (10)
 #define TEX_COORD_BUFF_STARTING_LEN (10)
 #define VBO_STARTING_LEN (10)
 #define INDEX_BUFF_STARTING_LEN (20)
-#define NUM_PROPS (5)
 
 typedef enum {
   AMB = 0,
@@ -20,12 +20,6 @@ typedef enum {
   SPEC_EXPONENT = 3,
   BUMP = 4
 } TEX_TYPE;
-
-typedef enum chain_type {
-  LOCATION = 0,
-  ROTATION = 1,
-  SCALE = 2
-} C_TYPE;
 
 typedef struct material {
   uint64_t name;
@@ -39,36 +33,6 @@ typedef struct line_buffer {
   size_t len;
 } LINE_BUFFER;
 
-typedef struct collider {
-  vec3 verts[8];
-  unsigned int num_used;
-} COLLIDER;
-
-typedef struct bone {
-  float coords[3];
-  int parent;
-  int num_children;
-} BONE;
-
-typedef struct keyframe {
-  float offset[4];
-  int frame;
-} KEYFRAME;
-
-typedef struct keyframe_chain {
-  KEYFRAME *chain;
-  int *sled;
-  size_t num_frames;
-  C_TYPE type;
-  unsigned int b_id;
-} K_CHAIN;
-
-typedef struct animation {
-  K_CHAIN *keyframe_chains;
-  size_t num_chains;
-  size_t duration;
-} ANIMATION;
-
 typedef struct vbo {
   float vertex[3];
   float normal[3];
@@ -76,25 +40,6 @@ typedef struct vbo {
   int bone_ids[4];
   float weights[4];
 } VBO;
-
-typedef struct model {
-  ANIMATION *animations;
-  K_CHAIN *k_chain_block;
-  KEYFRAME *keyframe_block;
-  int *sled_block;
-  BONE *bones;
-  COLLIDER *colliders;
-  int *collider_bone_links;
-  size_t num_animations;
-  size_t num_bones;
-  size_t num_colliders;
-  unsigned int textures[NUM_PROPS];
-  unsigned int VAO;
-  unsigned int VBO;
-  unsigned int EBO;
-  unsigned int num_indicies;
-  unsigned int ref_count;
-} MODEL;
 
 typedef struct entity {
   MODEL *model;
