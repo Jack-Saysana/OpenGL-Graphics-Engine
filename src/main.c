@@ -69,6 +69,17 @@ int main() {
     return -1;
   }
 
+  unsigned int u_shader = init_shader_prog(
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/unanimated/shader.vs",
+      NULL,
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/unanimated/shader.fs"
+      );
+  if (u_shader == -1) {
+    printf("Error loading shaders\n");
+    glfwTerminate();
+    return -1;
+  }
+
   unsigned int b_shader = init_shader_prog(
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
       //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
@@ -94,7 +105,7 @@ int main() {
   }
 
   unsigned int test_shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/cell_shader/shader.vs",
+      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/unanimated/shader.vs",
       NULL,
       "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
       );
@@ -160,15 +171,12 @@ int main() {
     return -1;
   }
 
-  /*COLLIDER dude_hb = {{{ 0.20, 1.75, 0.1 },
-                       { 0.20, 1.75, -0.1 },
-                       { -0.20, 1.75, 0.1 },
-                       { -0.20, 1.75, -0.1 },
-                       { 0.20, 0.0, 0.1 },
-                       { 0.20, 0.0, -0.1 },
-                       { -0.20, 0.0, 0.1 },
-                       { -0.20, 0.0, -0.1}
-                      }, 8};*/
+  ENTITY *player = init_entity(dude);
+  if (player == NULL) {
+    printf("Unable to load player\n");
+    glfwTerminate();
+    return -1;
+  }
 
   COLLIDER dude_hb = {{{ 0.20, 1.75, 0.1 },
                        { 0.20, 1.75, -0.1 },
@@ -183,21 +191,7 @@ int main() {
     glm_vec3_add(dude_hb.verts[i], camera_model_pos, dude_hb.verts[i]);
   }
 
-  /*vec3 temp = { 5.0, 10.0, -15.0 };
-  COLLIDER dude2_hb = {{{ 0.20, 1.75, 0.1 },
-                       { 0.20, 1.75, -0.1 },
-                       { -0.20, 1.75, 0.1 },
-                       { -0.20, 1.75, -0.1 },
-                       { 0.20, 0.0, 0.1 },
-                       { 0.20, 0.0, -0.1 },
-                       { -0.20, 0.0, 0.1 },
-                       { -0.20, 0.0, -0.1}
-                      }, 8};
-  for (int i = 0; i < 8; i++) {
-    glm_vec3_add(dude2_hb.verts[i], temp, dude2_hb.verts[i]);
-  }*/
-
-  int status = oct_tree_insert(tree, &dude_hb, dude, 0);
+  int status = oct_tree_insert(tree, &dude_hb, player, 0);
   if (status != 0) {
     printf("Failed to insert dude1\n");
   }
@@ -215,6 +209,10 @@ int main() {
   glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
   glUseProgram(shader);
   glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1,
+                     GL_FALSE, (float *)projection);
+
+  glUseProgram(u_shader);
+  glUniformMatrix4fv(glGetUniformLocation(u_shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
   glUseProgram(b_shader);
@@ -259,7 +257,7 @@ int main() {
 
     keyboard_input(window);
 
-    animate(dude, 0, cur_frame);
+    animate(player, 0, cur_frame);
 
     // Render
 
@@ -297,68 +295,36 @@ int main() {
 
     /* Oct-Tree */
 
-    /* Bones */
+    /* Skeleton */
 
     glm_translate(model, camera_model_pos);
     glm_rotate_y(model, camera_model_rot, model);
 
     glUseProgram(b_shader);
-    for (int i = 0; i < dude->num_bones; i++) {
-      char var_name[50];
-      sprintf(var_name, "bones[%d].coords", i);
-      glUniform3f(glGetUniformLocation(b_shader, var_name),
-                  dude->bones[i].coords[0], dude->bones[i].coords[1],
-                  dude->bones[i].coords[2]);
-      sprintf(var_name, "bones[%d].parent", i);
-      glUniform1i(glGetUniformLocation(b_shader, var_name),
-                   dude->bones[i].parent);
-
-      sprintf(var_name, "bone_mats[%d]", i);
-      glUniformMatrix4fv(glGetUniformLocation(b_shader, var_name),
-                         3, GL_FALSE,
-                         (float *) dude->bone_mats[i]);
-    }
-    glUniformMatrix4fv(glGetUniformLocation(b_shader, "model"), 1,
-                       GL_FALSE, (float *) model);
     glUniformMatrix4fv(glGetUniformLocation(b_shader, "view"), 1,
                        GL_FALSE, (float *) view);
-    draw_bones(dude);
+
+    glm_mat4_copy(model, player->model_mat);
+    draw_skeleton(b_shader, player);
+
+    /* Skin */
 
     glUseProgram(shader);
-
-    for (int i = 0; i < dude->num_bones; i++) {
-      char var_name[50];
-      sprintf(var_name, "bones[%d].coords", i);
-      glUniform3f(glGetUniformLocation(shader, var_name),
-                  dude->bones[i].coords[0], dude->bones[i].coords[1],
-                  dude->bones[i].coords[2]);
-      sprintf(var_name, "bones[%d].parent", i);
-      glUniform1i(glGetUniformLocation(shader, var_name),
-                   dude->bones[i].parent);
-
-      sprintf(var_name, "bone_mats[%d]", i);
-      glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
-                         3, GL_FALSE,
-                         (float *) dude->bone_mats[i]);
-    }
-
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
                        GL_FALSE, (float *) view);
     glUniform3f(glGetUniformLocation(shader, "camera_pos"), camera_pos[0],
                 camera_pos[1], camera_pos[2]);
-
     if (draw) {
-      draw_model(shader, dude);
+      draw_entity(shader, player);
     }
 
-    /*glm_mat4_identity(model);
-    glm_scale_uni(model, 32.0);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-    draw_model(shader, cube);*/
+    /* Unanimated models */
+
+    glUseProgram(u_shader);
+    glUniformMatrix4fv(glGetUniformLocation(u_shader, "view"), 1,
+                       GL_FALSE, (float *) view);
+    glUniform3f(glGetUniformLocation(u_shader, "camera_pos"), camera_pos[0],
+                camera_pos[1], camera_pos[2]);
 
     glm_mat4_identity(model);
     glm_vec3_zero(translation);
@@ -366,9 +332,9 @@ int main() {
     translation[1] = 10.0;
     translation[2] = -15.0;
     glm_translate(model, translation);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+    glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
-    draw_model(shader, dude);
+    draw_model(u_shader, dude);
 
     glm_mat4_identity(model);
     glm_vec3_zero(translation);
@@ -376,9 +342,9 @@ int main() {
     translation[1] = 50.0;
     translation[2] = 50.0;
     glm_scale(model, translation);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+    glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
-    draw_model(shader, floor);
+    draw_model(u_shader, floor);
 
     /* Tests */
 
@@ -394,6 +360,8 @@ int main() {
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
+
+  free_entity(player);
 
   free_model(cube);
   free_model(test);

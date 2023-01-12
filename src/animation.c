@@ -1,21 +1,21 @@
 #include <animation.h>
 
-int animate(MODEL *model, unsigned int animation_index, unsigned int frame) {
-  if (model == NULL) {
-    printf("Invalid animated model\n");
+int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame) {
+  if (entity == NULL) {
+    printf("Invalid animated entity\n");
     return -1;
   }
 
-  if (animation_index >= model->num_animations) {
+  if (animation_index >= entity->model->num_animations) {
     printf("Invalid animation target\n");
     return -1;
   }
-  ANIMATION animation = model->animations[animation_index];
+  ANIMATION animation = entity->model->animations[animation_index];
 
-  for (int i = 0; i < model->num_bones; i++) {
-    glm_mat4_identity(model->bone_mats[i][0]);
-    glm_mat4_identity(model->bone_mats[i][1]);
-    glm_mat4_identity(model->bone_mats[i][2]);
+  for (int i = 0; i < entity->model->num_bones; i++) {
+    glm_mat4_identity(entity->bone_mats[i][0]);
+    glm_mat4_identity(entity->bone_mats[i][1]);
+    glm_mat4_identity(entity->bone_mats[i][2]);
   }
 
   for (int i = 0; i < animation.num_chains; i++) {
@@ -26,7 +26,7 @@ int animate(MODEL *model, unsigned int animation_index, unsigned int frame) {
     }
 
     if (prev != -1 && prev < cur_chain.num_frames - 1) {
-      calc_bone_mats(model->bone_mats, cur_chain.b_id, cur_chain.type,
+      calc_bone_mats(entity->bone_mats, cur_chain.b_id, cur_chain.type,
                      frame, cur_chain.chain + prev,
                      cur_chain.chain + (prev + 1));
     } else if (prev != -1 && cur_chain.type == ROTATION) {
@@ -36,16 +36,16 @@ int animate(MODEL *model, unsigned int animation_index, unsigned int frame) {
                     cur_chain.chain[prev].offset[2],
                     cur_chain.chain[prev].offset[3]);
       glm_quat_normalize(quat);
-      glm_quat_mat4(quat, model->bone_mats[cur_chain.b_id][cur_chain.type]);
+      glm_quat_mat4(quat, entity->bone_mats[cur_chain.b_id][cur_chain.type]);
     } else if (prev != -1) {
       vec3 offset = { cur_chain.chain[prev].offset[0],
                       cur_chain.chain[prev].offset[1],
                       cur_chain.chain[prev].offset[2] };
       if (cur_chain.type == LOCATION) {
-        glm_translate(model->bone_mats[cur_chain.b_id][cur_chain.type],
+        glm_translate(entity->bone_mats[cur_chain.b_id][cur_chain.type],
                       offset);
       } else {
-        glm_scale(model->bone_mats[cur_chain.b_id][cur_chain.type],
+        glm_scale(entity->bone_mats[cur_chain.b_id][cur_chain.type],
                   offset);
       }
     }

@@ -1,8 +1,8 @@
+#include <glad/glad.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <cglm/mat4.h>
-#include <cglm/quat.h>
-#include <cglm/affine.h>
+#include <cglm/vec3.h>
 
 #define NUM_PROPS (5)
 
@@ -11,6 +11,11 @@ typedef enum chain_type {
   ROTATION = 1,
   SCALE = 2
 } C_TYPE;
+
+typedef struct collider {
+  vec3 verts[8];
+  unsigned int num_used;
+} COLLIDER;
 
 typedef struct keyframe {
   float offset[4];
@@ -24,11 +29,6 @@ typedef struct keyframe_chain {
   C_TYPE type;
   unsigned int b_id;
 } K_CHAIN;
-
-typedef struct collider {
-  vec3 verts[8];
-  unsigned int num_used;
-} COLLIDER;
 
 typedef struct animation {
   K_CHAIN *keyframe_chains;
@@ -67,7 +67,9 @@ typedef struct entity {
   mat4 model_mat;
 } ENTITY;
 
-int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame);
-void calc_bone_mats(mat4 (*bone_mats)[3], unsigned int bone_id, C_TYPE type,
-                    unsigned int frame, KEYFRAME *prev, KEYFRAME *next);
-int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
+ENTITY *init_entity(MODEL *model);
+void draw_entity(unsigned int shader, ENTITY *entity);
+void draw_skeleton(unsigned int shader, ENTITY *entity);
+void draw_model(unsigned int shader, MODEL *model);
+void draw_bones(MODEL *model);
+void free_entity(ENTITY *entity);

@@ -89,17 +89,6 @@ MODEL *load_model(char *path) {
     return NULL;
   }
 
-  mat4 (*bone_mats)[3] = malloc(sizeof(mat4) * 3 * b_len);
-  if (bone_mats == NULL) {
-    fclose(file);
-    free(bones);
-    free(vertices);
-    free(indicies);
-    free(animations);
-    printf("Unable to allocate bone matrix buffer\n");
-    return NULL;
-  }
-
   MODEL *model = malloc(sizeof(MODEL));
   if (model == NULL) {
     fclose(file);
@@ -107,7 +96,6 @@ MODEL *load_model(char *path) {
     free(vertices);
     free(indicies);
     free(animations);
-    free(bone_mats);
     printf("Unable to allocate model\n");
     return NULL;
   }
@@ -120,7 +108,6 @@ MODEL *load_model(char *path) {
     free(vertices);
     free(indicies);
     free(animations);
-    free(bone_mats);
     free(model);
     printf("Unable to allocate keyframe chains\n");
     return NULL;
@@ -134,7 +121,6 @@ MODEL *load_model(char *path) {
     free(vertices);
     free(indicies);
     free(animations);
-    free(bone_mats);
     free(model);
     free(k_chain_block);
     printf("Unable to allocate keyframes\n");
@@ -149,7 +135,6 @@ MODEL *load_model(char *path) {
     free(vertices);
     free(indicies);
     free(animations);
-    free(bone_mats);
     free(model);
     free(k_chain_block);
     free(keyframe_block);
@@ -164,7 +149,6 @@ MODEL *load_model(char *path) {
     free(vertices);
     free(indicies);
     free(animations);
-    free(bone_mats);
     free(model);
     free(k_chain_block);
     free(keyframe_block);
@@ -179,7 +163,6 @@ MODEL *load_model(char *path) {
     free(vertices);
     free(indicies);
     free(animations);
-    free(bone_mats);
     free(model);
     free(k_chain_block);
     free(keyframe_block);
@@ -277,11 +260,11 @@ MODEL *load_model(char *path) {
   model->bones = bones;
   model->colliders = colliders;
   model->collider_bone_links = bone_links;
-  model->bone_mats = bone_mats;
   model->num_animations = a_len;
   model->num_bones = b_len;
   model->num_colliders = col_len;
   model->num_indicies = i_len * 3;
+  model->ref_count = 0;
 
   if (obj_mat != NULL) {
     for (int i = 0; i < NUM_PROPS; i++) {

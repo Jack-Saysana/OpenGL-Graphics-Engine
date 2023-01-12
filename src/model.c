@@ -1,6 +1,10 @@
 #include <model.h>
 
 void draw_model(unsigned int shader, MODEL *model) {
+  if (model == NULL) {
+    return;
+  }
+
   int uniform_loc = -1;
   char *uniform_names[5] = { "material.amb_map", "material.diff_map",
                              "material.spec_map", "material.spec_exponent",
@@ -21,6 +25,10 @@ void draw_model(unsigned int shader, MODEL *model) {
 }
 
 void draw_bones(MODEL *model) {
+  if (model == NULL) {
+    return;
+  }
+
   unsigned int VAO;
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
@@ -31,16 +39,12 @@ void draw_bones(MODEL *model) {
   } B_VBO;
 
   B_VBO *bone_data = malloc(sizeof(B_VBO) * model->num_bones);
-  //printf("%lld\n", model->num_bones);
   for (int i = 0; i < model->num_bones; i++) {
     bone_data[i].coords[0] = model->bones[i].coords[0];
     bone_data[i].coords[1] = model->bones[i].coords[1];
     bone_data[i].coords[2] = model->bones[i].coords[2];
     bone_data[i].bone_id = i;
-    //printf("[%f %f %f][%d]\n", bone_data[i].coords[0], bone_data[i].coords[1],
-    //       bone_data[i].coords[2], bone_data[i].bone_id);
   }
-  //printf("\n");
 
   unsigned int VBO;
   glGenBuffers(1, &VBO);
@@ -73,6 +77,5 @@ void free_model(MODEL *model) {
   free(model->bones);
   free(model->colliders);
   free(model->collider_bone_links);
-  free(model->bone_mats);
   free(model);
 }

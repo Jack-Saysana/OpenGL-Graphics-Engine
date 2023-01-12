@@ -52,7 +52,6 @@ typedef struct model {
   BONE *bones;
   COLLIDER *colliders;
   int *collider_bone_links;
-  mat4 (*bone_mats)[3];
   size_t num_animations;
   size_t num_bones;
   size_t num_colliders;
@@ -61,7 +60,14 @@ typedef struct model {
   unsigned int VBO;
   unsigned int EBO;
   unsigned int num_indicies;
+  unsigned int ref_count;
 } MODEL;
+
+typedef struct entity {
+  MODEL *model;
+  mat4 (*bone_mats)[3];
+  mat4 model_mat;
+} ENTITY;
 
 typedef struct physics_object {
   MODEL *model;
@@ -103,15 +109,16 @@ void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
 
 unsigned int init_shader_prog(char *, char *, char *);
 MODEL *load_model(char *path);
-int animate(MODEL *model, unsigned int animation_index, unsigned int frame);
-void draw_bones(MODEL *model);
+ENTITY *init_entity(MODEL *model);
+int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame);
+void draw_entity(unsigned int shader, ENTITY *entity);
+void draw_skeleton(unsigned int shader, ENTITY *entity);
 void draw_model(unsigned int shader, MODEL *model);
 void free_model(MODEL *model);
-
-
+void free_entity(ENTITY *entity);
 
 OCT_TREE *init_tree();
-int oct_tree_insert(OCT_TREE *tree, COLLIDER *obj, MODEL *model,
+int oct_tree_insert(OCT_TREE *tree, COLLIDER *obj, ENTITY *entity,
                     size_t model_offset);
 int oct_tree_delete(OCT_TREE *tree, size_t node_offset, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);

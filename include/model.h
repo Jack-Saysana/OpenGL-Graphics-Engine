@@ -57,7 +57,6 @@ typedef struct model {
   BONE *bones;
   COLLIDER *colliders;
   int *collider_bone_links;
-  mat4 (*bone_mats)[3];
   size_t num_animations;
   size_t num_bones;
   size_t num_colliders;
@@ -66,7 +65,14 @@ typedef struct model {
   unsigned int VBO;
   unsigned int EBO;
   unsigned int num_indicies;
+  unsigned int ref_count;
 } MODEL;
+
+typedef struct entity {
+  MODEL *model;
+  mat4 (*bone_mats)[3];
+  mat4 model_mat;
+} ENTITY;
 
 void draw_model(unsigned int shader, MODEL *model);
 void draw_bones(MODEL *model);
