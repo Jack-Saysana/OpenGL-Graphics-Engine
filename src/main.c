@@ -1,5 +1,19 @@
 #include <main.h>
 
+
+#define LINUX (1)
+#define LAPTOP (0)
+#define PC (0)
+
+#if LINUX == 1
+#define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
+#elif LAPTOP == 1
+#define DIR "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine"
+#else
+#define DIR "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine"
+#endif
+
+
 vec3 up = { 0.0, 1.0, 0.0 };
 
 float delta_time = 0.0;
@@ -55,13 +69,9 @@ int main() {
   glViewport(0, 0, 640, 480);
 
   unsigned int shader = init_shader_prog(
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.vs",
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/cell_shader/shader.vs",
+      DIR"/src/shaders/cell_shader/shader.vs",
       NULL,
-      //"C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/cell_shader/shader.fs"
+      DIR"/src/shaders/cell_shader/shader.fs"
       );
   if (shader == -1) {
     printf("Error loading shaders\n");
@@ -70,9 +80,9 @@ int main() {
   }
 
   unsigned int u_shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/unanimated/shader.vs",
+      DIR"/src/shaders/unanimated/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/unanimated/shader.fs"
+      DIR"/src/shaders/unanimated/shader.fs"
       );
   if (u_shader == -1) {
     printf("Error loading shaders\n");
@@ -81,11 +91,9 @@ int main() {
   }
 
   unsigned int b_shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.vs",
+      DIR"/src/shaders/bone/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/src/shaders/bone/shader.fs"
+      DIR"/src/shaders/bone/shader.fs"
       );
   if (b_shader == -1) {
     printf("Error loading bone shaders\n");
@@ -94,9 +102,9 @@ int main() {
   }
 
   unsigned int origin_shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/origin/shader.vs",
+      DIR"/src/shaders/origin/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/origin/shader.fs"
+      DIR"/src/shaders/origin/shader.fs"
       );
   if (origin_shader == -1) {
     printf("Error loading origin shaders\n");
@@ -105,9 +113,9 @@ int main() {
   }
 
   unsigned int test_shader = init_shader_prog(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/unanimated/shader.vs",
+      DIR"/src/shaders/unanimated/shader.vs",
       NULL,
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/src/shaders/test/shader.fs"
+      DIR"/src/shaders/test/shader.fs"
       );
   if (test_shader == -1) {
     printf("Error loading test shaders\n");
@@ -116,8 +124,7 @@ int main() {
   }
 
   MODEL *cube = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cube/cube.obj"
+      DIR"/resources/cube/cube.obj"
       );
   if (cube == NULL) {
     printf("Unable to load model\n");
@@ -126,8 +133,7 @@ int main() {
   }
 
   MODEL *cross = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/cross/cross.obj"
+      DIR"/resources/cross/cross.obj"
       );
   if (cross == NULL) {
     printf("Unable to load model\n");
@@ -136,8 +142,7 @@ int main() {
   }
 
   MODEL *dude = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/low_poly_new/low_poly_new.obj"
+      DIR"/resources/low_poly_new/low_poly_new.obj"
       );
   if (dude == NULL) {
     printf("Unable to load model\n");
@@ -146,8 +151,7 @@ int main() {
   }
 
   MODEL *test = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
-      //"C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine/resources/test/test.obj"
+      DIR"/resources/test/test.obj"
       );
   if (test == NULL) {
     printf("Unable to load model\n");
@@ -156,7 +160,7 @@ int main() {
   }
 
   MODEL *floor = load_model(
-      "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine/resources/floor/floor.obj"
+      DIR"/resources/floor/floor.obj"
       );
   if (floor == NULL) {
     printf("Unable to load model\n");
