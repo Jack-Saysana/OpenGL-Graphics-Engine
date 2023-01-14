@@ -5,7 +5,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include <cglm/mat4.h>
-#include <model_str.h>
+#include <entity_str.h>
 
 #define VERTEX_BUFF_STARTING_LEN (10)
 #define NORMAL_BUFF_STARTING_LEN (10)
@@ -40,13 +40,6 @@ typedef struct vbo {
   int bone_ids[4];
   float weights[4];
 } VBO;
-
-typedef struct entity {
-  MODEL *model;
-  size_t *tree_offsets;
-  mat4 (*bone_mats)[3];
-  mat4 model_mat;
-} ENTITY;
 
 MODEL *load_model(char *);
 unsigned int genTextureId(char *tex_path);

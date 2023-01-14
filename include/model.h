@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cglm/mat4.h>
-#include <model_str.h>
+#include <entity_str.h>
 
 typedef enum {
   AMB = 0,
@@ -11,13 +11,6 @@ typedef enum {
   SPEC_EXPONENT = 3,
   BUMP = 4
 } TEX_TYPE;
-
-typedef struct entity {
-  MODEL *model;
-  size_t *tree_offsets;
-  mat4 (*bone_mats)[3];
-  mat4 model_mat;
-} ENTITY;
 
 void draw_model(unsigned int shader, MODEL *model);
 void draw_bones(MODEL *model);

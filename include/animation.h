@@ -3,14 +3,7 @@
 #include <cglm/mat4.h>
 #include <cglm/quat.h>
 #include <cglm/affine.h>
-#include <model_str.h>
-
-typedef struct entity {
-  MODEL *model;
-  size_t *tree_offsets;
-  mat4 (*bone_mats)[3];
-  mat4 model_mat;
-} ENTITY;
+#include <entity_str.h>
 
 int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame);
 void calc_bone_mats(mat4 (*bone_mats)[3], unsigned int bone_id, C_TYPE type,

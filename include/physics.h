@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <cglm/vec3.h>
-#include <model_str.h>
+#include <entity_str.h>
 
 #define MAX_DEPTH (5)
 #define OCT_TREE_STARTING_LEN (25)
@@ -24,13 +24,6 @@ typedef enum {
   negX_negY_negZ = 7,
   MULTIPLE = -1
 } OCTANT;
-
-typedef struct entity {
-  MODEL *model;
-  size_t *tree_offsets;
-  mat4 (*bone_mats)[3];
-  mat4 model_mat;
-} ENTITY;
 
 typedef struct physics_object {
   ENTITY *entity;

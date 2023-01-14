@@ -5,14 +5,7 @@
 #include <cglm/mat4.h>
 #include <math.h>
 #include <stdlib.h>
-#include <model_str.h>
-
-typedef struct entity {
-  MODEL *model;
-  size_t *tree_offsets;
-  mat4 (*bone_mats)[3];
-  mat4 model_mat;
-} ENTITY;
+#include <entity_str.h>
 
 typedef struct physics_object {
   ENTITY *entity;

@@ -1,16 +1,18 @@
 #include <main.h>
 
 
-#define LINUX (1)
+#define LINUX (0)
 #define LAPTOP (0)
-#define PC (0)
+#define PC (1)
 
 #if LINUX == 1
 #define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
 #elif LAPTOP == 1
 #define DIR "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine"
-#else
+#elif PC == 1
 #define DIR "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine"
+#else
+#define DIR ""
 #endif
 
 
