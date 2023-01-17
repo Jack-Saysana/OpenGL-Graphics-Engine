@@ -1,4 +1,4 @@
-#version 460 core
+#version 430 core
 
 #define LOCATION (0)
 #define ROTATION (1)

@@ -1,4 +1,4 @@
-#version 460 core
+#version 430 core
 
 #define LOCATION (0)
 #define ROTATION (1)
@@ -15,8 +15,9 @@ struct BONE {
   int parent;
 };
 
-uniform BONE bones[26];
-uniform mat4 bone_mats[26][3];
+//uniform BONE bones[26];
+//uniform mat4 bone_mats[26][3];
+uniform mat4 bone_mats[50];
 
 uniform mat4 model;
 uniform mat4 view;
@@ -28,7 +29,7 @@ out vec2 tex_coords;
 out vec3 normal;
 out vec3 view_pos;
 
-mat4 hierarchy_transform(int id);
+//mat4 hierarchy_transform(int id);
 vec4 get_bone_transformation();
 
 void main() {
@@ -51,7 +52,7 @@ vec4 get_bone_transformation() {
   int i = 0;
   int cur = in_bone_ids[i];
   while (i < 4 && cur != -1) {
-    total += (in_weights[i] * hierarchy_transform(cur) * vec4(in_pos, 1.0));
+    total += (in_weights[i] * bone_mats[cur]/*hierarchy_transform(cur)*/ * vec4(in_pos, 1.0));
     i++;
     cur = in_bone_ids[i];
   }
@@ -59,7 +60,7 @@ vec4 get_bone_transformation() {
   return total;
 }
 
-mat4 hierarchy_transform(int id) {
+/*mat4 hierarchy_transform(int id) {
   int cur = id;
   mat4 transformation = mat4(vec4(1.0, 0.0, 0.0, 0.0),
                              vec4(0.0, 1.0, 0.0, 0.0),
@@ -84,4 +85,4 @@ mat4 hierarchy_transform(int id) {
   }
 
   return transformation;
-}
+}*/

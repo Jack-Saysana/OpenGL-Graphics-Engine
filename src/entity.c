@@ -28,9 +28,18 @@ ENTITY *init_entity(MODEL *model) {
       return NULL;
     }
 
+    ent->final_b_mats = malloc(sizeof(mat4) * model->num_bones);
+    if (ent->final_b_mats == NULL) {
+      free(ent->tree_offsets);
+      free(ent->bone_mats);
+      free(ent);
+      return NULL;
+    }
+
     model->ref_count++;
   } else {
     ent->bone_mats = NULL;
+    ent->final_b_mats = NULL;
   }
 
   ent->model = model;
@@ -46,8 +55,9 @@ void draw_entity(unsigned int shader, ENTITY *entity) {
   }
 
   glUseProgram(shader);
+  char var_name[50];
   for (int i = 0; i < entity->model->num_bones; i++) {
-    char var_name[50];
+    /*char var_name[50];
     sprintf(var_name, "bones[%d].coords", i);
     glUniform3f(glGetUniformLocation(shader, var_name),
                 entity->model->bones[i].coords[0],
@@ -60,7 +70,10 @@ void draw_entity(unsigned int shader, ENTITY *entity) {
     sprintf(var_name, "bone_mats[%d]", i);
     glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
                        3, GL_FALSE,
-                       (float *) entity->bone_mats[i]);
+                       (float *) entity->bone_mats[i]);*/
+    sprintf(var_name, "bone_mats[%d]", i);
+    glUniformMatrix4fv(glGetUniformLocation(shader, var_name), 1, GL_FALSE,
+                       (float *) entity->final_b_mats[i]);
   }
 
   glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
@@ -75,8 +88,9 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
   }
 
   glUseProgram(shader);
+  char var_name[50];
   for (int i = 0; i < entity->model->num_bones; i++) {
-    char var_name[50];
+    /*char var_name[50];
     sprintf(var_name, "bones[%d].coords", i);
     glUniform3f(glGetUniformLocation(shader, var_name),
                 entity->model->bones[i].coords[0],
@@ -89,7 +103,10 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
     sprintf(var_name, "bone_mats[%d]", i);
     glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
                        3, GL_FALSE,
-                       (float *) entity->bone_mats[i]);
+                       (float *) entity->bone_mats[i]);*/
+    sprintf(var_name, "bone_mats[%d]", i);
+    glUniformMatrix4fv(glGetUniformLocation(shader, var_name), 1, GL_FALSE,
+                       (float *) entity->final_b_mats[i]);
   }
   glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
                      GL_FALSE, (float *) entity->model_mat);
@@ -106,6 +123,7 @@ void free_entity(ENTITY *entity) {
   }
   if (entity->bone_mats) {
     free(entity->bone_mats);
+    free(entity->final_b_mats);
   }
 
   free(entity);

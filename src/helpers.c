@@ -81,7 +81,7 @@ LINE_BUFFER *get_lines(char *path) {
   int status = 0;
   FILE *file = fopen(path, "r");
   if (file == NULL) {
-    printf("Unable to open object file\n");
+    printf("Unable to open file at path: %s\n", path);
     return NULL;
   }
 

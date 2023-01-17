@@ -1,4 +1,4 @@
-#version 460 core
+#version 430 core 
 
 #define LOCATION (0)
 #define ROTATION (1)
@@ -12,8 +12,9 @@ struct BONE {
   int parent;
 };
 
-uniform BONE bones[26];
-uniform mat4 bone_mats[26][3];
+//uniform BONE bones[26];
+//uniform mat4 bone_mats[26][3];
+uniform mat4 bone_mats[50];
 
 uniform mat4 model;
 uniform mat4 view;
@@ -21,13 +22,13 @@ uniform mat4 projection;
 
 out vec3 test_col;
 
-mat4 parent_transformation();
-int equiv_mats(mat4 a, mat4 b);
+//mat4 parent_transformation();
+//int equiv_mats(mat4 a, mat4 b);
 
 void main() {
-  mat4 transformation = bone_mats[bone_id][LOCATION] /** bone_mats[bone_id][ROTATION]*/ *
-                        bone_mats[bone_id][SCALE];
-  transformation = parent_transformation() * transformation;
+  //mat4 transformation = bone_mats[bone_id][LOCATION] /** bone_mats[bone_id][ROTATION]*/ *
+  //                      bone_mats[bone_id][SCALE];
+  //transformation = parent_transformation() * transformation;
 
   mat4 idy = mat4(vec4(1.0, 0.0, 0.0, 0.0),
                   vec4(0.0, 1.0, 0.0, 0.0),
@@ -41,10 +42,10 @@ void main() {
 
   test_col = vec3(0.0, 0.0, 1.0);
 
-  gl_Position = projection * view * model * transformation * vec4(in_pos, 1.0);
+  gl_Position = projection * view * model * bone_mats[bone_id] * vec4(in_pos, 1.0);
 }
 
-int equiv_mats(mat4 a, mat4 b) {
+/*int equiv_mats(mat4 a, mat4 b) {
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       if (a[i][j] != b[i][j]) {
@@ -81,4 +82,4 @@ mat4 parent_transformation() {
   }
 
   return transformation;
-}
+}*/

@@ -31,7 +31,7 @@ typedef struct animation {
 } ANIMATION;
 
 typedef struct bone {
-  float coords[3];
+  vec3 coords;
   int parent;
   int num_children;
 } BONE;
@@ -59,5 +59,6 @@ typedef struct entity {
   MODEL *model;
   size_t *tree_offsets;
   mat4 (*bone_mats)[3];
+  mat4 *final_b_mats;
   mat4 model_mat;
 } ENTITY;

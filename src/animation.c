@@ -51,6 +51,32 @@ int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame) {
     }
   }
 
+  int parent = -1;
+  mat4 (*bone_mats)[3] = entity->bone_mats;
+  mat4 *final_mats = entity->final_b_mats;
+
+  vec3 temp = { 0.0, 0.0, 0.0 };
+  mat4 to_bone = GLM_MAT4_IDENTITY_INIT;
+  mat4 from_bone = GLM_MAT4_IDENTITY_INIT;
+  for (size_t i = 0; i < entity->model->num_bones; i++) {
+    parent = entity->model->bones[i].parent;
+    glm_vec3_negate_to(entity->model->bones[i].coords, temp);
+    glm_translate(to_bone, entity->model->bones[i].coords);
+    glm_translate(from_bone, temp);
+
+    glm_mat4_mul(from_bone, bone_mats[i][SCALE], final_mats[i]);
+    glm_mat4_mul(bone_mats[i][ROTATION], final_mats[i], final_mats[i]);
+    glm_mat4_mul(to_bone, final_mats[i], final_mats[i]);
+    glm_mat4_mul(bone_mats[i][LOCATION], final_mats[i], final_mats[i]);
+
+    glm_mat4_identity(to_bone);
+    glm_mat4_identity(from_bone);
+
+    if (parent != -1) {
+      glm_mat4_mul(final_mats[parent], final_mats[i], final_mats[i]);
+    }
+  }
+
   return 0;
 }
 

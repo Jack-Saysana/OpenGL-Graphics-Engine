@@ -1,9 +1,9 @@
 #include <main.h>
 
 
-#define LINUX (0)
+#define LINUX (1)
 #define LAPTOP (0)
-#define PC (1)
+#define PC (0)
 
 #if LINUX == 1
 #define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
@@ -47,6 +47,9 @@ int main() {
   if (!glfwInit()) {
     return -1;
   }
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   window = glfwCreateWindow(640, 480, "Jack", NULL, NULL);
   if (window == NULL) {
@@ -54,6 +57,7 @@ int main() {
     glfwTerminate();
     return -1;
   }
+
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
   glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
@@ -129,16 +133,7 @@ int main() {
       DIR"/resources/cube/cube.obj"
       );
   if (cube == NULL) {
-    printf("Unable to load model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *cross = load_model(
-      DIR"/resources/cross/cross.obj"
-      );
-  if (cross == NULL) {
-    printf("Unable to load model\n");
+    printf("Unable to load cube model\n");
     glfwTerminate();
     return -1;
   }
@@ -147,7 +142,7 @@ int main() {
       DIR"/resources/low_poly_new/low_poly_new.obj"
       );
   if (dude == NULL) {
-    printf("Unable to load model\n");
+    printf("Unable to load dude model\n");
     glfwTerminate();
     return -1;
   }
@@ -156,7 +151,7 @@ int main() {
       DIR"/resources/test/test.obj"
       );
   if (test == NULL) {
-    printf("Unable to load model\n");
+    printf("Unable to load test model\n");
     glfwTerminate();
     return -1;
   }
@@ -165,7 +160,7 @@ int main() {
       DIR"/resources/floor/floor.obj"
       );
   if (floor == NULL) {
-    printf("Unable to load model\n");
+    printf("Unable to load floor model\n");
     glfwTerminate();
     return -1;
   }
@@ -370,7 +365,6 @@ int main() {
 
   free_model(cube);
   free_model(test);
-  free_model(cross);
   free_model(dude);
 
   free_oct_tree(tree);
