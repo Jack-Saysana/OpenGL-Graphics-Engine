@@ -40,17 +40,25 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     return -1;
   }
 
-  COLLIDER *obj = entity->model->colliders + collider_offset;
+  COLLIDER obj;
+  obj.num_used = entity->model->colliders[collider_offset].num_used;
+  int bone = entity->model->collider_bone_links[collider_offset];
+  for (unsigned int i = 0; i < obj.num_used; i++) {
+    glm_mat4_mulv3(entity->final_b_mats[bone],
+                   entity->model->colliders[collider_offset].verts[i], 1.0,
+                   obj.verts[i]);
+    glm_mat4_mulv3(entity->model_mat, obj.verts[i], 1.0, obj.verts[i]);
+  }
 
   vec3 max_extent = { 16.0, 16.0, 16.0 };
   vec3 min_extent = { -16.0, -16.0, -16.0 };
   float max_extents[6];
-  max_extents[0] = obj->verts[max_dot(obj, X)][0];
-  max_extents[1] = obj->verts[max_dot(obj, NEG_X)][0];
-  max_extents[2] = obj->verts[max_dot(obj, Y)][1];
-  max_extents[3] = obj->verts[max_dot(obj, NEG_Y)][1];
-  max_extents[4] = obj->verts[max_dot(obj, Z)][2];
-  max_extents[5] = obj->verts[max_dot(obj, NEG_Z)][2];
+  max_extents[0] = obj.verts[max_dot(&obj, X)][0];
+  max_extents[1] = obj.verts[max_dot(&obj, NEG_X)][0];
+  max_extents[2] = obj.verts[max_dot(&obj, Y)][1];
+  max_extents[3] = obj.verts[max_dot(&obj, NEG_Y)][1];
+  max_extents[4] = obj.verts[max_dot(&obj, Z)][2];
+  max_extents[5] = obj.verts[max_dot(&obj, NEG_Z)][2];
   float oct_len = 16.0;
 
   OCTANT cur_oct = MULTIPLE;
@@ -94,14 +102,14 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   return 0;
 }
 
-int oct_tree_delete(OCT_TREE *tree, size_t node_offset, size_t obj_offset) {
-  if (tree == NULL || node_offset > tree->node_buff_len ||
-      obj_offset > tree->data_buff_len) {
+int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
+  if (tree == NULL || obj_offset > tree->data_buff_len) {
     printf("Invalid deletion input\n");
     return -1;
   }
 
-  OCT_NODE *node = tree->node_buffer + node_offset;
+  OCT_NODE *node = tree->node_buffer +
+                   tree->data_buffer[obj_offset].node_offset;
   if (node->empty) {
     return 0;
   }

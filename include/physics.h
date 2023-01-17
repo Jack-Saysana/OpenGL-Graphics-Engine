@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <cglm/vec3.h>
+#include <cglm/mat4.h>
 #include <entity_str.h>
 
 #define MAX_DEPTH (5)
@@ -66,7 +67,7 @@ vec3 NEG_Z = { 0.0, 0.0, -1.0 };
 
 OCT_TREE *init_tree();
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
-int oct_tree_delete(OCT_TREE *tree, size_t node_offset, size_t obj_offset);
+int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
 int collision_check(COLLIDER *a, COLLIDER *b);

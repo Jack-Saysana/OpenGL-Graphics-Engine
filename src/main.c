@@ -1,6 +1,5 @@
 #include <main.h>
 
-
 #define LINUX (1)
 #define LAPTOP (0)
 #define PC (0)
@@ -188,14 +187,11 @@ int main() {
                        { -0.20, 0.0, 0.1 },
                        { -0.20, 0.0, -0.1}
                       }, 8};
-  for (int i = 0; i < 8; i++) {
-    glm_vec3_add(dude_hb.verts[i], camera_model_pos, dude_hb.verts[i]);
-  }
 
-  /* Experimental, never directly modify model's colliders */
   dude->colliders[0] = dude_hb;
-  /* --- */
 
+  glm_translate(player->model_mat, camera_model_pos);
+  glm_rotate_y(player->model_mat, camera_model_rot, player->model_mat);
   int status = oct_tree_insert(tree, player, 0);
   if (status != 0) {
     printf("Failed to insert dude1\n");
@@ -231,6 +227,8 @@ int main() {
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+  /* Origin VAO setup */
+
   float point[] = { 0.0, 0.0, 0.0 };
   unsigned int pt_VAO;
   glGenVertexArrays(1, &pt_VAO);
@@ -257,7 +255,14 @@ int main() {
 
     keyboard_input(window);
 
+    /* Animation */
+
     animate(player, 0, cur_frame);
+
+    /* Collision */
+
+    oct_tree_delete(tree, player->tree_offsets[0]);
+    oct_tree_insert(tree, player, 0);
 
     // Render
 
@@ -355,7 +360,7 @@ int main() {
 
     vec3 pos = { 0.0, 0.0, 0.0 };
     draw_oct_tree(cube, tree, pos, 16.0, test_shader, 0, 1);
-
+    
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -366,6 +371,7 @@ int main() {
   free_model(cube);
   free_model(test);
   free_model(dude);
+  free_model(floor);
 
   free_oct_tree(tree);
 
@@ -396,11 +402,7 @@ void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
   vec3 temp = { 0.0, 0.0, 0.0 };
   if (tree->node_buffer[offset].next_offset != -1 && depth < 5) {
     for (int i = 0; i < 8; i++) {
-      if (i == 0 || i == 7) {
-        glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 0.0, 0.0);
-      } else {
-        glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 1.0, 0.0);
-      }
+      glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 1.0, 0.0);
       glm_vec3_scale(quad_translate[i], scale / 2.0, temp);
       glm_vec3_add(pos, temp, temp);
       draw_oct_tree(cube, tree, temp, scale / 2.0, shader,

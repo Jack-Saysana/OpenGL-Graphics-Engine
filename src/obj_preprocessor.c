@@ -2,6 +2,10 @@
 
 int preprocess_lines(LINE_BUFFER *lb) {
   char *bin_path = malloc(strlen(lb->dir) + strlen(lb->filename) + 6);
+  if (bin_path == NULL) {
+    printf("Unable to allocate line buffer path\n");
+    return -1;
+  }
   sprintf(bin_path, "%s/%s.bin", lb->dir, lb->filename);
 
   printf("%s, %s\n", lb->dir, lb->filename);
@@ -10,9 +14,11 @@ int preprocess_lines(LINE_BUFFER *lb) {
   FILE *file = fopen(bin_path, "wb");
   if (file == NULL) {
     printf("Unable to open preprocessed file\n");
+    free(bin_path);
     free_line_buffer(lb);
     return -1;
   }
+  free(bin_path);
 
   bones = malloc(sizeof(BONE) * BUFF_STARTING_LEN);
   if (bones == NULL) {
