@@ -1,6 +1,6 @@
 #version 430 core
 
-in vec3 test_col;
+uniform vec3 test_col;
 
 out vec4 FragColor;
 

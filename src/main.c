@@ -87,7 +87,7 @@ int main() {
   unsigned int u_shader = init_shader_prog(
       DIR"/src/shaders/unanimated/shader.vs",
       NULL,
-      DIR"/src/shaders/unanimated/shader.fs"
+      DIR"/src/shaders/cell_shader/shader.fs"
       );
   if (u_shader == -1) {
     printf("Error loading shaders\n");
@@ -95,24 +95,24 @@ int main() {
     return -1;
   }
 
-  unsigned int b_shader = init_shader_prog(
+  unsigned int bone_shader = init_shader_prog(
       DIR"/src/shaders/bone/shader.vs",
       NULL,
-      DIR"/src/shaders/bone/shader.fs"
+      DIR"/src/shaders/basic/shader.fs"
       );
-  if (b_shader == -1) {
+  if (bone_shader == -1) {
     printf("Error loading bone shaders\n");
     glfwTerminate();
     return -1;
   }
 
-  unsigned int origin_shader = init_shader_prog(
-      DIR"/src/shaders/origin/shader.vs",
+  unsigned int basic_shader = init_shader_prog(
+      DIR"/src/shaders/basic/shader.vs",
       NULL,
-      DIR"/src/shaders/origin/shader.fs"
+      DIR"/src/shaders/basic/shader.fs"
       );
-  if (origin_shader == -1) {
-    printf("Error loading origin shaders\n");
+  if (basic_shader == -1) {
+    printf("Error loading basic shaders\n");
     glfwTerminate();
     return -1;
   }
@@ -211,12 +211,12 @@ int main() {
   glUniformMatrix4fv(glGetUniformLocation(u_shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
-  glUseProgram(b_shader);
-  glUniformMatrix4fv(glGetUniformLocation(b_shader, "projection"), 1,
+  glUseProgram(bone_shader);
+  glUniformMatrix4fv(glGetUniformLocation(bone_shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
-  glUseProgram(origin_shader);
-  glUniformMatrix4fv(glGetUniformLocation(origin_shader, "projection"), 1,
+  glUseProgram(basic_shader);
+  glUniformMatrix4fv(glGetUniformLocation(basic_shader, "projection"), 1,
                      GL_FALSE, (float *)projection);
 
   glUseProgram(test_shader);
@@ -289,11 +289,12 @@ int main() {
     /* Origin */
 
     glPointSize(10.0);
-    glUseProgram(origin_shader);
-    glUniformMatrix4fv(glGetUniformLocation(origin_shader, "model"), 1,
+    glUseProgram(basic_shader);
+    glUniformMatrix4fv(glGetUniformLocation(basic_shader, "model"), 1,
                        GL_FALSE, (float *) model);
-    glUniformMatrix4fv(glGetUniformLocation(origin_shader, "view"), 1,
+    glUniformMatrix4fv(glGetUniformLocation(basic_shader, "view"), 1,
                        GL_FALSE, (float *) view);
+    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 0.0, 1.0, 1.0);
     glBindVertexArray(pt_VAO);
     glDrawArrays(GL_POINTS, 0, 1);
     glBindVertexArray(0);
@@ -305,12 +306,13 @@ int main() {
     glm_translate(model, camera_model_pos);
     glm_rotate_y(model, camera_model_rot, model);
 
-    glUseProgram(b_shader);
-    glUniformMatrix4fv(glGetUniformLocation(b_shader, "view"), 1,
+    glUseProgram(bone_shader);
+    glUniform3f(glGetUniformLocation(bone_shader, "test_col"), 0.0, 0.0, 1.0);
+    glUniformMatrix4fv(glGetUniformLocation(bone_shader, "view"), 1,
                        GL_FALSE, (float *) view);
 
     glm_mat4_copy(model, player->model_mat);
-    draw_skeleton(b_shader, player);
+    draw_skeleton(bone_shader, player);
 
     /* Skin */
 
