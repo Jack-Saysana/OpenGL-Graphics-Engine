@@ -1,4 +1,4 @@
-#include <physics.h>
+#include <oct_tree.h>
 
 OCT_TREE *init_tree() {
   OCT_TREE *tree = malloc(sizeof(OCT_TREE));

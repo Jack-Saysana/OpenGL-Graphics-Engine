@@ -178,18 +178,6 @@ int main() {
     return -1;
   }
 
-  COLLIDER dude_hb = {{{ 0.20, 1.75, 0.1 },
-                       { 0.20, 1.75, -0.1 },
-                       { -0.20, 1.75, 0.1 },
-                       { -0.20, 1.75, -0.1 },
-                       { 0.20, 0.0, 0.1 },
-                       { 0.20, 0.0, -0.1 },
-                       { -0.20, 0.0, 0.1 },
-                       { -0.20, 0.0, -0.1}
-                      }, 8};
-
-  dude->colliders[0] = dude_hb;
-
   glm_translate(player->model_mat, camera_model_pos);
   glm_rotate_y(player->model_mat, camera_model_rot, player->model_mat);
   int status = oct_tree_insert(tree, player, 0);
@@ -313,6 +301,14 @@ int main() {
 
     glm_mat4_copy(model, player->model_mat);
     draw_skeleton(bone_shader, player);
+
+    /* Colliders */
+
+    glPointSize(5.0);
+    glUseProgram(basic_shader);
+    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 1.0, 0.0, 1.0);
+    glBindVertexArray(pt_VAO);
+    draw_colliders(basic_shader, player);
 
     /* Skin */
 

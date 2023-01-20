@@ -114,6 +114,43 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
   draw_bones(entity->model);
 }
 
+void draw_colliders(unsigned int shader, ENTITY *entity) {
+  if (entity == NULL) {
+    return;
+  }
+
+  glUseProgram(shader);
+  mat4 used = GLM_MAT4_IDENTITY_INIT;
+  int bone = 0;
+  unsigned int *VAO = malloc(sizeof(unsigned int) *
+                             entity->model->num_colliders);
+  unsigned int *VBO = malloc(sizeof(unsigned int) *
+                             entity->model->num_colliders);
+  for (int i = 0; i < entity->model->num_colliders; i++) {
+    bone = entity->model->collider_bone_links[i];
+    glm_mat4_mul(entity->model_mat, entity->final_b_mats[bone], used);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
+                       (float *) used);
+    glGenVertexArrays(1, VAO + i);
+    glBindVertexArray(VAO[i]);
+    glGenBuffers(1, VBO + i);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[i]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 *
+                 entity->model->num_colliders,
+                 entity->model->colliders[i].verts, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3,
+                          (void *) 0);
+    glEnableVertexAttribArray(0);
+
+    glDrawArrays(GL_POINTS, 0, entity->model->colliders[i].num_used);
+    glBindVertexArray(0);
+    glDeleteVertexArrays(1, VAO + i);
+    glDeleteBuffers(1, VBO + i);
+  }
+  free(VAO);
+  free(VBO);
+}
+
 void free_entity(ENTITY *entity) {
   if (entity->model->ref_count > 0) {
     entity->model->ref_count--;
