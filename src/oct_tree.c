@@ -40,25 +40,42 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     return -1;
   }
 
-  COLLIDER obj;
-  obj.num_used = entity->model->colliders[collider_offset].num_used;
-  int bone = entity->model->collider_bone_links[collider_offset];
-  for (unsigned int i = 0; i < obj.num_used; i++) {
-    glm_mat4_mulv3(entity->final_b_mats[bone],
-                   entity->model->colliders[collider_offset].verts[i], 1.0,
-                   obj.verts[i]);
-    glm_mat4_mulv3(entity->model_mat, obj.verts[i], 1.0, obj.verts[i]);
-  }
-
   vec3 max_extent = { 16.0, 16.0, 16.0 };
   vec3 min_extent = { -16.0, -16.0, -16.0 };
   float max_extents[6];
-  max_extents[0] = obj.verts[max_dot(&obj, X)][0];
-  max_extents[1] = obj.verts[max_dot(&obj, NEG_X)][0];
-  max_extents[2] = obj.verts[max_dot(&obj, Y)][1];
-  max_extents[3] = obj.verts[max_dot(&obj, NEG_Y)][1];
-  max_extents[4] = obj.verts[max_dot(&obj, Z)][2];
-  max_extents[5] = obj.verts[max_dot(&obj, NEG_Z)][2];
+
+  COLLIDER obj;
+  obj.data = entity->model->colliders[collider_offset].data;
+  obj.type = entity->model->colliders[collider_offset].type;
+  if (obj.type == POLY) {
+    int bone = entity->model->collider_bone_links[collider_offset];
+    for (unsigned int i = 0; i < obj.data.num_used; i++) {
+      glm_mat4_mulv3(entity->final_b_mats[bone],
+                     entity->model->colliders[collider_offset].data.verts[i], 1.0,
+                     obj.data.verts[i]);
+      glm_mat4_mulv3(entity->model_mat, obj.data.verts[i], 1.0,
+                     obj.data.verts[i]);
+    }
+
+    max_extents[0] = obj.data.verts[max_dot(&obj, X)][0];
+    max_extents[1] = obj.data.verts[max_dot(&obj, NEG_X)][0];
+    max_extents[2] = obj.data.verts[max_dot(&obj, Y)][1];
+    max_extents[3] = obj.data.verts[max_dot(&obj, NEG_Y)][1];
+    max_extents[4] = obj.data.verts[max_dot(&obj, Z)][2];
+    max_extents[5] = obj.data.verts[max_dot(&obj, NEG_Z)][2];
+  } else {
+    vec3 center = { 0.0, 0.0, 0.0 };
+    glm_vec3_copy(obj.data.center, center);
+    float radius = obj.data.radius;
+
+    max_extents[0] = center[0] + radius;
+    max_extents[1] = center[0] - radius;
+    max_extents[2] = center[1] + radius;
+    max_extents[3] = center[1] - radius;
+    max_extents[4] = center[2] + radius;
+    max_extents[5] = center[2] - radius;
+  }
+ 
   float oct_len = 16.0;
 
   OCTANT cur_oct = MULTIPLE;
@@ -150,9 +167,9 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
   return 0;
 }
 
-COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box) {
+COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
   COLLISION_RES res = { NULL, 0, 0 };
-  if (tree == NULL || hit_box == NULL) {
+  if (tree == NULL || col == NULL) {
     printf("Invalid search input\n");
     return res;
   }
@@ -166,13 +183,27 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box) {
 
   vec3 max_extent = { 16.0, 16.0, 16.0 };
   vec3 min_extent = { -16.0, -16.0, -16.0 };
+
   float max_extents[6];
-  max_extents[0] = hit_box->verts[max_dot(hit_box, X)][0];
-  max_extents[1] = hit_box->verts[max_dot(hit_box, NEG_X)][0];
-  max_extents[2] = hit_box->verts[max_dot(hit_box, Y)][1];
-  max_extents[3] = hit_box->verts[max_dot(hit_box, NEG_Y)][1];
-  max_extents[4] = hit_box->verts[max_dot(hit_box, Z)][2];
-  max_extents[5] = hit_box->verts[max_dot(hit_box, NEG_Z)][2];
+  if (col->type == POLY) {
+    max_extents[0] = col->data.verts[max_dot(col, X)][0];
+    max_extents[1] = col->data.verts[max_dot(col, NEG_X)][0];
+    max_extents[2] = col->data.verts[max_dot(col, Y)][1];
+    max_extents[3] = col->data.verts[max_dot(col, NEG_Y)][1];
+    max_extents[4] = col->data.verts[max_dot(col, Z)][2];
+    max_extents[5] = col->data.verts[max_dot(col, NEG_Z)][2];
+  } else {
+    vec3 center = { 0.0, 0.0, 0.0 };
+    glm_vec3_copy(col->data.center, center);
+    float radius = col->data.radius;
+
+    max_extents[0] = center[0] + radius;
+    max_extents[1] = center[0] - radius;
+    max_extents[2] = center[1] + radius;
+    max_extents[3] = center[1] - radius;
+    max_extents[4] = center[2] + radius;
+    max_extents[5] = center[2] - radius;
+  }
   float oct_len = 16.0;
 
   OCTANT cur_oct = MULTIPLE;
@@ -184,10 +215,10 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box) {
   while (searching) {
     status = read_oct(tree, tree->node_buffer + cur_offset, &res);
     if (status != 0) {
-      free(res.list);
+      /*free(res.list);
       res.list = NULL;
       res.list_len = 0;
-      res.list_buff_size = 0;
+      res.list_buff_size = 0;*/
       return res;
     }
 
@@ -200,10 +231,6 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box) {
         searching = 0;
         status = read_all_children(tree, tree->node_buffer + cur_offset, &res);
         if (status != 0) {
-          free(res.list);
-          res.list = NULL;
-          res.list_len = 0;
-          res.list_buff_size = 0;
           return res;
         }
       } else {
@@ -227,7 +254,8 @@ void free_oct_tree(OCT_TREE *tree) {
  * collision detection. Refer to personal notes for in-depth details.
  */
 int collision_check(COLLIDER *a, COLLIDER *b) {
-  if (a == NULL || b == NULL || a->num_used > 8 || b->num_used > 8) {
+  if (a == NULL || b == NULL || a->type != POLY || b->type != POLY ||
+      a->data.num_used > 8 || b->data.num_used > 8) {
     return 0;
   }
 
@@ -303,7 +331,8 @@ void triangle_check(vec3 a, vec3 b, vec3 c, unsigned int *num_used) {
 }
 
 void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
-  if (a == NULL || b == NULL || a->num_used > 8 || b->num_used > 8) {
+  if (a == NULL || b == NULL || a->type != POLY || b->type != POLY ||
+      a->data.num_used > 8 || b->data.num_used > 8) {
     return;
   }
 
@@ -311,20 +340,25 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
   vec3 max_b = { 0.0, 0.0, 0.0 };
   vec3 temp = { 0.0, 0.0, 0.0 };
 
-  glm_vec3_copy(a->verts[max_dot(a, dir)], max_a);
+  glm_vec3_copy(a->data.verts[max_dot(a, dir)], max_a);
 
   glm_vec3_scale(dir, -1.0, temp);
-  glm_vec3_copy(b->verts[max_dot(b, temp)], max_b);
+  glm_vec3_copy(b->data.verts[max_dot(b, temp)], max_b);
 
   glm_vec3_sub(max_a, max_b, dest);
 }
 
 int max_dot(COLLIDER *a, vec3 dir) {
+  if (a->type != POLY) {
+    printf("Input must be polyhedron\n");
+    return -1;
+  }
+
   float max = -FLT_MAX;
   float temp = 0.0;
   int index = 0;
-  for (unsigned int i = 0; i < a->num_used; i++) {
-    temp = glm_vec3_dot(dir, a->verts[i]);
+  for (unsigned int i = 0; i < a->data.num_used; i++) {
+    temp = glm_vec3_dot(dir, a->data.verts[i]);
     if (temp > max) {
       max = temp;
       index = i;
@@ -382,13 +416,25 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
 }
 
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
-  int status = read_oct(tree, node, res);
+  OCT_NODE *stack[1 + (MAX_DEPTH * 8)]; 
+  stack[0] = node;
+  size_t top = 1;
 
-  for (OCTANT i = X_Y_Z; i < negX_negY_negZ; i++) {
-    status = read_all_children(tree, tree->node_buffer + node->next_offset + i,
-                               res);
+  int status = -1;
+  OCT_NODE *cur = NULL;
+  while (top) {
+    cur = stack[top - 1];
+    status = read_oct(tree, cur, res);
     if (status != 0) {
       return -1;
+    }
+    top--;
+
+    if (cur->next_offset != -1) {
+      for (OCTANT i = X_Y_Z; i< negX_negY_negZ; i++) {
+        stack[top] = tree->node_buffer + (cur->next_offset + i);
+        top++;
+      }
     }
   }
   return 0;

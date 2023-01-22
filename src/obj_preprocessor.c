@@ -227,10 +227,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
       if (b_len == b_buff_len) {
         status = double_buffer((void **) &bones, &b_buff_len, sizeof(BONE));
       }
-    } else if (cur_line[0] == 'h' && cur_line[1] == 'b' &&
+    } else if (cur_line[0] == 'c' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
-      COLLIDER collider;
-      sscanf(cur_line, "hb %d %d %f %f %f \
+      colliders[col_len].type = POLY;
+      sscanf(cur_line, "cp %d %d %f %f %f \
                                  %f %f %f \
                                  %f %f %f \
                                  %f %f %f \
@@ -238,36 +238,31 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                  %f %f %f \
                                  %f %f %f \
                                  %f %f %f", bone_links + col_len,
-                                 &(colliders[col_len].num_used),
-                                 collider.verts[0],
-                                 collider.verts[0]+1,
-                                 collider.verts[0]+2,
-                                 collider.verts[1],
-                                 collider.verts[1]+1,
-                                 collider.verts[1]+2,
-                                 collider.verts[2],
-                                 collider.verts[2]+1,
-                                 collider.verts[2]+2,
-                                 collider.verts[3],
-                                 collider.verts[3]+1,
-                                 collider.verts[3]+2,
-                                 collider.verts[4],
-                                 collider.verts[4]+1,
-                                 collider.verts[4]+2,
-                                 collider.verts[5],
-                                 collider.verts[5]+1,
-                                 collider.verts[5]+2,
-                                 collider.verts[6],
-                                 collider.verts[6]+1,
-                                 collider.verts[6]+2,
-                                 collider.verts[7],
-                                 collider.verts[7]+1,
-                                 collider.verts[7]+2);
-      for (int i = 0; i < colliders[col_len].num_used; i++) {
-        colliders[col_len].verts[i][0] = collider.verts[i][0];
-        colliders[col_len].verts[i][1] = collider.verts[i][1];
-        colliders[col_len].verts[i][2] = collider.verts[i][2];
-      }
+                                 &(colliders[col_len].data.num_used),
+                                 colliders[col_len].data.verts[0],
+                                 colliders[col_len].data.verts[0]+1,
+                                 colliders[col_len].data.verts[0]+2,
+                                 colliders[col_len].data.verts[1],
+                                 colliders[col_len].data.verts[1]+1,
+                                 colliders[col_len].data.verts[1]+2,
+                                 colliders[col_len].data.verts[2],
+                                 colliders[col_len].data.verts[2]+1,
+                                 colliders[col_len].data.verts[2]+2,
+                                 colliders[col_len].data.verts[3],
+                                 colliders[col_len].data.verts[3]+1,
+                                 colliders[col_len].data.verts[3]+2,
+                                 colliders[col_len].data.verts[4],
+                                 colliders[col_len].data.verts[4]+1,
+                                 colliders[col_len].data.verts[4]+2,
+                                 colliders[col_len].data.verts[5],
+                                 colliders[col_len].data.verts[5]+1,
+                                 colliders[col_len].data.verts[5]+2,
+                                 colliders[col_len].data.verts[6],
+                                 colliders[col_len].data.verts[6]+1,
+                                 colliders[col_len].data.verts[6]+2,
+                                 colliders[col_len].data.verts[7],
+                                 colliders[col_len].data.verts[7]+1,
+                                 colliders[col_len].data.verts[7]+2);
 
       col_len++;
       if (col_len == col_buff_len) {
@@ -279,7 +274,27 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                  sizeof(int));
         }
       }
-    } else if (cur_line[0] == 'v' && cur_line[1] == 't' && cur_line[2] == ' ') {
+    } else if (cur_line[0] == 'c' && cur_line[1] == 's' &&
+               cur_line[2] == ' ') {
+      colliders[col_len].type = SPHERE;
+      sscanf(cur_line, "cs %d %f %f %f %f", bone_links + col_len,
+             colliders[col_len].data.center,
+             colliders[col_len].data.center + 1,
+             colliders[col_len].data.center + 2,
+             &(colliders[col_len].data.radius));
+
+      col_len++;
+      if (col_len == col_buff_len) {
+        size_t old_buff_len = col_buff_len;
+        status = double_buffer((void **) &colliders, &col_buff_len,
+                               sizeof(COLLIDER));
+        if (status == 0) {
+          status = double_buffer((void **) &bone_links, &old_buff_len,
+                                 sizeof(int));
+        }
+      }
+    } else if (cur_line[0] == 'v' && cur_line[1] == 't' &&
+               cur_line[2] == ' ') {
       sscanf(cur_line, "vt %f %f",
             tex_coords[t_len],
             tex_coords[t_len] + 1

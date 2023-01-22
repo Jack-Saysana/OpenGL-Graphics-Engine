@@ -147,7 +147,7 @@ int main() {
   }
 
   MODEL *test = load_model(
-      DIR"/resources/test/test.obj"
+      DIR"/resources/3DChess/bishop.obj"
       );
   if (test == NULL) {
     printf("Unable to load test model\n");
@@ -160,6 +160,15 @@ int main() {
       );
   if (floor == NULL) {
     printf("Unable to load floor model\n");
+    glfwTerminate();
+    return -1;
+  }
+
+  MODEL *sphere = load_model(
+      DIR"/resources/sphere/sphere.obj"
+      );
+  if (sphere == NULL) {
+    printf("Unable to load spehere model\n");
     glfwTerminate();
     return -1;
   }
@@ -308,7 +317,7 @@ int main() {
     glUseProgram(basic_shader);
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 1.0, 0.0, 1.0);
     glBindVertexArray(pt_VAO);
-    draw_colliders(basic_shader, player);
+    draw_colliders(basic_shader, player, sphere);
 
     /* Skin */
 
@@ -338,6 +347,11 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(u_shader, dude);
+
+    glm_mat4_identity(model);
+    glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    draw_model(u_shader, test);
 
     glm_mat4_identity(model);
     glm_vec3_zero(translation);

@@ -6,6 +6,27 @@ typedef enum chain_type {
   SCALE = 2
 } C_TYPE;
 
+typedef enum collider_type {
+  POLY,
+  SPHERE
+} COL_TYPE;
+
+typedef struct collider {
+  union {
+    // POLYHEDRON DATA
+    struct {
+      vec3 verts[8];
+      unsigned int num_used;
+    };
+    // SPHERE DATA
+    struct {
+      vec3 center;
+      float radius;
+    };
+  } data;
+  COL_TYPE type;
+} COLLIDER;
+
 typedef struct keyframe {
   float offset[4];
   int frame;
@@ -18,11 +39,6 @@ typedef struct keyframe_chain {
   C_TYPE type;
   unsigned int b_id;
 } K_CHAIN;
-
-typedef struct collider {
-  vec3 verts[8];
-  unsigned int num_used;
-} COLLIDER;
 
 typedef struct animation {
   K_CHAIN *keyframe_chains;
