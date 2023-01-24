@@ -9,12 +9,6 @@
 #define BUFF_STARTING_LEN (10)
 
 typedef enum {
-  LINE = 2,
-  TRIANGLE = 3,
-  TETRAHEDRON = 4
-} SIMPLEX;
-
-typedef enum {
   X_Y_Z = 0,
   X_Y_negZ = 1,
   X_negY_Z = 2,
@@ -70,12 +64,9 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
-int collision_check(COLLIDER *a, COLLIDER *b);
 
 // BACK FACING
 
-void triangle_check(vec3 a, vec3 b, vec3 c, unsigned int *num_used);
-void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest);
 int init_node(OCT_TREE *tree, OCT_NODE *parent);
 int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
