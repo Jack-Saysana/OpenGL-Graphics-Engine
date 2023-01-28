@@ -7,6 +7,7 @@
 #define MAX_DEPTH (5)
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
+#define INVALID (0xBAADF00D)
 
 typedef enum {
   X_Y_Z = 0,
@@ -70,8 +71,10 @@ void free_oct_tree(OCT_TREE *tree);
 int init_node(OCT_TREE *tree, OCT_NODE *parent);
 int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
-int append_list(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                size_t collider_offset);
+int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
+                  size_t collider_offset);
+int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset);
+int remove_from_list(OCT_TREE *tree, size_t obj_offset);
 OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *ebj_extents,
                      float *oct_len);
 int max_dot(COLLIDER *a, vec3 dir);

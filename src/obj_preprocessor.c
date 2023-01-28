@@ -227,10 +227,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
       if (b_len == b_buff_len) {
         status = double_buffer((void **) &bones, &b_buff_len, sizeof(BONE));
       }
-    } else if (cur_line[0] == 'c' && cur_line[1] == 'p' &&
+    } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = POLY;
-      sscanf(cur_line, "cp %d %d %f %f %f \
+      sscanf(cur_line, "hp %d %d %f %f %f \
                                  %f %f %f \
                                  %f %f %f \
                                  %f %f %f \
@@ -274,10 +274,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                  sizeof(int));
         }
       }
-    } else if (cur_line[0] == 'c' && cur_line[1] == 's' &&
+    } else if (cur_line[0] == 'h' && cur_line[1] == 's' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = SPHERE;
-      sscanf(cur_line, "cs %d %f %f %f %f", bone_links + col_len,
+      sscanf(cur_line, "hs %d %f %f %f %f", bone_links + col_len,
              colliders[col_len].data.center,
              colliders[col_len].data.center + 1,
              colliders[col_len].data.center + 2,

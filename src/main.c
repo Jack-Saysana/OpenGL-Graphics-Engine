@@ -187,9 +187,41 @@ int main() {
     return -1;
   }
 
+  vec3 cube_pos = { 3.0, 2.0, 3.0 };
+  vec3 cube_col = { 1.0, 1.0, 1.0 };
+  cube->num_colliders = 1;
+  cube->colliders = malloc(sizeof(COLLIDER));
+  cube->collider_bone_links = malloc(sizeof(int));
+  ENTITY *box_entity = init_entity(cube);
+  if (test == NULL) {
+    printf("Unable to load cube entity\n");
+    glfwTerminate();
+    return -1;
+  }
+  vec3 verts[8] = {
+    {  1.0,  1.0,  1.0 },
+    {  1.0,  1.0, -1.0 },
+    { -1.0,  1.0,  1.0 },
+    { -1.0,  1.0, -1.0 },
+    {  1.0, -1.0,  1.0 },
+    {  1.0, -1.0, -1.0 },
+    { -1.0, -1.0,  1.0 },
+    { -1.0, -1.0, -1.0 }
+  };
+  COLLIDER box;
+  box.type = POLY;
+  box.data.num_used = 8;
+  for (int i = 0; i < 8; i++) {
+    glm_vec3_copy(verts[i], box.data.verts[i]);
+  }
+  cube->colliders[0] = box;
+  glm_mat4_identity(box_entity->model_mat);
+  glm_translate(box_entity->model_mat, cube_pos);
+  oct_tree_insert(tree, box_entity, 0);
+
   glm_translate(player->model_mat, camera_model_pos);
   glm_rotate_y(player->model_mat, camera_model_rot, player->model_mat);
-  int status = oct_tree_insert(tree, player, 0);
+  int status = oct_tree_insert(tree, player, 15);
   if (status != 0) {
     printf("Failed to insert dude1\n");
   }
@@ -197,7 +229,6 @@ int main() {
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   mat4 view = GLM_MAT4_IDENTITY_INIT;
-
 
   glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
   glUseProgram(shader);
@@ -255,11 +286,40 @@ int main() {
     /* Animation */
 
     animate(player, 0, cur_frame);
+    //vec3 translate = { 3.0, 3.0 + sin(glfwGetTime()), 3.0 };
+    //glm_mat4_identity(box_entity->model_mat);
+    //glm_translate(box_entity->model_mat, translate);
+
+    /* Physics */
+
+    COLLIDER a;
+    a.type = SPHERE;
+    a.data.radius = player->model->colliders[15].data.radius;
+    glm_mat4_mulv3(player->model_mat, player->model->colliders[15].data.center,
+                   1.0, a.data.center);
+    COLLIDER b;
+    b.type = POLY;
+    b.data.num_used = 8;
+    for (int i = 0; i < 8; i++) {
+      glm_mat4_mulv3(box_entity->model_mat, cube->colliders[0].data.verts[i],
+                     1.0, b.data.verts[i]);
+    }
+    if (collision_check(&a, &b)) {
+      cube_col[0] = 1.0;
+      cube_col[1] = 0.0;
+      cube_col[2] = 0.0;
+    } else {
+      cube_col[0] = 1.0;
+      cube_col[1] = 1.0;
+      cube_col[2] = 1.0;
+    }
 
     /* Collision */
 
-    oct_tree_delete(tree, player->tree_offsets[0]);
-    oct_tree_insert(tree, player, 0);
+    oct_tree_delete(tree, player->tree_offsets[15]);
+    oct_tree_insert(tree, player, 15);
+    oct_tree_delete(tree, box_entity->tree_offsets[0]);
+    oct_tree_insert(tree, box_entity, 0);
 
     // Render
 
@@ -319,6 +379,10 @@ int main() {
     glBindVertexArray(pt_VAO);
     draw_colliders(basic_shader, player, sphere);
 
+    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), cube_col[0],
+                cube_col[1], cube_col[2]);
+    draw_colliders(basic_shader, box_entity, sphere);
+
     /* Skin */
 
     glUseProgram(shader);
@@ -373,12 +437,19 @@ int main() {
     vec3 pos = { 0.0, 0.0, 0.0 };
     draw_oct_tree(cube, tree, pos, 16.0, test_shader, 0, 1);
     
+    glUniform3f(glGetUniformLocation(test_shader, "test_col"), cube_col[0],
+                cube_col[1], cube_col[2]);
+    glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
+                       GL_FALSE, (float *) box_entity->model_mat);
+    draw_entity(test_shader, box_entity);
+
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
   free_entity(player);
+  free_entity(box_entity);
 
   free_model(cube);
   free_model(test);
@@ -428,7 +499,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void keyboard_input(GLFWwindow *window) {
-  float cam_speed = 5.0 * delta_time;
+  float cam_speed = 2.0 * delta_time;
   vec3 movement = { 0.0, 0.0, 0.0 };
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera_model_rot = glm_rad(-yaw + 180.0);

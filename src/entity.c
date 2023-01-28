@@ -57,20 +57,6 @@ void draw_entity(unsigned int shader, ENTITY *entity) {
   glUseProgram(shader);
   char var_name[50];
   for (int i = 0; i < entity->model->num_bones; i++) {
-    /*char var_name[50];
-    sprintf(var_name, "bones[%d].coords", i);
-    glUniform3f(glGetUniformLocation(shader, var_name),
-                entity->model->bones[i].coords[0],
-                entity->model->bones[i].coords[1],
-                entity->model->bones[i].coords[2]);
-    sprintf(var_name, "bones[%d].parent", i);
-    glUniform1i(glGetUniformLocation(shader, var_name),
-                 entity->model->bones[i].parent);
-
-    sprintf(var_name, "bone_mats[%d]", i);
-    glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
-                       3, GL_FALSE,
-                       (float *) entity->bone_mats[i]);*/
     sprintf(var_name, "bone_mats[%d]", i);
     glUniformMatrix4fv(glGetUniformLocation(shader, var_name), 1, GL_FALSE,
                        (float *) entity->final_b_mats[i]);
@@ -90,20 +76,6 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
   glUseProgram(shader);
   char var_name[50];
   for (int i = 0; i < entity->model->num_bones; i++) {
-    /*char var_name[50];
-    sprintf(var_name, "bones[%d].coords", i);
-    glUniform3f(glGetUniformLocation(shader, var_name),
-                entity->model->bones[i].coords[0],
-                entity->model->bones[i].coords[1],
-                entity->model->bones[i].coords[2]);
-    sprintf(var_name, "bones[%d].parent", i);
-    glUniform1i(glGetUniformLocation(shader, var_name),
-                 entity->model->bones[i].parent);
-
-    sprintf(var_name, "bone_mats[%d]", i);
-    glUniformMatrix4fv(glGetUniformLocation(shader, var_name),
-                       3, GL_FALSE,
-                       (float *) entity->bone_mats[i]);*/
     sprintf(var_name, "bone_mats[%d]", i);
     glUniformMatrix4fv(glGetUniformLocation(shader, var_name), 1, GL_FALSE,
                        (float *) entity->final_b_mats[i]);
@@ -130,7 +102,7 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
 
   for (int i = 0; i < entity->model->num_colliders; i++) {
     bone = entity->model->collider_bone_links[i];
-    if (bone != -1) {
+    if (bone >= 0 && bone < entity->model->num_colliders) {
       glm_mat4_mul(entity->model_mat, entity->final_b_mats[bone], used);
     } else {
       glm_mat4_copy(entity->model_mat, used);
