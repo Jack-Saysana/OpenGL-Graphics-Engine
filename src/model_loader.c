@@ -305,11 +305,18 @@ MODEL *load_model(char *path) {
     for (int i = 0; i < NUM_PROPS; i++) {
       if (obj_mat->mat_paths[i] != NULL) {
         model->textures[i] = genTextureId(obj_mat->mat_paths[i]);
+      } else {
+        model->textures[i] = 0xBAADF00D;
       }
     }
 
     free_materials(obj_mat, 1);
+  } else {
+    for (int i = 0; i < NUM_PROPS; i++) {
+      model->textures[i] = 0xBAADF00D;
+    }
   }
+
   free(bin_path);
   free(vertices);
   free(indicies);

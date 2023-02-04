@@ -23,7 +23,7 @@ float last_frame = 0.0;
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
-vec3 camera_model_pos = { 3.5, 0.0, 3.0 };
+vec3 camera_model_pos = { 0.0, 0.0, 0.0 };
 float camera_model_rot = 0.0;
 
 float lastX = 400;
@@ -203,6 +203,7 @@ int main() {
   cube->num_colliders = 1;
   cube->colliders = malloc(sizeof(COLLIDER));
   cube->collider_bone_links = malloc(sizeof(int));
+  cube->collider_bone_links[0] = -1;
   ENTITY *box_entity = init_entity(cube);
   if (box_entity == NULL) {
     printf("Unable to load box entity\n");
@@ -235,6 +236,7 @@ int main() {
   sphere->num_colliders = 1;
   sphere->colliders = malloc(sizeof(COLLIDER));
   sphere->collider_bone_links = malloc(sizeof(int));
+  sphere->collider_bone_links[0] = -1;
   ENTITY *sphere_entity = init_entity(sphere);
   if (sphere_entity == NULL) {
     printf("Unable to load sphere entity\n");
@@ -327,11 +329,11 @@ int main() {
     cube_pos[2] = 3.0;
     glm_mat4_identity(box_entity->model_mat);
     glm_translate(box_entity->model_mat, cube_pos);
-    /*s_pos[0] = -3.0;
+    s_pos[0] = -3.0;
     s_pos[1] = 2.0 + sin(glfwGetTime());
     s_pos[2] = -3.0;
     glm_mat4_identity(sphere_entity->model_mat);
-    glm_translate(sphere_entity->model_mat, s_pos);*/
+    glm_translate(sphere_entity->model_mat, s_pos);
 
     /* Physics */
 
@@ -510,20 +512,24 @@ int main() {
     draw_model(u_shader, dude);
 
     vec3 scale_factor = { 1.0, 1.0, 1.0 };
+    mat4 t_mat = GLM_MAT4_IDENTITY_INIT;
     scale_factor[1] = collision_depth[0];
+    glm_translate(t_mat, cube_pos);
     glm_mat4_identity(model);
-    glm_translate(model, cube_pos);
+    glm_mat4_mul(vector_rot_mats[0], model, model);
+    glm_mat4_mul(t_mat, model, model);
     glm_scale(model, scale_factor); 
-    //glm_mat4_mul(vector_rot_mats[0], model, model);
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(u_shader, vector);
 
     scale_factor[1] = collision_depth[1];
     glm_mat4_identity(model);
-    glm_translate(model, s_pos);
+    glm_mat4_identity(t_mat);
+    glm_translate(t_mat, s_pos);
+    glm_mat4_mul(vector_rot_mats[1], model, model);
+    glm_mat4_mul(t_mat, model, model);
     glm_scale(model, scale_factor); 
-    //glm_mat4_mul(vector_rot_mats[1], model, model);
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(u_shader, vector);
@@ -568,6 +574,7 @@ int main() {
   free_model(dude);
   free_model(floor);
   free_model(sphere);
+  free_model(vector);
 
   free_oct_tree(tree);
 
