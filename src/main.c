@@ -23,7 +23,7 @@ float last_frame = 0.0;
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
-vec3 camera_model_pos = { 5.0, 0.0, 5.0 };
+vec3 camera_model_pos = { 3.5, 0.0, 3.0 };
 float camera_model_rot = 0.0;
 
 float lastX = 400;
@@ -173,6 +173,15 @@ int main() {
     return -1;
   }
 
+  MODEL *vector = load_model(
+      DIR"/resources/vector/vector.obj"
+      );
+  if (vector == NULL) {
+    printf("Unable to load vector model\n");
+    glfwTerminate();
+    return -1;
+  }
+
   OCT_TREE *tree = init_tree();
   if (tree == NULL) {
     printf("Unable to load oct-tree\n");
@@ -187,14 +196,16 @@ int main() {
     return -1;
   }
 
+
+
   vec3 cube_pos = { 3.0, 2.0, 3.0 };
   vec3 cube_col = { 1.0, 1.0, 1.0 };
   cube->num_colliders = 1;
   cube->colliders = malloc(sizeof(COLLIDER));
   cube->collider_bone_links = malloc(sizeof(int));
   ENTITY *box_entity = init_entity(cube);
-  if (test == NULL) {
-    printf("Unable to load cube entity\n");
+  if (box_entity == NULL) {
+    printf("Unable to load box entity\n");
     glfwTerminate();
     return -1;
   }
@@ -218,6 +229,31 @@ int main() {
   glm_mat4_identity(box_entity->model_mat);
   glm_translate(box_entity->model_mat, cube_pos);
   oct_tree_insert(tree, box_entity, 0);
+
+  vec3 s_pos = { -3.0, 2.0, -3.0 };
+  vec3 s_col = { 1.0, 1.0, 1.0 };
+  sphere->num_colliders = 1;
+  sphere->colliders = malloc(sizeof(COLLIDER));
+  sphere->collider_bone_links = malloc(sizeof(int));
+  ENTITY *sphere_entity = init_entity(sphere);
+  if (sphere_entity == NULL) {
+    printf("Unable to load sphere entity\n");
+    glfwTerminate();
+    return -1;
+  }
+  COLLIDER ball;
+  ball.type = SPHERE;
+  ball.data.center[0] = 0.0;
+  ball.data.center[1] = 0.0;
+  ball.data.center[2] = 0.0;
+  ball.data.radius = 1.0;
+  sphere->colliders[0] = ball;
+  glm_mat4_identity(sphere_entity->model_mat);
+  glm_translate(sphere_entity->model_mat, s_pos);
+  oct_tree_insert(tree, sphere_entity, 0);
+
+
+
 
   glm_translate(player->model_mat, camera_model_pos);
   glm_rotate_y(player->model_mat, camera_model_rot, player->model_mat);
@@ -286,9 +322,16 @@ int main() {
     /* Animation */
 
     animate(player, 0, cur_frame);
-    //vec3 translate = { 3.0, 3.0 + sin(glfwGetTime()), 3.0 };
-    //glm_mat4_identity(box_entity->model_mat);
-    //glm_translate(box_entity->model_mat, translate);
+    cube_pos[0] = 3.0;
+    cube_pos[1] = 3.0 + sin(glfwGetTime());
+    cube_pos[2] = 3.0;
+    glm_mat4_identity(box_entity->model_mat);
+    glm_translate(box_entity->model_mat, cube_pos);
+    /*s_pos[0] = -3.0;
+    s_pos[1] = 2.0 + sin(glfwGetTime());
+    s_pos[2] = -3.0;
+    glm_mat4_identity(sphere_entity->model_mat);
+    glm_translate(sphere_entity->model_mat, s_pos);*/
 
     /* Physics */
 
@@ -304,14 +347,62 @@ int main() {
       glm_mat4_mulv3(box_entity->model_mat, cube->colliders[0].data.verts[i],
                      1.0, b.data.verts[i]);
     }
-    if (collision_check(&a, &b)) {
+    COLLIDER c;
+    c.type = SPHERE;
+    c.data.radius = sphere_entity->model->colliders[0].data.radius;
+    glm_mat4_mulv3(sphere_entity->model_mat,
+                   sphere_entity->model->colliders[0].data.center, 1.0,
+                   c.data.center);
+
+    vec3 simplex[4];
+    vec3 collision_dir[2];
+    float collision_depth[2];
+    versor temp;
+    mat4 vector_rot_mats[2];
+    int status = 0;
+    if (collision_check(&a, &b, simplex)) {
+      status = epa_response(&a, &b, simplex, collision_dir[0],
+                            collision_depth);
+      if (status != 0) {
+        printf("COLLISION ERR BETWEEN CUBE AND PLAYER\n");
+        break;
+      }
+      glm_vec3_negate(collision_dir[0]);
+      glm_quat_from_vecs(up, collision_dir[0], temp);
+      glm_quat_mat4(temp, vector_rot_mats[0]);
+
       cube_col[0] = 1.0;
       cube_col[1] = 0.0;
       cube_col[2] = 0.0;
     } else {
+      glm_vec3_zero(collision_dir[0]);
+      collision_depth[0] = 0;
+
       cube_col[0] = 1.0;
       cube_col[1] = 1.0;
       cube_col[2] = 1.0;
+    }
+    if (collision_check(&a, &c, simplex)) {
+      status = epa_response(&a, &c, simplex, collision_dir[1],
+                            collision_depth + 1);
+      if (status != 0) {
+        printf("COLLISION ERR BETWEEN SPHERE AND PLAYER\n");
+        break;
+      }
+      glm_vec3_negate(collision_dir[1]);
+      glm_quat_from_vecs(up, collision_dir[1], temp);
+      glm_quat_mat4(temp, vector_rot_mats[1]);
+
+      s_col[0] = 1.0;
+      s_col[1] = 0.0;
+      s_col[2] = 0.0;
+    } else {
+      glm_vec3_zero(collision_dir[1]);
+      collision_depth[1] = 0;
+
+      s_col[0] = 1.0;
+      s_col[1] = 1.0;
+      s_col[2] = 1.0;
     }
 
     /* Collision */
@@ -320,6 +411,8 @@ int main() {
     oct_tree_insert(tree, player, 15);
     oct_tree_delete(tree, box_entity->tree_offsets[0]);
     oct_tree_insert(tree, box_entity, 0);
+    oct_tree_delete(tree, sphere_entity->tree_offsets[0]);
+    oct_tree_insert(tree, sphere_entity, 0);
 
     // Render
 
@@ -383,6 +476,10 @@ int main() {
                 cube_col[1], cube_col[2]);
     draw_colliders(basic_shader, box_entity, sphere);
 
+    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), s_col[0],
+                s_col[1], s_col[2]);
+    draw_colliders(basic_shader, sphere_entity, sphere);
+
     /* Skin */
 
     glUseProgram(shader);
@@ -412,10 +509,24 @@ int main() {
                        GL_FALSE, (float *) model);
     draw_model(u_shader, dude);
 
+    vec3 scale_factor = { 1.0, 1.0, 1.0 };
+    scale_factor[1] = collision_depth[0];
     glm_mat4_identity(model);
+    glm_translate(model, cube_pos);
+    glm_scale(model, scale_factor); 
+    //glm_mat4_mul(vector_rot_mats[0], model, model);
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
-    draw_model(u_shader, test);
+    draw_model(u_shader, vector);
+
+    scale_factor[1] = collision_depth[1];
+    glm_mat4_identity(model);
+    glm_translate(model, s_pos);
+    glm_scale(model, scale_factor); 
+    //glm_mat4_mul(vector_rot_mats[1], model, model);
+    glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    draw_model(u_shader, vector);
 
     glm_mat4_identity(model);
     glm_vec3_zero(translation);
@@ -434,8 +545,8 @@ int main() {
                        (float *) view);
     glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 0.0);
 
-    vec3 pos = { 0.0, 0.0, 0.0 };
-    draw_oct_tree(cube, tree, pos, 16.0, test_shader, 0, 1);
+    //vec3 pos = { 0.0, 0.0, 0.0 };
+    //draw_oct_tree(cube, tree, pos, 16.0, test_shader, 0, 1);
     
     glUniform3f(glGetUniformLocation(test_shader, "test_col"), cube_col[0],
                 cube_col[1], cube_col[2]);
@@ -450,11 +561,13 @@ int main() {
 
   free_entity(player);
   free_entity(box_entity);
+  free_entity(sphere_entity);
 
   free_model(cube);
   free_model(test);
   free_model(dude);
   free_model(floor);
+  free_model(sphere);
 
   free_oct_tree(tree);
 
