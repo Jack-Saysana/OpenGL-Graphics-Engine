@@ -1,8 +1,8 @@
 #include <main.h>
 
-#define LINUX (1)
+#define LINUX (0)
 #define LAPTOP (0)
-#define PC (0)
+#define PC (1)
 
 #if LINUX == 1
 #define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
@@ -147,7 +147,7 @@ int main() {
   }
 
   MODEL *test = load_model(
-      DIR"/resources/3DChess/bishop.obj"
+      DIR"/resources/test/test.obj"
       );
   if (test == NULL) {
     printf("Unable to load test model\n");
@@ -160,6 +160,15 @@ int main() {
       );
   if (floor == NULL) {
     printf("Unable to load floor model\n");
+    glfwTerminate();
+    return -1;
+  }
+
+  MODEL *platform = load_model(
+      DIR"/resources/platform/platform.obj"
+      );
+  if (platform == NULL) {
+    printf("Unable to load platform model\n");
     glfwTerminate();
     return -1;
   }
@@ -195,6 +204,16 @@ int main() {
     glfwTerminate();
     return -1;
   }
+
+  ENTITY *obstacle = init_entity(platform);
+  if (obstacle == NULL) {
+    printf("Unable to load obstacle\n");
+    glfwTerminate();
+    return -1;
+  }
+  vec3 ob_pos = { 3.0, 0.0, -3.0 };
+  glm_mat4_identity(obstacle->model_mat);
+  glm_translate(obstacle->model_mat, ob_pos);
 
 
 
@@ -309,6 +328,21 @@ int main() {
   glBindVertexArray(0);
 
   float until_next = 0.0;
+
+  status = init_simulation();
+  if (status != 0) {
+    glfwTerminate();
+  }
+
+  status = insert_entity(player);
+  if (status != 0) {
+    glfwTerminate();
+  }
+  status = insert_entity(obstacle);
+  if (status != 0) {
+    glfwTerminate();
+  }
+
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -361,7 +395,6 @@ int main() {
     float collision_depth[2];
     versor temp;
     mat4 vector_rot_mats[2];
-    int status = 0;
     if (collision_check(&a, &b, simplex)) {
       status = epa_response(&a, &b, simplex, collision_dir[0],
                             collision_depth);
@@ -473,6 +506,7 @@ int main() {
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 1.0, 0.0, 1.0);
     glBindVertexArray(pt_VAO);
     draw_colliders(basic_shader, player, sphere);
+    draw_colliders(basic_shader, obstacle, sphere);
 
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), cube_col[0],
                 cube_col[1], cube_col[2]);
@@ -518,7 +552,7 @@ int main() {
     glm_mat4_identity(model);
     glm_mat4_mul(vector_rot_mats[0], model, model);
     glm_mat4_mul(t_mat, model, model);
-    glm_scale(model, scale_factor); 
+    glm_scale(model, scale_factor);
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(u_shader, vector);
@@ -529,7 +563,7 @@ int main() {
     glm_translate(t_mat, s_pos);
     glm_mat4_mul(vector_rot_mats[1], model, model);
     glm_mat4_mul(t_mat, model, model);
-    glm_scale(model, scale_factor); 
+    glm_scale(model, scale_factor);
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(u_shader, vector);
@@ -544,6 +578,12 @@ int main() {
                        GL_FALSE, (float *) model);
     draw_model(u_shader, floor);
 
+    glm_mat4_identity(model);
+    glm_translate(model, ob_pos);
+    glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    draw_entity(u_shader, obstacle);
+
     /* Tests */
 
     glUseProgram(test_shader);
@@ -553,7 +593,7 @@ int main() {
 
     //vec3 pos = { 0.0, 0.0, 0.0 };
     //draw_oct_tree(cube, tree, pos, 16.0, test_shader, 0, 1);
-    
+
     glUniform3f(glGetUniformLocation(test_shader, "test_col"), cube_col[0],
                 cube_col[1], cube_col[2]);
     glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
@@ -565,6 +605,7 @@ int main() {
     glfwPollEvents();
   }
 
+  end_simulation();
   free_entity(player);
   free_entity(box_entity);
   free_entity(sphere_entity);

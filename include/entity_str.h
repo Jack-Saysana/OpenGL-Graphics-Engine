@@ -72,9 +72,13 @@ typedef struct model {
 } MODEL;
 
 typedef struct entity {
+  /* Linear Algebra Data */
   MODEL *model;
   size_t *tree_offsets;
   mat4 (*bone_mats)[3];
   mat4 *final_b_mats;
   mat4 model_mat;
+
+  /* Broad Physics Data */
+  vec3 velocity;
 } ENTITY;

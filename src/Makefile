@@ -1,4 +1,4 @@
-FILES = main.c glad.c shader.c model_loader.c model.c entity.c obj_preprocessor.c material.c helpers.c animation.c oct_tree.c physics.c
+FILES = main.c glad.c shader.c model_loader.c model.c entity.c obj_preprocessor.c material.c helpers.c animation.c oct_tree.c physics.c simulation.c
 
 win:
 	gcc -Wall -Werror -I../include -LC:/msys64/mingw64/bin -L:/msys64/mingw64/lib -o Jack $(FILES) -l:glfw3.dll -l:libcglm.a

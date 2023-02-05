@@ -46,6 +46,9 @@ ENTITY *init_entity(MODEL *model) {
 
   glm_mat4_identity(ent->model_mat);
 
+  vec3 init_velocity = { 0.0, 0.0, 0.0 };
+  glm_vec3_copy(init_velocity, ent->velocity);
+
   return ent;
 }
 

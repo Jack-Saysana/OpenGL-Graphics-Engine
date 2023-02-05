@@ -26,11 +26,22 @@ struct PT_LIGHT {
   int a_consts[3];
 };
 
-/*vec3 calc_dir_light(struct DIR_LIGHT light) {
-  vec3 col = vec3(texture(material.diff_map, tex_coords));
+vec3 calc_dir_light(DIR_LIGHT light);
+
+void main() {
+  dir_light.col = vec3(1.0, 1.0, 1.0);
+  dir_light.dir = vec3(1.0, 1.0, 1.0);
+
+  //frag_col = vec4(calc_dir_light(dir_light), 1.0);
+  frag_col = vec4(1.0, 1.0, 1.0, 1.0);
+}
+
+vec3 calc_dir_light(DIR_LIGHT light) {
+  /*vec3 col = vec3(texture(material.diff_map, tex_coords));
   if (col.x == 0.0 && col.y == 0.0 && col.z == 0.0) {
     col = vec3(1.0, 1.0, 1.0);
-  }
+  }*/
+  vec3 col = vec3(1.0, 1.0, 1.0);
 
   vec3 ambient = light.col * 0.05;
 
@@ -42,7 +53,7 @@ struct PT_LIGHT {
   vec3 specular = spec * light.col;
 
   return (ambient + diffuse + specular) * col;
-}*/
+}
 
 /*vec3 calc_point_light(struct PT_LIGHT light) {
   vec3 col = vec3(texture(material.diff_map, tex_coords));
@@ -65,10 +76,3 @@ struct PT_LIGHT {
   return (ambient + diffuse + specular) * col;
 }*/
 
-void main() {
-  dir_light.col = vec3(1.0, 1.0, 1.0);
-  dir_light.dir = vec3(1.0, 1.0, 1.0);
-
-  //frag_col = vec4(calc_dir_light(dir_light), 1.0);
-  frag_col = vec4(1.0, 1.0, 1.0, 1.0);
-}

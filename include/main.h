@@ -55,6 +55,12 @@ void draw_model(unsigned int shader, MODEL *model);
 void free_model(MODEL *model);
 void free_entity(ENTITY *entity);
 
+int init_simulation();
+int simulate_frame();
+int insert_entity(ENTITY *entity);
+ENTITY *remove_entity(size_t location);
+void end_simulation();
+
 OCT_TREE *init_tree();
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);

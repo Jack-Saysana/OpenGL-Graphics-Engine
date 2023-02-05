@@ -81,7 +81,7 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     max_extents[4] = obj.data.center[2] + radius;
     max_extents[5] = obj.data.center[2] - radius;
   }
- 
+
   float oct_len = 16.0;
 
   OCTANT cur_oct = MULTIPLE;
@@ -295,7 +295,7 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
 }
 
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
-  OCT_NODE *stack[1 + (MAX_DEPTH * 8)]; 
+  OCT_NODE *stack[1 + (MAX_DEPTH * 8)];
   stack[0] = node;
   size_t top = 1;
 
