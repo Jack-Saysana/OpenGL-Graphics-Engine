@@ -32,6 +32,7 @@ typedef struct collider {
     };
   } data;
   COL_TYPE type;
+  int category;
 } COLLIDER;
 
 typedef struct material {

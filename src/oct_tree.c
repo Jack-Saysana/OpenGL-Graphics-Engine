@@ -295,16 +295,33 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
 }
 
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
-  OCT_NODE *stack[1 + (MAX_DEPTH * 8)];
-  stack[0] = node;
-  size_t top = 1;
+  OCT_NODE **stack = malloc(sizeof(OCT_NODE *) * BUFF_STARTING_LEN);
+  if (stack == NULL) {
+    return -1;
+  }
 
+  size_t top = 0;
+  size_t stack_size = BUFF_STARTING_LEN;
   int status = -1;
+  for (OCTANT i = X_Y_Z; i < negX_negY_negZ; i++) {
+    stack[top] = tree->node_buffer + (node->next_offset + i);
+    top++;
+    if (top == stack_size) {
+      status = double_buffer((void **) &stack, &stack_size,
+                             sizeof(OCT_NODE *));
+      if (status != 0) {
+        free(stack);
+        return -1;
+      }
+    }
+  }
+
   OCT_NODE *cur = NULL;
   while (top) {
     cur = stack[top - 1];
     status = read_oct(tree, cur, res);
     if (status != 0) {
+      free(stack);
       return -1;
     }
     top--;
@@ -313,9 +330,19 @@ int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
       for (OCTANT i = X_Y_Z; i< negX_negY_negZ; i++) {
         stack[top] = tree->node_buffer + (cur->next_offset + i);
         top++;
+        if (top == stack_size) {
+          status = double_buffer((void **) &stack, &stack_size,
+                                 sizeof(OCT_NODE *));
+          if (status != 0) {
+            free(stack);
+            return -1;
+          }
+        }
       }
     }
   }
+
+  free(stack);
   return 0;
 }
 

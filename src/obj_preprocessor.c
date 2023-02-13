@@ -230,39 +230,41 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = POLY;
-      sscanf(cur_line, "hp %d %d %f %f %f \
-                                 %f %f %f \
-                                 %f %f %f \
-                                 %f %f %f \
-                                 %f %f %f \
-                                 %f %f %f \
-                                 %f %f %f \
-                                 %f %f %f", bone_links + col_len,
-                                 &(colliders[col_len].data.num_used),
-                                 colliders[col_len].data.verts[0],
-                                 colliders[col_len].data.verts[0]+1,
-                                 colliders[col_len].data.verts[0]+2,
-                                 colliders[col_len].data.verts[1],
-                                 colliders[col_len].data.verts[1]+1,
-                                 colliders[col_len].data.verts[1]+2,
-                                 colliders[col_len].data.verts[2],
-                                 colliders[col_len].data.verts[2]+1,
-                                 colliders[col_len].data.verts[2]+2,
-                                 colliders[col_len].data.verts[3],
-                                 colliders[col_len].data.verts[3]+1,
-                                 colliders[col_len].data.verts[3]+2,
-                                 colliders[col_len].data.verts[4],
-                                 colliders[col_len].data.verts[4]+1,
-                                 colliders[col_len].data.verts[4]+2,
-                                 colliders[col_len].data.verts[5],
-                                 colliders[col_len].data.verts[5]+1,
-                                 colliders[col_len].data.verts[5]+2,
-                                 colliders[col_len].data.verts[6],
-                                 colliders[col_len].data.verts[6]+1,
-                                 colliders[col_len].data.verts[6]+2,
-                                 colliders[col_len].data.verts[7],
-                                 colliders[col_len].data.verts[7]+1,
-                                 colliders[col_len].data.verts[7]+2);
+      sscanf(cur_line, "hp %d %d %d %f %f %f \
+                                    %f %f %f \
+                                    %f %f %f \
+                                    %f %f %f \
+                                    %f %f %f \
+                                    %f %f %f \
+                                    %f %f %f \
+                                    %f %f %f",
+                                    &(colliders[col_len].category),
+                                    bone_links + col_len,
+                                    &(colliders[col_len].data.num_used),
+                                    colliders[col_len].data.verts[0],
+                                    colliders[col_len].data.verts[0]+1,
+                                    colliders[col_len].data.verts[0]+2,
+                                    colliders[col_len].data.verts[1],
+                                    colliders[col_len].data.verts[1]+1,
+                                    colliders[col_len].data.verts[1]+2,
+                                    colliders[col_len].data.verts[2],
+                                    colliders[col_len].data.verts[2]+1,
+                                    colliders[col_len].data.verts[2]+2,
+                                    colliders[col_len].data.verts[3],
+                                    colliders[col_len].data.verts[3]+1,
+                                    colliders[col_len].data.verts[3]+2,
+                                    colliders[col_len].data.verts[4],
+                                    colliders[col_len].data.verts[4]+1,
+                                    colliders[col_len].data.verts[4]+2,
+                                    colliders[col_len].data.verts[5],
+                                    colliders[col_len].data.verts[5]+1,
+                                    colliders[col_len].data.verts[5]+2,
+                                    colliders[col_len].data.verts[6],
+                                    colliders[col_len].data.verts[6]+1,
+                                    colliders[col_len].data.verts[6]+2,
+                                    colliders[col_len].data.verts[7],
+                                    colliders[col_len].data.verts[7]+1,
+                                    colliders[col_len].data.verts[7]+2);
 
       col_len++;
       if (col_len == col_buff_len) {
@@ -277,7 +279,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'h' && cur_line[1] == 's' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = SPHERE;
-      sscanf(cur_line, "hs %d %f %f %f %f", bone_links + col_len,
+      sscanf(cur_line, "hs %d %d %f %f %f %f",
+             &(colliders[col_len].category),
+             bone_links + col_len,
              colliders[col_len].data.center,
              colliders[col_len].data.center + 1,
              colliders[col_len].data.center + 2,
@@ -362,7 +366,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
-      sscanf(cur_line, "a %lld", &(cur_anim->duration));
+      sscanf(cur_line, "a %ld", &(cur_anim->duration));
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;

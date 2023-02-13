@@ -1,9 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cglm/vec3.h>
+#include <cglm/affine.h>
 #include <entity_str.h>
 
 #define BUFF_STARTING_LEN (10)
+
+#define DYNAMIC (0)
+#define DRIVING (1)
+
+// Masks for determining entity type
+#define T_DYNAMIC (1)
+#define T_DRIVING (2)
+#define T_IMMUTABLE (4)
+
+#define DEFAULT (0)
+#define HIT_BOX (1)
+#define HURT_BOX (2)
 
 typedef struct physics_object {
   ENTITY *entity;
@@ -36,24 +49,36 @@ typedef struct collision_result {
 } COLLISION_RES;
 
 static ENTITY **dynamic_ents = NULL;
-static size_t d_ent_buff_len = 0;
-static size_t d_ent_buff_size = 0;
+static size_t dy_ent_buff_len = 0;
+static size_t dy_ent_buff_size = 0;
 
-static ENTITY **static_ents = NULL;
-static size_t s_ent_buff_len = 0;
-static size_t s_ent_buff_size = 0;
+static ENTITY **driving_ents = NULL;
+static size_t dr_ent_buff_len = 0;
+static size_t dr_ent_buff_size = 0;
 
 static OCT_TREE *physics_tree = NULL;
 
+// Front Facing
 int init_simulation();
 int simulate_frame();
 int insert_entity(ENTITY *entity);
-ENTITY *remove_entity(size_t location);
+int remove_entity(ENTITY *entity);
 void end_simulation();
 
+// Back Facing
+int collision_test(ENTITY *target, size_t offset);
+void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
+int add_to_elist(ENTITY **list, size_t *len, size_t *buff_size,
+                 ENTITY *entity);
+void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
+
+// Outside helpers
 OCT_TREE *init_tree();
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
+int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
+int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
+                 float *p_depth);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);

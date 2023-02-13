@@ -1,8 +1,8 @@
 #include <main.h>
 
-#define LINUX (0)
+#define LINUX (1)
 #define LAPTOP (0)
-#define PC (1)
+#define PC (0)
 
 #if LINUX == 1
 #define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
@@ -25,6 +25,8 @@ vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
 vec3 camera_model_pos = { 0.0, 0.0, 0.0 };
 float camera_model_rot = 0.0;
+
+vec3 movement = { 0.0, 0.0, 0.0 };
 
 float lastX = 400;
 float lastY = 300;
@@ -191,12 +193,12 @@ int main() {
     return -1;
   }
 
-  OCT_TREE *tree = init_tree();
+  /*OCT_TREE *tree = init_tree();
   if (tree == NULL) {
     printf("Unable to load oct-tree\n");
     glfwTerminate();
     return -1;
-  }
+  }*/
 
   ENTITY *player = init_entity(dude);
   if (player == NULL) {
@@ -248,7 +250,7 @@ int main() {
   cube->colliders[0] = box;
   glm_mat4_identity(box_entity->model_mat);
   glm_translate(box_entity->model_mat, cube_pos);
-  oct_tree_insert(tree, box_entity, 0);
+  //oct_tree_insert(tree, box_entity, 0);
 
   vec3 s_pos = { -3.0, 2.0, -3.0 };
   vec3 s_col = { 1.0, 1.0, 1.0 };
@@ -271,17 +273,17 @@ int main() {
   sphere->colliders[0] = ball;
   glm_mat4_identity(sphere_entity->model_mat);
   glm_translate(sphere_entity->model_mat, s_pos);
-  oct_tree_insert(tree, sphere_entity, 0);
+  // oct_tree_insert(tree, sphere_entity, 0);
 
 
 
 
   glm_translate(player->model_mat, camera_model_pos);
   glm_rotate_y(player->model_mat, camera_model_rot, player->model_mat);
-  int status = oct_tree_insert(tree, player, 15);
+  /*int status = oct_tree_insert(tree, player, 15);
   if (status != 0) {
     printf("Failed to insert dude1\n");
-  }
+  }*/
 
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;
@@ -329,15 +331,23 @@ int main() {
 
   float until_next = 0.0;
 
-  status = init_simulation();
+
+  // SIMULATION SET UP
+
+  int status = init_simulation();
   if (status != 0) {
     glfwTerminate();
   }
 
+  // Make player driving
+  player->type |= 2;
   status = insert_entity(player);
   if (status != 0) {
     glfwTerminate();
   }
+
+  // Make obstacle immovable
+  obstacle->type |= 4;
   status = insert_entity(obstacle);
   if (status != 0) {
     glfwTerminate();
@@ -371,17 +381,39 @@ int main() {
 
     /* Physics */
 
-    COLLIDER a;
-    a.type = SPHERE;
-    a.data.radius = player->model->colliders[15].data.radius;
-    glm_mat4_mulv3(player->model_mat, player->model->colliders[15].data.center,
-                   1.0, a.data.center);
+    glm_vec3_copy(movement, player->velocity);
+    vec3 displacement = { 0.0, 0.0, 0.0 };
+    glm_vec3(player->model_mat[3], displacement);
+    status = simulate_frame();
+    if (status != 0) {
+      break;
+    }
+    vec3 update = { 0.0, 0.0, 0.0 };
+    glm_vec3(player->model_mat[3], update);
+    float temp = update[0];
+    update[0] = update[2];
+    update[2] = temp;
+    glm_vec3_sub(player->model_mat[3], displacement, displacement);
+    glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
+
+    /*COLLIDER a;
+    a.type = POLY;
+    a.data.num_used = player->model->colliders[0].data.num_used;
+    for (int i = 0; i < 8; i++) {
+      glm_mat4_mulv3(player->model_mat,
+                     player->model->colliders[0].data.verts[i], 1.0,
+                     a.data.verts[i]);
+    }
+    //glm_mat4_mulv3(player->model_mat, player->model->colliders[15].data.center,
+    //               1.0, a.data.center);
+    
     COLLIDER b;
     b.type = POLY;
     b.data.num_used = 8;
     for (int i = 0; i < 8; i++) {
-      glm_mat4_mulv3(box_entity->model_mat, cube->colliders[0].data.verts[i],
-                     1.0, b.data.verts[i]);
+      glm_mat4_mulv3(obstacle->model_mat,
+                     obstacle->model->colliders[0].data.verts[i], 1.0,
+                     b.data.verts[i]);
     }
     COLLIDER c;
     c.type = SPHERE;
@@ -399,7 +431,7 @@ int main() {
       status = epa_response(&a, &b, simplex, collision_dir[0],
                             collision_depth);
       if (status != 0) {
-        printf("COLLISION ERR BETWEEN CUBE AND PLAYER\n");
+        printf("COLLISION ERR BETWEEN PLATFORM AND PLAYER\n");
         break;
       }
       glm_vec3_negate(collision_dir[0]);
@@ -438,22 +470,23 @@ int main() {
       s_col[0] = 1.0;
       s_col[1] = 1.0;
       s_col[2] = 1.0;
-    }
+    }*/
 
     /* Collision */
 
-    oct_tree_delete(tree, player->tree_offsets[15]);
-    oct_tree_insert(tree, player, 15);
-    oct_tree_delete(tree, box_entity->tree_offsets[0]);
-    oct_tree_insert(tree, box_entity, 0);
-    oct_tree_delete(tree, sphere_entity->tree_offsets[0]);
-    oct_tree_insert(tree, sphere_entity, 0);
+    //oct_tree_delete(tree, player->tree_offsets[15]);
+    //oct_tree_insert(tree, player, 15);
+    //oct_tree_delete(tree, box_entity->tree_offsets[0]);
+    //oct_tree_insert(tree, box_entity, 0);
+    //oct_tree_delete(tree, sphere_entity->tree_offsets[0]);
+    //oct_tree_insert(tree, sphere_entity, 0);
 
     // Render
 
     /* Camera */
 
-    vec3 translation = { -camera_model_pos[0], 0.0, -camera_model_pos[2] };
+    vec3 translation = { -camera_model_pos[0], -camera_model_pos[1],
+                         -camera_model_pos[2] };
 
     glm_mat4_identity(view);
     camera_offset[1] = -dude->bones[18].coords[1];
@@ -545,10 +578,10 @@ int main() {
                        GL_FALSE, (float *) model);
     draw_model(u_shader, dude);
 
-    vec3 scale_factor = { 1.0, 1.0, 1.0 };
+    /*vec3 scale_factor = { 1.0, 1.0, 1.0 };
     mat4 t_mat = GLM_MAT4_IDENTITY_INIT;
     scale_factor[1] = collision_depth[0];
-    glm_translate(t_mat, cube_pos);
+    glm_translate(t_mat, ob_pos);
     glm_mat4_identity(model);
     glm_mat4_mul(vector_rot_mats[0], model, model);
     glm_mat4_mul(t_mat, model, model);
@@ -566,7 +599,7 @@ int main() {
     glm_scale(model, scale_factor);
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
-    draw_model(u_shader, vector);
+    draw_model(u_shader, vector);*/
 
     glm_mat4_identity(model);
     glm_vec3_zero(translation);
@@ -577,12 +610,6 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
                        GL_FALSE, (float *) model);
     draw_model(u_shader, floor);
-
-    glm_mat4_identity(model);
-    glm_translate(model, ob_pos);
-    glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-    draw_entity(u_shader, obstacle);
 
     /* Tests */
 
@@ -599,6 +626,13 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
                        GL_FALSE, (float *) box_entity->model_mat);
     draw_entity(test_shader, box_entity);
+
+    glm_mat4_identity(model);
+    glm_translate(model, ob_pos);
+    glUniformMatrix4fv(glGetUniformLocation(test_shader, "model"), 1,
+                       GL_FALSE, (float *) obstacle->model_mat);
+    draw_entity(test_shader, obstacle);
+
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -617,7 +651,7 @@ int main() {
   free_model(sphere);
   free_model(vector);
 
-  free_oct_tree(tree);
+  //free_oct_tree(tree);
 
   glfwTerminate();
 
@@ -661,7 +695,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 
 void keyboard_input(GLFWwindow *window) {
   float cam_speed = 2.0 * delta_time;
-  vec3 movement = { 0.0, 0.0, 0.0 };
+  glm_vec3_zero(movement);
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera_model_rot = glm_rad(-yaw + 180.0);
 

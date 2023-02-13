@@ -19,7 +19,7 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
 
   while (true) {
     support_func(a, b, dir, simplex[num_used]);
-    if (glm_vec3_dot(dir, simplex[num_used]) < 0.0) {
+    if (glm_vec3_dot(dir, simplex[num_used]) <= 0.0) {
       return 0;
     }
     for (int i = 0; i < num_used; i++) {

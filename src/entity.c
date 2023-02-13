@@ -49,6 +49,10 @@ ENTITY *init_entity(MODEL *model) {
   vec3 init_velocity = { 0.0, 0.0, 0.0 };
   glm_vec3_copy(init_velocity, ent->velocity);
 
+  ent->list_offsets[0] = 0xBAADF00D;
+  ent->list_offsets[1] = 0xBAADF00D;
+  ent->type = 0;
+
   return ent;
 }
 

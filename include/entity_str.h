@@ -1,4 +1,7 @@
 #define NUM_PROPS (5)
+#define DEFAULT (0)
+#define HIT_BOX (1)
+#define HURT_BOX (2)
 
 typedef enum chain_type {
   LOCATION = 0,
@@ -25,7 +28,9 @@ typedef struct collider {
     };
   } data;
   COL_TYPE type;
+  int category;
 } COLLIDER;
+
 
 typedef struct keyframe {
   float offset[4];
@@ -80,5 +85,8 @@ typedef struct entity {
   mat4 model_mat;
 
   /* Broad Physics Data */
+  size_t list_offsets[2];
   vec3 velocity;
+  // Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC]
+  int type;
 } ENTITY;

@@ -58,7 +58,7 @@ void free_entity(ENTITY *entity);
 int init_simulation();
 int simulate_frame();
 int insert_entity(ENTITY *entity);
-ENTITY *remove_entity(size_t location);
+int remove_entity(ENTITY *entity);
 void end_simulation();
 
 OCT_TREE *init_tree();
