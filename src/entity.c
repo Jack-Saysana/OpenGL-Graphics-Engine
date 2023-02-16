@@ -44,7 +44,9 @@ ENTITY *init_entity(MODEL *model) {
 
   ent->model = model;
 
-  glm_mat4_identity(ent->model_mat);
+  glm_mat4_identity(ent->rotation);
+  glm_vec3_one(ent->scale);
+  glm_vec3_zero(ent->translation);
 
   vec3 init_velocity = { 0.0, 0.0, 0.0 };
   glm_vec3_copy(init_velocity, ent->velocity);
@@ -69,8 +71,10 @@ void draw_entity(unsigned int shader, ENTITY *entity) {
                        (float *) entity->final_b_mats[i]);
   }
 
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(entity, model);
   glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                     GL_FALSE, (float *) entity->model_mat);
+                     GL_FALSE, (float *) model);
 
   draw_model(shader, entity->model);
 }
@@ -87,8 +91,11 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
     glUniformMatrix4fv(glGetUniformLocation(shader, var_name), 1, GL_FALSE,
                        (float *) entity->final_b_mats[i]);
   }
+
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(entity, model);
   glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                     GL_FALSE, (float *) entity->model_mat);
+                     GL_FALSE, (float *) model);
 
   draw_bones(entity->model);
 }
@@ -107,12 +114,16 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
   unsigned int *VBO = malloc(sizeof(unsigned int) *
                              entity->model->num_colliders);
 
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(entity, model);
+  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+                     GL_FALSE, (float *) model);
   for (int i = 0; i < entity->model->num_colliders; i++) {
     bone = entity->model->collider_bone_links[i];
     if (bone >= 0 && bone < entity->model->num_colliders) {
-      glm_mat4_mul(entity->model_mat, entity->final_b_mats[bone], used);
+      glm_mat4_mul(model, entity->final_b_mats[bone], used);
     } else {
-      glm_mat4_copy(entity->model_mat, used);
+      glm_mat4_copy(model, used);
     }
     type = entity->model->colliders[i].type;
 
@@ -160,4 +171,11 @@ void free_entity(ENTITY *entity) {
   }
 
   free(entity);
+}
+
+void get_model_mat(ENTITY *entity, mat4 model) {
+  glm_mat4_identity(model);
+  glm_translate(model, entity->translation);
+  glm_mat4_mul(model, entity->rotation, model);
+  glm_scale(model, entity->scale);
 }

@@ -2,6 +2,7 @@
 #include <float.h>
 #include <cglm/vec3.h>
 #include <cglm/mat4.h>
+#include <cglm/affine.h>
 #include <entity_str.h>
 
 #define MAX_DEPTH (5)
@@ -79,3 +80,5 @@ OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *ebj_extents,
                      float *oct_len);
 int max_dot(COLLIDER *a, vec3 dir);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
+void get_model_mat(ENTITY *entity, mat4 model);
+

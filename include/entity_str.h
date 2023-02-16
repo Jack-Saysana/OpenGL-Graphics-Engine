@@ -82,7 +82,10 @@ typedef struct entity {
   size_t *tree_offsets;
   mat4 (*bone_mats)[3];
   mat4 *final_b_mats;
-  mat4 model_mat;
+  //mat4 model_mat;
+  mat4 rotation;
+  vec3 scale;
+  vec3 translation;
 
   /* Broad Physics Data */
   size_t list_offsets[2];

@@ -13,3 +13,4 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere);
 void draw_model(unsigned int shader, MODEL *model);
 void draw_bones(MODEL *model);
 void free_entity(ENTITY *entity);
+void get_model_mat(ENTITY *entity, mat4 model);

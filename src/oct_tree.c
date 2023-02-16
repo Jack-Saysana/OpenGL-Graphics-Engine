@@ -48,6 +48,9 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   obj.data = entity->model->colliders[collider_offset].data;
   obj.type = entity->model->colliders[collider_offset].type;
   int bone = entity->model->collider_bone_links[collider_offset];
+
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(entity, model);
   if (obj.type == POLY) {
     for (unsigned int i = 0; i < obj.data.num_used; i++) {
       if (bone >= 0 && bone < entity->model->num_colliders) {
@@ -55,8 +58,8 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
                        entity->model->colliders[collider_offset].data.verts[i],
                        1.0, obj.data.verts[i]);
       }
-      glm_mat4_mulv3(entity->model_mat, obj.data.verts[i], 1.0,
-                     obj.data.verts[i]);
+
+      glm_mat4_mulv3(model, obj.data.verts[i], 1.0, obj.data.verts[i]);
     }
 
     max_extents[0] = obj.data.verts[max_dot(&obj, X)][0];
@@ -71,7 +74,7 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
                      entity->model->colliders[collider_offset].data.center,
                      1.0, obj.data.center);
     }
-    glm_mat4_mulv3(entity->model_mat, obj.data.center, 1.0, obj.data.center);
+    glm_mat4_mulv3(model, obj.data.center, 1.0, obj.data.center);
     float radius = obj.data.radius;
 
     max_extents[0] = obj.data.center[0] + radius;

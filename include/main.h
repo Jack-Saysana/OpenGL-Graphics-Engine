@@ -37,6 +37,8 @@ typedef struct collision_result {
   size_t list_buff_size;
 } COLLISION_RES;
 
+extern OCT_TREE *physics_tree;
+
 void keyboard_input(GLFWwindow *window);
 void mouse_input(GLFWwindow *widnow, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
@@ -69,3 +71,4 @@ void free_oct_tree(OCT_TREE *tree);
 int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
+void get_model_mat(ENTITY *entity, mat4 model);

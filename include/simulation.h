@@ -56,7 +56,7 @@ static ENTITY **driving_ents = NULL;
 static size_t dr_ent_buff_len = 0;
 static size_t dr_ent_buff_size = 0;
 
-static OCT_TREE *physics_tree = NULL;
+OCT_TREE *physics_tree = NULL;
 
 // Front Facing
 int init_simulation();
@@ -82,3 +82,4 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
+void get_model_mat(ENTITY *entity, mat4 model);

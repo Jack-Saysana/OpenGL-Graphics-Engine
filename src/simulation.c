@@ -65,6 +65,15 @@ int simulate_frame() {
         entity->velocity[2] != 0.0) {
       colliders = entity->model->colliders;
       for (size_t col = 0; col < entity->model->num_colliders; col++) {
+        status = oct_tree_delete(physics_tree, entity->tree_offsets[col]);
+        if (status != 0) {
+          return -1;
+        }
+        status = oct_tree_insert(physics_tree, entity, col);
+        if (status != 0) {
+          return -1;
+        }
+
         if (colliders[col].category == DEFAULT) {
           status = collision_test(entity, col);
           if (status != 0) {
@@ -85,7 +94,11 @@ int simulate_frame() {
 
 int collision_test(ENTITY *target, size_t offset) {
   COLLIDER t_col;
-  global_collider(target->model_mat, target->model->colliders + offset,
+
+  mat4 t_model = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(target, t_model);
+
+  global_collider(t_model, target->model->colliders + offset,
                   &t_col);
 
   COLLISION_RES col_res = oct_tree_search(physics_tree, &t_col);
@@ -99,11 +112,14 @@ int collision_test(ENTITY *target, size_t offset) {
 
   int collision = 0;
   int status = 0;
+  mat4 p_model = GLM_MAT4_IDENTITY_INIT;
   for (size_t i = 0; i < col_res.list_len; i++) {
     p_obj = col_res.list[i];
-    global_collider(p_obj->entity->model_mat,
+    get_model_mat(p_obj->entity, p_model);
+    global_collider(p_model,
                     p_obj->entity->model->colliders + p_obj->collider_offset,
                     &collider);
+
     if (p_obj->entity != target) {
       collision = collision_check(&t_col, &collider, simplex);
       if (collision) {
@@ -113,10 +129,10 @@ int collision_test(ENTITY *target, size_t offset) {
           return -1;
         }
 
+        /* TRANSLATING IN INCORRECT DIRECTION DUE TO ROTATION BEING APPLIED */
         glm_vec3_scale_as(p_dir, p_depth, p_dir);
         glm_vec3_negate(p_dir);
-        glm_translate(target->model_mat, p_dir);
-        //glm_translate(p_obj->entity->model_mat, p_dir);
+        glm_vec3_add(p_dir, target->translation, target->translation);
       }
     }
   }
