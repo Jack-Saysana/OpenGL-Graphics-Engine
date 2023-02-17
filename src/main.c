@@ -17,13 +17,10 @@
 
 vec3 up = { 0.0, 1.0, 0.0 };
 
-float delta_time = 0.0;
-float last_frame = 0.0;
-
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
-vec3 camera_model_pos = { -3.0, 0.0, 3.0 };
+vec3 camera_model_pos = { 3.0, 4.0, 3.0 };
 float camera_model_rot = 0.0;
 
 vec3 movement = { 0.0, 0.0, 0.0 };
@@ -40,6 +37,7 @@ int cur_frame = 0;
 float last_push = 0.0;
 
 int toggled = 1;
+int space_pressed = 0;
 int cursor_on = 1;
 int draw = 0;
 
@@ -62,7 +60,6 @@ int main() {
 
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-  //glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window, mouse_input);
   glfwSetScrollCallback(window, scroll_callback);
 
@@ -324,9 +321,6 @@ int main() {
   glEnableVertexAttribArray(0);
   glBindVertexArray(0);
 
-  float until_next = 0.0;
-
-
   // SIMULATION SET UP
 
   int status = init_simulation();
@@ -376,12 +370,6 @@ int main() {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
     }
 
-    float current_time = glfwGetTime();
-    delta_time = current_time - last_frame;
-    last_frame = current_time;
-
-    until_next += delta_time;
-
     keyboard_input(window);
 
     /* Animation */
@@ -406,7 +394,10 @@ int main() {
 
     /* Physics */
 
-    glm_vec3_copy(movement, player->velocity);
+    player->velocity[0] = movement[0];
+    player->velocity[1] += movement[1];
+    player->velocity[2] = movement[2];
+    //glm_vec3_copy(movement, player->velocity);
     vec3 displacement = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(player->translation, displacement);
     status = simulate_frame();
@@ -415,6 +406,8 @@ int main() {
     }
     glm_vec3_sub(player->translation, displacement, displacement);
     glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
+    //printf("%f %f %f\n", player->velocity[0], player->velocity[1],
+    //       player->velocity[2]);
 
     /* Camera */
 
@@ -536,7 +529,10 @@ int main() {
   free_entity(player);
   free_entity(box_entity);
   free_entity(sphere_entity);
+  free_entity(floor_entity);
+  free_entity(obstacle);
 
+  free_model(platform);
   free_model(cube);
   free_model(test);
   free_model(dude);
@@ -615,11 +611,19 @@ void keyboard_input(GLFWwindow *window) {
     glm_vec3_scale(movement, cam_speed, movement);
     glm_vec3_add(camera_model_pos, movement, camera_model_pos);
   }
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+    if (space_pressed == 0) {
+      movement[1] = 0.25;
+      space_pressed = 1;
+    }
+  } else {
+    space_pressed = 0;
+  }
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, 1);
   }
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS &&
-      glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS &&
+      glfwGetKey(window, GLFW_KEY_E) != GLFW_PRESS) {
     if (glfwGetTime() - last_push >= 0.125) {
       if (cur_frame == 39) {
         cur_frame = 0;
@@ -627,8 +631,8 @@ void keyboard_input(GLFWwindow *window) {
       cur_frame++;
       last_push = glfwGetTime();
     }
-  } else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-             glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS &&
+  } else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS &&
+             glfwGetKey(window, GLFW_KEY_Q) != GLFW_PRESS &&
              cur_frame > 0) {
     if (glfwGetTime() - last_push >= 0.125) {
       cur_frame--;

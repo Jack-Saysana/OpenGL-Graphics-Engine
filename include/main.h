@@ -37,6 +37,8 @@ typedef struct collision_result {
   size_t list_buff_size;
 } COLLISION_RES;
 
+extern float delta_time;
+extern float last_frame;
 extern OCT_TREE *physics_tree;
 
 void keyboard_input(GLFWwindow *window);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <GLFW/glfw3.h>
 #include <cglm/vec3.h>
 #include <cglm/affine.h>
 #include <entity_str.h>
@@ -17,6 +18,8 @@
 #define DEFAULT (0)
 #define HIT_BOX (1)
 #define HURT_BOX (2)
+
+#define GRAVITY (0.50)
 
 typedef struct physics_object {
   ENTITY *entity;
@@ -47,6 +50,9 @@ typedef struct collision_result {
   size_t list_len;
   size_t list_buff_size;
 } COLLISION_RES;
+
+float last_frame = 0.0;
+float delta_time = 0.0;
 
 static ENTITY **dynamic_ents = NULL;
 static size_t dy_ent_buff_len = 0;

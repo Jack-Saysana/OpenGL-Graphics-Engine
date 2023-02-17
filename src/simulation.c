@@ -41,6 +41,11 @@ int init_simulation() {
 
 int simulate_frame() {
   int status = 0;
+
+  float current_time = glfwGetTime();
+  delta_time = current_time - last_frame;
+  last_frame = current_time;
+
   ENTITY *entity = NULL;
   COLLIDER *colliders = NULL;
 
@@ -63,6 +68,9 @@ int simulate_frame() {
     entity = dynamic_ents[ent];
     if (entity->velocity[0] != 0.0 || entity->velocity[1] != 0.0 ||
         entity->velocity[2] != 0.0) {
+      entity->velocity[1] -= (delta_time * GRAVITY);
+      entity->translation[1] += entity->velocity[1];
+
       colliders = entity->model->colliders;
       for (size_t col = 0; col < entity->model->num_colliders; col++) {
         status = oct_tree_delete(physics_tree, entity->tree_offsets[col]);
@@ -120,7 +128,7 @@ int collision_test(ENTITY *target, size_t offset) {
                     p_obj->entity->model->colliders + p_obj->collider_offset,
                     &collider);
 
-    if (p_obj->entity != target) {
+    if (p_obj->entity != target && collider.category == DEFAULT) {
       collision = collision_check(&t_col, &collider, simplex);
       if (collision) {
         status = epa_response(&t_col, &collider, simplex, p_dir, &p_depth);
@@ -129,10 +137,23 @@ int collision_test(ENTITY *target, size_t offset) {
           return -1;
         }
 
-        /* TRANSLATING IN INCORRECT DIRECTION DUE TO ROTATION BEING APPLIED */
         glm_vec3_scale_as(p_dir, p_depth, p_dir);
         glm_vec3_negate(p_dir);
         glm_vec3_add(p_dir, target->translation, target->translation);
+        glm_vec3_add(p_dir, target->velocity, target->velocity);
+
+        if ((target->velocity[0] > 0.0 && target->velocity[0] < 0.002) ||
+            (target->velocity[0] < 0.0 && target->velocity[0] > -0.002)) {
+          target->velocity[0] = 0.0;
+        }
+        if ((target->velocity[1] > 0.0 && target->velocity[1] < 0.002) ||
+            (target->velocity[1] < 0.0 && target->velocity[1] > -0.002)) {
+          target->velocity[1] = 0.0;
+        }
+        if ((target->velocity[2] > 0.0 && target->velocity[2] < 0.002) ||
+            (target->velocity[2] < 0.0 && target->velocity[2] > -0.002)) {
+          target->velocity[2] = 0.0;
+        }
       }
     }
   }
