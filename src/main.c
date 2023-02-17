@@ -23,7 +23,7 @@ float last_frame = 0.0;
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
-vec3 camera_model_pos = { 0.0, 0.0, 0.0 };
+vec3 camera_model_pos = { -3.0, 0.0, 3.0 };
 float camera_model_rot = 0.0;
 
 vec3 movement = { 0.0, 0.0, 0.0 };
@@ -40,7 +40,7 @@ int cur_frame = 0;
 float last_push = 0.0;
 
 int toggled = 1;
-int cursor_off = 1;
+int cursor_on = 1;
 int draw = 0;
 
 int main() {
@@ -62,7 +62,7 @@ int main() {
 
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-  glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+  //glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window, mouse_input);
   glfwSetScrollCallback(window, scroll_callback);
 
@@ -370,10 +370,10 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (cursor_off) {
-      glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
-    } else {
+    if (cursor_on) {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_NORMAL);
+    } else {
+      glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
     }
 
     float current_time = glfwGetTime();
@@ -518,9 +518,9 @@ int main() {
     glUniformMatrix4fv(glGetUniformLocation(test_shader, "view"), 1, GL_FALSE,
                        (float *) view);
 
-    /*vec3 pos = { 0.0, 0.0, 0.0 };
-    glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 0.0);
-    draw_oct_tree(cube, physics_tree, pos, 16.0, test_shader, 0, 1);*/
+    //vec3 pos = { 0.0, 0.0, 0.0 };
+    //glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 0.0);
+    //draw_oct_tree(cube, physics_tree, pos, 16.0, test_shader, 0, 1);
 
     glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 1.0);
     draw_entity(test_shader, box_entity);
@@ -639,10 +639,10 @@ void keyboard_input(GLFWwindow *window) {
     if (toggled) {
       if (draw == 1) {
         draw = 0;
-        cursor_off = 1;
+        cursor_on = 1;
       } else {
         draw = 1;
-        cursor_off = 0;
+        cursor_on = 0;
       }
       toggled = 0;
     }

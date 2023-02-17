@@ -306,7 +306,7 @@ int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
   size_t top = 0;
   size_t stack_size = BUFF_STARTING_LEN;
   int status = -1;
-  for (OCTANT i = X_Y_Z; i < negX_negY_negZ; i++) {
+  for (OCTANT i = X_Y_Z; i <= negX_negY_negZ; i++) {
     stack[top] = tree->node_buffer + (node->next_offset + i);
     top++;
     if (top == stack_size) {
@@ -330,7 +330,7 @@ int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
     top--;
 
     if (cur->next_offset != -1) {
-      for (OCTANT i = X_Y_Z; i< negX_negY_negZ; i++) {
+      for (OCTANT i = X_Y_Z; i <= negX_negY_negZ; i++) {
         stack[top] = tree->node_buffer + (cur->next_offset + i);
         top++;
         if (top == stack_size) {
