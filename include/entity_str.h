@@ -3,6 +3,10 @@
 #define HIT_BOX (1)
 #define HURT_BOX (2)
 
+#define POINT_COL (1)
+#define EDGE_COL (2)
+#define FACE_COL (3)
+
 typedef enum chain_type {
   LOCATION = 0,
   ROTATION = 1,
@@ -83,7 +87,7 @@ typedef struct entity {
   mat4 (*bone_mats)[3];
   mat4 *final_b_mats;
   //mat4 model_mat;
-  mat4 rotation;
+  versor rotation;
   vec3 scale;
   vec3 translation;
 

@@ -70,7 +70,4 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
-int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
-int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
-                 float *p_depth);
 void get_model_mat(ENTITY *entity, mat4 model);

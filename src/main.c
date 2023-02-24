@@ -274,8 +274,7 @@ int main() {
 
 
 
-  glm_mat4_identity(player->rotation);
-  glm_rotate_y(player->rotation, camera_model_rot, player->rotation);
+  glm_quatv(player->rotation, camera_model_rot, up);
 
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;
@@ -448,8 +447,7 @@ int main() {
     /* Skeleton */
 
     glm_vec3_copy(camera_model_pos, player->translation);
-    glm_mat4_identity(player->rotation);
-    glm_rotate_y(player->rotation, camera_model_rot, player->rotation);
+    glm_quatv(player->rotation, camera_model_rot, up);
 
     glUseProgram(bone_shader);
     glUniform3f(glGetUniformLocation(bone_shader, "test_col"), 0.0, 0.0, 1.0);

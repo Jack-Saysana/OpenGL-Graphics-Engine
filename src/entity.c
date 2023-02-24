@@ -44,7 +44,7 @@ ENTITY *init_entity(MODEL *model) {
 
   ent->model = model;
 
-  glm_mat4_identity(ent->rotation);
+  glm_quat_identity(ent->rotation);
   glm_vec3_one(ent->scale);
   glm_vec3_zero(ent->translation);
 
@@ -176,6 +176,6 @@ void free_entity(ENTITY *entity) {
 void get_model_mat(ENTITY *entity, mat4 model) {
   glm_mat4_identity(model);
   glm_translate(model, entity->translation);
-  glm_mat4_mul(model, entity->rotation, model);
+  glm_quat_rotate(model, entity->rotation, model);
   glm_scale(model, entity->scale);
 }

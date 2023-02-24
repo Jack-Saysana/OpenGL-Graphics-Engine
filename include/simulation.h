@@ -15,6 +15,7 @@
 #define T_DRIVING (2)
 #define T_IMMUTABLE (4)
 
+// Masks for determining collider categoty
 #define DEFAULT (0)
 #define HIT_BOX (1)
 #define HURT_BOX (2)

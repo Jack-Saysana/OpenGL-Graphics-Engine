@@ -223,6 +223,148 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   return 0;
 }
 
+// Expects a non-negated p_vec
+void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
+  if (a->type == SPHERE) {
+    glm_vec3_scale_as(p_vec, a->data.radius, dest);
+    glm_vec3_add(a->data.center, dest, dest);
+    return;
+  } else if (b->type == SPHERE) {
+    glm_vec3_scale_as(p_vec, b->data.radius * -1.0, dest);
+    glm_vec3_add(b->data.center, dest, dest);
+    return;
+  }
+
+  vec3 a_face[4];
+  glm_vec3_copy(a->data.verts[max_dot(a, p_vec)], a_face[0]);
+  unsigned int a_face_len = 1;
+  vec3 cur_vert = GLM_VEC3_ZERO_INIT;
+  for (unsigned int i = 0; i < a->data.num_used; i++) {
+    glm_vec3_sub(a->data.verts[i], a_face[0], cur_vert);
+    if ((glm_vec3_dot(p_vec, cur_vert) == 0.0) &&
+        (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
+      glm_vec3_copy(a->data.verts[i], a_face[a_face_len]);
+      a_face_len++;
+    }
+  }
+
+  vec3 b_face[4];
+  glm_vec3_copy(b->data.verts[max_dot(b, p_vec)], b_face[0]);
+  unsigned int b_face_len = 1;
+  vec3 bp_dir;
+  glm_vec3_negate_to(p_vec, bp_dir);
+  for (unsigned int i = 0; i < b->data.num_used; i++) {
+    glm_vec3_sub(b->data.verts[i], b_face[0], cur_vert);
+    if ((glm_vec3_dot(bp_dir, cur_vert) == 0.0) &&
+        (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
+      glm_vec3_copy(b->data.verts[i], b_face[b_face_len]);
+      b_face_len++;
+    }
+  }
+
+  // Point - Face case
+  if (a_face_len == POINT_COL) {
+    glm_vec3_copy(a_face[0], dest);
+    return;
+  }
+  if (b_face_len == POINT_COL) {
+    glm_vec3_copy(a_face[0], dest);
+    return;
+  }
+
+  vec3 clip_dir;
+  vec3 test_dir;
+  int next_vert = 0;
+
+  float c_proj = 0.0;
+  vec3 c_min_b = GLM_VEC3_ZERO_INIT;
+  vec3 c_min_d = GLM_VEC3_ZERO_INIT;
+  vec3 clip_edge = GLM_VEC3_ZERO_INIT;
+
+  if (a_face_len == EDGE_COL || b_face_len == EDGE_COL) {
+    // Edge - Face case
+    vec3 *face = NULL;
+    unsigned int face_len = 0;
+    vec3 *edge = NULL;
+    if (a_face_len == EDGE_COL) {
+      face = b_face;
+      edge = a_face;
+      face_len = b_face_len;
+    } else {
+      face = a_face;
+      edge = b_face;
+      face_len = a_face_len;
+    }
+
+    vec3 col_edge[2];
+    glm_vec3_copy(edge[0], col_edge[0]);
+    glm_vec3_copy(edge[1], col_edge[1]);
+
+    for (unsigned int i = 0; i < face_len; i++) {
+      next_vert = (i + 1) % face_len;
+      glm_vec3_sub(face[next_vert], face[i], clip_edge);
+      glm_vec3_cross(p_vec, clip_edge, clip_dir);
+
+      glm_vec3_sub(col_edge[0], face[i], test_dir);
+      if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
+        // Trim and add
+        glm_vec3_sub(col_edge[0], face[i], c_min_b);
+        glm_vec3_sub(col_edge[0], col_edge[1], c_min_d);
+        c_proj = glm_vec3_dot(clip_edge, c_min_b) -
+                 glm_vec3_dot(clip_edge, c_min_d);
+        glm_vec3_scale_as(clip_edge, c_proj, col_edge[0]);
+        glm_vec3_add(col_edge[0], face[i], col_edge[0]);
+      }
+
+      glm_vec3_sub(col_edge[1], face[i], test_dir);
+      if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
+        // Trim and add
+        glm_vec3_sub(col_edge[1], face[i], c_min_b);
+        glm_vec3_sub(col_edge[1], col_edge[0], c_min_d);
+        c_proj = glm_vec3_dot(clip_edge, c_min_b) -
+                 glm_vec3_dot(clip_edge, c_min_d);
+        glm_vec3_scale_as(clip_edge, c_proj, col_edge[1]);
+        glm_vec3_add(col_edge[1], face[i], col_edge[1]);
+      }
+    } 
+
+    glm_vec3_center(col_edge[0], col_edge[1], dest);
+    return;
+  }
+
+  // Face - Face case
+  vec3 col_face[4];
+  for (int i = 0; i < b_face_len; i++) {
+    glm_vec3_copy(b_face[i], col_face[i]);
+  }
+
+  for (unsigned int i = 0; i < a_face_len; i++) {
+    next_vert = (i + 1) % a_face_len;
+    glm_vec3_sub(a_face[next_vert], a_face[i], clip_edge);
+    glm_vec3_cross(p_vec, clip_edge, clip_dir);
+
+    for (unsigned int j = 0; j < b_face_len; j++) {
+      glm_vec3_sub(col_face[j], a_face[i], test_dir);
+      if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
+        // Trim and add
+        glm_vec3_sub(a_face[i], col_face[j], c_min_b);
+        c_proj = glm_vec3_dot(c_min_b, clip_edge);
+        glm_vec3_scale_as(clip_edge, c_proj, col_face[j]);
+        glm_vec3_add(col_face[j], a_face[i], col_face[j]);
+      }
+    }
+  }
+
+  glm_vec3_zero(dest);
+  for (unsigned int i = 0; i < b_face_len; i++) {
+    glm_vec3_add(col_face[i], dest, dest);
+  }
+  dest[0] /= b_face_len;
+  dest[1] /= b_face_len;
+  dest[2] /= b_face_len;
+  return;
+}
+
 int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir) {
   vec3 b_min_a = { 0.0, 0.0, 0.0 };
   vec3 d_min_a = { 0.0, 0.0, 0.0 };
