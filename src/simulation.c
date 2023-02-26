@@ -1,5 +1,7 @@
 #include <simulation.h>
 
+extern vec3 col_point;
+
 int init_simulation() {
   if (dynamic_ents != NULL || driving_ents != NULL) {
     printf("Simulation already initialized."\
@@ -136,8 +138,9 @@ int collision_test(ENTITY *target, size_t offset) {
           free(col_res.list);
           return -1;
         }
-
         glm_vec3_scale_as(p_dir, p_depth, p_dir);
+        collision_point(&t_col, &collider, p_dir, col_point);
+
         glm_vec3_negate(p_dir);
         glm_vec3_add(p_dir, target->translation, target->translation);
         glm_vec3_add(p_dir, target->velocity, target->velocity);

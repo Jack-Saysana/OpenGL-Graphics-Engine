@@ -128,3 +128,4 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
 void free_line_buffer(LINE_BUFFER *);
 void free_materials(void *buffer, size_t buf_len);
 int double_buffer(void **, size_t *, size_t);
+int max_dot(vec3 *verts, unsigned int len, vec3 dir);

@@ -88,5 +88,6 @@ void free_oct_tree(OCT_TREE *tree);
 int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
+void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void get_model_mat(ENTITY *entity, mat4 model);

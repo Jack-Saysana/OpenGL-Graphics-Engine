@@ -223,8 +223,10 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   return 0;
 }
 
-// Expects a non-negated p_vec
+// Expects a p_vec pointing in the direction of penetration, not the direction
+// of penetration repair.
 void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
+  // Simple sphere case
   if (a->type == SPHERE) {
     glm_vec3_scale_as(p_vec, a->data.radius, dest);
     glm_vec3_add(a->data.center, dest, dest);
@@ -235,31 +237,41 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     return;
   }
 
-  vec3 a_face[4];
-  glm_vec3_copy(a->data.verts[max_dot(a, p_vec)], a_face[0]);
-  unsigned int a_face_len = 1;
+  float face_test = 0.0;
+  unsigned int num_used = a->data.num_used;
+  unsigned int starting_index = max_dot(a->data.verts, num_used, p_vec);
+  unsigned int cur_index = 0;
   vec3 cur_vert = GLM_VEC3_ZERO_INIT;
-  for (unsigned int i = 0; i < a->data.num_used; i++) {
-    glm_vec3_sub(a->data.verts[i], a_face[0], cur_vert);
-    if ((glm_vec3_dot(p_vec, cur_vert) == 0.0) &&
+
+  // Generate the surface of collision for the first collider
+  vec3 a_face[4] = {
+    { 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0 }
+  };
+  vec3 a_norm = GLM_VEC3_ZERO_INIT;
+  glm_vec3_copy(a->data.verts[starting_index], a_face[0]);
+  unsigned int a_face_len = 1;
+  for (unsigned int i = 1; i < num_used; i++) {
+    cur_index = (starting_index + i) % num_used;
+    glm_vec3_sub(a->data.verts[cur_index], a_face[0], cur_vert);
+    face_test = glm_vec3_dot(p_vec, cur_vert);
+    if ((face_test >= -0.0001 && face_test <= 0.0001) &&
         (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
-      glm_vec3_copy(a->data.verts[i], a_face[a_face_len]);
+      glm_vec3_copy(a->data.verts[cur_index], a_face[a_face_len]);
       a_face_len++;
+      if (a_face_len > FACE_COL) {
+        break;
+      }
     }
   }
-
-  vec3 b_face[4];
-  glm_vec3_copy(b->data.verts[max_dot(b, p_vec)], b_face[0]);
-  unsigned int b_face_len = 1;
-  vec3 bp_dir;
-  glm_vec3_negate_to(p_vec, bp_dir);
-  for (unsigned int i = 0; i < b->data.num_used; i++) {
-    glm_vec3_sub(b->data.verts[i], b_face[0], cur_vert);
-    if ((glm_vec3_dot(bp_dir, cur_vert) == 0.0) &&
-        (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
-      glm_vec3_copy(b->data.verts[i], b_face[b_face_len]);
-      b_face_len++;
-    }
+  vec3 edge1 = GLM_VEC3_ZERO_INIT;
+  vec3 edge2 = GLM_VEC3_ZERO_INIT;
+  if (a_face_len > FACE_COL) {
+    glm_vec3_sub(a_face[3], a_face[0], edge1);
+    glm_vec3_sub(a_face[1], a_face[0], edge2);
+    glm_vec3_cross(edge1, edge2, a_norm);
   }
 
   // Point - Face case
@@ -267,6 +279,42 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     glm_vec3_copy(a_face[0], dest);
     return;
   }
+
+  vec3 bp_vec;
+  glm_vec3_negate_to(p_vec, bp_vec);
+  num_used = b->data.num_used;
+  starting_index = max_dot(b->data.verts, num_used, bp_vec);
+
+  // Generate the surface of collision for the second collider
+  vec3 b_face[4] = {
+    { 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0 }
+  };
+  vec3 b_norm = GLM_VEC3_ZERO_INIT;
+  glm_vec3_copy(b->data.verts[starting_index], b_face[0]);
+  unsigned int b_face_len = 1;
+  for (unsigned int i = 1; i < num_used; i++) {
+    cur_index = (starting_index + i) % num_used;
+    glm_vec3_sub(b->data.verts[cur_index], b_face[0], cur_vert);
+    face_test = glm_vec3_dot(bp_vec, cur_vert);
+    if ((face_test >= -0.0001 && face_test <= 0.0001) &&
+        (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
+      glm_vec3_copy(b->data.verts[cur_index], b_face[b_face_len]);
+      b_face_len++;
+      if (b_face_len > FACE_COL) {
+        break;
+      }
+    }
+  }
+  if (b_face_len > FACE_COL) {
+    glm_vec3_sub(b_face[3], b_face[0], edge1);
+    glm_vec3_sub(b_face[1], b_face[0], edge2);
+    glm_vec3_cross(edge1, edge2, b_norm);
+  }
+
+  // Point - Face case
   if (b_face_len == POINT_COL) {
     glm_vec3_copy(a_face[0], dest);
     return;
@@ -277,8 +325,6 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   int next_vert = 0;
 
   float c_proj = 0.0;
-  vec3 c_min_b = GLM_VEC3_ZERO_INIT;
-  vec3 c_min_d = GLM_VEC3_ZERO_INIT;
   vec3 clip_edge = GLM_VEC3_ZERO_INIT;
 
   if (a_face_len == EDGE_COL || b_face_len == EDGE_COL) {
@@ -286,32 +332,34 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     vec3 *face = NULL;
     unsigned int face_len = 0;
     vec3 *edge = NULL;
+    vec3 norm = GLM_VEC3_ZERO_INIT;
     if (a_face_len == EDGE_COL) {
       face = b_face;
       edge = a_face;
       face_len = b_face_len;
+      glm_vec3_copy(b_norm, norm);
     } else {
       face = a_face;
       edge = b_face;
       face_len = a_face_len;
+      glm_vec3_copy(a_norm, norm);
     }
 
     vec3 col_edge[2];
     glm_vec3_copy(edge[0], col_edge[0]);
     glm_vec3_copy(edge[1], col_edge[1]);
 
+    // Clip edge to fit inside face
     for (unsigned int i = 0; i < face_len; i++) {
       next_vert = (i + 1) % face_len;
       glm_vec3_sub(face[next_vert], face[i], clip_edge);
-      glm_vec3_cross(p_vec, clip_edge, clip_dir);
+      glm_vec3_normalize(clip_edge);
+      glm_vec3_cross(norm, clip_edge, clip_dir);
 
       glm_vec3_sub(col_edge[0], face[i], test_dir);
       if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
         // Trim and add
-        glm_vec3_sub(col_edge[0], face[i], c_min_b);
-        glm_vec3_sub(col_edge[0], col_edge[1], c_min_d);
-        c_proj = glm_vec3_dot(clip_edge, c_min_b) -
-                 glm_vec3_dot(clip_edge, c_min_d);
+        c_proj = glm_vec3_dot(clip_edge, test_dir);
         glm_vec3_scale_as(clip_edge, c_proj, col_edge[0]);
         glm_vec3_add(col_edge[0], face[i], col_edge[0]);
       }
@@ -319,10 +367,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
       glm_vec3_sub(col_edge[1], face[i], test_dir);
       if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
         // Trim and add
-        glm_vec3_sub(col_edge[1], face[i], c_min_b);
-        glm_vec3_sub(col_edge[1], col_edge[0], c_min_d);
-        c_proj = glm_vec3_dot(clip_edge, c_min_b) -
-                 glm_vec3_dot(clip_edge, c_min_d);
+        c_proj = glm_vec3_dot(clip_edge, test_dir);
         glm_vec3_scale_as(clip_edge, c_proj, col_edge[1]);
         glm_vec3_add(col_edge[1], face[i], col_edge[1]);
       }
@@ -338,17 +383,18 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     glm_vec3_copy(b_face[i], col_face[i]);
   }
 
+  // Clip face b to fit into face a
   for (unsigned int i = 0; i < a_face_len; i++) {
     next_vert = (i + 1) % a_face_len;
     glm_vec3_sub(a_face[next_vert], a_face[i], clip_edge);
-    glm_vec3_cross(p_vec, clip_edge, clip_dir);
+    glm_vec3_normalize(clip_edge);
+    glm_vec3_cross(a_norm, clip_edge, clip_dir);
 
     for (unsigned int j = 0; j < b_face_len; j++) {
       glm_vec3_sub(col_face[j], a_face[i], test_dir);
       if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
         // Trim and add
-        glm_vec3_sub(a_face[i], col_face[j], c_min_b);
-        c_proj = glm_vec3_dot(c_min_b, clip_edge);
+        c_proj = glm_vec3_dot(test_dir, clip_edge);
         glm_vec3_scale_as(clip_edge, c_proj, col_face[j]);
         glm_vec3_add(col_face[j], a_face[i], col_face[j]);
       }
@@ -485,7 +531,8 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
     glm_vec3_scale_as(dir, a->data.radius, max_a);
     glm_vec3_add(max_a, a->data.center, max_a);
   } else {
-    glm_vec3_copy(a->data.verts[max_dot(a, dir)], max_a);
+    glm_vec3_copy(a->data.verts[max_dot(a->data.verts, a->data.num_used, dir)],
+                  max_a);
   }
 
   glm_vec3_negate_to(dir, temp);
@@ -493,24 +540,19 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
     glm_vec3_scale_as(temp, b->data.radius, max_b);
     glm_vec3_add(max_b, b->data.center, max_b);
   } else {
-    glm_vec3_copy(b->data.verts[max_dot(b, temp)], max_b);
+    glm_vec3_copy(b->data.verts[max_dot(b->data.verts, b->data.num_used,
+                  temp)], max_b);
   } 
 
   glm_vec3_sub(max_a, max_b, dest);
 }
 
-int max_dot(COLLIDER *a, vec3 dir) {
-
-  if (a->type != POLY) {
-    printf("Input must be polyhedron\n");
-    return -1;
-  }
-
+int max_dot(vec3 *verts, unsigned int len, vec3 dir) {
   float max = -FLT_MAX;
   float temp = 0.0;
   int index = 0;
-  for (unsigned int i = 0; i < a->data.num_used; i++) {
-    temp = glm_vec3_dot(dir, a->data.verts[i]);
+  for (unsigned int i = 0; i < len; i++) {
+    temp = glm_vec3_dot(dir, verts[i]);
     if (temp > max) {
       max = temp;
       index = i;

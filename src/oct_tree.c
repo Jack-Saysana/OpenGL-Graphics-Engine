@@ -62,12 +62,14 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
       glm_mat4_mulv3(model, obj.data.verts[i], 1.0, obj.data.verts[i]);
     }
 
-    max_extents[0] = obj.data.verts[max_dot(&obj, X)][0];
-    max_extents[1] = obj.data.verts[max_dot(&obj, NEG_X)][0];
-    max_extents[2] = obj.data.verts[max_dot(&obj, Y)][1];
-    max_extents[3] = obj.data.verts[max_dot(&obj, NEG_Y)][1];
-    max_extents[4] = obj.data.verts[max_dot(&obj, Z)][2];
-    max_extents[5] = obj.data.verts[max_dot(&obj, NEG_Z)][2];
+    vec3 *verts = obj.data.verts;
+    unsigned int num_used = obj.data.num_used;
+    max_extents[0] = obj.data.verts[max_dot(verts, num_used, X)][0];
+    max_extents[1] = obj.data.verts[max_dot(verts, num_used, NEG_X)][0];
+    max_extents[2] = obj.data.verts[max_dot(verts, num_used, Y)][1];
+    max_extents[3] = obj.data.verts[max_dot(verts, num_used, NEG_Y)][1];
+    max_extents[4] = obj.data.verts[max_dot(verts, num_used, Z)][2];
+    max_extents[5] = obj.data.verts[max_dot(verts, num_used, NEG_Z)][2];
   } else {
     if (bone >= 0 && bone < entity->model->num_colliders) {
       glm_mat4_mulv3(entity->final_b_mats[bone],
@@ -189,12 +191,14 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
 
   float max_extents[6];
   if (col->type == POLY) {
-    max_extents[0] = col->data.verts[max_dot(col, X)][0];
-    max_extents[1] = col->data.verts[max_dot(col, NEG_X)][0];
-    max_extents[2] = col->data.verts[max_dot(col, Y)][1];
-    max_extents[3] = col->data.verts[max_dot(col, NEG_Y)][1];
-    max_extents[4] = col->data.verts[max_dot(col, Z)][2];
-    max_extents[5] = col->data.verts[max_dot(col, NEG_Z)][2];
+    vec3 *verts = col->data.verts;
+    unsigned int num_used = col->data.num_used;
+    max_extents[0] = col->data.verts[max_dot(verts, num_used, X)][0];
+    max_extents[1] = col->data.verts[max_dot(verts, num_used, NEG_X)][0];
+    max_extents[2] = col->data.verts[max_dot(verts, num_used, Y)][1];
+    max_extents[3] = col->data.verts[max_dot(verts, num_used, NEG_Y)][1];
+    max_extents[4] = col->data.verts[max_dot(verts, num_used, Z)][2];
+    max_extents[5] = col->data.verts[max_dot(verts, num_used, NEG_Z)][2];
   } else {
     vec3 center = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(col->data.center, center);

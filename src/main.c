@@ -20,7 +20,7 @@ vec3 up = { 0.0, 1.0, 0.0 };
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
-vec3 camera_model_pos = { 3.0, 4.0, 3.0 };
+vec3 camera_model_pos = { 3.0, 1.0, 6.0 };
 float camera_model_rot = 0.0;
 
 vec3 movement = { 0.0, 0.0, 0.0 };
@@ -40,6 +40,8 @@ int toggled = 1;
 int space_pressed = 0;
 int cursor_on = 1;
 int draw = 0;
+
+vec3 col_point = { 0.0, 0.0, 0.0 };
 
 int main() {
   GLFWwindow *window;
@@ -220,17 +222,17 @@ int main() {
 
   vec3 cube_pos = { 3.0, 2.0, 3.0 };
   vec3 cube_col = { 1.0, 1.0, 1.0 };
-  cube->num_colliders = 1;
+  /*cube->num_colliders = 1;
   cube->colliders = malloc(sizeof(COLLIDER));
   cube->collider_bone_links = malloc(sizeof(int));
-  cube->collider_bone_links[0] = -1;
+  cube->collider_bone_links[0] = -1;*/
   ENTITY *box_entity = init_entity(cube);
   if (box_entity == NULL) {
     printf("Unable to load box entity\n");
     glfwTerminate();
     return -1;
   }
-  vec3 verts[8] = {
+  /*vec3 verts[8] = {
     {  1.0,  1.0,  1.0 },
     {  1.0,  1.0, -1.0 },
     { -1.0,  1.0,  1.0 },
@@ -247,7 +249,7 @@ int main() {
     glm_vec3_copy(verts[i], box.data.verts[i]);
   }
   box.category = DEFAULT;
-  cube->colliders[0] = box;
+  cube->colliders[0] = box;*/
   glm_vec3_copy(cube_pos, box_entity->translation);
 
   vec3 s_pos = { -3.0, 2.0, -3.0 };
@@ -439,6 +441,14 @@ int main() {
                        GL_FALSE, (float *) view);
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 0.0, 1.0, 1.0);
     glBindVertexArray(pt_VAO);
+    glDrawArrays(GL_POINTS, 0, 1);
+
+    /* Test collision point */
+
+    glm_translate(model, col_point);
+    glUniformMatrix4fv(glGetUniformLocation(basic_shader, "model"), 1,
+                       GL_FALSE, (float *) model);
+    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 1.0, 0.0, 0.0);
     glDrawArrays(GL_POINTS, 0, 1);
     glBindVertexArray(0);
 

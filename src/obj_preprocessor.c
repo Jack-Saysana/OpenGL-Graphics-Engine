@@ -266,6 +266,47 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                     colliders[col_len].data.verts[7]+1,
                                     colliders[col_len].data.verts[7]+2);
 
+      vec3 dirs[8] = {
+        { 1.0, 1.0, 1.0 },
+        { -1.0, 1.0, 1.0 },
+        { -1.0, 1.0, -1.0 },
+        { 1.0, 1.0, -1.0 },
+        { 1.0, -1.0, -1.0 },
+        { -1.0, -1.0, -1.0 },
+        { -1.0, -1.0, 1.0 },
+        { 1.0, -1.0, 1.0}
+      };
+      vec3 *verts = colliders[col_len].data.verts;
+      vec3 center_of_mass = GLM_VEC3_ZERO_INIT;
+      vec3 unsorted[8];
+      unsigned int num_used = colliders[col_len].data.num_used;
+      for (unsigned int i = 0; i < num_used; i++) {
+        glm_vec3_add(verts[i], center_of_mass, center_of_mass);
+      }
+      center_of_mass[0] /= num_used;
+      center_of_mass[1] /= num_used;
+      center_of_mass[2] /= num_used;
+
+      for (unsigned int i = 0; i < num_used; i++) {
+        glm_vec3_sub(verts[i], center_of_mass, unsorted[i]);
+        glm_vec3_normalize(unsorted[i]);
+      }
+
+      vec3 temp = GLM_VEC3_ZERO_INIT;
+      int best = 0;
+      for (int i = 0; i < 8; i++) {
+        best = max_dot(unsorted, num_used, dirs[i]);
+        if (best != i) {
+          glm_vec3_copy(verts[i], temp);
+          glm_vec3_copy(verts[best], verts[i]);
+          glm_vec3_copy(temp, verts[best]);
+
+          glm_vec3_copy(unsorted[i], temp);
+          glm_vec3_copy(unsorted[best], unsorted[i]);
+          glm_vec3_copy(temp, unsorted[best]);
+        }
+      }
+
       col_len++;
       if (col_len == col_buff_len) {
         size_t old_buff_len = col_buff_len;

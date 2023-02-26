@@ -11,6 +11,10 @@
 #define POSSIBLE (0)
 #define REMOVED (-1)
 
+#define POINT_COL (1)
+#define EDGE_COL (2)
+#define FACE_COL (3)
+
 typedef enum {
   LINE = 2,
   TRIANGLE = 3,
@@ -36,7 +40,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
 int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir);
 int triangle_check(vec3 A, vec3 B, vec3 C, unsigned int *num_used, vec3 dir);
 void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest);
-int max_dot(COLLIDER *a, vec3 dir);
+int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void calc_dir_line(vec3 a, vec3 b, vec3 dir);
 
 float calc_face_dist(vec3 a, vec3 b, vec3 c, vec3 dest_norm);

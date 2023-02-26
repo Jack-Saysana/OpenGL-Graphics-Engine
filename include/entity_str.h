@@ -3,10 +3,6 @@
 #define HIT_BOX (1)
 #define HURT_BOX (2)
 
-#define POINT_COL (1)
-#define EDGE_COL (2)
-#define FACE_COL (3)
-
 typedef enum chain_type {
   LOCATION = 0,
   ROTATION = 1,
