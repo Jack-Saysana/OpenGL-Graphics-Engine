@@ -20,7 +20,7 @@
 #define HIT_BOX (1)
 #define HURT_BOX (2)
 
-#define GRAVITY (0.50)
+#define GRAVITY (0.5)
 
 typedef struct physics_object {
   ENTITY *entity;
@@ -73,7 +73,9 @@ int remove_entity(ENTITY *entity);
 void end_simulation();
 
 // Back Facing
-int collision_test(ENTITY *target, size_t offset);
+int collision_test(ENTITY *subject, size_t offset);
+void solve_collision(ENTITY *a, size_t a_col, ENTITY *b, size_t b_col,
+                     vec3 p_dir, vec3 p_loc);
 void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
 int add_to_elist(ENTITY **list, size_t *len, size_t *buff_size,
                  ENTITY *entity);

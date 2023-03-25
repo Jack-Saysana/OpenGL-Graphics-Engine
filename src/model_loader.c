@@ -64,9 +64,9 @@ MODEL *load_model(char *path) {
       return NULL;
     }
   }
- 
+
   VBO *vertices = NULL;
-  if (v_len) { 
+  if (v_len) {
     vertices = malloc(sizeof(VBO) * v_len);
     if (vertices == NULL) {
       fclose(file);

@@ -36,10 +36,20 @@ ENTITY *init_entity(MODEL *model) {
       return NULL;
     }
 
+    ent->np_data = calloc(model->num_bones, sizeof(PHYS_DATA));
+    if (ent->np_data == NULL) {
+      free(ent->final_b_mats);
+      free(ent->tree_offsets);
+      free(ent->bone_mats);
+      free(ent);
+      return NULL;
+    }
+
     model->ref_count++;
   } else {
     ent->bone_mats = NULL;
     ent->final_b_mats = NULL;
+    ent->np_data = NULL;
   }
 
   ent->model = model;
@@ -48,11 +58,10 @@ ENTITY *init_entity(MODEL *model) {
   glm_vec3_one(ent->scale);
   glm_vec3_zero(ent->translation);
 
-  vec3 init_velocity = { 0.0, 0.0, 0.0 };
-  glm_vec3_copy(init_velocity, ent->velocity);
-
   ent->list_offsets[0] = 0xBAADF00D;
   ent->list_offsets[1] = 0xBAADF00D;
+  glm_vec3_zero(ent->velocity);
+  ent->mass = 1.0;
   ent->type = 0;
 
   return ent;

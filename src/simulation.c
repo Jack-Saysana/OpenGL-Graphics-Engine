@@ -1,6 +1,7 @@
 #include <simulation.h>
 
 extern vec3 col_point;
+extern int enable_gravity;
 
 int init_simulation() {
   if (dynamic_ents != NULL || driving_ents != NULL) {
@@ -59,7 +60,7 @@ int simulate_frame() {
       entity->type |= T_DYNAMIC;
       status = add_to_elist(dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
                             entity);
-      if (status != 0) {
+      if (status) {
         return -1;
       }
     }
@@ -70,23 +71,29 @@ int simulate_frame() {
     entity = dynamic_ents[ent];
     if (entity->velocity[0] != 0.0 || entity->velocity[1] != 0.0 ||
         entity->velocity[2] != 0.0) {
-      entity->velocity[1] -= (delta_time * GRAVITY);
-      entity->translation[1] += entity->velocity[1];
+      if (enable_gravity) {
+        entity->velocity[1] -= (delta_time * GRAVITY);
+        //entity->translation[1] += entity->velocity[1];
+        glm_vec3_add(entity->velocity, entity->translation,
+                     entity->translation);
+      }
 
       colliders = entity->model->colliders;
       for (size_t col = 0; col < entity->model->num_colliders; col++) {
-        status = oct_tree_delete(physics_tree, entity->tree_offsets[col]);
-        if (status != 0) {
-          return -1;
-        }
-        status = oct_tree_insert(physics_tree, entity, col);
-        if (status != 0) {
-          return -1;
-        }
+        if ((entity->type & T_DRIVING && colliders[col].category == DEFAULT) ||
+            (!(entity->type & T_DRIVING) &&
+            colliders[col].category == HURT_BOX)) {
+          status = oct_tree_delete(physics_tree, entity->tree_offsets[col]);
+          if (status) {
+            return -1;
+          }
+          status = oct_tree_insert(physics_tree, entity, col);
+          if (status) {
+            return -1;
+          }
 
-        if (colliders[col].category == DEFAULT) {
           status = collision_test(entity, col);
-          if (status != 0) {
+          if (status) {
             return -1;
           }
         }
@@ -99,64 +106,113 @@ int simulate_frame() {
     }
   }
 
+  // Update all simulated objects
+  /*size_t cur_col = 0;
+  size_t bone_index = 0;
+  vec3 *velocity = NULL;
+  for (size_t i = 0; i < physics_tree->data_buff_len; i++) {
+    entity = physics_tree->data_buffer[i].entity;
+    cur_col = physics_tree->data_buffer[i].collider_offset;
+    int obj_driving = (entity->type & T_DRIVING) ||
+                      (entity->model->num_bones == 0);
+    if (obj_driving) {
+      velocity = &(entity->velocity);
+      //glm_vec3_add(entity->delta_v, *velocity, *velocity);
+      glm_vec3_add(*velocity, entity->translation, entity->translation);
+      //glm_vec3_zero(entity->delta_v);
+    } else {
+      bone_index = entity->model->collider_bone_links[cur_col];
+      //velocity = &(entity->np_data[bone_index].velocity);
+      //glm_vec3_add(entity->np_data[bone_index].delta_v, *velocity, *velocity);
+      glm_translate(entity->bone_mats[bone_index][LOCATION], *velocity);
+      //glm_vec3_zero(entity->np_data[bone_index].delta_v);
+    }
+
+    if (*velocity[0] < 0.002 && *velocity[0] > -0.002) {
+      *velocity[0] = 0.0;
+    }
+    if (*velocity[1] < 0.002 && *velocity[1] > -0.002) {
+      *velocity[1] = 0.0;
+    }
+    if (*velocity[2] < 0.002 && *velocity[2] > -0.002) {
+      *velocity[2] = 0.0;
+    }
+
+    if ((*velocity[0] != 0.0 || *velocity[1] != 0.0 || *velocity[2] != 0.0) &&
+        (entity->type & T_DYNAMIC) == 0) {
+      entity->type |= T_DYNAMIC;
+      status = add_to_elist(dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
+                            entity);
+      if (status) {
+        return -1;
+      }
+    }
+  }*/
+
   return 0;
 }
 
-int collision_test(ENTITY *target, size_t offset) {
-  COLLIDER t_col;
+int collision_test(ENTITY *subject, size_t offset) {
+  COLLIDER s_col;
 
-  mat4 t_model = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(target, t_model);
+  mat4 s_model = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(subject, s_model);
 
-  global_collider(t_model, target->model->colliders + offset,
-                  &t_col);
+  global_collider(s_model, subject->model->colliders + offset,
+                  &s_col);
 
-  COLLISION_RES col_res = oct_tree_search(physics_tree, &t_col);
+  COLLISION_RES col_res = oct_tree_search(physics_tree, &s_col);
 
   PHYS_OBJ *p_obj = NULL;
+  ENTITY *p_ent = NULL;
   COLLIDER collider;
 
   vec3 simplex[4];
   vec3 p_dir = GLM_VEC3_ZERO_INIT;
   float p_depth = 0.0;
+  vec3 p_col = GLM_VEC3_ZERO_INIT;
 
   int collision = 0;
   int status = 0;
   mat4 p_model = GLM_MAT4_IDENTITY_INIT;
   for (size_t i = 0; i < col_res.list_len; i++) {
     p_obj = col_res.list[i];
-    get_model_mat(p_obj->entity, p_model);
+    p_ent = p_obj->entity;
+    get_model_mat(p_ent, p_model);
     global_collider(p_model,
                     p_obj->entity->model->colliders + p_obj->collider_offset,
                     &collider);
 
-    if (p_obj->entity != target && collider.category == DEFAULT) {
-      collision = collision_check(&t_col, &collider, simplex);
+    if (p_ent != subject) {
+      collision = collision_check(&s_col, &collider, simplex);
       if (collision) {
-        status = epa_response(&t_col, &collider, simplex, p_dir, &p_depth);
-        if (status != 0) {
+        status = epa_response(&s_col, &collider, simplex, p_dir, &p_depth);
+        if (status) {
           free(col_res.list);
           return -1;
         }
         glm_vec3_scale_as(p_dir, p_depth, p_dir);
-        collision_point(&t_col, &collider, p_dir, col_point);
-
+        collision_point(&s_col, &collider, p_dir, p_col);
+        glm_vec3_copy(p_col, col_point);
         glm_vec3_negate(p_dir);
-        glm_vec3_add(p_dir, target->translation, target->translation);
-        glm_vec3_add(p_dir, target->velocity, target->velocity);
 
-        if ((target->velocity[0] > 0.0 && target->velocity[0] < 0.002) ||
-            (target->velocity[0] < 0.0 && target->velocity[0] > -0.002)) {
-          target->velocity[0] = 0.0;
+        solve_collision(subject, offset, p_ent, p_obj->collider_offset,
+                        p_dir, p_col);
+        /*glm_vec3_add(p_dir, subject->translation, subject->translation);
+        glm_vec3_add(p_dir, subject->velocity, subject->velocity);
+
+        if ((subject->velocity[0] > 0.0 && subject->velocity[0] < 0.002) ||
+            (subject->velocity[0] < 0.0 && subject->velocity[0] > -0.002)) {
+          subject->velocity[0] = 0.0;
         }
-        if ((target->velocity[1] > 0.0 && target->velocity[1] < 0.002) ||
-            (target->velocity[1] < 0.0 && target->velocity[1] > -0.002)) {
-          target->velocity[1] = 0.0;
+        if ((subject->velocity[1] > 0.0 && subject->velocity[1] < 0.002) ||
+            (subject->velocity[1] < 0.0 && subject->velocity[1] > -0.002)) {
+          subject->velocity[1] = 0.0;
         }
-        if ((target->velocity[2] > 0.0 && target->velocity[2] < 0.002) ||
-            (target->velocity[2] < 0.0 && target->velocity[2] > -0.002)) {
-          target->velocity[2] = 0.0;
-        }
+        if ((subject->velocity[2] > 0.0 && subject->velocity[2] < 0.002) ||
+            (subject->velocity[2] < 0.0 && subject->velocity[2] > -0.002)) {
+          subject->velocity[2] = 0.0;
+        }*/
       }
     }
   }
@@ -164,6 +220,69 @@ int collision_test(ENTITY *target, size_t offset) {
   free(col_res.list);
 
   return 0;
+}
+
+void solve_collision(ENTITY *a, size_t a_col, ENTITY *b, size_t b_col,
+                     vec3 p_dir, vec3 p_loc) {
+  float mass_a = a->mass;
+  vec3 va_naut = GLM_VEC3_ZERO_INIT;
+  glm_vec3_copy(a->velocity, va_naut);
+  glm_vec3_add(p_dir, a->translation, a->translation);
+
+  if (b->type & T_IMMUTABLE) {
+    glm_vec3_add(p_dir, va_naut, a->velocity);
+    return;
+  }
+
+  float mass_b = b->mass;
+  vec3 vb_naut = GLM_VEC3_ZERO_INIT;
+  glm_vec3_copy(b->velocity, vb_naut);
+
+  // A collision response
+  vec3 momentum_a = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(va_naut, mass_a, momentum_a);
+
+  vec3 momentum_b = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(vb_naut, mass_b, momentum_b);
+
+  vec3 v_final = GLM_VEC3_ZERO_INIT;
+  glm_vec3_add(momentum_a, momentum_b, v_final);
+  glm_vec3_divs(v_final, mass_a + mass_b, a->velocity);
+  if (a->velocity[0] < 0.002 && a->velocity[0] > -0.002) {
+    a->velocity[0] = 0.0;
+  }
+  if (a->velocity[1] < 0.002 && a->velocity[1] > -0.002) {
+    a->velocity[1] = 0.0;
+  }
+  if (a->velocity[2] < 0.002 && a->velocity[2] > -0.002) {
+    a->velocity[2] = 0.0;
+  }
+  glm_vec3_add(a->velocity, a->translation, a->translation);
+
+  // B collision response
+  vec3 cm_vminv = GLM_VEC3_ZERO_INIT;
+  glm_vec3_sub(va_naut, vb_naut, cm_vminv);
+  glm_vec3_scale(cm_vminv, 0.5 * mass_a, cm_vminv);
+
+  glm_vec3_add(momentum_a, momentum_b, v_final);
+  glm_vec3_add(cm_vminv, v_final, v_final);
+  glm_vec3_divs(v_final, mass_a + mass_b, b->velocity);
+  if (b->velocity[0] < 0.002 && b->velocity[0] > -0.002) {
+    b->velocity[0] = 0.0;
+  }
+  if (b->velocity[1] < 0.002 && b->velocity[1] > -0.002) {
+    b->velocity[1] = 0.0;
+  }
+  if (b->velocity[2] < 0.002 && b->velocity[2] > -0.002) {
+    b->velocity[2] = 0.0;
+  }
+  glm_vec3_add(b->velocity, b->translation, b->translation);
+
+  if ((b->velocity[0] != 0.0 || b->velocity[1] != 0.0 || b->velocity[2] != 0.0)
+      && (b->type & T_DYNAMIC) == 0) {
+    b->type |= T_DYNAMIC;
+    add_to_elist(dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size, b);
+  }
 }
 
 int add_to_elist(ENTITY **list, size_t *len, size_t *buff_size,
@@ -187,7 +306,7 @@ int insert_entity(ENTITY *entity) {
   if (entity == NULL || dynamic_ents == NULL || driving_ents == NULL) {
     return -1;
   }
-  
+
   int status = 0;
   if (entity->velocity[0] != 0.0 || entity->velocity[1] != 0.0 ||
       entity->velocity[2] != 0.0) {
@@ -196,7 +315,7 @@ int insert_entity(ENTITY *entity) {
 
     status = add_to_elist(dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
                           entity);
-    if (status != 0) {
+    if (status) {
       printf("Unable to reallocate dynamic entity buffer\n");
       end_simulation();
       return -1;
@@ -208,7 +327,7 @@ int insert_entity(ENTITY *entity) {
 
     status = add_to_elist(driving_ents, &dr_ent_buff_len, &dr_ent_buff_size,
                           entity);
-    if (status != 0) {
+    if (status) {
       printf("Unable to reallocate driving entity buffer\n");
       end_simulation();
       return -1;
@@ -216,11 +335,16 @@ int insert_entity(ENTITY *entity) {
   }
 
   for (int i = 0; i < entity->model->num_colliders; i++) {
-    status = oct_tree_insert(physics_tree, entity, i);
-    if (status != 0) {
-      printf("Unable to insert entity into physics oct-tree\n");
-      end_simulation();
-      return -1;
+    if ((entity->type & T_DRIVING &&
+        entity->model->colliders[i].category == DEFAULT) ||
+        (!(entity->type & T_DRIVING) &&
+        entity->model->colliders[i].category == HURT_BOX)) {
+      status = oct_tree_insert(physics_tree, entity, i);
+      if (status) {
+        printf("Unable to insert entity into physics oct-tree\n");
+        end_simulation();
+        return -1;
+      }
     }
   }
 
@@ -255,7 +379,12 @@ int remove_entity(ENTITY *entity) {
   entity->list_offsets[DRIVING] = 0xBAADF00D;
 
   for (int i = 0; i < entity->model->num_colliders; i++) {
-    oct_tree_delete(physics_tree, entity->tree_offsets[i]);
+    if ((entity->type & T_DRIVING &&
+        entity->model->colliders[i].category == DEFAULT) ||
+        (!(entity->type & T_DRIVING) &&
+        entity->model->colliders[i].category == HURT_BOX)) {
+      oct_tree_delete(physics_tree, entity->tree_offsets[i]);
+    }
   }
 
   return 0;

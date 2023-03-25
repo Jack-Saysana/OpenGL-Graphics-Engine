@@ -274,7 +274,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     glm_vec3_cross(edge1, edge2, a_norm);
   }
 
-  // Point - Face case
+  // Surface of collision is just a point
   if (a_face_len == POINT_COL) {
     glm_vec3_copy(a_face[0], dest);
     return;
@@ -314,7 +314,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     glm_vec3_cross(edge1, edge2, b_norm);
   }
 
-  // Point - Face case
+  // Surface of collision is just a point
   if (b_face_len == POINT_COL) {
     glm_vec3_copy(a_face[0], dest);
     return;

@@ -42,6 +42,7 @@ int cursor_on = 1;
 int draw = 0;
 
 vec3 col_point = { 0.0, 0.0, 0.0 };
+int enable_gravity = 0;
 
 int main() {
   GLFWwindow *window;
@@ -218,39 +219,28 @@ int main() {
   vec3 floor_scale = { 50.0, 1.0, 50.0 };
   glm_vec3_copy(floor_scale, floor_entity->scale);
 
-
-
   vec3 cube_pos = { 3.0, 2.0, 3.0 };
   vec3 cube_col = { 1.0, 1.0, 1.0 };
-  /*cube->num_colliders = 1;
-  cube->colliders = malloc(sizeof(COLLIDER));
-  cube->collider_bone_links = malloc(sizeof(int));
-  cube->collider_bone_links[0] = -1;*/
   ENTITY *box_entity = init_entity(cube);
   if (box_entity == NULL) {
     printf("Unable to load box entity\n");
     glfwTerminate();
     return -1;
   }
-  /*vec3 verts[8] = {
-    {  1.0,  1.0,  1.0 },
-    {  1.0,  1.0, -1.0 },
-    { -1.0,  1.0,  1.0 },
-    { -1.0,  1.0, -1.0 },
-    {  1.0, -1.0,  1.0 },
-    {  1.0, -1.0, -1.0 },
-    { -1.0, -1.0,  1.0 },
-    { -1.0, -1.0, -1.0 }
-  };
-  COLLIDER box;
-  box.type = POLY;
-  box.data.num_used = 8;
-  for (int i = 0; i < 8; i++) {
-    glm_vec3_copy(verts[i], box.data.verts[i]);
-  }
-  box.category = DEFAULT;
-  cube->colliders[0] = box;*/
   glm_vec3_copy(cube_pos, box_entity->translation);
+
+  vec3 m_box_pos = { 0, 0.5, 0 };
+  vec3 m_box_scale = { 0.5, 0.5, 0.5 };
+  ENTITY *m_box_entity = init_entity(cube);
+  if (m_box_entity == NULL) {
+    printf("Unable to load moveable box entity\n");
+    glfwTerminate();
+    return -1;
+  }
+  glm_vec3_copy(m_box_pos, m_box_entity->translation);
+  glm_vec3_copy(m_box_scale, m_box_entity->scale);
+
+
 
   vec3 s_pos = { -3.0, 2.0, -3.0 };
   vec3 s_col = { 1.0, 1.0, 1.0 };
@@ -329,33 +319,36 @@ int main() {
     glfwTerminate();
   }
 
-  // Make player driving
-  player->type |= 2;
+  player->type |= T_DRIVING;
   status = insert_entity(player);
   if (status != 0) {
     glfwTerminate();
   }
 
-  // Make obstacle immovable
-  obstacle->type |= 4;
+  obstacle->type |= T_DRIVING | T_IMMUTABLE;
   status = insert_entity(obstacle);
   if (status != 0) {
     glfwTerminate();
   }
 
-  sphere_entity->type |= 4;
+  sphere_entity->type |= T_DRIVING | T_IMMUTABLE;
   status = insert_entity(sphere_entity);
   if (status != 0) {
     glfwTerminate();
   }
 
-  box_entity->type |= 4;
+  box_entity->type |= T_DRIVING | T_IMMUTABLE;
   status = insert_entity(box_entity);
   if (status != 0) {
     glfwTerminate();
   }
 
-  floor_entity->type |= 4;
+  status = insert_entity(m_box_entity);
+  if (status != 0) {
+    glfwTerminate();
+  }
+
+  floor_entity->type |= T_DRIVING | T_IMMUTABLE;
   status = insert_entity(floor_entity);
   if (status != 0) {
     glfwTerminate();
@@ -385,7 +378,6 @@ int main() {
     cube_pos[2] = 3.0;
     glm_mat4_identity(box_entity->model_mat);
     glm_translate(box_entity->model_mat, cube_pos);
-    glm_vec3_copy(vel, box_entity->velocity);
     s_pos[0] = -3.0;
     s_pos[1] = 2.0 + sin(glfwGetTime());
     s_pos[2] = -3.0;
@@ -395,10 +387,8 @@ int main() {
 
     /* Physics */
 
-    player->velocity[0] = movement[0];
-    player->velocity[1] += movement[1];
-    player->velocity[2] = movement[2];
-    //glm_vec3_copy(movement, player->velocity);
+    glm_vec3_add(movement, player->velocity, player->velocity);
+
     vec3 displacement = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(player->translation, displacement);
     status = simulate_frame();
@@ -409,6 +399,13 @@ int main() {
     glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
     //printf("%f %f %f\n", player->velocity[0], player->velocity[1],
     //       player->velocity[2]);
+    /*printf("box: [%f %f %f]\nplayer: [%f %f %f]\n",
+           m_box_entity->velocity[0],
+           m_box_entity->velocity[1],
+           m_box_entity->velocity[2],
+           player->velocity[0],
+           player->velocity[1],
+           player->velocity[2]);*/
 
     /* Camera */
 
@@ -475,6 +472,7 @@ int main() {
     draw_colliders(basic_shader, player, sphere);
     draw_colliders(basic_shader, obstacle, sphere);
     draw_colliders(basic_shader, floor_entity, sphere);
+    draw_colliders(basic_shader, m_box_entity, sphere);
 
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), cube_col[0],
                 cube_col[1], cube_col[2]);
@@ -527,6 +525,7 @@ int main() {
     draw_entity(test_shader, box_entity);
     draw_entity(test_shader, obstacle);
     draw_entity(test_shader, floor_entity);
+    draw_entity(test_shader, m_box_entity);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -589,7 +588,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void keyboard_input(GLFWwindow *window) {
-  float cam_speed = 2.0 * delta_time;
+  float cam_speed = 0.125 * delta_time;
   glm_vec3_zero(movement);
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera_model_rot = glm_rad(-yaw + 180.0);
@@ -621,7 +620,7 @@ void keyboard_input(GLFWwindow *window) {
   }
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
     if (space_pressed == 0) {
-      movement[1] = 0.25;
+      movement[1] = 0.125;
       space_pressed = 1;
     }
   } else {
@@ -652,9 +651,11 @@ void keyboard_input(GLFWwindow *window) {
       if (draw == 1) {
         draw = 0;
         cursor_on = 1;
+        enable_gravity = 0;
       } else {
         draw = 1;
         cursor_on = 0;
+        enable_gravity = 1;
       }
       toggled = 0;
     }
