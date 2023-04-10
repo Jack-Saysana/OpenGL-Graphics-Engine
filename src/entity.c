@@ -61,7 +61,9 @@ ENTITY *init_entity(MODEL *model) {
   ent->list_offsets[0] = 0xBAADF00D;
   ent->list_offsets[1] = 0xBAADF00D;
   glm_vec3_zero(ent->velocity);
-  ent->mass = 1.0;
+  glm_vec3_zero(ent->ang_velocity);
+  ent->inv_mass = 0.0;
+  //ent->mass = 1.0;
   ent->type = 0;
 
   return ent;

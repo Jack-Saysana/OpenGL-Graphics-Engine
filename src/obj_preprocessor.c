@@ -286,6 +286,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       center_of_mass[0] /= num_used;
       center_of_mass[1] /= num_used;
       center_of_mass[2] /= num_used;
+      glm_vec3_copy(center_of_mass, colliders[col_len].data.center_of_mass);
 
       for (unsigned int i = 0; i < num_used; i++) {
         glm_vec3_sub(verts[i], center_of_mass, unsorted[i]);

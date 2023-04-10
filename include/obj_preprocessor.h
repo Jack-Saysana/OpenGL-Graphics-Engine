@@ -3,37 +3,10 @@
 #include <string.h>
 #include <stdint.h>
 #include <cglm/vec3.h>
+#include <entity_str.h>
 
 #define BUFF_STARTING_LEN (10)
 #define NUM_PROPS (5)
-
-typedef enum chain_type {
-  LOCATION = 0,
-  ROTATION = 1,
-  SCALE = 2
-} C_TYPE;
-
-typedef enum collider_type {
-  POLY,
-  SPHERE
-} COL_TYPE;
-
-typedef struct collider {
-  union {
-    // POLYHEDRON DATA
-    struct {
-      vec3 verts[8];
-      unsigned int num_used;
-    };
-    // SPHERE DATA
-    struct {
-      vec3 center;
-      float radius;
-    };
-  } data;
-  COL_TYPE type;
-  int category;
-} COLLIDER;
 
 typedef struct material {
   uint64_t name;
@@ -52,31 +25,6 @@ typedef struct face_vert {
   struct face_vert *next;
   int index;
 } FACE_VERT;
-
-typedef struct bone {
-  float coords[3];
-  int parent;
-  int num_children;
-} BONE;
-
-typedef struct keyframe {
-  float offset[4];
-  int frame;
-} KEYFRAME;
-
-typedef struct keyframe_chain {
-  KEYFRAME *chain;
-  int *sled;
-  size_t num_frames;
-  C_TYPE type;
-  unsigned int b_id;
-} K_CHAIN;
-
-typedef struct animation {
-  K_CHAIN *keyframe_chains;
-  size_t num_chains;
-  size_t duration;
-} ANIMATION;
 
 BONE *bones;
 size_t b_buff_len;

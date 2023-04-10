@@ -14,7 +14,6 @@
 #define DIR ""
 #endif
 
-
 vec3 up = { 0.0, 1.0, 0.0 };
 
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
@@ -42,7 +41,7 @@ int cursor_on = 1;
 int draw = 0;
 
 vec3 col_point = { 0.0, 0.0, 0.0 };
-int enable_gravity = 0;
+int enable_gravity = 1;
 
 int main() {
   GLFWwindow *window;
@@ -229,7 +228,7 @@ int main() {
   }
   glm_vec3_copy(cube_pos, box_entity->translation);
 
-  vec3 m_box_pos = { 0, 0.5, 0 };
+  vec3 m_box_pos = { 0.0, 1.0, 0.0 };
   vec3 m_box_scale = { 0.5, 0.5, 0.5 };
   ENTITY *m_box_entity = init_entity(cube);
   if (m_box_entity == NULL) {
@@ -242,7 +241,7 @@ int main() {
 
 
 
-  vec3 s_pos = { -3.0, 2.0, -3.0 };
+  vec3 s_pos = { -3.0, 2.0, 3.0 };
   vec3 s_col = { 1.0, 1.0, 1.0 };
   sphere->num_colliders = 1;
   sphere->colliders = malloc(sizeof(COLLIDER));
@@ -320,35 +319,42 @@ int main() {
   }
 
   player->type |= T_DRIVING;
+  player->inv_mass = 1.0;
+
   status = insert_entity(player);
   if (status != 0) {
     glfwTerminate();
   }
 
-  obstacle->type |= T_DRIVING | T_IMMUTABLE;
+  obstacle->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(obstacle);
   if (status != 0) {
     glfwTerminate();
   }
 
-  sphere_entity->type |= T_DRIVING | T_IMMUTABLE;
+  sphere_entity->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(sphere_entity);
   if (status != 0) {
     glfwTerminate();
   }
 
-  box_entity->type |= T_DRIVING | T_IMMUTABLE;
+  box_entity->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(box_entity);
   if (status != 0) {
     glfwTerminate();
   }
 
+  m_box_entity->inv_mass = 1.0;
+  vec3 init_vel = { 0.0, 0.001, 0.0 };
+  glm_vec3_copy(init_vel, m_box_entity->velocity);
+  versor init_rot = { 0.0, 0.925101, 0.0, -0.379725 };
+  glm_quat_copy(init_rot, m_box_entity->rotation);
   status = insert_entity(m_box_entity);
   if (status != 0) {
     glfwTerminate();
   }
 
-  floor_entity->type |= T_DRIVING | T_IMMUTABLE;
+  floor_entity->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(floor_entity);
   if (status != 0) {
     glfwTerminate();
@@ -387,7 +393,12 @@ int main() {
 
     /* Physics */
 
+    /*printf("movement: %f %f %f ", movement[0], movement[1], movement[2]);
+    printf("velocity: %f %f %f\n", player->velocity[0], player->velocity[1],
+           player->velocity[2]);*/
     glm_vec3_add(movement, player->velocity, player->velocity);
+    /*printf("velocity2: %f %f %f\n", player->velocity[0], player->velocity[1],
+           player->velocity[2]);*/
 
     vec3 displacement = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(player->translation, displacement);
@@ -395,6 +406,8 @@ int main() {
     if (status != 0) {
       break;
     }
+    /*printf("velocity3: %f %f %f\n", player->velocity[0], player->velocity[1],
+           player->velocity[2]);*/
     glm_vec3_sub(player->translation, displacement, displacement);
     glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
     //printf("%f %f %f\n", player->velocity[0], player->velocity[1],
@@ -406,6 +419,9 @@ int main() {
            player->velocity[0],
            player->velocity[1],
            player->velocity[2]);*/
+    //printf("%f %f %f\n", m_box_entity->ang_velocity[0],
+    //       m_box_entity->ang_velocity[1], m_box_entity->ang_velocity[2]);
+    //fflush(stdout);
 
     /* Camera */
 
@@ -665,34 +681,36 @@ void keyboard_input(GLFWwindow *window) {
 }
 
 void mouse_input(GLFWwindow *window, double xpos, double ypos) {
-  if (firstMouse) {
+  if (cursor_on == 0) {
+    if (firstMouse) {
+      lastX = xpos;
+      lastY = yaw;
+      firstMouse = 0;
+    }
+
+    float xOffset = xpos -lastX;
+    float yOffset = lastY - ypos;
+
     lastX = xpos;
-    lastY = yaw;
-    firstMouse = 0;
+    lastY = ypos;
+
+    const float sensitivity = 0.1f;
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    if (pitch > 89.0f) {
+      pitch = 89.0f;
+    } else if (pitch < -89.0f) {
+      pitch = -89.0f;
+    }
+
+    camera_front[0] = sin(glm_rad(yaw));
+    camera_front[2] = -cos(glm_rad(yaw));
+    glm_vec3_normalize(camera_front);
   }
-
-  float xOffset = xpos -lastX;
-  float yOffset = lastY - ypos;
-
-  lastX = xpos;
-  lastY = ypos;
-
-  const float sensitivity = 0.1f;
-  xOffset *= sensitivity;
-  yOffset *= sensitivity;
-
-  yaw += xOffset;
-  pitch += yOffset;
-
-  if (pitch > 89.0f) {
-    pitch = 89.0f;
-  } else if (pitch < -89.0f) {
-    pitch = -89.0f;
-  }
-
-  camera_front[0] = sin(glm_rad(yaw));
-  camera_front[2] = -cos(glm_rad(yaw));
-  glm_vec3_normalize(camera_front);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {

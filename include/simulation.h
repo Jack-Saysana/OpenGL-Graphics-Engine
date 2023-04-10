@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <GLFW/glfw3.h>
 #include <cglm/vec3.h>
+#include <cglm/quat.h>
 #include <cglm/affine.h>
 #include <entity_str.h>
 
@@ -21,6 +22,13 @@
 #define HURT_BOX (2)
 
 #define GRAVITY (0.5)
+vec3 G_VEC = { 0.0, GRAVITY, 0.0 };
+vec3 U_DIR = { 0.0, 1.0, 0.0 };
+vec3 D_DIR = { 0.0, -1.0, 0.0 };
+vec3 L_DIR = { 1.0, 0.0, 0.0 };
+vec3 R_DIR = { -1.0, 1.0, 0.0 };
+vec3 F_DIR = { 0.0, 1.0, 1.0 };
+vec3 B_DIR = { 0.0, 1.0, -1.0 };
 
 typedef struct physics_object {
   ENTITY *entity;
@@ -74,12 +82,13 @@ void end_simulation();
 
 // Back Facing
 int collision_test(ENTITY *subject, size_t offset);
-void solve_collision(ENTITY *a, size_t a_col, ENTITY *b, size_t b_col,
+void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
                      vec3 p_dir, vec3 p_loc);
 void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
 int add_to_elist(ENTITY **list, size_t *len, size_t *buff_size,
                  ENTITY *entity);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
+void remove_noise(vec3 vec, float threshold);
 
 // Outside helpers
 OCT_TREE *init_tree();
@@ -93,3 +102,4 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
 void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void get_model_mat(ENTITY *entity, mat4 model);
+int max_dot(vec3 *verts, unsigned int len, vec3 dir);

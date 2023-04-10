@@ -7,6 +7,13 @@
 #include <stdlib.h>
 #include <entity_str.h>
 
+extern vec3 U_DIR;
+extern vec3 D_DIR;
+extern vec3 L_DIR;
+extern vec3 R_DIR;
+extern vec3 F_DIR;
+extern vec3 B_DIR;
+
 typedef struct physics_object {
   ENTITY *entity;
   size_t collider_offset;
@@ -71,3 +78,5 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
 void get_model_mat(ENTITY *entity, mat4 model);
+
+int max_dot(vec3 *verts, unsigned int len, vec3 dir);

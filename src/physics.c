@@ -90,7 +90,7 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   vec3 cur_norm = { 0.0, 0.0, 0.0 };
   // ABC
   float dist = calc_face_dist(polytope[3], polytope[0], polytope[1], cur_norm);
-  int status = insert_face(faces, 3, 0, 1, cur_norm, dist); 
+  int status = insert_face(faces, 3, 0, 1, cur_norm, dist);
   if (status != 0) {
     free(polytope);
     free_faces(faces);
@@ -99,7 +99,7 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   }
   // ACD
   dist = calc_face_dist(polytope[3], polytope[1], polytope[2], cur_norm);
-  status = insert_face(faces, 3, 1, 2, cur_norm, dist); 
+  status = insert_face(faces, 3, 1, 2, cur_norm, dist);
   if (status != 0) {
     free(polytope);
     free_faces(faces);
@@ -108,7 +108,7 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   }
   // ADB
   dist = calc_face_dist(polytope[3], polytope[2], polytope[0], cur_norm);
-  status = insert_face(faces, 3, 2, 0, cur_norm, dist); 
+  status = insert_face(faces, 3, 2, 0, cur_norm, dist);
   if (status != 0) {
     free(polytope);
     free_faces(faces);
@@ -117,7 +117,7 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   }
   // CBD
   dist = calc_face_dist(polytope[1], polytope[0], polytope[2], cur_norm);
-  status = insert_face(faces, 1, 0, 2, cur_norm, dist); 
+  status = insert_face(faces, 1, 0, 2, cur_norm, dist);
   if (status != 0) {
     free(polytope);
     free_faces(faces);
@@ -135,7 +135,7 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
     min_dist = faces->buffer[0].dist;
 
     remove_face(faces, 0, cur_face, min_norm);
-    
+
     // Add edges to unique edges
     for (int i = 0; i < 3; i++) {
       j = (i + 1) % 3;
@@ -225,6 +225,7 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
 
 // Expects a p_vec pointing in the direction of penetration, not the direction
 // of penetration repair.
+// Utilized Sutherland-Hodgman clipping algortihm
 void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   // Simple sphere case
   if (a->type == SPHERE) {
@@ -266,6 +267,8 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
       }
     }
   }
+
+  // Surface of collision is a face
   vec3 edge1 = GLM_VEC3_ZERO_INIT;
   vec3 edge2 = GLM_VEC3_ZERO_INIT;
   if (a_face_len > FACE_COL) {
@@ -286,7 +289,8 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   starting_index = max_dot(b->data.verts, num_used, bp_vec);
 
   // Generate the surface of collision for the second collider
-  vec3 b_face[4] = {
+  vec3 b_face[5] = {
+    { 0.0, 0.0, 0.0 },
     { 0.0, 0.0, 0.0 },
     { 0.0, 0.0, 0.0 },
     { 0.0, 0.0, 0.0 },
@@ -308,6 +312,8 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
       }
     }
   }
+
+  // Surface of collision is a face
   if (b_face_len > FACE_COL) {
     glm_vec3_sub(b_face[3], b_face[0], edge1);
     glm_vec3_sub(b_face[1], b_face[0], edge2);
@@ -320,12 +326,13 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     return;
   }
 
-  vec3 clip_dir;
-  vec3 test_dir;
-  int next_vert = 0;
-
-  float c_proj = 0.0;
+  vec3 clip_dir = GLM_VEC3_ZERO_INIT;
   vec3 clip_edge = GLM_VEC3_ZERO_INIT;
+  vec3 cur_test_dir = GLM_VEC3_ZERO_INIT;
+  vec3 prev_test_dir = GLM_VEC3_ZERO_INIT;
+  int next_vert = 0;
+  int prev_vert = 0;
+
 
   if (a_face_len == EDGE_COL || b_face_len == EDGE_COL) {
     // Edge - Face case
@@ -355,60 +362,104 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
       glm_vec3_sub(face[next_vert], face[i], clip_edge);
       glm_vec3_normalize(clip_edge);
       glm_vec3_cross(norm, clip_edge, clip_dir);
+      glm_vec3_normalize(clip_dir);
 
-      glm_vec3_sub(col_edge[0], face[i], test_dir);
-      if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
-        // Trim and add
-        c_proj = glm_vec3_dot(clip_edge, test_dir);
-        glm_vec3_scale_as(clip_edge, c_proj, col_edge[0]);
-        glm_vec3_add(col_edge[0], face[i], col_edge[0]);
+      glm_vec3_sub(col_edge[0], face[i], cur_test_dir);
+      if (glm_vec3_dot(cur_test_dir, clip_dir) > 0.0) {
+        intersection_point(col_edge[1], col_edge[0],
+                           face[i], face[next_vert],
+                           clip_dir, col_edge[0]);
       }
 
-      glm_vec3_sub(col_edge[1], face[i], test_dir);
-      if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
-        // Trim and add
-        c_proj = glm_vec3_dot(clip_edge, test_dir);
-        glm_vec3_scale_as(clip_edge, c_proj, col_edge[1]);
-        glm_vec3_add(col_edge[1], face[i], col_edge[1]);
+      glm_vec3_sub(col_edge[1], face[i], cur_test_dir);
+      if (glm_vec3_dot(cur_test_dir, clip_dir) > 0.0) {
+        intersection_point(col_edge[0], col_edge[1],
+                           face[i], face[next_vert],
+                           clip_dir, col_edge[1]);
       }
-    } 
+    }
 
     glm_vec3_center(col_edge[0], col_edge[1], dest);
     return;
   }
 
   // Face - Face case
-  vec3 col_face[4];
-  for (int i = 0; i < b_face_len; i++) {
-    glm_vec3_copy(b_face[i], col_face[i]);
-  }
+  vec3 col_face[5];
+  unsigned int col_face_len = 0;
 
-  // Clip face b to fit into face a
+  // Clip face b to fit into face a using Sutherland-Hodgeman
   for (unsigned int i = 0; i < a_face_len; i++) {
     next_vert = (i + 1) % a_face_len;
     glm_vec3_sub(a_face[next_vert], a_face[i], clip_edge);
     glm_vec3_normalize(clip_edge);
     glm_vec3_cross(a_norm, clip_edge, clip_dir);
+    glm_vec3_normalize(clip_dir);
 
     for (unsigned int j = 0; j < b_face_len; j++) {
-      glm_vec3_sub(col_face[j], a_face[i], test_dir);
-      if (glm_vec3_dot(test_dir, clip_dir) > 0.0) {
-        // Trim and add
-        c_proj = glm_vec3_dot(test_dir, clip_edge);
-        glm_vec3_scale_as(clip_edge, c_proj, col_face[j]);
-        glm_vec3_add(col_face[j], a_face[i], col_face[j]);
+      if (j == 0) {
+        prev_vert = b_face_len - 1;
+      } else {
+        prev_vert = j - 1;
+      }
+      glm_vec3_sub(b_face[j], a_face[i], cur_test_dir);
+      glm_vec3_sub(b_face[prev_vert], a_face[i], prev_test_dir);
+      if (glm_vec3_dot(cur_test_dir, clip_dir) <= 0.0) {
+        if (glm_vec3_dot(prev_test_dir, clip_dir) > 0.0) {
+          intersection_point(b_face[j], b_face[prev_vert],
+                             a_face[i], a_face[next_vert],
+                             clip_dir, col_face[col_face_len]);
+          col_face_len++;
+        }
+
+        glm_vec3_copy(b_face[j], col_face[col_face_len]);
+        col_face_len++;
+      } else if (glm_vec3_dot(prev_test_dir, clip_dir) <= 0.0) {
+        intersection_point(b_face[prev_vert], b_face[j],
+                           a_face[i], a_face[next_vert],
+                           clip_dir, col_face[col_face_len]);
+        col_face_len++;
       }
     }
+
+    for (unsigned int j = 0; j < col_face_len; j++) {
+      glm_vec3_copy(col_face[j], b_face[j]);
+    }
+    b_face_len = col_face_len;
+    col_face_len = 0;
   }
 
   glm_vec3_zero(dest);
   for (unsigned int i = 0; i < b_face_len; i++) {
-    glm_vec3_add(col_face[i], dest, dest);
+    glm_vec3_add(b_face[i], dest, dest);
   }
   dest[0] /= b_face_len;
   dest[1] /= b_face_len;
   dest[2] /= b_face_len;
+
   return;
+}
+
+// Finds intersection point of line ab and cd. Norm is perpendicular to cd.
+// ASSUMES LINES ARE INTERSECTING
+void intersection_point(vec3 a, vec3 b,
+                        vec3 c, vec3 d,
+                        vec3 norm, vec3 dest) {
+  vec3 b_min_a = GLM_VEC3_ZERO_INIT;
+  vec3 d_min_c = GLM_VEC3_ZERO_INIT;
+  vec3 b_min_d = GLM_VEC3_ZERO_INIT;
+  glm_vec3_sub(b, a, b_min_a);
+  glm_vec3_sub(d, c, d_min_c);
+  glm_vec3_sub(b, d, b_min_d);
+  float bd_proj = glm_vec3_dot(b_min_d, norm);
+  float sub_mag = 0.0;
+  if (glm_vec3_dot(b_min_a, d_min_c) != 0.0) {
+    sub_mag = bd_proj / sin(glm_vec3_angle(b_min_a, d_min_c));
+  } else {
+    sub_mag = bd_proj;
+  }
+  glm_vec3_scale_as(b_min_a, sub_mag, dest);
+  glm_vec3_sub(b_min_a, dest, dest);
+  glm_vec3_add(dest, a, dest);
 }
 
 int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir) {
@@ -542,7 +593,7 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
   } else {
     glm_vec3_copy(b->data.verts[max_dot(b->data.verts, b->data.num_used,
                   temp)], max_b);
-  } 
+  }
 
   glm_vec3_sub(max_a, max_b, dest);
 }
@@ -705,7 +756,7 @@ void remove_face(F_HEAP *heap, size_t index, ivec3 d_ind, vec3 d_norm) {
     temp_dist = cur->dist;
 
     if (left_index < heap->buff_len && left->dist < cur->dist &&
-        right_index < heap->buff_len && right->dist < cur->dist) { 
+        right_index < heap->buff_len && right->dist < cur->dist) {
       swap = left->dist < right->dist ? left : right;
     } else if (left_index < heap->buff_len && left->dist < cur->dist) {
       swap = left;

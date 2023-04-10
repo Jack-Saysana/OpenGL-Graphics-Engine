@@ -23,6 +23,7 @@ typedef struct collider {
     // POLYHEDRON DATA
     struct {
       vec3 verts[8];
+      vec3 center_of_mass;
       unsigned int num_used;
     };
     // SPHERE DATA
@@ -106,6 +107,7 @@ typedef struct entity {
   /* "Narrow" physics data corresponding to each bone. Used in instances where
      entity bones are seperate physics objects. */
   PHYS_DATA *np_data;
+  mat4 inv_inertia;
   /* Broad entity-based transformations */
   versor rotation;
   vec3 scale;
@@ -116,7 +118,9 @@ typedef struct entity {
   /* "Broad" physics data. Used when entire entity is a single physics
      object */
   vec3 velocity;
-  float mass;
+  vec3 ang_velocity;
+  float inv_mass;
+  //float mass;
   /* Physics system status
      Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC] */
   int type;
