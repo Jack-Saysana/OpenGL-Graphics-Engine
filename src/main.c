@@ -19,7 +19,7 @@ vec3 up = { 0.0, 1.0, 0.0 };
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
-vec3 camera_model_pos = { 3.0, 1.0, 6.0 };
+vec3 camera_model_pos = { 0.0, 1.0, 2.0 };
 float camera_model_rot = 0.0;
 
 vec3 movement = { 0.0, 0.0, 0.0 };
@@ -228,7 +228,7 @@ int main() {
   }
   glm_vec3_copy(cube_pos, box_entity->translation);
 
-  vec3 m_box_pos = { 0.0, 1.0, 0.0 };
+  vec3 m_box_pos = { 0.0, 3.0, 1.0 };
   vec3 m_box_scale = { 0.5, 0.5, 0.5 };
   ENTITY *m_box_entity = init_entity(cube);
   if (m_box_entity == NULL) {
@@ -347,8 +347,10 @@ int main() {
   m_box_entity->inv_mass = 1.0;
   vec3 init_vel = { 0.0, 0.001, 0.0 };
   glm_vec3_copy(init_vel, m_box_entity->velocity);
-  versor init_rot = { 0.0, 0.925101, 0.0, -0.379725 };
-  glm_quat_copy(init_rot, m_box_entity->rotation);
+  //versor init_rot = { 0.006049, 0.256307, 0.002722, 0.966573 };
+  //glm_quat_copy(init_rot, m_box_entity->rotation);
+  //vec3 init_ang_vel = { 0.0, 0.0015, 0.0 };
+  //glm_vec3_copy(init_ang_vel, m_box_entity->ang_velocity);
   status = insert_entity(m_box_entity);
   if (status != 0) {
     glfwTerminate();
@@ -360,7 +362,16 @@ int main() {
     glfwTerminate();
   }
 
+  float f_time = 0;
   while (!glfwWindowShouldClose(window)) {
+
+
+
+    if (glfwGetTime() - f_time > 0.01) {
+      f_time = glfwGetTime();
+
+
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -393,6 +404,11 @@ int main() {
 
     /* Physics */
 
+    /*if (m_box_entity->translation[1] < -10.0) {
+      glm_vec3_copy(m_box_pos, m_box_entity->translation);
+      glm_vec3_zero(m_box_entity->velocity);
+      m_box_entity->velocity[1] = 0.001;
+    }*/
     /*printf("movement: %f %f %f ", movement[0], movement[1], movement[2]);
     printf("velocity: %f %f %f\n", player->velocity[0], player->velocity[1],
            player->velocity[2]);*/
@@ -419,9 +435,9 @@ int main() {
            player->velocity[0],
            player->velocity[1],
            player->velocity[2]);*/
-    //printf("%f %f %f\n", m_box_entity->ang_velocity[0],
-    //       m_box_entity->ang_velocity[1], m_box_entity->ang_velocity[2]);
-    //fflush(stdout);
+    /*printf("%f %f %f\n", m_box_entity->ang_velocity[0],
+           m_box_entity->ang_velocity[1], m_box_entity->ang_velocity[2]);
+    fflush(stdout);*/
 
     /* Camera */
 
@@ -546,10 +562,17 @@ int main() {
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
     glfwPollEvents();
+
+
+
+    }
+
+
   }
 
   end_simulation();
   free_entity(player);
+  free_entity(m_box_entity);
   free_entity(box_entity);
   free_entity(sphere_entity);
   free_entity(floor_entity);
@@ -604,7 +627,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void keyboard_input(GLFWwindow *window) {
-  float cam_speed = 0.125 * delta_time;
+  float cam_speed = 0.25 * delta_time;
   glm_vec3_zero(movement);
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera_model_rot = glm_rad(-yaw + 180.0);

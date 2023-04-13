@@ -88,7 +88,8 @@ void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
 int add_to_elist(ENTITY **list, size_t *len, size_t *buff_size,
                  ENTITY *entity);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
-void remove_noise(vec3 vec, float threshold);
+void vec3_remove_noise(vec3 vec, float threshold);
+void vec4_remove_noise(vec4 vec, float threshold);
 
 // Outside helpers
 OCT_TREE *init_tree();

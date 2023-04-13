@@ -179,6 +179,7 @@ void free_entity(ENTITY *entity) {
   if (entity->bone_mats) {
     free(entity->bone_mats);
     free(entity->final_b_mats);
+    free(entity->np_data);
   }
 
   free(entity);

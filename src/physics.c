@@ -245,12 +245,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   vec3 cur_vert = GLM_VEC3_ZERO_INIT;
 
   // Generate the surface of collision for the first collider
-  vec3 a_face[4] = {
-    { 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0 }
-  };
+  vec3 a_face[4];
   vec3 a_norm = GLM_VEC3_ZERO_INIT;
   glm_vec3_copy(a->data.verts[starting_index], a_face[0]);
   unsigned int a_face_len = 1;
@@ -289,13 +284,9 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   starting_index = max_dot(b->data.verts, num_used, bp_vec);
 
   // Generate the surface of collision for the second collider
-  vec3 b_face[5] = {
-    { 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0 }
-  };
+  // b_face is of 8 verticies because it will later be clipped to a face up to
+  // 8 verticies large
+  vec3 b_face[8];
   vec3 b_norm = GLM_VEC3_ZERO_INIT;
   glm_vec3_copy(b->data.verts[starting_index], b_face[0]);
   unsigned int b_face_len = 1;
@@ -384,7 +375,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   }
 
   // Face - Face case
-  vec3 col_face[5];
+  vec3 col_face[8];
   unsigned int col_face_len = 0;
 
   // Clip face b to fit into face a using Sutherland-Hodgeman
