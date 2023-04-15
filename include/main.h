@@ -78,5 +78,6 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
 void get_model_mat(ENTITY *entity, mat4 model);
+void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
 
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);

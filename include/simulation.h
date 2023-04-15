@@ -23,6 +23,9 @@
 
 #define GRAVITY (0.5)
 vec3 G_VEC = { 0.0, GRAVITY, 0.0 };
+
+#define DAMP_FACTOR (0.9f)
+
 vec3 U_DIR = { 0.0, 1.0, 0.0 };
 vec3 D_DIR = { 0.0, -1.0, 0.0 };
 vec3 L_DIR = { 1.0, 0.0, 0.0 };
