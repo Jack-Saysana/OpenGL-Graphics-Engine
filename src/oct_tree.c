@@ -29,12 +29,13 @@ OCT_TREE *init_tree() {
 
   tree->node_buffer[0].empty = 1;
   tree->node_buffer[0].next_offset = -1;
+  tree->type = 0xBAADF00D;
 
   return tree;
 }
 
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
-  if (tree == NULL || entity == NULL ||
+  if (tree == NULL || entity == NULL || tree->type > EVENT_TREE ||
       collider_offset >= entity->model->num_colliders) {
     printf("Invalid insertion input\n");
     return -1;
@@ -131,7 +132,8 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
 }
 
 int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
-  if (tree == NULL || obj_offset > tree->data_buff_len) {
+  if (tree == NULL || obj_offset > tree->data_buff_len ||
+      tree->type > EVENT_TREE) {
     printf("Invalid deletion input\n");
     return -1;
   }
@@ -146,7 +148,7 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
 
   // Extract from node
   remove_from_list(tree, obj_offset);
-  obj->entity->tree_offsets[obj->collider_offset] = INVALID;
+  obj->entity->tree_offsets[obj->collider_offset][tree->type] = INVALID;
 
   // Swap with end of the list
   size_t end_offset = tree->data_buff_len - 1;
@@ -155,7 +157,7 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
     obj->collider_offset = tree->data_buffer[end_offset].collider_offset;
     obj->node_offset = tree->data_buffer[end_offset].node_offset;
 
-    obj->entity->tree_offsets[obj->collider_offset] = obj_offset;
+    obj->entity->tree_offsets[obj->collider_offset][tree->type] = obj_offset;
 
     remove_from_list(tree, end_offset);
     add_to_list(tree, obj_offset, obj->node_offset);
@@ -362,7 +364,7 @@ int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
   tree->data_buffer[buff_len].collider_offset = collider_offset;
   tree->data_buffer[buff_len].entity = entity;
 
-  entity->tree_offsets[collider_offset] = buff_len;
+  entity->tree_offsets[collider_offset][tree->type] = buff_len;
 
   (tree->data_buff_len)++;
   if (tree->data_buff_len == tree->data_buff_size) {

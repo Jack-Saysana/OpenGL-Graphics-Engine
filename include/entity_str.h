@@ -7,6 +7,12 @@
 #define T_DRIVING (2)
 #define T_IMMUTABLE (4)
 
+#define PHYS_TREE (0)
+#define HIT_TREE (1)
+#define EVENT_TREE (2)
+
+#define NUM_OCT_TREES (3)
+
 typedef enum chain_type {
   LOCATION = 0,
   ROTATION = 1,
@@ -96,9 +102,10 @@ typedef struct physics_data {
 
 typedef struct entity {
   MODEL *model;
-  /* Each element index corresponds to the model collider of the same index.
-     Element value corresponds to the index of the collider in its oct-tree */
-  size_t *tree_offsets;
+  /* Index corresponds to the model collider of the same index.
+     Values of the 3-sized array correspond to the offset of the collider in
+     the given oct tree (0: Physics, 1: Hit-Hurt, 2: Misc. Event) */
+  size_t (*tree_offsets)[3];
   /* Location, rotation and scale matricies for each bone */
   mat4 (*bone_mats)[3];
   /* Model matrix for each bone, including those inherited by parent bones */

@@ -5,23 +5,23 @@ extern int enable_gravity;
 
 int init_simulation() {
   if (dynamic_ents != NULL || driving_ents != NULL) {
-    printf("Simulation already initialized."\
-           "Simulation initialization failed\n");
+    fprintf(stderr, "Simulation already initialized."\
+                    "Simulation initialization failed\n");
     return -1;
   }
 
   dynamic_ents = malloc(sizeof(ENTITY *) * BUFF_STARTING_LEN);
   if (dynamic_ents == NULL) {
-    printf("Failed to allocate dynamic entities buffer. "\
-           "Simulation initialization failed\n");
+    fprintf(stderr, "Failed to allocate dynamic entities buffer. "\
+                    "Simulation initialization failed\n");
     return -1;
   }
 
   driving_ents = malloc(sizeof(ENTITY *) * BUFF_STARTING_LEN);
   if (driving_ents == NULL) {
     free(dynamic_ents);
-    printf("Failed to allocate static entities buffer. "\
-           "Simulation initialization failed\n");
+    fprintf(stderr, "Failed to allocate static entities buffer. "\
+                    "Simulation initialization failed\n");
     return -1;
   }
 
@@ -29,10 +29,32 @@ int init_simulation() {
   if (physics_tree == NULL) {
     free(dynamic_ents);
     free(driving_ents);
-    printf("Failed to initialized physics oct-tree."\
-           "Simulation initialization failed\n");
+    fprintf(stderr, "Failed to initialize physics oct-tree."\
+                    "Simulation initialization failed\n");
     return -1;
   }
+  physics_tree->type = PHYS_TREE;
+
+  combat_tree = init_tree();
+  if (combat_tree == NULL) {
+    free(dynamic_ents);
+    free(driving_ents);
+    free_oct_tree(physics_tree);
+    fprintf(stderr, "Failed to initialize combat oct-tree."\
+                    "Simulation initialization failed\n");
+  }
+  combat_tree->type = HIT_TREE;
+
+  event_tree = init_tree();
+  if (event_tree == NULL) {
+    free(dynamic_ents);
+    free(driving_ents);
+    free_oct_tree(physics_tree);
+    free_oct_tree(combat_tree);
+    fprintf(stderr, "Failed to initialize event oct-tree."\
+                    "Simulation initialization failed\n");
+  }
+  event_tree->type = EVENT_TREE;
 
   dy_ent_buff_len = 0;
   dy_ent_buff_size = BUFF_STARTING_LEN;
@@ -78,7 +100,8 @@ int simulate_frame() {
         if ((entity->type & T_DRIVING && colliders[col].category == DEFAULT) ||
             (!(entity->type & T_DRIVING) &&
             colliders[col].category == HURT_BOX)) {
-          status = oct_tree_delete(physics_tree, entity->tree_offsets[col]);
+          status = oct_tree_delete(physics_tree,
+                                   entity->tree_offsets[col][PHYS_TREE]);
           if (status) {
             return -1;
           }
@@ -438,6 +461,7 @@ int insert_entity(ENTITY *entity) {
   }
 
   int status = 0;
+  // Add entity to dynamic list if moving
   if (entity->velocity[0] != 0.0 || entity->velocity[1] != 0.0 ||
       entity->velocity[2] != 0.0) {
     entity->type |= T_DYNAMIC;
@@ -446,32 +470,45 @@ int insert_entity(ENTITY *entity) {
     status = add_to_elist(&dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
                           entity);
     if (status) {
-      printf("Unable to reallocate dynamic entity buffer\n");
+      fprintf(stderr, "Unable to reallocate dynamic entity buffer\n");
       end_simulation();
       return -1;
     }
   }
 
+  // Add entity to driving list if driving
   if (entity->type & T_DRIVING) {
     entity->list_offsets[DRIVING] = dr_ent_buff_len;
 
     status = add_to_elist(&driving_ents, &dr_ent_buff_len, &dr_ent_buff_size,
                           entity);
     if (status) {
-      printf("Unable to reallocate driving entity buffer\n");
+      fprintf(stderr, "Unable to reallocate driving entity buffer\n");
       end_simulation();
       return -1;
     }
   }
 
+  // Add colliders to the appropriate oct-trees
+  int cur_type = 0;
+  int cur_cat = 0;
   for (int i = 0; i < entity->model->num_colliders; i++) {
-    if ((entity->type & T_DRIVING &&
-        entity->model->colliders[i].category == DEFAULT) ||
-        (!(entity->type & T_DRIVING) &&
-        entity->model->colliders[i].category == HURT_BOX)) {
+    cur_type = entity->type;
+    cur_cat = entity->model->colliders[i].category;
+    if (((cur_type & T_DRIVING) && cur_cat == DEFAULT) ||
+       (!(cur_type & T_DRIVING) && cur_cat == HURT_BOX)) {
       status = oct_tree_insert(physics_tree, entity, i);
       if (status) {
-        printf("Unable to insert entity into physics oct-tree\n");
+        fprintf(stderr, "Unable to insert entity into physics oct-tree\n");
+        end_simulation();
+        return -1;
+      }
+    }
+
+    if (cur_cat == HURT_BOX || cur_cat == HIT_BOX) {
+      status = oct_tree_insert(combat_tree, entity, i);
+      if (status) {
+        fprintf(stderr, "Unable to insert entity into combat oct-tree\n");
         end_simulation();
         return -1;
       }
@@ -508,12 +545,18 @@ int remove_entity(ENTITY *entity) {
   entity->list_offsets[DYNAMIC] = 0xBAADF00D;
   entity->list_offsets[DRIVING] = 0xBAADF00D;
 
+  int cur_type = 0;
+  int cur_cat = 0;
   for (int i = 0; i < entity->model->num_colliders; i++) {
-    if ((entity->type & T_DRIVING &&
-        entity->model->colliders[i].category == DEFAULT) ||
-        (!(entity->type & T_DRIVING) &&
-        entity->model->colliders[i].category == HURT_BOX)) {
-      oct_tree_delete(physics_tree, entity->tree_offsets[i]);
+    cur_type = entity->type;
+    cur_cat = entity->model->colliders[i].category;
+    if (((cur_type & T_DRIVING) && cur_cat == DEFAULT) ||
+       (!(cur_type & T_DRIVING) && cur_cat == HURT_BOX)) {
+      oct_tree_delete(physics_tree, entity->tree_offsets[i][PHYS_TREE]);
+    }
+
+    if (cur_cat == HURT_BOX || cur_cat == HIT_BOX) {
+      oct_tree_delete(combat_tree, entity->tree_offsets[i][HIT_TREE]);
     }
   }
 

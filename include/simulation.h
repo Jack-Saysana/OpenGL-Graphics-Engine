@@ -55,6 +55,7 @@ typedef struct oct_tree {
   size_t node_buff_size;
   size_t data_buff_len;
   size_t data_buff_size;
+  unsigned int type;
 } OCT_TREE;
 
 typedef struct collision_result {
@@ -75,6 +76,8 @@ static size_t dr_ent_buff_len = 0;
 static size_t dr_ent_buff_size = 0;
 
 OCT_TREE *physics_tree = NULL;
+OCT_TREE *combat_tree = NULL;
+OCT_TREE *event_tree = NULL;
 
 // Front Facing
 int init_simulation();

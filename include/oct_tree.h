@@ -44,6 +44,7 @@ typedef struct oct_tree {
   size_t node_buff_size;
   size_t data_buff_len;
   size_t data_buff_size;
+  unsigned int type;
 } OCT_TREE;
 
 typedef struct collision_result {

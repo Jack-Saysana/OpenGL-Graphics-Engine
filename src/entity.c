@@ -11,10 +11,16 @@ ENTITY *init_entity(MODEL *model) {
   }
 
   if (model->num_colliders > 0) {
-    ent->tree_offsets = malloc(sizeof(size_t) * model->num_colliders);
+    ent->tree_offsets = malloc(sizeof(size_t) * NUM_OCT_TREES *
+                               model->num_colliders);
     if (ent->tree_offsets == NULL) {
       free(ent);
       return NULL;
+    }
+    for (size_t i = 0; i < model->num_colliders; i++) {
+      ent->tree_offsets[i][PHYS_TREE] = 0xBAADF00D;
+      ent->tree_offsets[i][HIT_TREE] = 0xBAADF00D;
+      ent->tree_offsets[i][EVENT_TREE] = 0xBAADF00D;
     }
   } else {
     ent->tree_offsets = NULL;
