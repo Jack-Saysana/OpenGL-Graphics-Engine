@@ -44,8 +44,6 @@ ENTITY *init_entity(MODEL *model) {
       free(ent);
       return NULL;
     }
-
-    model->ref_count++;
   } else {
     ent->bone_mats = NULL;
     ent->final_b_mats = NULL;
@@ -170,9 +168,6 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
 }
 
 void free_entity(ENTITY *entity) {
-  if (entity->model->ref_count > 0) {
-    entity->model->ref_count--;
-  }
   if (entity->tree_offsets) {
     free(entity->tree_offsets);
   }

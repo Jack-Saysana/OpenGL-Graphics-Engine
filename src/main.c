@@ -1,47 +1,53 @@
 #include <main.h>
 
-#define RES_X (640.0)
-#define RES_Y (400.0)
-#define LINUX (1)
-#define LAPTOP (0)
-#define PC (0)
+// SCENE ELEMENTS
+extern unsigned int shader;
+extern unsigned int u_shader;
+extern unsigned int bone_shader;
+extern unsigned int basic_shader;
+extern unsigned int test_shader;
 
-#if LINUX == 1
-#define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
-#elif LAPTOP == 1
-#define DIR "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine"
-#elif PC == 1
-#define DIR "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine"
-#else
-#define DIR ""
-#endif
+extern MODEL *cube;
+extern MODEL *dude;
+extern MODEL *test;
+extern MODEL *floor_model;
+extern MODEL *platform;
+extern MODEL *sphere;
+extern MODEL *vector;
 
+extern ENTITY *player;
+extern ENTITY *obstacle;
+extern ENTITY *floor_entity;
+extern ENTITY *box_entity;
+extern ENTITY *sphere_entity;
+extern ENTITY **boxes;
+extern ENTITY **spheres;
+extern const int NUM_BOXES;
+extern const int NUM_SPHERES;
+
+// CAMERA INFO
 vec3 up = { 0.0, 1.0, 0.0 };
-
 vec3 camera_offset = { 0.0, 0.0, -5.0 };
 vec3 camera_front = { 0.0, 0.0, -1.0 };
 vec3 camera_pos = { 0.0, 0.0, 0.0 };
 vec3 camera_model_pos = { 0.0, 0.5, 0.0 };
 float camera_model_rot = 0.0;
-
-vec3 movement = { 0.0, 0.0, 0.0 };
-
-float lastX = 400;
-float lastY = 300;
-
 float pitch = 0;
 float yaw = 0;
+vec3 movement = { 0.0, 0.0, 0.0 };
 
+// CONTROLS
 int firstMouse = 1;
-
-int cur_frame = 0;
+float lastX = 400;
+float lastY = 300;
 float last_push = 0.0;
-
 int toggled = 1;
 int space_pressed = 0;
 int cursor_on = 1;
 int draw = 0;
 
+// MISC DATA
+int cur_frame = 0;
 vec3 col_point = { 0.0, 0.0, 0.0 };
 int enable_gravity = 1;
 
@@ -77,192 +83,14 @@ int main() {
 
   glViewport(0, 0, RES_X, RES_Y);
 
-  unsigned int shader = init_shader_prog(
-      DIR"/src/shaders/cell_shader/shader.vs",
-      NULL,
-      DIR"/src/shaders/cell_shader/shader.fs"
-      );
-  if (shader == -1) {
-    printf("Error loading shaders\n");
+  int status = init_scene();
+  if (status) {
     glfwTerminate();
     return -1;
   }
 
-  unsigned int u_shader = init_shader_prog(
-      DIR"/src/shaders/unanimated/shader.vs",
-      NULL,
-      DIR"/src/shaders/cell_shader/shader.fs"
-      );
-  if (u_shader == -1) {
-    printf("Error loading shaders\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  unsigned int bone_shader = init_shader_prog(
-      DIR"/src/shaders/bone/shader.vs",
-      NULL,
-      DIR"/src/shaders/basic/shader.fs"
-      );
-  if (bone_shader == -1) {
-    printf("Error loading bone shaders\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  unsigned int basic_shader = init_shader_prog(
-      DIR"/src/shaders/basic/shader.vs",
-      NULL,
-      DIR"/src/shaders/basic/shader.fs"
-      );
-  if (basic_shader == -1) {
-    printf("Error loading basic shaders\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  unsigned int test_shader = init_shader_prog(
-      DIR"/src/shaders/unanimated/shader.vs",
-      NULL,
-      DIR"/src/shaders/test/shader.fs"
-      );
-  if (test_shader == -1) {
-    printf("Error loading test shaders\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *cube = load_model(
-      DIR"/resources/cube/cube.obj"
-      );
-  if (cube == NULL) {
-    printf("Unable to load cube model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *dude = load_model(
-      DIR"/resources/low_poly_new/low_poly_new.obj"
-      );
-  if (dude == NULL) {
-    printf("Unable to load dude model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *test = load_model(
-      DIR"/resources/test/test.obj"
-      );
-  if (test == NULL) {
-    printf("Unable to load test model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *floor = load_model(
-      DIR"/resources/floor/floor.obj"
-      );
-  if (floor == NULL) {
-    printf("Unable to load floor model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *platform = load_model(
-      DIR"/resources/platform/platform.obj"
-      );
-  if (platform == NULL) {
-    printf("Unable to load platform model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *sphere = load_model(
-      DIR"/resources/sphere/sphere.obj"
-      );
-  if (sphere == NULL) {
-    printf("Unable to load spehere model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  MODEL *vector = load_model(
-      DIR"/resources/vector/vector.obj"
-      );
-  if (vector == NULL) {
-    printf("Unable to load vector model\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  ENTITY *player = init_entity(dude);
-  if (player == NULL) {
-    printf("Unable to load player\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  ENTITY *obstacle = init_entity(platform);
-  if (obstacle == NULL) {
-    printf("Unable to load obstacle\n");
-    glfwTerminate();
-    return -1;
-  }
-  vec3 ob_pos = { 3.0, 0.0, -3.0 };
-  glm_vec3_copy(ob_pos, obstacle->translation);
-
-  ENTITY *floor_entity = init_entity(floor);
-  if (floor_entity == NULL) {
-    printf("Unable to load floor entity\n");
-    glfwTerminate();
-    return -1;
-  }
-  vec3 floor_scale = { 50.0, 1.0, 50.0 };
-  glm_vec3_copy(floor_scale, floor_entity->scale);
-
-  vec3 cube_pos = { 3.0, 2.0, 3.0 };
-  vec3 cube_col = { 1.0, 1.0, 1.0 };
-  ENTITY *box_entity = init_entity(cube);
-  if (box_entity == NULL) {
-    printf("Unable to load box entity\n");
-    glfwTerminate();
-    return -1;
-  }
-  glm_vec3_copy(cube_pos, box_entity->translation);
-
-  vec3 m_box_pos = { 0.0, 3.0, -3.0 };
-  vec3 m_box_scale = { 0.5, 0.5, 0.5 };
-  ENTITY *m_box_entity = init_entity(cube);
-  if (m_box_entity == NULL) {
-    printf("Unable to load moveable box entity\n");
-    glfwTerminate();
-    return -1;
-  }
-  glm_vec3_copy(m_box_pos, m_box_entity->translation);
-  glm_vec3_copy(m_box_scale, m_box_entity->scale);
-
-  vec3 s_pos = { -3.0, 2.0, 3.0 };
-  vec3 s_col = { 1.0, 1.0, 1.0 };
-  sphere->num_colliders = 1;
-  sphere->colliders = malloc(sizeof(COLLIDER));
-  sphere->collider_bone_links = malloc(sizeof(int));
-  sphere->collider_bone_links[0] = -1;
-  ENTITY *sphere_entity = init_entity(sphere);
-  if (sphere_entity == NULL) {
-    printf("Unable to load sphere entity\n");
-    glfwTerminate();
-    return -1;
-  }
-  COLLIDER ball;
-  ball.type = SPHERE;
-  ball.data.center[0] = 0.0;
-  ball.data.center[1] = 0.0;
-  ball.data.center[2] = 0.0;
-  ball.data.radius = 1.0;
-  ball.category = DEFAULT;
-  sphere->colliders[0] = ball;
-  glm_vec3_copy(s_pos, sphere_entity->translation);
-
+  vec3 cube_col = GLM_VEC3_ONE_INIT;
+  vec3 s_col = GLM_VEC3_ONE_INIT;
   glm_quatv(player->rotation, camera_model_rot, up);
 
   mat4 projection = GLM_MAT4_IDENTITY_INIT;
@@ -311,7 +139,7 @@ int main() {
 
   // SIMULATION SET UP
 
-  int status = init_simulation();
+  status = init_simulation();
   if (status != 0) {
     glfwTerminate();
   }
@@ -342,7 +170,7 @@ int main() {
     glfwTerminate();
   }
 
-  m_box_entity->inv_mass = 4.0;
+  /*m_box_entity->inv_mass = 4.0;
   vec3 init_vel = { 0.0, 0.001, 0.0 };
   glm_vec3_copy(init_vel, m_box_entity->velocity);
   //versor init_rot = { 0.0, 0.0, 0.5, 1.0 };
@@ -353,6 +181,25 @@ int main() {
   status = insert_entity(m_box_entity);
   if (status != 0) {
     glfwTerminate();
+  }*/
+  for (int i = 0; i < NUM_BOXES; i++) {
+    boxes[i]->inv_mass = 4.0;
+    vec3 init_vel = { 0.0, 0.01, 0.0 };
+    glm_vec3_copy(init_vel, boxes[i]->velocity);
+    status = insert_entity(boxes[i]);
+    if (status) {
+      glfwTerminate();
+    }
+  }
+
+  for (int i = 0; i < NUM_SPHERES; i++) {
+    spheres[i]->inv_mass = 8.0;
+    vec3 init_vel = { 0.0, 0.01, 0.0 };
+    glm_vec3_copy(init_vel, spheres[i]->velocity);
+    status = insert_entity(spheres[i]);
+    if (status) {
+      glfwTerminate();
+    }
   }
 
   floor_entity->type |= T_DRIVING;// | T_IMMUTABLE;
@@ -432,8 +279,6 @@ int main() {
     glDrawArrays(GL_POINTS, 0, 1);
     glBindVertexArray(0);
 
-    /* Oct-Tree */
-
     /* Skeleton */
 
     glm_vec3_copy(camera_model_pos, player->translation);
@@ -455,7 +300,9 @@ int main() {
     draw_colliders(basic_shader, player, sphere);
     draw_colliders(basic_shader, obstacle, sphere);
     draw_colliders(basic_shader, floor_entity, sphere);
-    draw_colliders(basic_shader, m_box_entity, sphere);
+    for (int i = 0; i < NUM_BOXES; i++) {
+      draw_colliders(basic_shader, boxes[i], sphere);
+    }
 
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), cube_col[0],
                 cube_col[1], cube_col[2]);
@@ -465,7 +312,7 @@ int main() {
                 s_col[1], s_col[2]);
     draw_colliders(basic_shader, sphere_entity, sphere);
 
-    /* Skin */
+    /* Player */
 
     glUseProgram(shader);
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
@@ -476,25 +323,7 @@ int main() {
       draw_entity(shader, player);
     }
 
-    /* Unanimated models */
-
-    glUseProgram(u_shader);
-    glUniformMatrix4fv(glGetUniformLocation(u_shader, "view"), 1,
-                       GL_FALSE, (float *) view);
-    glUniform3f(glGetUniformLocation(u_shader, "camera_pos"), camera_pos[0],
-                camera_pos[1], camera_pos[2]);
-
-    glm_mat4_identity(model);
-    glm_vec3_zero(translation);
-    translation[0] = 5.0;
-    translation[1] = 10.0;
-    translation[2] = -15.0;
-    glm_translate(model, translation);
-    glUniformMatrix4fv(glGetUniformLocation(u_shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-    draw_model(u_shader, dude);
-
-    /* Tests */
+    /* Objects */
 
     glUseProgram(test_shader);
     glUniformMatrix4fv(glGetUniformLocation(test_shader, "view"), 1, GL_FALSE,
@@ -504,7 +333,12 @@ int main() {
     draw_entity(test_shader, box_entity);
     draw_entity(test_shader, obstacle);
     draw_entity(test_shader, floor_entity);
-    draw_entity(test_shader, m_box_entity);
+    for (int i = 0; i < NUM_BOXES; i++) {
+      draw_entity(test_shader, boxes[i]);
+    }
+    for (int i = 0; i < NUM_SPHERES; i++) {
+      draw_entity(test_shader, spheres[i]);
+    }
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
@@ -513,17 +347,24 @@ int main() {
 
   end_simulation();
   free_entity(player);
-  free_entity(m_box_entity);
   free_entity(box_entity);
   free_entity(sphere_entity);
   free_entity(floor_entity);
   free_entity(obstacle);
+  for (int i = 0; i < NUM_BOXES; i++) {
+    free_entity(boxes[i]);
+  }
+  free(boxes);
+  for (int i = 0; i < NUM_SPHERES; i++) {
+    free_entity(spheres[i]);
+  }
+  free(spheres);
 
   free_model(platform);
   free_model(cube);
   free_model(test);
   free_model(dude);
-  free_model(floor);
+  free_model(floor_model);
   free_model(sphere);
   free_model(vector);
 

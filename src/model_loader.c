@@ -299,7 +299,6 @@ MODEL *load_model(char *path) {
   model->num_bones = b_len;
   model->num_colliders = col_len;
   model->num_indicies = i_len * 3;
-  model->ref_count = 0;
 
   if (obj_mat != NULL) {
     for (int i = 0; i < NUM_PROPS; i++) {

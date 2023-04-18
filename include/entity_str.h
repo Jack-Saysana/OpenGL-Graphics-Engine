@@ -85,7 +85,6 @@ typedef struct model {
   unsigned int VBO;
   unsigned int EBO;
   unsigned int num_indicies;
-  unsigned int ref_count;
 } MODEL;
 
 typedef struct physics_data {

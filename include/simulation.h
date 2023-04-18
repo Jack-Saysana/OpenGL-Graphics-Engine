@@ -88,7 +88,7 @@ int collision_test(ENTITY *subject, size_t offset);
 void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
                      vec3 p_dir, vec3 p_loc);
 void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
-int add_to_elist(ENTITY **list, size_t *len, size_t *buff_size,
+int add_to_elist(ENTITY ***list, size_t *len, size_t *buff_size,
                  ENTITY *entity);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
 void vec3_remove_noise(vec3 vec, float threshold);

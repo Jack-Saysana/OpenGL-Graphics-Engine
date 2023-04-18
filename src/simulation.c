@@ -58,7 +58,7 @@ int simulate_frame() {
     if ((entity->type & T_DYNAMIC) == 0 && (entity->velocity[0] != 0.0 ||
         entity->velocity[1] != 0.0 || entity->velocity[2] != 0.0)) {
       entity->type |= T_DYNAMIC;
-      status = add_to_elist(dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
+      status = add_to_elist(&dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
                             entity);
       if (status) {
         return -1;
@@ -126,6 +126,9 @@ int collision_test(ENTITY *subject, size_t offset) {
   get_model_mat(subject, s_model);
   global_collider(s_model, subject->model->colliders + offset,
                   &s_col);
+  if (subject->model->colliders[offset].type == SPHERE) {
+    s_col.data.radius *= subject->scale[0];
+  }
 
   COLLISION_RES col_res = oct_tree_search(physics_tree, &s_col);
 
@@ -155,8 +158,11 @@ int collision_test(ENTITY *subject, size_t offset) {
     p_ent = p_obj->entity;
     get_model_mat(p_ent, p_model);
     global_collider(p_model,
-                    p_obj->entity->model->colliders + p_obj->collider_offset,
+                    p_ent->model->colliders + p_obj->collider_offset,
                     &collider);
+    if (p_ent->model->colliders[p_obj->collider_offset].type == SPHERE) {
+      collider.data.radius *= p_ent->scale[0];
+    }
 
     if (p_ent != subject) {
       collision = collision_check(&s_col, &collider, simplex);
@@ -379,10 +385,10 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
 
   if ((a->type & T_DRIVING) == 0) {
     vec3 delta_ang_va = GLM_VEC3_ZERO_INIT;
-    glm_mat4_mulv3(a->inv_inertia, a_cross_n, 1.0, delta_ang_va);
+    glm_mat4_mulv3(a->inv_inertia, a_cross_t, 1.0, delta_ang_va);
     glm_vec3_scale(delta_ang_va, impulse_f, delta_ang_va);
     glm_vec3_scale(a->ang_velocity, DAMP_FACTOR, a->ang_velocity);
-    glm_vec3_add(a->ang_velocity, delta_ang_va, a->ang_velocity);
+    glm_vec3_sub(a->ang_velocity, delta_ang_va, a->ang_velocity);
     vec3_remove_noise(a->ang_velocity, 0.0001);
   }
 
@@ -393,10 +399,10 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
 
   if ((b->type & T_DRIVING) == 0) {
     vec3 delta_ang_vb = GLM_VEC3_ZERO_INIT;
-    glm_mat4_mulv3(b->inv_inertia, b_cross_n, 1.0, delta_ang_vb);
+    glm_mat4_mulv3(b->inv_inertia, b_cross_t, 1.0, delta_ang_vb);
     glm_vec3_scale(delta_ang_vb, impulse_f, delta_ang_vb);
     glm_vec3_scale(b->ang_velocity, DAMP_FACTOR, b->ang_velocity);
-    glm_vec3_sub(b->ang_velocity, delta_ang_vb, b->ang_velocity);
+    glm_vec3_add(b->ang_velocity, delta_ang_vb, b->ang_velocity);
     vec3_remove_noise(b->ang_velocity, 0.0001);
   }
 
@@ -405,16 +411,16 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
        b->ang_velocity[1] != 0.0 || b->ang_velocity[2] != 0.0)
       && (b->type & T_DYNAMIC) == 0) {
     b->type |= T_DYNAMIC;
-    add_to_elist(dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size, b);
+    add_to_elist(&dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size, b);
   }
 }
 
-int add_to_elist(ENTITY **list, size_t *len, size_t *buff_size,
+int add_to_elist(ENTITY ***list, size_t *len, size_t *buff_size,
                  ENTITY *entity) {
-  list[*len] = entity;
+  (*list)[*len] = entity;
   (*len)++;
   if (*len == *buff_size) {
-    return double_buffer((void **) &list, buff_size, sizeof(ENTITY *));
+    return double_buffer((void **) list, buff_size, sizeof(ENTITY *));
   }
 
   return 0;
@@ -437,7 +443,7 @@ int insert_entity(ENTITY *entity) {
     entity->type |= T_DYNAMIC;
     entity->list_offsets[DYNAMIC] = dy_ent_buff_len;
 
-    status = add_to_elist(dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
+    status = add_to_elist(&dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
                           entity);
     if (status) {
       printf("Unable to reallocate dynamic entity buffer\n");
@@ -449,7 +455,7 @@ int insert_entity(ENTITY *entity) {
   if (entity->type & T_DRIVING) {
     entity->list_offsets[DRIVING] = dr_ent_buff_len;
 
-    status = add_to_elist(driving_ents, &dr_ent_buff_len, &dr_ent_buff_size,
+    status = add_to_elist(&driving_ents, &dr_ent_buff_len, &dr_ent_buff_size,
                           entity);
     if (status) {
       printf("Unable to reallocate driving entity buffer\n");

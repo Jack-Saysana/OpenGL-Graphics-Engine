@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <entity_str.h>
 
+#define RES_X (640.0)
+#define RES_Y (400.0)
+
 extern vec3 U_DIR;
 extern vec3 D_DIR;
 extern vec3 L_DIR;
@@ -47,6 +50,8 @@ typedef struct collision_result {
 extern float delta_time;
 extern float last_frame;
 extern OCT_TREE *physics_tree;
+
+int init_scene();
 
 void keyboard_input(GLFWwindow *window);
 void mouse_input(GLFWwindow *widnow, double xpos, double ypos);
