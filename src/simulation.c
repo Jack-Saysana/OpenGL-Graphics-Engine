@@ -505,7 +505,7 @@ int insert_entity(ENTITY *entity) {
       }
     }
 
-    if (cur_cat == HURT_BOX || cur_cat == HIT_BOX) {
+    if (cur_cat == HURT_BOX) {
       status = oct_tree_insert(combat_tree, entity, i);
       if (status) {
         fprintf(stderr, "Unable to insert entity into combat oct-tree\n");
@@ -542,8 +542,8 @@ int remove_entity(ENTITY *entity) {
     remove_from_elist(driving_ents, DRIVING, offset, &dr_ent_buff_len);
   }
 
-  entity->list_offsets[DYNAMIC] = 0xBAADF00D;
-  entity->list_offsets[DRIVING] = 0xBAADF00D;
+  entity->list_offsets[DYNAMIC] = INVALID_VAL;
+  entity->list_offsets[DRIVING] = INVALID_VAL;
 
   int cur_type = 0;
   int cur_cat = 0;
@@ -555,7 +555,8 @@ int remove_entity(ENTITY *entity) {
       oct_tree_delete(physics_tree, entity->tree_offsets[i][PHYS_TREE]);
     }
 
-    if (cur_cat == HURT_BOX || cur_cat == HIT_BOX) {
+    if ((cur_cat == HURT_BOX || cur_cat == HIT_BOX) &&
+        entity->tree_offsets[i][HIT_TREE] != INVALID) {
       oct_tree_delete(combat_tree, entity->tree_offsets[i][HIT_TREE]);
     }
   }

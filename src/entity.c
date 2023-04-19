@@ -18,9 +18,9 @@ ENTITY *init_entity(MODEL *model) {
       return NULL;
     }
     for (size_t i = 0; i < model->num_colliders; i++) {
-      ent->tree_offsets[i][PHYS_TREE] = 0xBAADF00D;
-      ent->tree_offsets[i][HIT_TREE] = 0xBAADF00D;
-      ent->tree_offsets[i][EVENT_TREE] = 0xBAADF00D;
+      ent->tree_offsets[i][PHYS_TREE] = INVALID;
+      ent->tree_offsets[i][HIT_TREE] = INVALID;
+      ent->tree_offsets[i][EVENT_TREE] = INVALID;
     }
   } else {
     ent->tree_offsets = NULL;

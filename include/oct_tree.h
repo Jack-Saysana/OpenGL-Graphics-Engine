@@ -8,7 +8,6 @@
 #define MAX_DEPTH (5)
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
-#define INVALID (0xBAADF00D)
 
 typedef enum {
   X_Y_Z = 0,

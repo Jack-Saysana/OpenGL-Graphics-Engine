@@ -131,12 +131,15 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   return 0;
 }
 
+/* Obj offset is the 1-indexed position of the element to delete, NOT the zero
+ * indexed position. This is because 0 is reserved for an invalid position */
 int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
-  if (tree == NULL || obj_offset > tree->data_buff_len ||
+  if (tree == NULL || obj_offset > tree->data_buff_len+1 || obj_offset < 1 ||
       tree->type > EVENT_TREE) {
     printf("Invalid deletion input\n");
     return -1;
   }
+  obj_offset--;
 
   OCT_NODE *node = tree->node_buffer +
                    tree->data_buffer[obj_offset].node_offset;
@@ -157,7 +160,7 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
     obj->collider_offset = tree->data_buffer[end_offset].collider_offset;
     obj->node_offset = tree->data_buffer[end_offset].node_offset;
 
-    obj->entity->tree_offsets[obj->collider_offset][tree->type] = obj_offset;
+    obj->entity->tree_offsets[obj->collider_offset][tree->type] = obj_offset+1;
 
     remove_from_list(tree, end_offset);
     add_to_list(tree, obj_offset, obj->node_offset);
@@ -165,10 +168,10 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
 
   // Delete node
   tree->data_buffer[end_offset].entity = NULL;
-  tree->data_buffer[end_offset].collider_offset = INVALID;
-  tree->data_buffer[end_offset].node_offset = INVALID;
-  tree->data_buffer[end_offset].next_offset = INVALID;
-  tree->data_buffer[end_offset].prev_offset = INVALID;
+  tree->data_buffer[end_offset].collider_offset = INVALID_VAL;
+  tree->data_buffer[end_offset].node_offset = INVALID_VAL;
+  tree->data_buffer[end_offset].next_offset = INVALID_VAL;
+  tree->data_buffer[end_offset].prev_offset = INVALID_VAL;
   (tree->data_buff_len)--;
 
   return 0;
@@ -263,8 +266,8 @@ int init_node(OCT_TREE *tree, OCT_NODE *parent) {
   parent->next_offset = tree->node_buff_len;
 
   for (size_t i = tree->node_buff_len; i < tree->node_buff_len + 8; i++) {
-    tree->node_buffer[i].head_offset = INVALID;
-    tree->node_buffer[i].tail_offset = INVALID;
+    tree->node_buffer[i].head_offset = INVALID_VAL;
+    tree->node_buffer[i].tail_offset = INVALID_VAL;
     tree->node_buffer[i].empty = 1;
     tree->node_buffer[i].next_offset = -1;
   }
@@ -364,7 +367,7 @@ int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
   tree->data_buffer[buff_len].collider_offset = collider_offset;
   tree->data_buffer[buff_len].entity = entity;
 
-  entity->tree_offsets[collider_offset][tree->type] = buff_len;
+  entity->tree_offsets[collider_offset][tree->type] = buff_len+1;
 
   (tree->data_buff_len)++;
   if (tree->data_buff_len == tree->data_buff_size) {
@@ -403,9 +406,9 @@ int remove_from_list(OCT_TREE *tree, size_t obj_offset) {
   OCT_NODE *node = tree->node_buffer + obj->node_offset;
 
   if (node->head_offset == node->tail_offset) {
-    obj->node_offset = INVALID;
-    node->head_offset = INVALID;
-    node->tail_offset = INVALID;
+    obj->node_offset = INVALID_VAL;
+    node->head_offset = INVALID_VAL;
+    node->tail_offset = INVALID_VAL;
     node->empty = 1;
     return 0;
   }

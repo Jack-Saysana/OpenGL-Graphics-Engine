@@ -11,6 +11,9 @@
 #define HIT_TREE (1)
 #define EVENT_TREE (2)
 
+#define INVALID (0)
+#define INVALID_VAL (0xBAADF00D)
+
 #define NUM_OCT_TREES (3)
 
 typedef enum chain_type {
