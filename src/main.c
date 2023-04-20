@@ -222,7 +222,7 @@ int main() {
 
     /* Animation */
 
-    animate(player, 0, cur_frame);
+    animate(player, 1, cur_frame);
 
     /* Physics */
 
@@ -453,7 +453,7 @@ void keyboard_input(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS &&
       glfwGetKey(window, GLFW_KEY_E) != GLFW_PRESS) {
     if (glfwGetTime() - last_push >= 0.05) {
-      if (cur_frame == 39) {
+      if (cur_frame == 59) {
         cur_frame = 0;
       }
       cur_frame++;

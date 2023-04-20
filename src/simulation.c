@@ -564,6 +564,80 @@ int remove_entity(ENTITY *entity) {
   return 0;
 }
 
+int disable_h_box(ENTITY *entity, size_t index) {
+  if (entity == NULL ||
+     (entity->model->colliders[index].category != HURT_BOX &&
+      entity->model->colliders[index].category != HIT_BOX)) {
+    return -1;
+  }
+
+  if (entity->tree_offsets[index][HIT_TREE] != INVALID) {
+    oct_tree_delete(combat_tree, entity->tree_offsets[index][HIT_TREE]);
+  }
+
+  return 0;
+}
+
+int enable_h_box(ENTITY *entity, size_t index) {
+  if (entity == NULL ||
+     (entity->model->colliders[index].category != HURT_BOX &&
+      entity->model->colliders[index].category != HIT_BOX)) {
+    return -1;
+  }
+
+  int status = 0;
+  if (entity->tree_offsets[index][HIT_TREE] == INVALID) {
+    status = oct_tree_insert(combat_tree, entity, index);
+    if (status) {
+      fprintf(stderr, "Unable to insert hurtbox into combat oct-tree\n");
+      end_simulation();
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+int disable_hurtboxes(ENTITY *entity) {
+  if (entity == NULL) {
+    return -1;
+  }
+
+  int cur_cat = 0;
+  for (int i = 0; i < entity->model->num_colliders; i++) {
+    cur_cat = entity->model->colliders[i].category;
+    if ((cur_cat == HURT_BOX) &&
+        (entity->tree_offsets[i][HIT_TREE] != INVALID)) {
+      oct_tree_delete(combat_tree, entity->tree_offsets[i][HIT_TREE]);
+    }
+  }
+
+  return 0;
+}
+
+int enable_hurtboxes(ENTITY *entity) {
+  if (entity == NULL) {
+    return -1;
+  }
+
+  int status = 0;
+  int cur_cat = 0;
+  for (int i = 0; i < entity->model->num_colliders; i++) {
+    cur_cat = entity->model->colliders[i].category;
+    if ((cur_cat == HURT_BOX) &&
+        (entity->tree_offsets[i][HIT_TREE] == INVALID)) {
+      status = oct_tree_insert(combat_tree, entity, i);
+      if (status) {
+        fprintf(stderr, "Unable to insert hurtbox into combat oct-tree\n");
+        end_simulation();
+        return -1;
+      }
+    }
+  }
+
+  return 0;
+}
+
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest) {
   dest->type = source->type;
   dest->category = source->category;

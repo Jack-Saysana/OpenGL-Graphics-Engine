@@ -82,9 +82,13 @@ OCT_TREE *event_tree = NULL;
 // Front Facing
 int init_simulation();
 int simulate_frame();
+void end_simulation();
 int insert_entity(ENTITY *entity);
 int remove_entity(ENTITY *entity);
-void end_simulation();
+int disable_h_box(ENTITY *entity, size_t index);
+int enable_h_box(ENTITY *entity, size_t index);
+int disable_hurtboxss(ENTITY *entity);
+int enable_hurtboxss(ENTITY *entity);
 
 // Back Facing
 int collision_test(ENTITY *subject, size_t offset);
