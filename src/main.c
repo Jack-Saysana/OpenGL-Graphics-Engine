@@ -8,6 +8,7 @@ extern unsigned int basic_shader;
 extern unsigned int test_shader;
 
 extern MODEL *cube;
+extern MODEL *rect_prism;
 extern MODEL *dude;
 extern MODEL *test;
 extern MODEL *floor_model;
@@ -22,8 +23,21 @@ extern ENTITY *box_entity;
 extern ENTITY *sphere_entity;
 extern ENTITY **boxes;
 extern ENTITY **spheres;
+extern ENTITY **rects;
 extern const int NUM_BOXES;
 extern const int NUM_SPHERES;
+extern const int NUM_RECTS;
+
+vec3 m_box_pos = { 0, 3.0, -2.1 };
+vec3 m_box_scale = { 0.5, 0.5, 0.5 };
+vec3 m_sphere_pos = { 1.0, 3.0, -3.0 };
+vec3 m_sphere_scale = { 0.5, 0.5, 0.5 };
+vec3 m_rect_pos = { 1.0, 3.0, 3.0 };
+vec3 m_rect_scale = { 0.5, 0.5, 0.5 };
+vec3 ob_pos = { 3.0, 0.0, -3.0 };
+vec3 floor_scale = { 50.0, 1.0, 50.0 };
+vec3 cube_pos = { 3.0, 2.0, 3.0 };
+vec3 s_pos = { -3.0, 2.0, 3.0 };
 
 // CAMERA INFO
 vec3 up = { 0.0, 1.0, 0.0 };
@@ -146,7 +160,6 @@ int main() {
 
   player->type |= T_DRIVING;
   player->inv_mass = 1.0;
-
   status = insert_entity(player);
   if (status != 0) {
     glfwTerminate();
@@ -183,9 +196,22 @@ int main() {
     glfwTerminate();
   }*/
   for (int i = 0; i < NUM_BOXES; i++) {
-    boxes[i]->inv_mass = 4.0;
-    vec3 init_vel = { 0.0, 0.01, 0.0 };
+    boxes[i]->inv_mass = 1.0;
+    vec3 init_vel = { 0.0, -0.05, 0.0 };
     glm_vec3_copy(init_vel, boxes[i]->velocity);
+    vec3 init_ang_vel = { -0.168430775, 0.00429611094, 0.00221232418 };
+    glm_vec3_copy(init_ang_vel, boxes[i]->ang_velocity);
+    versor init_rot = { 0.701721907, 0.477072179, -0.519831359, 0.0988073647 };
+    //versor init_rot = { -0.033304669, 0.0163957067, -0.0227729455,
+    //                    -0.999053717 };
+    glm_quat_normalize(init_rot);
+    glm_quat_copy(init_rot, boxes[i]->rotation);
+
+    glm_mat4_identity(boxes[i]->inv_inertia);
+    boxes[i]->inv_inertia[0][0] = (12.0 * boxes[i]->inv_mass) / 2.0;
+    boxes[i]->inv_inertia[1][1] = (12.0 * boxes[i]->inv_mass) / 2.0;
+    boxes[i]->inv_inertia[2][2] = (12.0 * boxes[i]->inv_mass) / 2.0;
+
     status = insert_entity(boxes[i]);
     if (status) {
       glfwTerminate();
@@ -193,24 +219,65 @@ int main() {
   }
 
   for (int i = 0; i < NUM_SPHERES; i++) {
-    spheres[i]->inv_mass = 8.0;
-    vec3 init_vel = { 0.0, 0.01, 0.0 };
+    spheres[i]->inv_mass = 1.0;
+    vec3 init_vel = { 0.0, -0.05, 0.0 };
     glm_vec3_copy(init_vel, spheres[i]->velocity);
+
+    glm_mat4_identity(spheres[i]->inv_inertia);
+    spheres[i]->inv_inertia[0][0] = spheres[i]->inv_mass / 0.1;
+    spheres[i]->inv_inertia[1][1] = spheres[i]->inv_mass / 0.1;
+    spheres[i]->inv_inertia[2][2] = spheres[i]->inv_mass / 0.1;
+
     status = insert_entity(spheres[i]);
     if (status) {
       glfwTerminate();
     }
   }
 
+  for (int i = 0; i < NUM_RECTS; i++) {
+    rects[i]->inv_mass = 1.0;
+    vec3 init_vel = { 0.0, 0.0, 0.0 };
+    glm_vec3_copy(init_vel, rects[i]->velocity);
+
+    glm_mat4_identity(rects[i]->inv_inertia);
+    rects[i]->inv_inertia[0][0] = (12.0 * rects[i]->inv_mass) / 1.25;
+    rects[i]->inv_inertia[1][1] = (12.0 * rects[i]->inv_mass) / 5.0;
+    rects[i]->inv_inertia[2][2] = (12.0 * rects[i]->inv_mass) / 4.25;
+
+    status = insert_entity(rects[i]);
+    if (status) {
+      glfwTerminate();
+    }
+  }
+
   floor_entity->type |= T_DRIVING;// | T_IMMUTABLE;
+  glm_mat4_zero(floor_entity->inv_inertia);
   status = insert_entity(floor_entity);
   if (status != 0) {
     glfwTerminate();
   }
 
+
+
+
+  // TEMP
+  //float prev_time = glfwGetTime();
+
+
+
+
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+
+
+
+    // TEMP
+    //if (glfwGetTime() - prev_time > 0.25) {
+    //  prev_time = glfwGetTime();
+
+
+
 
     if (cursor_on) {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_NORMAL);
@@ -220,6 +287,9 @@ int main() {
 
     keyboard_input(window);
 
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     /* Animation */
 
     animate(player, 1, cur_frame);
@@ -227,13 +297,21 @@ int main() {
     /* Physics */
 
     glm_vec3_add(movement, player->velocity, player->velocity);
-
     vec3 displacement = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(player->translation, displacement);
+
     status = simulate_frame();
     if (status != 0) {
       break;
     }
+    fprintf(stderr, "%f %f %f\n",
+            boxes[0]->ang_velocity[0],
+            boxes[0]->ang_velocity[1],
+            boxes[0]->ang_velocity[2]);
+    fflush(stderr);
+    //fprintf(stderr, "%f\n", glm_vec3_norm(boxes[0]->ang_velocity));
+    //fflush(stderr);
+
     glm_vec3_sub(player->translation, displacement, displacement);
     glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
 
@@ -339,10 +417,21 @@ int main() {
     for (int i = 0; i < NUM_SPHERES; i++) {
       draw_entity(test_shader, spheres[i]);
     }
+    for (int i = 0; i < NUM_RECTS; i++) {
+      draw_entity(test_shader, rects[i]);
+    }
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
+
     glfwPollEvents();
+
+
+
+    // TEMPORARY
+    //}
+
+
   }
 
   end_simulation();
@@ -359,9 +448,14 @@ int main() {
     free_entity(spheres[i]);
   }
   free(spheres);
+  for (int i = 0; i < NUM_RECTS; i++) {
+    free_entity(rects[i]);
+  }
+  free(rects);
 
   free_model(platform);
   free_model(cube);
+  free_model(rect_prism);
   free_model(test);
   free_model(dude);
   free_model(floor_model);
@@ -409,7 +503,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void keyboard_input(GLFWwindow *window) {
-  float cam_speed = 0.65 * delta_time;
+  float cam_speed = 4.0 * delta_time;
   glm_vec3_zero(movement);
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera_model_rot = glm_rad(-yaw + 180.0);
@@ -441,7 +535,7 @@ void keyboard_input(GLFWwindow *window) {
   }
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
     if (space_pressed == 0) {
-      movement[1] = 0.125;
+      movement[1] = 5.0;
       space_pressed = 1;
     }
   } else {

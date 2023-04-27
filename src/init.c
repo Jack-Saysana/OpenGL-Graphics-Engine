@@ -7,6 +7,7 @@ unsigned int basic_shader;
 unsigned int test_shader;
 
 MODEL *cube;
+MODEL *rect_prism;
 MODEL *dude;
 MODEL *test;
 MODEL *floor_model;
@@ -21,8 +22,21 @@ ENTITY *box_entity;
 ENTITY *sphere_entity;
 ENTITY **boxes;
 ENTITY **spheres;
+ENTITY **rects;
 const int NUM_BOXES = 1;
-const int NUM_SPHERES = 1;
+const int NUM_SPHERES = 0;
+const int NUM_RECTS = 1;
+
+extern vec3 m_box_pos;
+extern vec3 m_box_scale;
+extern vec3 m_sphere_pos;
+extern vec3 m_sphere_scale;
+extern vec3 m_rect_pos;
+extern vec3 m_rect_scale;
+extern vec3 ob_pos;
+extern vec3 floor_scale;
+extern vec3 cube_pos;
+extern vec3 s_pos;
 
 int init_scene() {
   shader = init_shader_prog(
@@ -81,6 +95,13 @@ int init_scene() {
   if (cube == NULL) {
     printf("Unable to load cube model\n");
     return -1;
+  }
+
+  rect_prism = load_model(
+      DIR"/resources/rect_prism/rect_prism.obj"
+      );
+  if (rect_prism == NULL) {
+    printf("Unable to load rect prism model\n");
   }
 
   dude = load_model(
@@ -142,7 +163,6 @@ int init_scene() {
     printf("Unable to load obstacle\n");
     return -1;
   }
-  vec3 ob_pos = { 3.0, 0.0, -3.0 };
   glm_vec3_copy(ob_pos, obstacle->translation);
 
   floor_entity = init_entity(floor_model);
@@ -150,10 +170,8 @@ int init_scene() {
     printf("Unable to load floor entity\n");
     return -1;
   }
-  vec3 floor_scale = { 50.0, 1.0, 50.0 };
   glm_vec3_copy(floor_scale, floor_entity->scale);
 
-  vec3 cube_pos = { 3.0, 2.0, 3.0 };
   box_entity = init_entity(cube);
   if (box_entity == NULL) {
     printf("Unable to load box entity\n");
@@ -161,7 +179,6 @@ int init_scene() {
   }
   glm_vec3_copy(cube_pos, box_entity->translation);
 
-  vec3 s_pos = { -3.0, 2.0, 3.0 };
   sphere_entity = init_entity(sphere);
   if (sphere_entity == NULL) {
     printf("Unable to load sphere entity\n");
@@ -170,31 +187,39 @@ int init_scene() {
   glm_vec3_copy(s_pos, sphere_entity->translation);
 
   boxes = malloc(sizeof(ENTITY *) * NUM_BOXES);
-  vec3 m_box_pos = { -1.0, 3.0, -3.0 };
-  vec3 m_box_scale = { 0.5, 0.5, 0.5 };
   for (int i = 0; i < NUM_BOXES; i++) {
     boxes[i] = init_entity(cube);
     if (boxes[i] == NULL) {
       printf("Unable to load moveable box: %d\n", i);
       return -1;
     }
-    m_box_pos[2] += 1.0;
+    m_box_pos[2] -= 1.0;
     glm_vec3_copy(m_box_pos, boxes[i]->translation);
     glm_vec3_copy(m_box_scale, boxes[i]->scale);
   }
 
   spheres = malloc(sizeof(ENTITY *) * NUM_SPHERES);
-  vec3 m_sphere_pos = { 1.0, 3.0, -3.0 };
-  vec3 m_sphere_scale = { 0.5, 0.5, 0.5 };
   for (int i = 0; i < NUM_SPHERES; i++) {
     spheres[i] = init_entity(sphere);
     if (spheres[i] == NULL) {
       fprintf(stderr, "Unable to load moveable sphere: %d\n", i);
       return -1;
     }
-    m_sphere_pos[2] += 1.0;
+    m_sphere_pos[0] += 1.0;
     glm_vec3_copy(m_sphere_pos, spheres[i]->translation);
     glm_vec3_copy(m_sphere_scale, spheres[i]->scale);
+  }
+
+  rects = malloc(sizeof(ENTITY *) * NUM_RECTS);
+  for (int i = 0; i < NUM_RECTS; i++) {
+    rects[i] = init_entity(rect_prism);
+    if (rects[i] == NULL) {
+      fprintf(stderr, "Unable to load moveable rect prism: %d\n", i);
+      return -1;
+    }
+    m_rect_pos[2] += 1.0;
+    glm_vec3_copy(m_rect_pos, rects[i]->translation);
+    glm_vec3_copy(m_rect_scale, rects[i]->scale);
   }
 
   return 0;

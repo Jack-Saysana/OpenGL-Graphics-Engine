@@ -21,10 +21,12 @@
 #define HIT_BOX (1)
 #define HURT_BOX (2)
 
-#define GRAVITY (0.5)
+#define GRAVITY (9.81)
 vec3 G_VEC = { 0.0, GRAVITY, 0.0 };
 
-#define DAMP_FACTOR (0.9f)
+#define L_DAMP_FACTOR (0.99f)
+#define A_DAMP_FACTOR (0.99f)
+#define FINE_DAMP (0.99f)
 
 vec3 U_DIR = { 0.0, 1.0, 0.0 };
 vec3 D_DIR = { 0.0, -1.0, 0.0 };
