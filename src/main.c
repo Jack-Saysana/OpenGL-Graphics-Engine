@@ -28,7 +28,7 @@ extern const int NUM_BOXES;
 extern const int NUM_SPHERES;
 extern const int NUM_RECTS;
 
-vec3 m_box_pos = { 0, 3.0, -2.1 };
+vec3 m_box_pos = { 7.0, 4.0, -2.0 };
 vec3 m_box_scale = { 0.5, 0.5, 0.5 };
 vec3 m_sphere_pos = { 1.0, 3.0, -3.0 };
 vec3 m_sphere_scale = { 0.5, 0.5, 0.5 };
@@ -196,16 +196,14 @@ int main() {
     glfwTerminate();
   }*/
   for (int i = 0; i < NUM_BOXES; i++) {
-    boxes[i]->inv_mass = 1.0;
+    boxes[i]->inv_mass = 2.0;
     vec3 init_vel = { 0.0, -0.05, 0.0 };
     glm_vec3_copy(init_vel, boxes[i]->velocity);
-    vec3 init_ang_vel = { -0.168430775, 0.00429611094, 0.00221232418 };
-    glm_vec3_copy(init_ang_vel, boxes[i]->ang_velocity);
-    versor init_rot = { 0.701721907, 0.477072179, -0.519831359, 0.0988073647 };
-    //versor init_rot = { -0.033304669, 0.0163957067, -0.0227729455,
-    //                    -0.999053717 };
-    glm_quat_normalize(init_rot);
-    glm_quat_copy(init_rot, boxes[i]->rotation);
+    //vec3 init_ang_vel = { -0.168430775, 0.00429611094, 0.00221232418 };
+    //glm_vec3_copy(init_ang_vel, boxes[i]->ang_velocity);
+    //versor init_rot = { 0.701721907, 0.477072179, -0.519831359, 0.0988073647 };
+    //glm_quat_normalize(init_rot);
+    //glm_quat_copy(init_rot, boxes[i]->rotation);
 
     glm_mat4_identity(boxes[i]->inv_inertia);
     boxes[i]->inv_inertia[0][0] = (12.0 * boxes[i]->inv_mass) / 2.0;
@@ -257,28 +255,7 @@ int main() {
     glfwTerminate();
   }
 
-
-
-
-  // TEMP
-  //float prev_time = glfwGetTime();
-
-
-
-
   while (!glfwWindowShouldClose(window)) {
-
-
-
-
-
-    // TEMP
-    //if (glfwGetTime() - prev_time > 0.25) {
-    //  prev_time = glfwGetTime();
-
-
-
-
     if (cursor_on) {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     } else {
@@ -304,11 +281,11 @@ int main() {
     if (status != 0) {
       break;
     }
-    fprintf(stderr, "%f %f %f\n",
+    /*fprintf(stderr, "%f %f %f\n",
             boxes[0]->ang_velocity[0],
             boxes[0]->ang_velocity[1],
             boxes[0]->ang_velocity[2]);
-    fflush(stderr);
+    fflush(stderr);*/
     //fprintf(stderr, "%f\n", glm_vec3_norm(boxes[0]->ang_velocity));
     //fflush(stderr);
 
@@ -425,13 +402,6 @@ int main() {
     glfwSwapBuffers(window);
 
     glfwPollEvents();
-
-
-
-    // TEMPORARY
-    //}
-
-
   }
 
   end_simulation();
