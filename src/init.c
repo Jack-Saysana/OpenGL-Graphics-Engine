@@ -24,8 +24,9 @@ ENTITY **boxes;
 ENTITY **spheres;
 ENTITY **rects;
 const int NUM_BOXES = 1;
-const int NUM_SPHERES = 0;
+const int NUM_SPHERES = 1;
 const int NUM_RECTS = 1;
+ENTITY *ragdoll;
 
 extern vec3 m_box_pos;
 extern vec3 m_box_scale;
@@ -37,6 +38,7 @@ extern vec3 ob_pos;
 extern vec3 floor_scale;
 extern vec3 cube_pos;
 extern vec3 s_pos;
+extern vec3 ragdoll_pos;
 
 int init_scene() {
   shader = init_shader_prog(
@@ -220,6 +222,13 @@ int init_scene() {
     m_rect_pos[2] += 1.0;
     glm_vec3_copy(m_rect_pos, rects[i]->translation);
     glm_vec3_copy(m_rect_scale, rects[i]->scale);
+  }
+
+  ragdoll = init_entity(dude);
+  glm_vec3_copy(ragdoll_pos, ragdoll->translation);
+  if (ragdoll == NULL) {
+    printf("Unable to load ragdoll\n");
+    return -1;
   }
 
   return 0;

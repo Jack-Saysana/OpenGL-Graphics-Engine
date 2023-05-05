@@ -21,7 +21,7 @@
 #define HIT_BOX (1)
 #define HURT_BOX (2)
 
-#define GRAVITY (9.81)
+#define GRAVITY (10.0)
 vec3 G_VEC = { 0.0, GRAVITY, 0.0 };
 
 #define L_DAMP_FACTOR (0.99f)
@@ -66,6 +66,17 @@ typedef struct collision_result {
   size_t list_buff_size;
 } COLLISION_RES;
 
+typedef struct collision_args {
+  ENTITY *entity;
+  vec3 *velocity;
+  vec3 *ang_velocity;
+  mat4 inv_inertia;
+  versor rotation;
+  vec3 center_of_mass;
+  float inv_mass;
+  int type;
+} COL_ARGS;
+
 float last_frame = 0.0;
 float delta_time = 0.0;
 
@@ -96,6 +107,7 @@ int enable_hurtboxss(ENTITY *entity);
 int collision_test(ENTITY *subject, size_t offset);
 void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
                      vec3 p_dir, vec3 p_loc);
+//void solve_collision(COL_ARGS *a, COL_ARGS *b, vec3 p_dir, vec3 p_loc);
 void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
 int add_to_elist(ENTITY ***list, size_t *len, size_t *buff_size,
                  ENTITY *entity);

@@ -27,10 +27,11 @@ extern ENTITY **rects;
 extern const int NUM_BOXES;
 extern const int NUM_SPHERES;
 extern const int NUM_RECTS;
+extern ENTITY *ragdoll;
 
 vec3 m_box_pos = { 7.0, 4.0, -2.0 };
 vec3 m_box_scale = { 0.5, 0.5, 0.5 };
-vec3 m_sphere_pos = { 1.0, 3.0, -3.0 };
+vec3 m_sphere_pos = { -3.0, 3.0, -3.0 };
 vec3 m_sphere_scale = { 0.5, 0.5, 0.5 };
 vec3 m_rect_pos = { 1.0, 3.0, 3.0 };
 vec3 m_rect_scale = { 0.5, 0.5, 0.5 };
@@ -38,6 +39,7 @@ vec3 ob_pos = { 3.0, 0.0, -3.0 };
 vec3 floor_scale = { 50.0, 1.0, 50.0 };
 vec3 cube_pos = { 3.0, 2.0, 3.0 };
 vec3 s_pos = { -3.0, 2.0, 3.0 };
+vec3 ragdoll_pos = { 0.0, 0.0, -3.0 };
 
 // CAMERA INFO
 vec3 up = { 0.0, 1.0, 0.0 };
@@ -165,6 +167,13 @@ int main() {
     glfwTerminate();
   }
 
+  ragdoll->type |= T_DRIVING;
+  ragdoll->inv_mass = 1.0;
+  status = insert_entity(ragdoll);
+  if (status != 0) {
+    glfwTerminate();
+  }
+
   obstacle->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(obstacle);
   if (status != 0) {
@@ -183,20 +192,8 @@ int main() {
     glfwTerminate();
   }
 
-  /*m_box_entity->inv_mass = 4.0;
-  vec3 init_vel = { 0.0, 0.001, 0.0 };
-  glm_vec3_copy(init_vel, m_box_entity->velocity);
-  //versor init_rot = { 0.0, 0.0, 0.5, 1.0 };
-  //glm_quat_normalize(init_rot);
-  //glm_quat_copy(init_rot, m_box_entity->rotation);
-  //vec3 init_ang_vel = { 0.015, 0.0, 0.015 };
-  //glm_vec3_copy(init_ang_vel, m_box_entity->ang_velocity);
-  status = insert_entity(m_box_entity);
-  if (status != 0) {
-    glfwTerminate();
-  }*/
   for (int i = 0; i < NUM_BOXES; i++) {
-    boxes[i]->inv_mass = 2.0;
+    boxes[i]->inv_mass = 1.0;
     vec3 init_vel = { 0.0, -0.05, 0.0 };
     glm_vec3_copy(init_vel, boxes[i]->velocity);
     //vec3 init_ang_vel = { -0.168430775, 0.00429611094, 0.00221232418 };
@@ -345,6 +342,7 @@ int main() {
                        GL_FALSE, (float *) view);
 
     draw_skeleton(bone_shader, player);
+    draw_skeleton(bone_shader, ragdoll);
 
     /* Colliders */
 
@@ -353,6 +351,7 @@ int main() {
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 1.0, 0.0, 1.0);
     glBindVertexArray(pt_VAO);
     draw_colliders(basic_shader, player, sphere);
+    draw_colliders(basic_shader, ragdoll, sphere);
     draw_colliders(basic_shader, obstacle, sphere);
     draw_colliders(basic_shader, floor_entity, sphere);
     for (int i = 0; i < NUM_BOXES; i++) {
@@ -376,6 +375,7 @@ int main() {
                 camera_pos[1], camera_pos[2]);
     if (draw) {
       draw_entity(shader, player);
+      draw_entity(shader, ragdoll);
     }
 
     /* Objects */
@@ -406,6 +406,7 @@ int main() {
 
   end_simulation();
   free_entity(player);
+  free_entity(ragdoll);
   free_entity(box_entity);
   free_entity(sphere_entity);
   free_entity(floor_entity);

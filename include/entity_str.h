@@ -96,12 +96,12 @@ typedef struct model {
   unsigned int num_indicies;
 } MODEL;
 
-typedef struct physics_data {
+typedef struct p_data {
+  mat4 inv_inertia;
   vec3 velocity;
-  /* Denotes the accumulated change in velocity during current frame. Will be
-     added to velocity once frame has finalized simulation */
-  float mass;
-} PHYS_DATA;
+  vec3 ang_velocity;
+  float inv_mass;
+} P_DATA;
 
 typedef struct entity {
   MODEL *model;
@@ -109,21 +109,20 @@ typedef struct entity {
      Values of the 3-sized array correspond to the offset of the collider in
      the given oct tree (0: Physics, 1: Hit-Hurt, 2: Misc. Event) */
   size_t (*tree_offsets)[3];
+  /* Positions of entity in the physics system's dynamic entity buffer and
+     driving entity buffer (if applicable) */
+  size_t list_offsets[2];
   /* Location, rotation and scale matricies for each bone */
   mat4 (*bone_mats)[3];
+  /* "Narrow" physics data for each bone */
+  P_DATA *np_data;
   /* Model matrix for each bone, including those inherited by parent bones */
   mat4 *final_b_mats;
-  /* "Narrow" physics data corresponding to each bone. Used in instances where
-     entity bones are seperate physics objects. */
-  PHYS_DATA *np_data;
   mat4 inv_inertia;
   /* Broad entity-based transformations */
   versor rotation;
   vec3 scale;
   vec3 translation;
-  /* Positions of entity in the physics system's dynamic entity buffer and
-     driving entity buffer (if applicable) */
-  size_t list_offsets[2];
   /* "Broad" physics data. Used when entire entity is a single physics
      object */
   vec3 velocity;

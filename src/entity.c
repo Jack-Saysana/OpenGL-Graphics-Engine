@@ -24,6 +24,7 @@ ENTITY *init_entity(MODEL *model) {
     }
   } else {
     ent->tree_offsets = NULL;
+    ent->np_data = NULL;
   }
 
   if (model->num_bones > 0) {
@@ -41,14 +42,22 @@ ENTITY *init_entity(MODEL *model) {
       free(ent);
       return NULL;
     }
+    for (size_t i = 0; i < model->num_bones; i++) {
+      glm_mat4_identity(ent->final_b_mats[i]);
+    }
 
-    ent->np_data = calloc(model->num_bones, sizeof(PHYS_DATA));
+    ent->np_data = malloc(sizeof(P_DATA) * model->num_bones);
     if (ent->np_data == NULL) {
-      free(ent->final_b_mats);
       free(ent->tree_offsets);
       free(ent->bone_mats);
+      free(ent->final_b_mats);
       free(ent);
-      return NULL;
+    }
+    for (size_t i = 0; i < model->num_bones; i++) {
+      glm_mat4_identity(ent->np_data[i].inv_inertia);
+      glm_vec3_zero(ent->np_data[i].velocity);
+      glm_vec3_zero(ent->np_data[i].ang_velocity);
+      ent->np_data[i].inv_mass = 0.0;
     }
   } else {
     ent->bone_mats = NULL;
@@ -67,7 +76,6 @@ ENTITY *init_entity(MODEL *model) {
   glm_vec3_zero(ent->velocity);
   glm_vec3_zero(ent->ang_velocity);
   ent->inv_mass = 0.0;
-  //ent->mass = 1.0;
   ent->type = 0;
 
   return ent;
@@ -180,7 +188,6 @@ void free_entity(ENTITY *entity) {
   if (entity->bone_mats) {
     free(entity->bone_mats);
     free(entity->final_b_mats);
-    free(entity->np_data);
   }
 
   free(entity);
