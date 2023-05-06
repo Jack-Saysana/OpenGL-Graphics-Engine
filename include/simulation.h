@@ -105,9 +105,8 @@ int enable_hurtboxss(ENTITY *entity);
 
 // Back Facing
 int collision_test(ENTITY *subject, size_t offset);
-void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
-                     vec3 p_dir, vec3 p_loc);
-//void solve_collision(COL_ARGS *a, COL_ARGS *b, vec3 p_dir, vec3 p_loc);
+void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
+                     vec3 p_loc);
 void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
 int add_to_elist(ENTITY ***list, size_t *len, size_t *buff_size,
                  ENTITY *entity);

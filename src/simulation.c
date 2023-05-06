@@ -7,6 +7,8 @@ extern int enable_gravity;
 
 extern ENTITY *player;
 extern ENTITY *ragdoll;
+extern ENTITY **boxes;
+extern ENTITY **rects;
 
 
 
@@ -139,15 +141,6 @@ int simulate_frame() {
 }
 
 int collision_test(ENTITY *subject, size_t offset) {
-  mat4 s_model = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(subject, s_model);
-  COLLIDER s_col;
-  global_collider(s_model, subject->model->colliders + offset,
-                  &s_col);
-  if (subject->model->colliders[offset].type == SPHERE) {
-    s_col.data.radius *= subject->scale[0];
-  }
-
   if (enable_gravity) {
     vec3 delta_d = GLM_VEC3_ZERO_INIT;
     versor delta_rot = GLM_QUAT_IDENTITY_INIT;
@@ -228,6 +221,16 @@ int collision_test(ENTITY *subject, size_t offset) {
     */
   }
 
+  // Need to change to also work for ragdolls (Use bone matricies)
+  mat4 s_model = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(subject, s_model);
+  COLLIDER s_col;
+  global_collider(s_model, subject->model->colliders + offset,
+                  &s_col);
+  if (subject->model->colliders[offset].type == SPHERE) {
+    s_col.data.radius *= subject->scale[0];
+  }
+
   COLLISION_RES col_res = oct_tree_search(physics_tree, &s_col);
 
   PHYS_OBJ *p_obj = NULL;
@@ -265,9 +268,6 @@ int collision_test(ENTITY *subject, size_t offset) {
     if (p_ent != subject) {
       collision = collision_check(&s_col, &collider, simplex);
       if (collision) {
-        if (subject == player && p_ent == ragdoll) {
-          printf("Hello\n");
-        }
         status = epa_response(&s_col, &collider, simplex, p_dir, &p_depth);
         if (status) {
           free(col_res.list);
@@ -340,7 +340,7 @@ int collision_test(ENTITY *subject, size_t offset) {
         }
         p_ent->inv_inertia[3][3] = 1.0;
 
-        /*COL_ARGS a;
+        COL_ARGS a;
         a.entity = subject;
         if (s_col.type == POLY) {
           glm_vec3_copy(s_col.data.center_of_mass, a.center_of_mass);
@@ -349,9 +349,12 @@ int collision_test(ENTITY *subject, size_t offset) {
         }
         glm_mat4_copy(subject->inv_inertia, a.inv_inertia);
         a.type = subject->type;
+
         // Determine appropriate collision args based on if entity is a ragdoll
+        /*
         int bone = subject->model->collider_bone_links[offset];
         if (s_col.category == DEFAULT || bone == -1) {
+        */
           // Initial collision correction
           glm_vec3_sub(subject->translation, p_dir, subject->translation);
 
@@ -359,6 +362,7 @@ int collision_test(ENTITY *subject, size_t offset) {
           a.ang_velocity = &(subject->ang_velocity);
           glm_quat_copy(subject->rotation, a.rotation);
           a.inv_mass = subject->inv_mass;
+        /*
         } else {
           // Initial collision correction
           vec3 correction = GLM_VEC3_ZERO_INIT;
@@ -370,6 +374,7 @@ int collision_test(ENTITY *subject, size_t offset) {
           glm_mat4_quat(subject->bone_mats[bone][ROTATION], a.rotation);
           a.inv_mass = subject->np_data[bone].inv_mass;
         }
+        */
 
         COL_ARGS b;
         b.entity = p_ent;
@@ -381,21 +386,27 @@ int collision_test(ENTITY *subject, size_t offset) {
         glm_mat4_copy(p_ent->inv_inertia, b.inv_inertia);
         b.type = p_ent->type;
         // Determine appropriate collision args based on if entity is a ragdoll
+        /*
         bone = p_ent->model->collider_bone_links[p_obj->collider_offset];
         if (collider.category == DEFAULT || bone == -1) {
+        */
           b.velocity = &(p_ent->velocity);
           b.ang_velocity = &(p_ent->ang_velocity);
           glm_quat_copy(p_ent->rotation, b.rotation);
           b.inv_mass = p_ent->inv_mass;
+        /*
         } else {
           b.velocity = &(p_ent->np_data[bone].velocity);
           b.ang_velocity = &(p_ent->np_data[bone].ang_velocity);
           glm_mat4_quat(p_ent->bone_mats[bone][ROTATION], b.rotation);
           b.inv_mass = p_ent->np_data[bone].inv_mass;
-        }*/
+        }
+        */
 
-        solve_collision(subject, &s_col, p_ent, &collider, p_dir, p_col);
-        //solve_collision(&a, &b, p_dir, p_col);
+        //solve_collision(subject, &s_col, p_ent, &collider, p_dir, p_col);
+        solve_collision(&a, &b, p_dir, p_col);
+        //solve_collision(&a, &b, subject, &s_col, p_ent, &collider, p_dir,
+        //                p_col);
       }
     }
   }
@@ -405,87 +416,56 @@ int collision_test(ENTITY *subject, size_t offset) {
   return 0;
 }
 
-void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
-                     vec3 p_dir, vec3 p_loc) {
-//void solve_collision(COL_ARGS *a, COL_ARGS *b, vec3 p_dir, vec3 p_loc) {
-
-
-
-  // MAKE "a" AND "b" MORE GENERAL TO BE APPLIED TO NARROW PHYSICS
-  // "a" AND "b" MUST INCLUDE REFERENCES TO "inv_mass", "inv_inertia",
-  // "velocity", "ang_velocity", and "center of mass"
-  // (This will mean "a_col" and "b_col" will no longer be needed)
-
-
-
-  glm_vec3_sub(a->translation, p_dir, a->translation);
-
-  /*
+//void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
+//                     vec3 p_dir, vec3 p_loc) {
+void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
+                     vec3 p_loc) {
   vec3 a_vel = GLM_VEC3_ZERO_INIT;
   vec3 a_ang_vel = GLM_VEC3_ZERO_INIT;
-  glm_vec3_copy(*(a->velocity), a_vel);
-  glm_vec3_copy(*(a->ang_velocity), a_ang_vel);
+  glm_vec3_copy(*(a_args->velocity), a_vel);
+  glm_vec3_copy(*(a_args->ang_velocity), a_ang_vel);
 
   vec3 b_vel = GLM_VEC3_ZERO_INIT;
   vec3 b_ang_vel = GLM_VEC3_ZERO_INIT;
-  glm_vec3_copy(*(b->velocity), b_vel);
-  glm_vec3_copy(*(b->ang_velocity), b_ang_vel);
-  */
+  glm_vec3_copy(*(b_args->velocity), b_vel);
+  glm_vec3_copy(*(b_args->ang_velocity), b_ang_vel);
 
   // MOMENT OF INERTIA CONVERSION: I = R * I * R^T
   mat4 a_inv_inertia = GLM_MAT4_ZERO_INIT;
-  if (a->inv_mass != 0.0) {
+  if (a_args->inv_mass != 0.0) {
     mat4 rot_a = GLM_MAT4_IDENTITY_INIT;
-    glm_quat_mat4(a->rotation, rot_a);
+    glm_quat_mat4(a_args->rotation, rot_a);
     mat4 rot_transpose_a = GLM_MAT4_IDENTITY_INIT;
     glm_mat4_transpose_to(rot_a, rot_transpose_a);
-    glm_mat4_mul(rot_a, a->inv_inertia, a_inv_inertia);
+    glm_mat4_mul(rot_a, a_args->inv_inertia, a_inv_inertia);
     glm_mat4_mul(a_inv_inertia, rot_transpose_a, a_inv_inertia);
   }
 
   mat4 b_inv_inertia = GLM_MAT4_ZERO_INIT;
-  if (b->inv_mass != 0.0) {
+  if (b_args->inv_mass != 0.0) {
     mat4 rot_b = GLM_MAT4_IDENTITY_INIT;
-    glm_quat_mat4(b->rotation, rot_b);
+    glm_quat_mat4(b_args->rotation, rot_b);
     mat4 rot_transpose_b = GLM_MAT4_IDENTITY_INIT;
     glm_mat4_transpose_to(rot_b, rot_transpose_b);
-    glm_mat4_mul(rot_b, b->inv_inertia, b_inv_inertia);
+    glm_mat4_mul(rot_b, b_args->inv_inertia, b_inv_inertia);
     glm_mat4_mul(b_inv_inertia, rot_transpose_b, b_inv_inertia);
   }
 
   // RELATIVE POSITION: r_rel = collison_point - center_of_mass
   vec3 a_rel = GLM_VEC3_ZERO_INIT;
-
-  if (a_col->type == POLY) {
-    glm_vec3_sub(p_loc, a_col->data.center_of_mass, a_rel);
-  } else {
-    glm_vec3_sub(p_loc, a_col->data.center, a_rel);
-  }
-
-  //glm_vec3_sub(p_loc, a->center_of_mass, a_rel);
+  glm_vec3_sub(p_loc, a_args->center_of_mass, a_rel);
 
   vec3 b_rel = GLM_VEC3_ZERO_INIT;
-
-  if (b_col->type == POLY) {
-    glm_vec3_sub(p_loc, b_col->data.center_of_mass, b_rel);
-  } else {
-    glm_vec3_sub(p_loc, b_col->data.center, b_rel);
-  }
-
-  //glm_vec3_sub(p_loc, b->center_of_mass, b_rel);
+  glm_vec3_sub(p_loc, b_args->center_of_mass, b_rel);
 
   // TOTAL VELOCITY: v = v_linear + v_angular x r_rel
   vec3 a_velocity = GLM_VEC3_ZERO_INIT;
-  //glm_vec3_cross(a_ang_vel, a_rel, a_velocity);
-  glm_vec3_cross(a->ang_velocity, a_rel, a_velocity);
-  //glm_vec3_add(a_vel, a_velocity, a_velocity);
-  glm_vec3_add(a->velocity, a_velocity, a_velocity);
+  glm_vec3_cross(a_ang_vel, a_rel, a_velocity);
+  glm_vec3_add(a_vel, a_velocity, a_velocity);
 
   vec3 b_velocity = GLM_VEC3_ZERO_INIT;
-  //glm_vec3_cross(b_ang_vel, b_rel, b_velocity);
-  glm_vec3_cross(b->ang_velocity, b_rel, b_velocity);
-  //glm_vec3_add(b_vel, b_velocity, b_velocity);
-  glm_vec3_add(b->velocity, b_velocity, b_velocity);
+  glm_vec3_cross(b_ang_vel, b_rel, b_velocity);
+  glm_vec3_add(b_vel, b_velocity, b_velocity);
 
   vec3 rel_velocity = GLM_VEC3_ZERO_INIT;
   glm_vec3_sub(a_velocity, b_velocity, rel_velocity);
@@ -500,12 +480,12 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
 
   // I^-1 * (r x n) x r
   vec3 a_ang_comp = GLM_VEC3_ZERO_INIT;
-  if (a->inv_mass != 0.0) {
+  if (a_args->inv_mass != 0.0) {
     glm_mat4_mulv3(a_inv_inertia, a_cross_n, 1.0, a_ang_comp);
     glm_vec3_cross(a_ang_comp, a_rel, a_ang_comp);
   }
   vec3 b_ang_comp = GLM_VEC3_ZERO_INIT;
-  if (b->inv_mass != 0.0) {
+  if (b_args->inv_mass != 0.0) {
     glm_mat4_mulv3(b_inv_inertia, b_cross_n, 1.0, b_ang_comp);
     glm_vec3_cross(b_ang_comp, b_rel, b_ang_comp);
   }
@@ -516,28 +496,28 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
   // -(1 + e)(v_rel * n)
   float impulse_nume = -1.0 * glm_vec3_dot(rel_velocity, col_normal);
   // (m1^-1 + m2^-1 + (I1^-1 * (r1 x n) x r1 + I2^-1 * (r2 x n) x r2) * n
-  float impulse_den = a->inv_mass + b->inv_mass +
+  float impulse_den = a_args->inv_mass + b_args->inv_mass +
                       glm_vec3_dot(angular_comp, col_normal);
   // Total impulse
   float impulse = impulse_nume / impulse_den;
 
   // CHANGE IN VELOCITY: (impulse / m) * n
   vec3 delta_va = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(col_normal, impulse * a->inv_mass, delta_va);
+  glm_vec3_scale(col_normal, impulse * a_args->inv_mass, delta_va);
 
   // CHANGE IN ANG VELOCITY: impulse * I^-1(r x n)
   vec3 delta_ang_va = GLM_VEC3_ZERO_INIT;
   // Check done because rotation only effects non-driving physics objects
-  if ((a->type & T_DRIVING) == 0) {
+  if ((a_args->type & T_DRIVING) == 0) {
     glm_mat4_mulv3(a_inv_inertia, a_cross_n, 1.0, delta_ang_va);
     glm_vec3_scale(delta_ang_va, impulse, delta_ang_va);
   }
 
   vec3 delta_vb = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(col_normal, impulse * b->inv_mass, delta_vb);
+  glm_vec3_scale(col_normal, impulse * b_args->inv_mass, delta_vb);
 
   vec3 delta_ang_vb = GLM_VEC3_ZERO_INIT;
-  if ((b->type & T_DRIVING) == 0) {
+  if ((b_args->type & T_DRIVING) == 0) {
     glm_mat4_mulv3(b_inv_inertia, b_cross_n, 1.0, delta_ang_vb);
     glm_vec3_scale(delta_ang_vb, impulse, delta_ang_vb);
   }
@@ -572,7 +552,7 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
   // -(v_rel * t)
   float f_nume = -1.0 * glm_vec3_dot(rel_velocity, col_tan);
   // m1^-1 + m2^-1 + (I1^-1 * (r1 x t) x r1 + I2^-1 * (r2 x t) x r2) * t
-  float f_den = a->inv_mass + b->inv_mass +
+  float f_den = a_args->inv_mass + b_args->inv_mass +
                 glm_vec3_dot(angular_comp, col_tan);
   float f = f_nume / f_den;
 
@@ -588,28 +568,19 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
 
   // CHANGE IN VELOCITY: (impulse / m)t
   vec3 delta_va_f = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(col_tan, impulse_f * a->inv_mass, delta_va_f);
+  glm_vec3_scale(col_tan, impulse_f * a_args->inv_mass, delta_va_f);
   glm_vec3_sub(delta_va, delta_va_f, delta_va);
 #endif
 
   // Dampen and update velocity
-
-  /*
   glm_vec3_scale(a_vel, L_DAMP_FACTOR, a_vel);
   glm_vec3_add(a_vel, delta_va, a_vel);
   vec3_remove_noise(a_vel, 0.0001);
-  glm_vec3_copy(a_vel, *(a->velocity));
-  */
-
-
-  glm_vec3_scale(a->velocity, L_DAMP_FACTOR, a->velocity);
-  glm_vec3_add(a->velocity, delta_va, a->velocity);
-  vec3_remove_noise(a->velocity, 0.0001);
-
+  glm_vec3_copy(a_vel, *(a_args->velocity));
 
 #ifdef FRICTION
   // CHANGE IN ANGULAR VELOCITY: impulse * I^-1(r x t)
-  if ((a->type & T_DRIVING) == 0) {
+  if ((a_args->type & T_DRIVING) == 0) {
     vec3 delta_ang_va_f = GLM_VEC3_ZERO_INIT;
     glm_mat4_mulv3(a_inv_inertia, a_cross_t, 1.0, delta_ang_va_f);
     glm_vec3_scale(delta_ang_va_f, impulse_f, delta_ang_va_f);
@@ -617,43 +588,25 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
   }
 #endif
   // Dampen and update ang velocity
-
-  /*
   glm_vec3_scale(a_ang_vel, A_DAMP_FACTOR, a_ang_vel);
   glm_vec3_add(a_ang_vel, delta_ang_va, a_ang_vel);
   vec3_remove_noise(a_ang_vel, 0.0001);
-  glm_vec3_copy(a_ang_vel, *(a->ang_velocity));
-  */
-
-
-  glm_vec3_scale(a->ang_velocity, A_DAMP_FACTOR, a->ang_velocity);
-  glm_vec3_add(a->ang_velocity, delta_ang_va, a->ang_velocity);
-  vec3_remove_noise(a->ang_velocity, 0.0001);
-
+  glm_vec3_copy(a_ang_vel, *(a_args->ang_velocity));
 
 #ifdef FRICTION
   vec3 delta_vb_f = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(col_tan, impulse_f * b->inv_mass, delta_vb_f);
+  glm_vec3_scale(col_tan, impulse_f * b_args->inv_mass, delta_vb_f);
   glm_vec3_sub(delta_vb, delta_vb_f, delta_vb);
 #endif
 
   // Dampen and update velocity
-
-  /*
   glm_vec3_scale(b_vel, L_DAMP_FACTOR, b_vel);
   glm_vec3_sub(b_vel, delta_vb, b_vel);
   vec3_remove_noise(b_vel, 0.0001);
-  glm_vec3_copy(b_vel, *(b->velocity));
-  */
-
-
-  glm_vec3_scale(b->velocity, L_DAMP_FACTOR, b->velocity);
-  glm_vec3_sub(b->velocity, delta_vb, b->velocity);
-  vec3_remove_noise(b->velocity, 0.0001);
-
+  glm_vec3_copy(b_vel, *(b_args->velocity));
 
 #ifdef FRICTION
-  if ((b->type & T_DRIVING) == 0) {
+  if ((b_args->type & T_DRIVING) == 0) {
     vec3 delta_ang_vb_f = GLM_VEC3_ZERO_INIT;
     glm_mat4_mulv3(b_inv_inertia, b_cross_t, 1.0, delta_ang_vb_f);
     glm_vec3_scale(delta_ang_vb_f, impulse_f, delta_ang_vb_f);
@@ -661,35 +614,18 @@ void solve_collision(ENTITY *a, COLLIDER *a_col, ENTITY *b, COLLIDER *b_col,
   }
 #endif
   // Dampen and update ang velocity
-
-  /*
   glm_vec3_scale(b_ang_vel, A_DAMP_FACTOR, b_ang_vel);
   glm_vec3_sub(b_ang_vel, delta_ang_vb, b_ang_vel);
   vec3_remove_noise(b_ang_vel, 0.0001);
-  glm_vec3_copy(b_ang_vel, *(b->ang_velocity));
-  */
+  glm_vec3_copy(b_ang_vel, *(b_args->ang_velocity));
 
-
-  glm_vec3_scale(b->ang_velocity, A_DAMP_FACTOR, b->ang_velocity);
-  glm_vec3_sub(b->ang_velocity, delta_ang_vb, b->ang_velocity);
-  vec3_remove_noise(b->ang_velocity, 0.0001);
-
-
-/*
   if ((b_vel[0] != 0.0 || b_vel[1] != 0.0 ||
        b_vel[2] != 0.0 || b_ang_vel[0] != 0.0 ||
        b_ang_vel[1] != 0.0 || b_ang_vel[2] != 0.0)
-*/
-
-  if ((b->velocity[0] != 0.0 || b->velocity[1] != 0.0 ||
-       b->velocity[2] != 0.0 || b->ang_velocity[0] != 0.0 ||
-       b->ang_velocity[1] != 0.0 || b->ang_velocity[2] != 0.0)
-
-      && (b->type & T_DYNAMIC) == 0) {
-    b->type |= T_DYNAMIC;
-    //add_to_elist(&dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
-    //             b->entity);
-    add_to_elist(&dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size, b);
+      && (b_args->type & T_DYNAMIC) == 0) {
+    b_args->entity->type |= T_DYNAMIC;
+    add_to_elist(&dynamic_ents, &dy_ent_buff_len, &dy_ent_buff_size,
+                 b_args->entity);
   }
 }
 

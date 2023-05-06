@@ -3,9 +3,9 @@
 #include <cglm/vec3.h>
 #include <entity_str.h>
 
-#define LINUX (0)
+#define LINUX (1)
 #define LAPTOP (0)
-#define PC (1)
+#define PC (0)
 
 #if LINUX == 1
 #define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
