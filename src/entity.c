@@ -42,9 +42,6 @@ ENTITY *init_entity(MODEL *model) {
       free(ent);
       return NULL;
     }
-    for (size_t i = 0; i < model->num_bones; i++) {
-      glm_mat4_identity(ent->final_b_mats[i]);
-    }
 
     ent->np_data = malloc(sizeof(P_DATA) * model->num_bones);
     if (ent->np_data == NULL) {
@@ -53,7 +50,14 @@ ENTITY *init_entity(MODEL *model) {
       free(ent->final_b_mats);
       free(ent);
     }
+
     for (size_t i = 0; i < model->num_bones; i++) {
+      glm_mat4_identity(ent->bone_mats[i][0]);
+      glm_mat4_identity(ent->bone_mats[i][1]);
+      glm_mat4_identity(ent->bone_mats[i][2]);
+
+      glm_mat4_identity(ent->final_b_mats[i]);
+
       glm_mat4_identity(ent->np_data[i].inv_inertia);
       glm_vec3_zero(ent->np_data[i].velocity);
       glm_vec3_zero(ent->np_data[i].ang_velocity);
@@ -139,11 +143,9 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
 
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(entity, model);
-  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                     GL_FALSE, (float *) model);
   for (int i = 0; i < entity->model->num_colliders; i++) {
     bone = entity->model->collider_bone_links[i];
-    if (bone >= 0 && bone < entity->model->num_colliders) {
+    if (bone >= 0 && bone < entity->model->num_bones) {
       glm_mat4_mul(model, entity->final_b_mats[bone], used);
     } else {
       glm_mat4_copy(model, used);

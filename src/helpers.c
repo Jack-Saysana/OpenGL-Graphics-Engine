@@ -242,3 +242,22 @@ uint64_t get_hash(char *str) {
 
   return hash;
 }
+
+/*
+ * ================ VEC3_REMOVE_NOISE ====================
+ *
+ * Zeros out members of a vec3 given a specific threshold
+ *
+ * =======================================================
+ */
+void vec3_remove_noise(vec3 vec, float threshold) {
+  if (vec[0] < threshold && vec[0] > -threshold) {
+    vec[0] = 0.0;
+  }
+  if (vec[1] < threshold && vec[1] > -threshold) {
+    vec[1] = 0.0;
+  }
+  if (vec[2] < threshold && vec[2] > -threshold) {
+    vec[2] = 0.0;
+  }
+}

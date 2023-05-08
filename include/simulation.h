@@ -24,17 +24,6 @@
 #define GRAVITY (10.0)
 vec3 G_VEC = { 0.0, GRAVITY, 0.0 };
 
-#define L_DAMP_FACTOR (0.99f)
-#define A_DAMP_FACTOR (0.9f)
-#define FINE_DAMP (0.99f)
-
-vec3 U_DIR = { 0.0, 1.0, 0.0 };
-vec3 D_DIR = { 0.0, -1.0, 0.0 };
-vec3 L_DIR = { 1.0, 0.0, 0.0 };
-vec3 R_DIR = { -1.0, 1.0, 0.0 };
-vec3 F_DIR = { 0.0, 1.0, 1.0 };
-vec3 B_DIR = { 0.0, 1.0, -1.0 };
-
 typedef struct physics_object {
   ENTITY *entity;
   size_t collider_offset;
@@ -105,14 +94,10 @@ int enable_hurtboxss(ENTITY *entity);
 
 // Back Facing
 int collision_test(ENTITY *subject, size_t offset);
-void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
-                     vec3 p_loc);
 void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
 int add_to_elist(ENTITY ***list, size_t *len, size_t *buff_size,
                  ENTITY *entity);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
-void vec3_remove_noise(vec3 vec, float threshold);
-void vec4_remove_noise(vec4 vec, float threshold);
 
 // Outside helpers
 OCT_TREE *init_tree();
@@ -124,6 +109,10 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
 void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
+void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
+                     vec3 p_loc);
+void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
+                         float inv_mass, mat4 dest);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void get_model_mat(ENTITY *entity, mat4 model);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);

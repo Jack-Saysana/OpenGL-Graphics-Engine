@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <cglm/vec3.h>
 
 #define LINE_BUFF_STARTING_LEN (50)
 #define FILE_CONTENTS_STARTING_LEN (500)
@@ -19,3 +20,4 @@ int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 uint64_t get_hash(char *str);
 LINE_BUFFER *get_lines(char *);
 void free_line_buffer(LINE_BUFFER *);
+void vec3_remove_noise(vec3 vec, float threshold);

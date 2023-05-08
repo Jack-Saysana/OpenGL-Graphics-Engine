@@ -3,6 +3,7 @@
 #include <cglm/vec3.h>
 #include <cglm/ivec3.h>
 #include <cglm/mat4.h>
+#include <cglm/quat.h>
 #include <entity_str.h>
 
 #define BUFF_STARTING_LEN (10)
@@ -14,6 +15,15 @@
 #define POINT_COL (1)
 #define EDGE_COL (2)
 #define FACE_COL (3)
+
+#define DAMP_FACTOR (0.999)
+
+vec3 U_DIR = { 0.0, 1.0, 0.0 };
+vec3 D_DIR = { 0.0, -1.0, 0.0 };
+vec3 L_DIR = { 1.0, 0.0, 0.0 };
+vec3 R_DIR = { -1.0, 1.0, 0.0 };
+vec3 F_DIR = { 0.0, 1.0, 1.0 };
+vec3 B_DIR = { 0.0, 1.0, -1.0 };
 
 typedef enum {
   LINE = 2,
@@ -32,6 +42,17 @@ typedef struct face_heap {
   size_t buff_len;
   size_t buff_size;
 } F_HEAP;
+
+typedef struct collision_args {
+  ENTITY *entity;
+  vec3 *velocity;
+  vec3 *ang_velocity;
+  mat4 inv_inertia;
+  versor rotation;
+  vec3 center_of_mass;
+  float inv_mass;
+  int type;
+} COL_ARGS;
 
 int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
@@ -52,4 +73,10 @@ int insert_face(F_HEAP *heap, int a, int b, int c, vec3 norm, float dist);
 void remove_face(F_HEAP *heap, size_t index, ivec3 d_ind, vec3 d_norm);
 void free_faces(F_HEAP *heap);
 
+void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
+                     vec3 p_loc);
+void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
+                         float inv_mass, mat4 dest);
+
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
+void vec3_remove_noise(vec3 vec, float threshold);

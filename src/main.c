@@ -39,7 +39,7 @@ vec3 ob_pos = { 3.0, 0.0, -3.0 };
 vec3 floor_scale = { 50.0, 1.0, 50.0 };
 vec3 cube_pos = { 3.0, 2.0, 3.0 };
 vec3 s_pos = { -3.0, 2.0, 3.0 };
-vec3 ragdoll_pos = { 0.0, 0.0, -3.0 };
+vec3 ragdoll_pos = { 0.0, 1.0, -3.0 };
 
 // CAMERA INFO
 vec3 up = { 0.0, 1.0, 0.0 };
@@ -167,8 +167,14 @@ int main() {
     glfwTerminate();
   }
 
-  ragdoll->type |= T_DRIVING;
+  //ragdoll->type |= T_DRIVING;
   ragdoll->inv_mass = 1.0;
+  ragdoll->scale[0] = 2.0;
+  ragdoll->scale[1] = 2.0;
+  ragdoll->scale[2] = 2.0;
+  for (size_t i = 0; i < ragdoll->model->num_bones; i++) {
+    ragdoll->np_data[i].inv_mass = 1.0;
+  }
   status = insert_entity(ragdoll);
   if (status != 0) {
     glfwTerminate();
@@ -375,7 +381,7 @@ int main() {
                 camera_pos[1], camera_pos[2]);
     if (draw) {
       draw_entity(shader, player);
-      draw_entity(shader, ragdoll);
+      //draw_entity(shader, ragdoll);
     }
 
     /* Objects */
