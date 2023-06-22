@@ -75,8 +75,14 @@ void free_faces(F_HEAP *heap);
 
 void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
                      vec3 p_loc);
+// int spring_response(ENTITY *entity, int bone, int b_col, float delta_time);
+// void spring_calc(ENTITY *entity, int p_bone, COLLIDER *p_col, int c_bone,
+//                  COLLIDER *c_col, float delta_time);
 void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
                          float inv_mass, mat4 dest);
+// void global_inv_inertia(mat4 inv_inertia, mat4 rotation, mat4 dest);
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void vec3_remove_noise(vec3 vec, float threshold);
+// void get_model_mat(ENTITY *entity, mat4 model);
+// void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);

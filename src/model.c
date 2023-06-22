@@ -77,5 +77,9 @@ void free_model(MODEL *model) {
   free(model->bones);
   free(model->colliders);
   free(model->collider_bone_links);
+  for (int i = 0; i < model->num_bones; i++) {
+    free(model->bone_relations[i]);
+  }
+  free(model->bone_relations);
   free(model);
 }

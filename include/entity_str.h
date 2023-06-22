@@ -65,7 +65,12 @@ typedef struct animation {
 } ANIMATION;
 
 typedef struct bone {
+  // Position of bone base (point at which parent connects to the bone)
+  // in entity space
   vec3 coords;
+  // Position of bone tail (point at which children extend from the bone)
+  // in entity space
+  vec3 tail;
   int parent;
   int num_children;
 } BONE;
@@ -82,6 +87,9 @@ typedef struct model {
      a resource for easy keyframe interpolation */
   int *sled_block;
   BONE *bones;
+  /* Each element's index corresponds to the bone of the same index. Element
+     value consists of an array containing indicies of children */
+  int **bone_relations;
   COLLIDER *colliders;
   /* Each element's index corresponds to the collider of the same index.
      Element value corresponds to bone represneted by collider */
@@ -128,7 +136,6 @@ typedef struct entity {
   vec3 velocity;
   vec3 ang_velocity;
   float inv_mass;
-  //float mass;
   /* Physics system status
      Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC] */
   int type;

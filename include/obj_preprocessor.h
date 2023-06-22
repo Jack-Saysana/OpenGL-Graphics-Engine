@@ -28,6 +28,7 @@ typedef struct face_vert {
 } FACE_VERT;
 
 BONE *bones;
+int **bone_relations;
 size_t b_buff_len;
 size_t b_len;
 
