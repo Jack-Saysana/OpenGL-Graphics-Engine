@@ -1,8 +1,8 @@
 #include <cglm/vec3.h>
 #include <cglm/mat3.h>
 
-#define VEC6_ZERO_INIT ({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f })
-#define MAT6_ZERO_INIT ({VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT})
+#define VEC6_ZERO_INIT { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }
+#define MAT6_ZERO_INIT {VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT}
 
 typedef float vec6[6];
 typedef vec6 mat6[6];
@@ -27,8 +27,5 @@ void vec6_add(vec6 a, vec6 b, vec6 dest);
 void vec6_sub(vec6 a, vec6 b, vec6 dest);
 // a = [a1, a2]
 // b = [b1, b2]
-// dest = a2*b1 + a1*b2
-void vec6_dot(vec6 a, vec6 b, vec6 dest);
-// v = [a, b]
-// dest = [transpose(b), transpose(a)]
-void vec6_transpose(vec6 v, vec6 dest);
+// = a2*b1 + a1*b2
+float vec6_dot(vec6 a, vec6 b);
