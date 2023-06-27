@@ -98,27 +98,40 @@ void mat6_mulv(mat6 m, vec6 v, vec6 dest) {
   vec6_copy(c, dest);
 }
 
-void mat6_spatial_transform(mat3 transform, mat6 dest) {
+void mat6_spatial_transform(mat3 rotate_fg, mat3 translate_fg, mat6 dest) {
   mat6 c = MAT6_ZERO_INIT;
-  c[0][0] = transform[0][0];
-  c[0][1] = transform[0][1];
-  c[0][2] = transform[0][2];
-  c[1][0] = transform[1][0];
-  c[1][1] = transform[1][1];
-  c[1][2] = transform[1][2];
-  c[2][0] = transform[2][0];
-  c[2][1] = transform[2][1];
-  c[2][2] = transform[2][2];
+  mat3 t = GLM_MAT3_IDENTITY_INIT;
+  glm_mat3_mul(translate_fg, rotate_fg, t);
 
-  c[3][3] = transform[0][0];
-  c[3][4] = transform[0][1];
-  c[3][5] = transform[0][2];
-  c[4][3] = transform[1][0];
-  c[4][4] = transform[1][1];
-  c[4][5] = transform[1][2];
-  c[5][3] = transform[2][0];
-  c[5][4] = transform[2][1];
-  c[5][5] = transform[2][2];
+  c[0][0] = rotate_fg[0][0];
+  c[0][1] = rotate_fg[0][1];
+  c[0][2] = rotate_fg[0][2];
+  c[1][0] = rotate_fg[1][0];
+  c[1][1] = rotate_fg[1][1];
+  c[1][2] = rotate_fg[1][2];
+  c[2][0] = rotate_fg[2][0];
+  c[2][1] = rotate_fg[2][1];
+  c[2][2] = rotate_fg[2][2];
+
+  c[0][3] = t[0][0];
+  c[0][4] = t[0][1];
+  c[0][5] = t[0][2];
+  c[1][3] = t[1][0];
+  c[1][4] = t[1][1];
+  c[1][5] = t[1][2];
+  c[2][3] = t[2][0];
+  c[2][4] = t[2][1];
+  c[2][5] = t[2][2];
+
+  c[3][3] = rotate_fg[0][0];
+  c[3][4] = rotate_fg[0][1];
+  c[3][5] = rotate_fg[0][2];
+  c[4][3] = rotate_fg[1][0];
+  c[4][4] = rotate_fg[1][1];
+  c[4][5] = rotate_fg[1][2];
+  c[5][3] = rotate_fg[2][0];
+  c[5][4] = rotate_fg[2][1];
+  c[5][5] = rotate_fg[2][2];
 
   mat6_copy(c, dest);
 }
