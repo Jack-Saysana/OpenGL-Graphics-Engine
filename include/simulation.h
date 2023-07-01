@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GLFW/glfw3.h>
-#include <cglm/vec3.h>
 #include <cglm/quat.h>
 #include <cglm/affine.h>
 #include <entity_str.h>

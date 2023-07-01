@@ -4,7 +4,6 @@
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-#include <cglm/mat4.h>
 #include <entity_str.h>
 
 #define VERTEX_BUFF_STARTING_LEN (10)

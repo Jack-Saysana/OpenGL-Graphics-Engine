@@ -1,7 +1,6 @@
 #include <glad/glad.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <cglm/mat4.h>
 #include <entity_str.h>
 
 typedef enum {

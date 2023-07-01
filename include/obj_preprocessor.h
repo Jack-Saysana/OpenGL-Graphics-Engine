@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <cglm/vec3.h>
-#include <cglm/mat4.h>
 #include <entity_str.h>
 
 #define BUFF_STARTING_LEN (10)

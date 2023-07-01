@@ -2,7 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
-#include <cglm/mat4.h>
 #include <math.h>
 #include <stdlib.h>
 #include <entity_str.h>

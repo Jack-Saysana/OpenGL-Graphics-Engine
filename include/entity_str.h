@@ -1,3 +1,5 @@
+#include <spatial_algebra.h>
+
 #define NUM_PROPS (5)
 #define DEFAULT (0)
 #define HIT_BOX (1)

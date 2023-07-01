@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <cglm/vec3.h>
 #include <entity_str.h>
 
-#define LINUX (1)
+#define LINUX (0)
 #define LAPTOP (0)
-#define PC (0)
+#define PC (1)
 
 #if LINUX == 1
 #define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"

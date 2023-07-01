@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <float.h>
-#include <cglm/vec3.h>
-#include <cglm/mat4.h>
 #include <cglm/affine.h>
 #include <entity_str.h>
 

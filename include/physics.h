@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#include <cglm/vec3.h>
 #include <cglm/ivec3.h>
-#include <cglm/mat4.h>
 #include <cglm/quat.h>
 #include <entity_str.h>
 
