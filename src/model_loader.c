@@ -56,11 +56,19 @@ MODEL *load_model(char *path) {
   }
 
   BONE *bones = NULL;
+  int *collider_links = NULL;
   if (b_len) {
     bones = malloc(sizeof(BONE) * b_len);
     if (bones == NULL) {
       fclose(file);
       printf("Unable to allocate bone buffer\n");
+      return NULL;
+    }
+    collider_links = malloc(sizeof(int) * b_len);
+    if (collider_links == NULL) {
+      fclose(file);
+      free(bones);
+      printf("Unable to allocate collider_links\n");
       return NULL;
     }
   }
@@ -71,6 +79,7 @@ MODEL *load_model(char *path) {
     if (vertices == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       printf("Unable to allocate vertex buffer\n");
       return NULL;
     }
@@ -82,6 +91,7 @@ MODEL *load_model(char *path) {
     if (indicies == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       printf("Unable to allocate indicies buffer\n");
       return NULL;
@@ -94,6 +104,7 @@ MODEL *load_model(char *path) {
     if (animations == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       printf("Unable to allocate animation buffer\n");
@@ -105,6 +116,7 @@ MODEL *load_model(char *path) {
   if (model == NULL) {
     fclose(file);
     free(bones);
+    free(collider_links);
     free(vertices);
     free(indicies);
     free(animations);
@@ -119,6 +131,7 @@ MODEL *load_model(char *path) {
     if (k_chain_block == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -135,6 +148,7 @@ MODEL *load_model(char *path) {
     if (keyframe_block == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -152,6 +166,7 @@ MODEL *load_model(char *path) {
     if (sled_block == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -165,11 +180,13 @@ MODEL *load_model(char *path) {
 
   COLLIDER *colliders = NULL;
   int *bone_links = NULL;
+  size_t *collider_children = NULL;
   if (col_len) {
     colliders = malloc(sizeof(COLLIDER) * col_len);
     if (colliders == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -184,6 +201,7 @@ MODEL *load_model(char *path) {
     if (bone_links == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -195,14 +213,11 @@ MODEL *load_model(char *path) {
       printf("Unable to allocate bone links\n");
       return NULL;
     }
-  }
-
-  int *collider_links = NULL;
-  if (b_len) {
-    collider_links = malloc(sizeof(int) * b_len);
-    if (collider_links == NULL) {
+    collider_children = malloc(sizeof(size_t) * col_len);
+    if (collider_children == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -212,7 +227,7 @@ MODEL *load_model(char *path) {
       free(sled_block);
       free(colliders);
       free(bone_links);
-      printf("Unable to allocate collider links\n");
+      printf("Unable to allocate collider children\n");
       return NULL;
     }
   }
@@ -228,6 +243,9 @@ MODEL *load_model(char *path) {
   }
   if (bone_links) {
     fread(bone_links, sizeof(int), col_len, file);
+  }
+  if (collider_children) {
+    fread(collider_children, sizeof(size_t), col_len, file);
   }
   if (vertices) {
     fread(vertices, sizeof(VBO), v_len, file);
@@ -319,6 +337,7 @@ MODEL *load_model(char *path) {
   model->bone_collider_links = collider_links;
   model->colliders = colliders;
   model->collider_bone_links = bone_links;
+  model->collider_children = collider_children;
   model->num_animations = a_len;
   model->num_bones = b_len;
   model->num_colliders = col_len;

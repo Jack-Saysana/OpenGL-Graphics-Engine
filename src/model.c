@@ -78,5 +78,6 @@ void free_model(MODEL *model) {
   free(model->bone_collider_links);
   free(model->colliders);
   free(model->collider_bone_links);
+  free(model->collider_children);
   free(model);
 }

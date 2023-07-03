@@ -216,6 +216,26 @@ int preprocess_lines(LINE_BUFFER *lb) {
     printf("Unable to allocate bone_links buffer\n");
     return -1;
   }
+  collider_children = malloc(sizeof(size_t) * BUFF_STARTING_LEN);
+  if (collider_children == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
+    free(collider_links);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free(materials);
+    free(animations);
+    free(colliders);
+    free(bone_links);
+    printf("Unable to allocate collider children buffer\n");
+    return -1;
+  }
   col_buff_len = BUFF_STARTING_LEN;
   col_len = 0;
 
@@ -335,12 +355,18 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
       col_len++;
       if (col_len == col_buff_len) {
-        size_t old_buff_len = col_buff_len;
         status = double_buffer((void **) &colliders, &col_buff_len,
                                sizeof(COLLIDER));
         if (status == 0) {
-          status = double_buffer((void **) &bone_links, &old_buff_len,
+          col_buff_len /= 2;
+          status = double_buffer((void **) &bone_links, &col_buff_len,
                                  sizeof(int));
+        }
+
+        if (status == 0) {
+          col_buff_len /= 2;
+          status = double_buffer((void **) &collider_children, &col_buff_len,
+                                 sizeof(size_t));
         }
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 's' &&
@@ -356,12 +382,18 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
       col_len++;
       if (col_len == col_buff_len) {
-        size_t old_buff_len = col_buff_len;
         status = double_buffer((void **) &colliders, &col_buff_len,
                                sizeof(COLLIDER));
         if (status == 0) {
-          status = double_buffer((void **) &bone_links, &old_buff_len,
+          col_buff_len /= 2;
+          status = double_buffer((void **) &bone_links, &col_buff_len,
                                  sizeof(int));
+        }
+
+        if (status == 0) {
+          col_buff_len /= 2;
+          status = double_buffer((void **) &collider_children, &col_buff_len,
+                                 sizeof(size_t));
         }
       }
     } else if (cur_line[0] == 'v' && cur_line[1] == 't' &&
@@ -538,6 +570,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free_materials(materials, mat_len);
       free(colliders);
       free(bone_links);
+      free(collider_children);
 
       for (int i = 0; i < a_len; i++) {
         for (int j = 0; j < animations[i].num_chains; j++) {
@@ -571,6 +604,34 @@ int preprocess_lines(LINE_BUFFER *lb) {
       if (bones[j].parent == i && collider_links[j] == -1) {
         collider_links[j] = collider_links[i];
       }
+    }
+  }
+
+  // Populate collider children buffer
+  for (int i = 0; i < col_len; i++) {
+    collider_children[i] = 0xBAADF00D;
+  }
+  size_t next = 0;
+  int root_bone = -1;
+  int parent_col = -1;
+  for (int i = 0; i < col_len; i++) {
+    colliders[i].children_offset = next;
+    colliders[i].num_children = 0;
+    for (int j = 0; j < col_len; j++) {
+      root_bone = bone_links[j];
+      if (root_bone == -1 || bones[root_bone].parent == -1) {
+        continue;
+      }
+
+      parent_col = collider_links[bones[root_bone].parent];
+      if (parent_col == i) {
+        collider_children[next] = j;
+        colliders[i].num_children++;
+        next++;
+      }
+    }
+    if (colliders[i].num_children == 0) {
+      colliders[i].children_offset = -1;
     }
   }
 
@@ -616,6 +677,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fwrite(collider_links, sizeof(int), b_len, file);
   fwrite(colliders, sizeof(COLLIDER), col_len, file);
   fwrite(bone_links, sizeof(int), col_len, file);
+  fwrite(collider_children, sizeof(size_t), col_len, file);
 
   for (size_t i = 0; i < vbo_len; i++) {
     fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);

@@ -30,6 +30,9 @@ typedef enum collider_type {
 } COL_TYPE;
 
 typedef struct collider {
+  // Position in the model collider buffer of the colliders child list
+  int children_offset;
+  size_t num_children;
   union {
     // POLYHEDRON DATA
     struct {
@@ -91,6 +94,11 @@ typedef struct model {
   /* Each element's index corresponds to the bone of the same index.
      Element value corresponds to collider represneted by bone */
   int *bone_collider_links;
+  /* Buffer denoting the indicies of colliders which are the children of other
+     colliders in the collider tree. The buffer is separated into smaller lists
+     which represent the children of a particular collider. The position and
+     length of a collider's child list is given in the COLLIDER struct. */
+  size_t *collider_children;
   size_t num_animations;
   size_t num_bones;
   size_t num_colliders;
@@ -105,10 +113,7 @@ typedef struct p_data {
   mat4 inv_inertia;
   /*vec6 spatial_accel;
   vec6 spatial_vel;
-  vec6 dofs;
-  size_t parent;
-  size_t num_children;
-  size_t *children;*/
+  vec6 dofs;*/
   size_t parent;
   vec3 velocity;
   vec3 ang_velocity;

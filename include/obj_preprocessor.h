@@ -63,6 +63,7 @@ size_t mat_len;
 
 COLLIDER *colliders;
 int *bone_links;
+size_t *collider_children;
 size_t col_buff_len;
 size_t col_len;
 
