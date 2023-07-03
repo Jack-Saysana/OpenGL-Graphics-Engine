@@ -88,6 +88,9 @@ typedef struct model {
   /* Each element's index corresponds to the collider of the same index.
      Element value corresponds to bone represneted by collider */
   int *collider_bone_links;
+  /* Each element's index corresponds to the bone of the same index.
+     Element value corresponds to collider represneted by bone */
+  int *bone_collider_links;
   size_t num_animations;
   size_t num_bones;
   size_t num_colliders;
@@ -100,6 +103,13 @@ typedef struct model {
 
 typedef struct p_data {
   mat4 inv_inertia;
+  /*vec6 spatial_accel;
+  vec6 spatial_vel;
+  vec6 dofs;
+  size_t parent;
+  size_t num_children;
+  size_t *children;*/
+  size_t parent;
   vec3 velocity;
   vec3 ang_velocity;
   float inv_mass;

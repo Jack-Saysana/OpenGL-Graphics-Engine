@@ -49,6 +49,17 @@ int preprocess_lines(LINE_BUFFER *lb) {
     return -1;
   }
 
+  collider_links = malloc(sizeof(int) * 4 * BUFF_STARTING_LEN);
+  if (collider_links == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
+    printf("Unable to allocate collider link buffer\n");
+    return -1;
+  }
+
   verticies = malloc(sizeof(float) * 3 * BUFF_STARTING_LEN);
   if (verticies == NULL) {
     free_line_buffer(lb);
@@ -56,6 +67,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     printf("Unable to allocate vertex buffer\n");
     return -1;
   }
@@ -69,6 +81,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     printf("Unable to allocate normal buffer\n");
     return -1;
@@ -83,6 +96,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     free(normals);
     printf("Unable to allocate tex coord buffer\n");
@@ -98,6 +112,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -114,6 +129,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -131,6 +147,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -149,6 +166,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -168,6 +186,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -185,6 +204,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
+    free(collider_links);
     free(verticies);
     free(normals);
     free(tex_coords);
@@ -225,7 +245,12 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                         &(bones[b_len].num_children));
       b_len++;
       if (b_len == b_buff_len) {
+        size_t old_buff_len = b_buff_len;
         status = double_buffer((void **) &bones, &b_buff_len, sizeof(BONE));
+        if (status == 0) {
+          status = double_buffer((void **) &collider_links, &old_buff_len,
+                                 sizeof(int));
+        }
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
@@ -408,7 +433,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
-      sscanf(cur_line, "a %ld", &(cur_anim->duration));
+      sscanf(cur_line, "a %lld", &(cur_anim->duration));
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;
@@ -504,6 +529,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(bones);
       free(bone_ids);
       free(bone_weights);
+      free(collider_links);
       free(verticies);
       free(normals);
       free(tex_coords);
@@ -526,7 +552,30 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
-  for (int i = 0; i < a_len; i++) {
+  // Compute collider links for each bone since bones and colliders aren't
+  // neccessariy 1:1
+  for (int i = 0; i < b_len; i++) {
+    collider_links[i] = -1;
+    for (int j = 0; j < col_len; j++) {
+      if (bone_links[j] == i) {
+        collider_links[i] = j;
+        break;
+      }
+    }
+  }
+  for (int i = 0; i < b_len; i++) {
+    if (collider_links[i] == -1) {
+      continue;
+    }
+    for (int j = 0; j < b_len; j++) {
+      if (bones[j].parent == i && collider_links[j] == -1) {
+        collider_links[j] = collider_links[i];
+      }
+    }
+  }
+
+  // Compute totals for animation
+  for (size_t i = 0; i < a_len; i++) {
     total_chains += animations[i].num_chains;
     total_frames += (animations[i].duration * animations[i].num_chains);
     for (int j = 0; j < animations[i].num_chains; j++) {
@@ -563,16 +612,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
-  for (size_t i = 0; i < b_len; i++) {
-    fwrite(bones + i, sizeof(BONE), 1, file);
-  }
-
-  for (size_t i = 0; i < col_len; i++) {
-    fwrite(colliders + i, sizeof(COLLIDER), 1, file);
-  }
-  for (size_t i = 0; i < col_len; i++) {
-    fwrite(bone_links + i, sizeof(int), 1, file);
-  }
+  fwrite(bones, sizeof(BONE), b_len, file);
+  fwrite(collider_links, sizeof(int), b_len, file);
+  fwrite(colliders, sizeof(COLLIDER), col_len, file);
+  fwrite(bone_links, sizeof(int), col_len, file);
 
   for (size_t i = 0; i < vbo_len; i++) {
     fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);
@@ -601,6 +644,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fclose(file);
   free_line_buffer(lb);
   free(bones);
+  free(collider_links);
   free(bone_ids);
   free(bone_weights);
   free(verticies);

@@ -35,6 +35,7 @@ size_t a_len;
 
 int (*bone_ids)[4];
 float (*bone_weights)[4];
+int *collider_links;
 
 float (*verticies)[3];
 size_t v_buff_len;
