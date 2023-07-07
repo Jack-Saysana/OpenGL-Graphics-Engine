@@ -71,6 +71,7 @@ typedef struct animation {
 
 typedef struct bone {
   vec3 coords;
+  vec3 basis_vectors[3];
   int parent;
   int num_children;
 } BONE;
