@@ -17,6 +17,8 @@ void mat6_mulv(mat6 m, vec6 v, vec6 dest);
 // dest = [[T, 0],[0, T]]
 void mat6_spatial_transform(mat3 rotate_fg, mat3 translate_fg, mat6 dest);
 
+// v = [0, 0, 0, 0, 0, 0];
+void vec6_zero(vec6 v);
 // dest = v
 void vec6_copy(vec6 v, vec6 dest);
 // dest = [a, b]

@@ -136,6 +136,15 @@ void mat6_spatial_transform(mat3 rotate_fg, mat3 translate_fg, mat6 dest) {
   mat6_copy(c, dest);
 }
 
+void vec6_zero(vec6 v) {
+  v[0] = 0.0;
+  v[1] = 0.0;
+  v[2] = 0.0;
+  v[3] = 0.0;
+  v[4] = 0.0;
+  v[5] = 0.0;
+}
+
 void vec6_copy(vec6 v, vec6 dest) {
   dest[0] = v[0];
   dest[1] = v[1];
