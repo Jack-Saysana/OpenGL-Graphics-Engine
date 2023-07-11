@@ -18,6 +18,13 @@
 
 #define NUM_OCT_TREES (3)
 
+#define DOF_X
+#define DOF_Y
+#define DOF_Z
+#define DOF_X_ROT
+#define DOF_Y_ROT
+#define DOF_Z_ROT
+
 typedef enum chain_type {
   LOCATION = 0,
   ROTATION = 1,
@@ -90,7 +97,7 @@ typedef struct model {
   BONE *bones;
   COLLIDER *colliders;
   /* Each element's index corresponds to the collider of the same index.
-     Element value corresponds to bone represneted by collider */
+     Element value corresponds to root bone represneted by collider */
   int *collider_bone_links;
   /* Each element's index corresponds to the bone of the same index.
      Element value corresponds to collider represneted by bone */
@@ -112,12 +119,11 @@ typedef struct model {
 
 typedef struct p_data {
   mat4 inv_inertia;
-  /*vec6 spatial_accel;
+  vec6 spatial_accel;
   vec6 spatial_vel;
-  vec6 dofs;*/
+  vec6 joint_angle_vels;
+  unsigned int dofs[6];
   size_t parent;
-  vec3 velocity;
-  vec3 ang_velocity;
   float inv_mass;
 } P_DATA;
 

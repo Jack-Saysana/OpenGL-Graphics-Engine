@@ -17,10 +17,29 @@ ENTITY *init_entity(MODEL *model) {
       free(ent);
       return NULL;
     }
+
+    ent->np_data = malloc(sizeof(P_DATA) * model->num_colliders);
+    if (ent->np_data == NULL) {
+      free(ent->tree_offsets);
+      free(ent);
+      return NULL;
+    }
+
     for (size_t i = 0; i < model->num_colliders; i++) {
       ent->tree_offsets[i][PHYS_TREE] = INVALID;
       ent->tree_offsets[i][HIT_TREE] = INVALID;
       ent->tree_offsets[i][EVENT_TREE] = INVALID;
+
+      glm_mat4_identity(ent->np_data[i].inv_inertia);
+      glm_vec3_zero(ent->np_data[i].velocity);
+      glm_vec3_zero(ent->np_data[i].ang_velocity);
+      ent->np_data[i].inv_mass = 0.0;
+      ent->np_data[i].dofs[0] = 0;
+      ent->np_data[i].dofs[1] = 0;
+      ent->np_data[i].dofs[2] = 0;
+      ent->np_data[i].dofs[3] = 0;
+      ent->np_data[i].dofs[4] = 0;
+      ent->np_data[i].dofs[5] = 0;
     }
   } else {
     ent->tree_offsets = NULL;
@@ -31,6 +50,7 @@ ENTITY *init_entity(MODEL *model) {
     ent->bone_mats = malloc(sizeof(mat4) * 3 * model->num_bones);
     if (ent->bone_mats == NULL) {
       free(ent->tree_offsets);
+      free(ent->np_data);
       free(ent);
       return NULL;
     }
@@ -39,16 +59,9 @@ ENTITY *init_entity(MODEL *model) {
     if (ent->final_b_mats == NULL) {
       free(ent->tree_offsets);
       free(ent->bone_mats);
+      free(ent->np_data);
       free(ent);
       return NULL;
-    }
-
-    ent->np_data = malloc(sizeof(P_DATA) * model->num_bones);
-    if (ent->np_data == NULL) {
-      free(ent->tree_offsets);
-      free(ent->bone_mats);
-      free(ent->final_b_mats);
-      free(ent);
     }
 
     for (size_t i = 0; i < model->num_bones; i++) {
@@ -57,16 +70,10 @@ ENTITY *init_entity(MODEL *model) {
       glm_mat4_identity(ent->bone_mats[i][2]);
 
       glm_mat4_identity(ent->final_b_mats[i]);
-
-      glm_mat4_identity(ent->np_data[i].inv_inertia);
-      glm_vec3_zero(ent->np_data[i].velocity);
-      glm_vec3_zero(ent->np_data[i].ang_velocity);
-      ent->np_data[i].inv_mass = 0.0;
     }
   } else {
     ent->bone_mats = NULL;
     ent->final_b_mats = NULL;
-    ent->np_data = NULL;
   }
 
   ent->model = model;
@@ -190,6 +197,9 @@ void free_entity(ENTITY *entity) {
   if (entity->bone_mats) {
     free(entity->bone_mats);
     free(entity->final_b_mats);
+  }
+  if (entity->np_data) {
+    free(entity->np_data);
   }
 
   free(entity);
