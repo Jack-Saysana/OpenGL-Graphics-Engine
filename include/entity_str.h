@@ -118,7 +118,9 @@ typedef struct model {
 } MODEL;
 
 typedef struct p_data {
+  mat6 spatial_inertia;
   mat4 inv_inertia;
+  vec6 spatial_zero_accel;
   vec6 spatial_accel;
   vec6 spatial_vel;
   vec6 joint_angle_vels;

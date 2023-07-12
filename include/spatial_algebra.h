@@ -9,12 +9,15 @@ typedef vec6 mat6[6];
 
 // dest = m
 void mat6_copy(mat6 m, mat6 dest);
+// dest = [[m1, m2], [m3, m4]]
+void mat6_compose(mat3 m1, mat3 m2, mat3 m3, mat3 m4, mat6 dest);
 // dest = m1m2
 void mat6_mul(mat6 m1, mat6 m2, mat6 dest);
 // dest = mv
 void mat6_mulv(mat6 m, vec6 v, vec6 dest);
-// T = transform
-// dest = [[T, 0],[0, T]]
+// R = rotate_fg
+// T = translate_fg
+// dest = [[R, 0],[TR, R]]
 void mat6_spatial_transform(mat3 rotate_fg, mat3 translate_fg, mat6 dest);
 
 // v = [0, 0, 0, 0, 0, 0];
