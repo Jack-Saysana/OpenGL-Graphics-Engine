@@ -3,6 +3,9 @@
 int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
   COLLIDER *links = body->model->colliders;
+
+  vec3 temp = GLM_VEC3_ZERO_INIT;
+
   // Calculate spatial velocities from inbound to outbound
   int root_bone = -1;
   int parent_col = -1;
@@ -42,7 +45,6 @@ int featherstone_abm(ENTITY *body) {
 
     vec3 *basis_vectors = body->model->bones[root_bone].basis_vectors;
 
-    vec3 temp = GLM_VEC3_ZERO_INIT;
     // Accumulate velocities from prismatic DOFS
     for (int j = 0; j < 3; j++) {
       if (p_data->dofs[j]) {
@@ -53,9 +55,11 @@ int featherstone_abm(ENTITY *body) {
     // Accumulate velocities from revolute DOFS
     for (int j = 0; j < 3; j++) {
       if (p_data->dofs[j + 3]) {
-        glm_vec3_scale(basis_vectors[j], p_data->joint_angle_vels[j], temp);
+        glm_vec3_scale(basis_vectors[j], p_data->joint_angle_vels[j + 3],
+                       temp);
         glm_vec3_add(temp, ang_vel, ang_vel);
-        glm_vec3_scale(basis_vectors[j], p_data->joint_angle_vels[j], temp);
+        glm_vec3_scale(basis_vectors[j], p_data->joint_angle_vels[j + 3],
+                       temp);
         glm_vec3_cross(temp, center_to_joint, temp);
         glm_vec3_add(temp, vel, vel);
       }
@@ -68,13 +72,59 @@ int featherstone_abm(ENTITY *body) {
   // Calculate I-hat and Z-hat from inbound to outbound
   for (int i = 0; i < num_links; i++) {
     P_DATA *p_data = body->np_data + i;
+
+    // M
+    float mass = 1.0 / p_data->inv_mass;
     mat3 mass_mat = GLM_MAT3_IDENTITY_INIT;
-    glm_mat3_scale(mass_mat, 1.0 / p_data->inv_mass);
+    glm_mat3_scale(mass_mat, mass);
+
+    // I
+    mat4 interia_tensor_m4 = GLM_MAT4_IDENTITY_INIT;
+    mat3 inertia = GLM_MAT3_IDENTITY_INIT;
+    glm_mat4_inv(p_data->inv_inertia, inertia_tensor_m4);
+    glm_mat4_pick3(inertia_tensor_m4, inertia);
+
+    // I-hat = [[0, M], [I, 0]];
+    mat6_compose(mat3_zero, mass_mat, inertia, mat3_zero,
+                 p_data->spatial_inertia);
+
+    // L
+    vec3 za_linear = { 0.0, -mass * GRAVITY, 0.0};
+
+    // A
+    vec3 za_angular = GLM_VEC3_ZERO_INIT;
+    vec3 ang_vel = GLM_VEC3_ZERO_INIT;
+    vec3 *basis_vectors = body->model->bones[root_bone].basis_vectors;
+    for (int j = 0; j < 3; j++) {
+      if (p_data->dofs[j + 3]) {
+        glm_vec3_scale(basis_vectors[j], p_data->joing_angle_vels[j + 3],
+                       temp);
+        glm_vec3_add(temp, ang_vel, ang_vel);
+      }
+    }
+    glm_mat3_mulv(inertia, ang_vel, za_angular);
+    glm_vec3_cross(ang_vel, za_angular, za_angular);
+
+    // Z-hat = [L, A]
+    vec6_compose(za_linear, za_angular, p_data->spatial_zero_accel);
   }
 
   // Calculate I-hat-A and Z-hat-A from outbound to inbound
   for (int i = num_links - 1; i >= 0; i--) {
+    if (links[i].category != HIT_BOX) {
+      continue;
+    }
 
+    root_bone = body->model->collider_bone_links[i];
+
+    size_t *children = body->model->collider_children +
+                      links[i].children_offset;
+
+    size_t cur_child = -1;
+    for (int j = 0; j < links[i].num_children; j++) {
+      // Accumulate children I-hat-A and Z-hat-A
+      cur_child = body->model->collider_bone_links[children[j]];
+    }
   }
 
   // Calculate q** and spatial acceleration from inbound to outbound
