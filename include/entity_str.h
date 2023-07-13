@@ -120,14 +120,23 @@ typedef struct model {
 typedef struct p_data {
   mat6 spatial_inertia;
   mat6 artic_spatial_inertia;
+
   mat4 inv_inertia;
+
+  vec6 spatial_axis;
+
   vec6 spatial_zero_accel;
+  vec6 artic_spatial_zero_accel;
+
   vec6 spatial_accel;
   vec6 spatial_vel;
+
   vec6 joint_angle_vels;
   unsigned int dofs[6];
+
   size_t parent;
   float inv_mass;
+  float spatial_force_mag;
 } P_DATA;
 
 typedef struct entity {

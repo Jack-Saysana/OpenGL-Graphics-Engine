@@ -31,16 +31,14 @@ int featherstone_abm(ENTITY *body) {
 
     P_DATA *p_data = body->np_data + i;
     vec3 center_to_joint = GLM_VEC3_ZERO_INIT;
-    if (root_bone) {
-      if (body->model->colliders[i].type == POLY) {
-        glm_vec3_sub(body->model->bones[root_bone].coords,
-                     body->model->colliders[i].data.center_of_mass,
-                     center_to_joint);
-      } else {
-        glm_vec3_sub(body->model->bones[root_bone].coords,
-                     body->model->colliders[i].data.center,
-                     center_to_joint);
-      }
+    if (body->model->colliders[i].type == POLY) {
+      glm_vec3_sub(body->model->bones[root_bone].coords,
+                   body->model->colliders[i].data.center_of_mass,
+                   center_to_joint);
+    } else {
+      glm_vec3_sub(body->model->bones[root_bone].coords,
+                   body->model->colliders[i].data.center,
+                   center_to_joint);
     }
 
     vec3 *basis_vectors = body->model->bones[root_bone].basis_vectors;
@@ -98,7 +96,7 @@ int featherstone_abm(ENTITY *body) {
     vec3 *basis_vectors = body->model->bones[root_bone].basis_vectors;
     for (int j = 0; j < 3; j++) {
       if (p_data->dofs[j + 3]) {
-        glm_vec3_scale(basis_vectors[j], p_data->joing_angle_vels[j + 3],
+        glm_vec3_scale(basis_vectors[j], p_data->joint_angle_vels[j + 3],
                        temp);
         glm_vec3_add(temp, ang_vel, ang_vel);
       }
@@ -117,6 +115,20 @@ int featherstone_abm(ENTITY *body) {
     }
 
     root_bone = body->model->collider_bone_links[i];
+    vec3 center_to_joint = GLM_VEC3_ZERO_INIT;
+    if (body->model->colliders[i].type == POLY) {
+      glm_vec3_sub(body->model->bones[root_bone].coords,
+                   body->model->colliders[i].data.center_of_mass,
+                   center_to_joint);
+    } else {
+      glm_vec3_sub(body->model->bones[root_bone].coords,
+                   body->model->colliders[i].data.center,
+                   center_to_joint);
+    }
+
+    P_DATA *p_data = body->np_data + i;
+    vec3 *basis_vectors = body->model->bones[root_bone].basis_vectors;
+
     // Matrix rotating vectors in world coordinates to vectors in the current
     // bone's coordinates
     mat4 world_to_cur = body->bone_mats[root_bone][ROTATION];
@@ -136,25 +148,66 @@ int featherstone_abm(ENTITY *body) {
 
       // Matrix rotating vectors in child's bone coordinates to vectors in the
       // current bone's coordinates
-      mat3 child_to_parent_rot = GLM_MAT4_IDENTITY_INIT;
+      mat3 child_to_parent_rot = GLM_MAT3_IDENTITY_INIT;
       glm_mat4_mul(world_to_cur, child_to_world, child_to_world);
       glm_mat4_pick3(child_to_world, child_to_parent_rot);
 
-      // Matrix translating vectors in the current bone's coords to vectors
-      // in the child bone's coords
-      mat3 parent_to_child_mat = GLM_MAT4_IDENTITY_INIT;
+      // Matrix rotating vectors in the current bone's coordinates to vectors
+      // in the child's bone coordinates
+      mat3 parent_to_child_rot = GLM_MAT3_IDENTITY_INIT;
+      glm_mat3_inv(child_to_parent_rot, parent_to_child_rot);
+
+      // Matrix who's diagonal is the vector from the parent bone tail to the
+      // child bone tail
+      mat3 parent_to_child_mat = GLM_MAT3_IDENTITY_INIT;
       vec3 parent_to_child = GLM_VEC3_ZERO_INIT;
       glm_vec3_sub(body->model->bones[cur_child].coords,
                    body->model->bones[root_bone].coords,
                    parent_to_child);
       glm_mat3_mulv(parent_to_child_mat, parent_to_child, parent_to_child_mat);
 
+      // Matrix who's diagonal is the vector from the child bone tail to the
+      // parent bone tail
+      mat3 child_to_parent_mat = GLM_MAT3_IDENTITY_INIT;
+      vec3 child_to_parent = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(parent_to_child, -1.0, child_to_parent);
+      glm_mat3_mulv(child_to_parent_mat, child_to_parent, child_to_parent_mat);
+
       // Spatial transformation matrix transforming vectors in the child bone's
       // coords to vectors in the current bone's coords
-      mat6 spatial_transformation = MAT6_ZERO_INIT;
+      mat6 spatial_child_to_parent = MAT6_ZERO_INIT;
       mat6_spatial_transform(child_to_parent_rot, parent_to_child_mat,
-                             spatial_transformation);
+                             spatial_child_to_parent);
+
+      // Spatial transformation matrix transforming vectors in the current
+      // bone's coords to vectors in the child bone's coords
+      mat6 spatial_parent_to_child = MAT6_ZERO_INIT;
+      mat6_spatial_transform(parent_to_child, rot, child_to_parent_mat,
+                             spatial_parent_to_child);
     }
+
+    vec6 spatial_force = VEC6_ZERO_INIT;
+    mat6_mulv(p_data->artic_spatial_inertia, p_data->spatial_accel,
+              spatial_force);
+    mat6_add(spatial_force, p_data->artic_spatial_zero_accel, spatial_force);
+
+    // TODO precompute
+    vec3 axis_ang = GLM_VEC3_ZERO_INIT;
+    vec3 axis_lin = GLM_VEC3_ZERO_INIT;
+    for (int i = 5; i >= 0; i--) {
+      if (dofs[i]) {
+        if (i < 3) {
+          glm_vec3_copy(basis_vectors[i], axis_lin);
+        } else {
+          glm_vec3_copy(basis_vectors[i - 3], axis_ang);
+          glm_vec3_cross(basis_vectors[i - 3], center_to_joint, axis_lin);
+        }
+        vec6_compose(axis_ang, axis_lin, p_data->spatial_axis);
+        break;
+      }
+    }
+
+    p_data->spatial_force_mag = vec6_dot(spatial_axis, spatial_force);
   }
 
   // Calculate q** and spatial acceleration from inbound to outbound
