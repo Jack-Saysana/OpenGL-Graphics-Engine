@@ -13,6 +13,10 @@ typedef vec6 mat6[6];
 void mat6_copy(mat6 m, mat6 dest);
 // dest = [[m1, m2], [m3, m4]]
 void mat6_compose(mat3 m1, mat3 m2, mat3 m3, mat3 m4, mat6 dest);
+// dest = m1 + m2
+void mat6_add(mat6 m1, mat6 m2, mat6 dest);
+// dest = m1 - m2
+void mat6_sub(mat6 m1, mat6 m2, mat6 dest);
 // dest = m1m2
 void mat6_mul(mat6 m1, mat6 m2, mat6 dest);
 // dest = mv
