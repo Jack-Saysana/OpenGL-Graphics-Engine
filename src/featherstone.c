@@ -69,6 +69,7 @@ int featherstone_abm(ENTITY *body) {
     vec6_add(p_data->spatial_vel, parent_vel, p_data->spatial_vel);
   }
 
+  // TODO A lot of this can be precomputed and never changes (I-hat, za_linear)
   // Calculate I-hat and Z-hat from inbound to outbound
   for (int i = 0; i < num_links; i++) {
     P_DATA *p_data = body->np_data + i;
@@ -116,6 +117,10 @@ int featherstone_abm(ENTITY *body) {
     }
 
     root_bone = body->model->collider_bone_links[i];
+    // Matrix rotating vectors in world coordinates to vectors in the current
+    // bone's coordinates
+    mat4 world_to_cur = body->bone_mats[root_bone][ROTATION];
+    glm_mat4_inv(cur_from_world_rot, cur_from_world_rot);
 
     size_t *children = body->model->collider_children +
                       links[i].children_offset;
@@ -124,6 +129,31 @@ int featherstone_abm(ENTITY *body) {
     for (int j = 0; j < links[i].num_children; j++) {
       // Accumulate children I-hat-A and Z-hat-A
       cur_child = body->model->collider_bone_links[children[j]];
+
+      // Matrix rotating vectors in the child bone's coordinates to world
+      // coordinates
+      mat4 child_to_world = body->bone_mats[cur_child][ROTATION];
+
+      // Matrix rotating vectors in child's bone coordinates to vectors in the
+      // current bone's coordinates
+      mat3 child_to_parent_rot = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_mul(world_to_cur, child_to_world, child_to_world);
+      glm_mat4_pick3(child_to_world, child_to_parent_rot);
+
+      // Matrix translating vectors in the current bone's coords to vectors
+      // in the child bone's coords
+      mat3 parent_to_child_mat = GLM_MAT4_IDENTITY_INIT;
+      vec3 parent_to_child = GLM_VEC3_ZERO_INIT;
+      glm_vec3_sub(body->model->bones[cur_child].coords,
+                   body->model->bones[root_bone].coords,
+                   parent_to_child);
+      glm_mat3_mulv(parent_to_child_mat, parent_to_child, parent_to_child_mat);
+
+      // Spatial transformation matrix transforming vectors in the child bone's
+      // coords to vectors in the current bone's coords
+      mat6 spatial_transformation = MAT6_ZERO_INIT;
+      mat6_spatial_transform(child_to_parent_rot, parent_to_child_mat,
+                             spatial_transformation);
     }
   }
 
