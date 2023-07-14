@@ -118,25 +118,42 @@ typedef struct model {
 } MODEL;
 
 typedef struct p_data {
-  mat6 spatial_inertia;
-  mat6 artic_spatial_inertia;
+  // Spatial inertia
+  mat6 I_hat;
+  // Articulated spatial inertia
+  mat6 I_hat_A;
 
   mat4 inv_inertia;
 
-  vec6 spatial_axis;
+  // Spatial joint axis
+  vec6 s_hat;
 
-  vec6 spatial_zero_accel;
-  vec6 artic_spatial_zero_accel;
+  // Spatial zero acceleration
+  vec6 Z_hat;
+  // Articulated spatial zero acceleration
+  vec6 Z_hat_A;
 
-  vec6 spatial_accel;
-  vec6 spatial_vel;
+  // Spatial acceleration
+  vec6 a_hat;
+  // Spatial velocity
+  vec6 v_hat;
 
+  // Joint angle of each degree of freedom
   vec6 joint_angle_vels;
+  // Buffer specifiying the degrees of freedom for link (0 for inactive,
+  // nonzero fro active)
+  // Layout:
+  // [X, Y, Z, ROTX, ROTY, ROTZ]
   unsigned int dofs[6];
 
+  // TEMP
+  vec3 velocity;
+  vec3 ang_velocity;
+  // END TEMP
   size_t parent;
   float inv_mass;
-  float spatial_force_mag;
+  // Magnitude of the spatial force acting on the links joint
+  float Q;
 } P_DATA;
 
 typedef struct entity {

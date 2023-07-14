@@ -7,6 +7,7 @@ int featherstone_abm(ENTITY *body) {
   vec3 temp = GLM_VEC3_ZERO_INIT;
 
   // Calculate spatial velocities from inbound to outbound
+  // TODO Need to take inertial frames into account
   int root_bone = -1;
   int parent_col = -1;
   for (int i = 0; i < num_links; i++) {
@@ -23,7 +24,7 @@ int featherstone_abm(ENTITY *body) {
 
     vec6 parent_vel = VEC6_ZERO_INIT;
     if (parent_col != -1) {
-      vec6_copy(body->np_data[parent_col].spatial_vel, parent_vel);
+      vec6_copy(body->np_data[parent_col].v_hat, parent_vel);
     }
 
     vec3 ang_vel = GLM_VEC3_ZERO_INIT;
@@ -63,8 +64,8 @@ int featherstone_abm(ENTITY *body) {
       }
     }
 
-    vec6_compose(ang_vel, vel, p_data->spatial_vel);
-    vec6_add(p_data->spatial_vel, parent_vel, p_data->spatial_vel);
+    vec6_compose(ang_vel, vel, p_data->v_hat);
+    vec6_add(p_data->v_hat, parent_vel, p_data->v_hat);
   }
 
   // TODO A lot of this can be precomputed and never changes (I-hat, za_linear)
@@ -84,8 +85,8 @@ int featherstone_abm(ENTITY *body) {
     glm_mat4_pick3(inertia_tensor_m4, inertia);
 
     // I-hat = [[0, M], [I, 0]];
-    mat6_compose(mat3_zero, mass_mat, inertia, mat3_zero,
-                 p_data->spatial_inertia);
+    mat6_compose(MAT3_ZERO, mass_mat, inertia, MAT3_ZERO,
+                 p_data->I_hat);
 
     // L
     vec3 za_linear = { 0.0, -mass * GRAVITY, 0.0};
@@ -105,7 +106,7 @@ int featherstone_abm(ENTITY *body) {
     glm_vec3_cross(ang_vel, za_angular, za_angular);
 
     // Z-hat = [L, A]
-    vec6_compose(za_linear, za_angular, p_data->spatial_zero_accel);
+    vec6_compose(za_linear, za_angular, p_data->Z_hat);
   }
 
   // Calculate I-hat-A and Z-hat-A from outbound to inbound
@@ -138,52 +139,30 @@ int featherstone_abm(ENTITY *body) {
                       links[i].children_offset;
 
     size_t cur_child = -1;
+    P_DATA *child_p_data = NULL;
     for (int j = 0; j < links[i].num_children; j++) {
       // Accumulate children I-hat-A and Z-hat-A
+      child_data = body->np_data + children[j];
       cur_child = body->model->collider_bone_links[children[j]];
 
-      // Matrix rotating vectors in the child bone's coordinates to world
-      // coordinates
-      mat4 child_to_world = body->bone_mats[cur_child][ROTATION];
-
-      // Matrix rotating vectors in child's bone coordinates to vectors in the
-      // current bone's coordinates
-      mat3 child_to_parent_rot = GLM_MAT3_IDENTITY_INIT;
-      glm_mat4_mul(world_to_cur, child_to_world, child_to_world);
-      glm_mat4_pick3(child_to_world, child_to_parent_rot);
-
-      // Matrix rotating vectors in the current bone's coordinates to vectors
-      // in the child's bone coordinates
-      mat3 parent_to_child_rot = GLM_MAT3_IDENTITY_INIT;
-      glm_mat3_inv(child_to_parent_rot, parent_to_child_rot);
-
-      // Matrix who's diagonal is the vector from the parent bone tail to the
-      // child bone tail
-      mat3 parent_to_child_mat = GLM_MAT3_IDENTITY_INIT;
-      vec3 parent_to_child = GLM_VEC3_ZERO_INIT;
-      glm_vec3_sub(body->model->bones[cur_child].coords,
-                   body->model->bones[root_bone].coords,
-                   parent_to_child);
-      glm_mat3_mulv(parent_to_child_mat, parent_to_child, parent_to_child_mat);
-
-      // Matrix who's diagonal is the vector from the child bone tail to the
-      // parent bone tail
-      mat3 child_to_parent_mat = GLM_MAT3_IDENTITY_INIT;
-      vec3 child_to_parent = GLM_VEC3_ZERO_INIT;
-      glm_vec3_scale(parent_to_child, -1.0, child_to_parent);
-      glm_mat3_mulv(child_to_parent_mat, child_to_parent, child_to_parent_mat);
-
-      // Spatial transformation matrix transforming vectors in the child bone's
-      // coords to vectors in the current bone's coords
-      mat6 spatial_child_to_parent = MAT6_ZERO_INIT;
-      mat6_spatial_transform(child_to_parent_rot, parent_to_child_mat,
-                             spatial_child_to_parent);
-
       // Spatial transformation matrix transforming vectors in the current
-      // bone's coords to vectors in the child bone's coords
-      mat6 spatial_parent_to_child = MAT6_ZERO_INIT;
-      mat6_spatial_transform(parent_to_child, rot, child_to_parent_mat,
-                             spatial_parent_to_child);
+      // link's frame to vectors in the child link's frame
+      mat6 cur_to_child = MAT6_ZERO_INIT;
+      // Spatial transformation matrix transforming vectors in the child
+      // link's frame to vectors in the current links' frame
+      mat6 child_to_cur = MAT6_ZERO_INIT;
+      compute_spatial_transformations(world_to_cur,
+                                      body->model->bones[root_bone].coords,
+                                      body->bone_mats[cur_child],
+                                      body->model->bones[cur_child].coords,
+                                      cur_to_child, child_to_cur);
+
+      vec6 s_dot_IA = VEC6_ZERO_INIT;
+      vec6_spatial_transpose_mulm(child_data[children[j]].s_hat,
+                                  child_data[children[j]].I_hat_A,
+                                  axis_dot_ineria);
+
+      float ssIA = vec6_dot(child_data[children[j]].s_hat, s_dot_IA);
     }
 
     vec6 spatial_force = VEC6_ZERO_INIT;
@@ -216,4 +195,50 @@ int featherstone_abm(ENTITY *body) {
   }
 
   return 0;
+}
+
+void compute_spatial_transformations(mat4 world_to_parent_rot,
+                                     vec3 parent_coords,
+                                     mat4* child_mats,
+                                     vec3 child_coords,
+                                     mat6 parent_to_child_dest,
+                                     mat6 child_to_parent_dest) {
+  // Matrix rotating vectors in the child bone's coordinates to world
+  // coordinates
+  mat4 child_to_world = parent_mats[ROTATION];
+
+  // Matrix rotating vectors in child's bone coordinates to vectors in the
+  // current bone's coordinates
+  mat3 child_to_parent_rot = GLM_MAT3_IDENTITY_INIT;
+  glm_mat4_mul(world_to_parent_rot, child_to_world, child_to_world);
+  glm_mat4_pick3(child_to_world, child_to_parent_rot);
+
+  // Matrix rotating vectors in the current bone's coordinates to vectors
+  // in the child's bone coordinates
+  mat3 parent_to_child_rot = GLM_MAT3_IDENTITY_INIT;
+  glm_mat3_inv(child_to_parent_rot, parent_to_child_rot);
+
+  // Matrix who's diagonal is the vector from the parent bone tail to the
+  // child bone tail
+  mat3 parent_to_child_mat = GLM_MAT3_IDENTITY_INIT;
+  vec3 parent_to_child = GLM_VEC3_ZERO_INIT;
+  glm_vec3_sub(child_coords, parent_coords, parent_to_child);
+  glm_mat3_mulv(parent_to_child_mat, parent_to_child, parent_to_child_mat);
+
+  // Matrix who's diagonal is the vector from the child bone tail to the
+  // parent bone tail
+  mat3 child_to_parent_mat = GLM_MAT3_IDENTITY_INIT;
+  vec3 child_to_parent = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(parent_to_child, -1.0, child_to_parent);
+  glm_mat3_mulv(child_to_parent_mat, child_to_parent, child_to_parent_mat);
+
+  // Spatial transformation matrix transforming vectors in the child bone's
+  // coords to vectors in the current bone's coords
+  mat6_spatial_transform(child_to_parent_rot, parent_to_child_mat,
+                         child_to_parent_dest);
+
+  // Spatial transformation matrix transforming vectors in the current
+  // bone's coords to vectors in the child bone's coords
+  mat6_spatial_transform(parent_to_child, rot, child_to_parent_mat,
+                         parent_to_child_dest);
 }
