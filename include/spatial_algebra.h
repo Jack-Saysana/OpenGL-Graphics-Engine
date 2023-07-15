@@ -40,3 +40,6 @@ void vec6_sub(vec6 a, vec6 b, vec6 dest);
 // b = [b1, b2]
 // = a2*b1 + a1*b2
 float vec6_dot(vec6 a, vec6 b);
+
+// MISC CUSTOM OPERATIONS
+void vec3_singular_cross(vec3 a, mat3 dest);

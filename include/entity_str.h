@@ -123,6 +123,15 @@ typedef struct p_data {
   // Articulated spatial inertia
   mat6 I_hat_A;
 
+  // Spatial tranformation from the current links inertial frame to its
+  // parent's inertial frame
+  mat6 ST_to_parent;
+
+  // Spatial transformation to the current link's inertial frame from its
+  // parent's inertial frame
+  mat6 ST_from_parent;
+
+  // Inverse inertia tensor
   mat4 inv_inertia;
 
   // Spatial joint axis
@@ -132,6 +141,8 @@ typedef struct p_data {
   vec6 Z_hat;
   // Articulated spatial zero acceleration
   vec6 Z_hat_A;
+
+  vec6 coriolis_vector;
 
   // Spatial acceleration
   vec6 a_hat;
@@ -146,11 +157,16 @@ typedef struct p_data {
   // [X, Y, Z, ROTX, ROTY, ROTZ]
   unsigned int dofs[6];
 
+  // Vector pointing from link parent's COM to current link's COM
+  vec3 from_parent_lin;
+
+  // Vector pointing from link's joint to link's COM
+  vec3 joint_to_com;
+
   // TEMP
   vec3 velocity;
   vec3 ang_velocity;
   // END TEMP
-  size_t parent;
   float inv_mass;
   // Magnitude of the spatial force acting on the links joint
   float Q;
