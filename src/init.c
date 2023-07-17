@@ -224,7 +224,7 @@ int init_scene() {
     glm_vec3_copy(m_rect_scale, rects[i]->scale);
   }
 
-  ragdoll = init_entity(dude);
+  ragdoll = init_entity(test);
   glm_vec3_copy(ragdoll_pos, ragdoll->translation);
   if (ragdoll == NULL) {
     printf("Unable to load ragdoll\n");

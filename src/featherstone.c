@@ -1,5 +1,5 @@
 #include <featherstone.h>
-
+/*
 int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
   COLLIDER *links = body->model->colliders;
@@ -222,13 +222,13 @@ void compute_spatial_velocity(int cur_col, int parent_col,
   }
 
   // Accumulate velocities from prismatic DOFS
-  /*for (int j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
     if (p_data->dofs[j]) {
       glm_vec3_scale(BASIS_VECTORS[j], p_data[cur_col]->joint_angle_vels[j],
                      temp);
       glm_vec3_add(temp, v, v);
     }
-  }*/
+  }
   // TODO Make this more flexible so more than just having the X-Axis as the
   // only degree of freedom
   glm_vec3_scale(BASIS_VECTORS[0],
@@ -275,4 +275,4 @@ void compute_I_hat_and_Z_hat(int cur_col, int cur_bone, P_DATA *p_data,
 
   // Z-hat = [L, A]
   vec6_compose(za_linear, za_angular, p_data[cur_col]->Z_hat);
-}
+}*/

@@ -4,11 +4,14 @@
 #define VEC6_ZERO_INIT { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }
 #define MAT6_ZERO_INIT {VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT}
 
-mat3 mat3_zero = GLM_MAT3_ZERO_INIT;
+//static mat3 MAT3_ZERO = GLM_MAT3_ZERO_INIT;
 
 typedef float vec6[6];
 typedef vec6 mat6[6];
 
+// Z = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+// m = [[Z, Z], [Z, Z]]
+void mat6_zero(mat6 m);
 // dest = m
 void mat6_copy(mat6 m, mat6 dest);
 // dest = [[m1, m2], [m3, m4]]
@@ -36,6 +39,10 @@ void vec6_compose(vec3 a, vec3 b, vec6 dest);
 void vec6_add(vec6 a, vec6 b, vec6 dest);
 // dest = a - b
 void vec6_sub(vec6 a, vec6 b, vec6 dest);
+// v = [a, b]
+// v' = transpose(transpose(a), transpose(b))
+// dest = v'm
+void vec6_spatial_transpose_mulm(vec6 v, mat6 m, vec6 dest);
 // a = [a1, a2]
 // b = [b1, b2]
 // = a2*b1 + a1*b2

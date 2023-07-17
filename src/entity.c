@@ -30,16 +30,33 @@ ENTITY *init_entity(MODEL *model) {
       ent->tree_offsets[i][HIT_TREE] = INVALID;
       ent->tree_offsets[i][EVENT_TREE] = INVALID;
 
-      glm_mat4_identity(ent->np_data[i].inv_inertia);
+      // TEMP
       glm_vec3_zero(ent->np_data[i].velocity);
       glm_vec3_zero(ent->np_data[i].ang_velocity);
-      ent->np_data[i].inv_mass = 0.0;
+      // END TEMP
+
+      mat6_zero(ent->np_data[i].I_hat);
+      mat6_zero(ent->np_data[i].I_hat_A);
+      mat6_zero(ent->np_data[i].ST_to_parent);
+      mat6_zero(ent->np_data[i].ST_from_parent);
+      glm_mat4_identity(ent->np_data[i].inv_inertia);
+      vec6_zero(ent->np_data[i].s_hat);
+      vec6_zero(ent->np_data[i].Z_hat);
+      vec6_zero(ent->np_data[i].Z_hat_A);
+      vec6_zero(ent->np_data[i].coriolis_vector);
+      vec6_zero(ent->np_data[i].a_hat);
+      vec6_zero(ent->np_data[i].v_hat);
+      vec6_zero(ent->np_data[i].joint_angle_vels);
       ent->np_data[i].dofs[0] = 0;
       ent->np_data[i].dofs[1] = 0;
       ent->np_data[i].dofs[2] = 0;
       ent->np_data[i].dofs[3] = 0;
       ent->np_data[i].dofs[4] = 0;
       ent->np_data[i].dofs[5] = 0;
+      glm_vec3_zero(ent->np_data[i].from_parent_lin);
+      glm_vec3_zero(ent->np_data[i].joint_to_com);
+      ent->np_data[i].inv_mass = 0.0;
+      ent->np_data[i].Q = 0.0;
     }
   } else {
     ent->tree_offsets = NULL;
