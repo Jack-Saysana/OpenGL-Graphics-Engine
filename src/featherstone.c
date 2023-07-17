@@ -1,10 +1,10 @@
 #include <featherstone.h>
-/*
+
 int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
   COLLIDER *links = body->model->colliders;
 
-  vec3 temp = GLM_VEC3_ZERO_INIT;
+  //vec3 temp = GLM_VEC3_ZERO_INIT;
 
   BONE *bones = body->model->bones;
   COLLIDER *colliders = body->model->colliders;
@@ -23,7 +23,7 @@ int featherstone_abm(ENTITY *body) {
       continue;
     }
 
-    root_bone = bone_from_col[i];
+    root_bone = bone_from_col[cur_col];
     vec3 cur_coords = GLM_VEC3_ZERO_INIT;
     if (colliders[cur_col].type == POLY) {
       glm_vec3_copy(colliders[cur_col].data.center_of_mass, cur_coords);
@@ -50,12 +50,13 @@ int featherstone_abm(ENTITY *body) {
                                       body->bone_mats[root_bone],
                                       cur_coords,
                                       p_data[cur_col].from_parent_lin,
-                                      p_data[cur_col].from_parent,
-                                      p_data[cur_col].to_parent);
+                                      p_data[cur_col].ST_from_parent,
+                                      p_data[cur_col].ST_to_parent);
     }
     compute_spatial_velocity(cur_col, parent_col, colliders, p_data);
   }
 
+  /*
   // TODO A lot of this can be precomputed and never changes (I-hat, za_linear)
   // Calculate I-hat and Z-hat from inbound to outbound
   for (int i = 0; i < num_links; i++) {
@@ -145,6 +146,7 @@ int featherstone_abm(ENTITY *body) {
   for (int i = 0; i < num_links; i++) {
 
   }
+  */
 
   return 0;
 }
@@ -157,14 +159,16 @@ void compute_spatial_transformations(mat4* parent_mats,
                                      mat6 parent_to_child_dest,
                                      mat6 child_to_parent_dest) {
   // Matrix rotating vectors in the parent bone's coordinates to world coords
-  mat4 parent_to_world = parent_mats[ROTATION];
+  mat4 parent_to_world = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_copy(parent_mats[ROTATION], parent_to_world);
   // Inverse of above
   mat4 world_to_parent = GLM_MAT4_IDENTITY_INIT;
-  glm_vec4_inv(parent_to_world, world_to_parent);
+  glm_mat4_inv(parent_to_world, world_to_parent);
 
   // Matrix rotating vectors in the child bone's coordinates to world
   // coordinates
-  mat4 child_to_world = child_mats[ROTATION];
+  mat4 child_to_world = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_copy(child_mats[ROTATION], child_to_world);
 
   // Matrix rotating vectors in child's bone coordinates to vectors in the
   // current bone's coordinates
@@ -187,7 +191,7 @@ void compute_spatial_transformations(mat4* parent_mats,
   // parent bone tail
   mat3 child_to_parent_mat = GLM_MAT3_IDENTITY_INIT;
   vec3 child_to_parent_lin = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(parent_to_child_lin, -1.0, child_to_parent_lin);
+  glm_vec3_scale(parent_to_child_lin_dest, -1.0, child_to_parent_lin);
   vec3_singular_cross(child_to_parent_lin, child_to_parent_mat);
 
   // Spatial transformation matrix transforming vectors in the child bone's
@@ -197,25 +201,31 @@ void compute_spatial_transformations(mat4* parent_mats,
 
   // Spatial transformation matrix transforming vectors in the current
   // bone's coords to vectors in the child bone's coords
-  mat6_spatial_transform(parent_to_child, rot, child_to_parent_mat,
+  mat6_spatial_transform(parent_to_child_rot, child_to_parent_mat,
                          parent_to_child_dest);
 }
 
-void compute_spatial_velocity(int cur_col, int parent_col,
-                              COLLIDERS *colliders, P_DATA *p_data) {
+void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
+                              P_DATA *p_data) {
   // NOTATION NOTES
   // "v" denotes velocity
   // "va" denotes angular velocity
   // "v_hat" denotes spatial (six dimentional) velocity
   vec3 temp = GLM_VEC3_ZERO_INIT;
 
+  vec6 parent_v_hat = VEC6_ZERO_INIT;
   vec3 v = GLM_VEC3_ZERO_INIT;
   vec3 va = GLM_VEC3_ZERO_INIT;
   if (parent_col != -1) {
-    glm_mat3_mulv(p_data[cur_col].ST_from_parent, p_data[parent_col].v_hat, v);
-
-    glm_mat3_mulv(p_data[cur_col].ST_from_parent,
-                  ((float *) p_data[parent_col].v_hat) + 3, va);
+    mat6_mulv(p_data[cur_col].ST_from_parent, p_data[parent_col].v_hat,
+              parent_v_hat);
+    // Because the angular component of a link is represented by the first half
+    // of v_hat, we can just pass v_hat in as a vec3 to use the angular
+    // velocity
+    glm_vec3_copy(parent_v_hat, va);
+    // The linear component is represented by the second half of v_hat, so we
+    // extract the last half of v_hat when using linear velocity
+    glm_vec3_copy(((float *) parent_v_hat) + 3, v);
     glm_vec3_cross(p_data[cur_col].v_hat, p_data[cur_col].from_parent_lin,
                    temp);
     glm_vec3_add(va, temp, va);
@@ -224,38 +234,36 @@ void compute_spatial_velocity(int cur_col, int parent_col,
   // Accumulate velocities from prismatic DOFS
   for (int j = 0; j < 3; j++) {
     if (p_data->dofs[j]) {
-      glm_vec3_scale(BASIS_VECTORS[j], p_data[cur_col]->joint_angle_vels[j],
+      glm_vec3_scale(BASIS_VECTORS[j], p_data[cur_col].joint_angle_vels[j],
                      temp);
       glm_vec3_add(temp, v, v);
     }
   }
   // TODO Make this more flexible so more than just having the X-Axis as the
   // only degree of freedom
-  glm_vec3_scale(BASIS_VECTORS[0],
-                 p_data[cur_col]->joint_angle_vels[3], temp);
+  glm_vec3_scale(BASIS_VECTORS[0], p_data[cur_col].joint_angle_vels[3], temp);
   glm_vec3_add(temp, va, va);
 
-  glm_vec3_cross(BASIS_VECTORS[0], p_data[cur_col]->joint_to_com, temp);
-  glm_vec3_scale(temp, p_data[cur_col]->joint_angle_vels[3], temp);
+  glm_vec3_cross(BASIS_VECTORS[0], p_data[cur_col].joint_to_com, temp);
+  glm_vec3_scale(temp, p_data[cur_col].joint_angle_vels[3], temp);
   glm_vec3_add(temp, v, v);
 
-  vec6_compose(va, v, p_data[cur_col]->v_hat);
+  vec6_compose(va, v, p_data[cur_col].v_hat);
 }
 
 void compute_I_hat_and_Z_hat(int cur_col, int cur_bone, P_DATA *p_data,
                              mat4 **bone_mats) {
-  mat4 temp_mat4 = GLM_MAT4_ZERO_INIT;
-  vec3 temp_vec3 = GLM_VEC3_ZERO_INIT;
+  mat4 temp = GLM_MAT4_ZERO_INIT;
 
   // M
-  float mass = 1.0 / p_data[cur_col]->inv_mass;
+  float mass = 1.0 / p_data[cur_col].inv_mass;
   mat3 mass_mat = GLM_MAT3_IDENTITY_INIT;
   glm_mat3_scale(mass_mat, mass);
 
   // I
   mat3 inertia_tensor = GLM_MAT3_IDENTITY_INIT;
-  glm_mat4_inv(p_data[cur_col]->inv_inertia, temp_mat4);
-  glm_mat4_pick3(temp_mat4, inertia_tensor);
+  glm_mat4_inv(p_data[cur_col].inv_inertia, temp);
+  glm_mat4_pick3(temp, inertia_tensor);
 
   // I-hat = [[0, M], [I, 0]];
   mat6_compose(MAT3_ZERO, mass_mat, inertia_tensor, MAT3_ZERO,
@@ -265,14 +273,16 @@ void compute_I_hat_and_Z_hat(int cur_col, int cur_bone, P_DATA *p_data,
   vec3 za_linear = GLM_VEC3_ZERO_INIT;
   mat4 world_to_cur = GLM_MAT3_ZERO_INIT;
   glm_mat4_inv(bone_mats[cur_bone][ROTATION], world_to_cur);
-  glm_mat4_mulv3(world_to_cur, GRAVITY, 1.0, za_linear);
+  glm_mat4_mulv3(world_to_cur, G_VEC, 1.0, za_linear);
   glm_vec3_scale(za_linear, -mass, za_linear);
 
   // A
   vec3 za_angular = GLM_VEC3_ZERO_INIT;
-  glm_mat3_mulv(inertia, p_data[cur_col]->v_hat, za_angular);
-  glm_vec3_cross(ang_vel, za_angular, za_angular);
+  // Because the angular velocity of a link is represented by the first half
+  // of v_hat, we can just pass v_hat in as a vec3 to use the angular velocity
+  glm_mat3_mulv(inertia_tensor, p_data[cur_col].v_hat, za_angular);
+  glm_vec3_cross(p_data[cur_col].v_hat, za_angular, za_angular);
 
   // Z-hat = [L, A]
-  vec6_compose(za_linear, za_angular, p_data[cur_col]->Z_hat);
-}*/
+  vec6_compose(za_linear, za_angular, p_data[cur_col].Z_hat);
+}

@@ -40,6 +40,7 @@ vec3 cube_pos = { 3.0, 2.0, 3.0 };
 vec3 s_pos = { -3.0, 2.0, 3.0 };
 vec3 ragdoll_pos = { 0.0, 1.0, -3.0 };
 
+void featherstone_abm(ENTITY *body);
 void free_entity(ENTITY *);
 void free_model(MODEL *);
 int init_scene();
@@ -232,8 +233,16 @@ int main() {
 
   sa_test();
 
-  printf("\n\nRagdoll:\n");
+  printf("\n\nBefore:\n");
   print_p_data(ragdoll);
+
+  featherstone_abm(ragdoll);
+
+  printf("\n\nAfter:\n");
+  print_p_data(ragdoll);
+
+
+
 
   free_entity(player);
   free_entity(ragdoll);

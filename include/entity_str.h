@@ -1,4 +1,5 @@
 #include <spatial_algebra.h>
+#include <cglm/mat4.h>
 
 #define NUM_PROPS (5)
 #define DEFAULT (0)

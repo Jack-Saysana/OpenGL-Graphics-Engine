@@ -4,8 +4,6 @@
 #define VEC6_ZERO_INIT { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }
 #define MAT6_ZERO_INIT {VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT, VEC6_ZERO_INIT}
 
-//static mat3 MAT3_ZERO = GLM_MAT3_ZERO_INIT;
-
 typedef float vec6[6];
 typedef vec6 mat6[6];
 
