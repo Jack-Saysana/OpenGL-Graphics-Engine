@@ -40,9 +40,9 @@ void draw_bones(MODEL *model) {
 
   B_VBO *bone_data = malloc(sizeof(B_VBO) * model->num_bones);
   for (int i = 0; i < model->num_bones; i++) {
-    bone_data[i].coords[0] = model->bones[i].coords[0];
-    bone_data[i].coords[1] = model->bones[i].coords[1];
-    bone_data[i].coords[2] = model->bones[i].coords[2];
+    bone_data[i].coords[0] = model->bones[i].base[0];
+    bone_data[i].coords[1] = model->bones[i].base[1];
+    bone_data[i].coords[2] = model->bones[i].base[2];
     bone_data[i].bone_id = i;
   }
 

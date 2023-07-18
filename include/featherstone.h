@@ -21,3 +21,5 @@ void compute_spatial_transformations(mat4* parent_mats,
                                      mat6 child_to_parent_dest);
 void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
                               P_DATA *p_data);
+
+void get_model_mat(ENTITY *entity, mat4 model);

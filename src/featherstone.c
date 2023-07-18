@@ -4,7 +4,8 @@ int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
   COLLIDER *links = body->model->colliders;
 
-  //vec3 temp = GLM_VEC3_ZERO_INIT;
+  mat4 to_world_coords = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(body, to_world_coords);
 
   BONE *bones = body->model->bones;
   COLLIDER *colliders = body->model->colliders;
@@ -24,13 +25,16 @@ int featherstone_abm(ENTITY *body) {
     }
 
     root_bone = bone_from_col[cur_col];
+
     vec3 cur_coords = GLM_VEC3_ZERO_INIT;
     if (colliders[cur_col].type == POLY) {
-      glm_vec3_copy(colliders[cur_col].data.center_of_mass, cur_coords);
+      glm_mat4_mulv3(to_world_coords, colliders[cur_col].data.center_of_mass,
+                     1.0, cur_coords);
     } else {
-      glm_vec3_copy(colliders[cur_col].data.center, cur_coords);
+      glm_mat4_mulv3(to_world_coords, colliders[cur_col].data.center, 1.0,
+                     cur_coords);
     }
-    glm_vec3_sub(cur_coords, bones[root_bone].coords,
+    glm_vec3_sub(cur_coords, bones[root_bone].base,
                  p_data[cur_col].joint_to_com);
 
     parent_bone = bones[root_bone].parent;
@@ -39,10 +43,12 @@ int featherstone_abm(ENTITY *body) {
       parent_col = col_from_bone[parent_bone];
       vec3 parent_coords = GLM_VEC3_ZERO_INIT;
       if (colliders[parent_col].type == POLY) {
-        glm_vec3_copy(colliders[parent_col].data.center_of_mass,
-                      parent_coords);
+        glm_mat4_mulv3(to_world_coords,
+                       colliders[parent_col].data.center_of_mass, 1.0,
+                       parent_coords);
       } else {
-        glm_vec3_copy(colliders[parent_col].data.center, parent_coords);
+        glm_mat4_mulv3(to_world_coords, colliders[parent_col].data.center, 1.0,
+                       parent_coords);
       }
 
       compute_spatial_transformations(body->bone_mats[parent_bone],
@@ -232,13 +238,13 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
   }
 
   // Accumulate velocities from prismatic DOFS
-  for (int j = 0; j < 3; j++) {
+  /*for (int j = 0; j < 3; j++) {
     if (p_data->dofs[j]) {
       glm_vec3_scale(BASIS_VECTORS[j], p_data[cur_col].joint_angle_vels[j],
                      temp);
       glm_vec3_add(temp, v, v);
     }
-  }
+  }*/
   // TODO Make this more flexible so more than just having the X-Axis as the
   // only degree of freedom
   glm_vec3_scale(BASIS_VECTORS[0], p_data[cur_col].joint_angle_vels[3], temp);

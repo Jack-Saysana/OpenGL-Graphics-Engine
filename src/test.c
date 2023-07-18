@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <entity_str.h>
 
+#define DEFAULT (0)
+#define HIT_BOX (1)
+
 extern MODEL *cube;
 extern MODEL *rect_prism;
 extern MODEL *dude;
@@ -44,6 +47,7 @@ void featherstone_abm(ENTITY *body);
 void free_entity(ENTITY *);
 void free_model(MODEL *);
 int init_scene();
+void get_model_mat(ENTITY *entity, mat4 model);
 
 // Not used but defition needed
 vec3 col_point = { 0.0, 0.0, 0.0 };
@@ -61,6 +65,9 @@ void print_vec6(vec6 v) {
 }
 
 void print_p_data(ENTITY *ent) {
+  mat4 to_world_coords = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(ent, to_world_coords);
+
   printf("Num colliders: %lld\nNum bones: %lld\n", ent->model->num_colliders,
          ent->model->num_bones);
   printf("Bone -> collider relations:\n");
@@ -73,7 +80,42 @@ void print_p_data(ENTITY *ent) {
   }
   printf("Physics data:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
+    if (ent->model->colliders[i].category != HIT_BOX) {
+      continue;
+    }
+
+    vec3 cur_coords = GLM_VEC3_ZERO_INIT;
+    if (ent->model->colliders[i].type == POLY) {
+      glm_mat4_mulv3(to_world_coords,
+                     ent->model->colliders[i].data.center_of_mass, 1.0,
+                     cur_coords);
+    } else {
+      glm_mat4_mulv3(to_world_coords,
+                     ent->model->colliders[i].data.center, 1.0, cur_coords);
+    }
+
+    vec3 cur_joint = GLM_VEC3_ZERO_INIT;
+    int root_bone = ent->model->collider_bone_links[i];
+      glm_mat4_mulv3(to_world_coords, ent->model->bones[root_bone].base, 1.0,
+                     cur_joint);
+    int parent_bone = ent->model->bones[root_bone].parent;
+
+    vec3 axis_of_rot = GLM_VEC3_ZERO_INIT;
+    glm_mat4_mulv3(to_world_coords,
+                   ent->model->bones[root_bone].basis_vectors[0], 1.0,
+                   axis_of_rot);
+    glm_vec3_normalize(axis_of_rot);
+
     printf("  collider[%lld]:\n", i);
+    if (parent_bone != -1) {
+      printf("    Parent: %d\n", ent->model->bone_collider_links[parent_bone]);
+    }
+    printf("    axis of rotation: %f %f %f\n", axis_of_rot[0], axis_of_rot[1],
+           axis_of_rot[2]);
+    printf("    COM:\n");
+    printf("    %f %f %f\n", cur_coords[0], cur_coords[1], cur_coords[2]);
+    printf("    joint:\n");
+    printf("    %f %f %f\n", cur_joint[0], cur_joint[1], cur_joint[2]);
     printf("    v-hat:\n");
     print_vec6(ent->np_data[i].v_hat);
   }
