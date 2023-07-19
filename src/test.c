@@ -65,8 +65,8 @@ void print_vec6(vec6 v) {
 }
 
 void print_p_data(ENTITY *ent) {
-  mat4 to_world_coords = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(ent, to_world_coords);
+  mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(ent, global_ent_to_world);
 
   printf("Num colliders: %lld\nNum bones: %lld\n", ent->model->num_colliders,
          ent->model->num_bones);
@@ -84,26 +84,34 @@ void print_p_data(ENTITY *ent) {
       continue;
     }
 
+    int root_bone = ent->model->collider_bone_links[i];
+
     vec3 cur_coords = GLM_VEC3_ZERO_INIT;
+    mat4 cur_ent_to_world = GLM_MAT3_IDENTITY_INIT;
+    glm_mat4_mul(ent->final_b_mats[root_bone], global_ent_to_world,
+                 cur_ent_to_world);
     if (ent->model->colliders[i].type == POLY) {
-      glm_mat4_mulv3(to_world_coords,
+      glm_mat4_mulv3(cur_ent_to_world,
                      ent->model->colliders[i].data.center_of_mass, 1.0,
                      cur_coords);
     } else {
-      glm_mat4_mulv3(to_world_coords,
-                     ent->model->colliders[i].data.center, 1.0, cur_coords);
+      glm_mat4_mulv3(cur_ent_to_world, ent->model->colliders[i].data.center,
+                     1.0, cur_coords);
     }
 
+    mat4 cur_bone_to_world = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_ins3(ent->model->bones[root_bone].coordinate_matrix,
+                  cur_bone_to_world);
+    glm_mat4_mul(cur_ent_to_world, cur_bone_to_world, cur_bone_to_world);
+
     vec3 cur_joint = GLM_VEC3_ZERO_INIT;
-    int root_bone = ent->model->collider_bone_links[i];
-      glm_mat4_mulv3(to_world_coords, ent->model->bones[root_bone].base, 1.0,
-                     cur_joint);
+    glm_mat4_mulv3(cur_ent_to_world, ent->model->bones[root_bone].base, 1.0,
+                   cur_joint);
+
     int parent_bone = ent->model->bones[root_bone].parent;
 
-    vec3 axis_of_rot = GLM_VEC3_ZERO_INIT;
-    glm_mat4_mulv3(to_world_coords,
-                   ent->model->bones[root_bone].basis_vectors[0], 1.0,
-                   axis_of_rot);
+    vec3 axis_of_rot = { 1.0, 0.0, 0.0 };
+    glm_mat4_mulv3(cur_bone_to_world, axis_of_rot, 1.0, axis_of_rot);
     glm_vec3_normalize(axis_of_rot);
 
     printf("  collider[%lld]:\n", i);

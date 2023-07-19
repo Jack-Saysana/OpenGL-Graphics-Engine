@@ -4,9 +4,6 @@ int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
   COLLIDER *links = body->model->colliders;
 
-  mat4 to_world_coords = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(body, to_world_coords);
-
   BONE *bones = body->model->bones;
   COLLIDER *colliders = body->model->colliders;
   int *bone_from_col = body->model->collider_bone_links;
@@ -17,6 +14,9 @@ int featherstone_abm(ENTITY *body) {
   int parent_bone = -1;
   int parent_col = -1;
 
+  mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(body, global_ent_to_world);
+
   // TODO joint_to_com can be precomputed
   // Calculate spatial velocities from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
@@ -26,12 +26,24 @@ int featherstone_abm(ENTITY *body) {
 
     root_bone = bone_from_col[cur_col];
 
+    // Transforms entity space vectors of current link to world space
+    mat4 cur_ent_to_world = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_mul(body->final_b_mats[root_bone], global_ent_to_world,
+                 cur_ent_to_world);
+
+    // Transforms bone space vectors of current link to world space
+    mat4 cur_bone_to_world = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_ins3(bones[root_bone].coordinate_matrix, cur_bone_to_world);
+    glm_mat4_mul(cur_ent_to_world, cur_bone_to_world, cur_bone_to_world);
+
     vec3 cur_coords = GLM_VEC3_ZERO_INIT;
+    // Uses entity space to world space because center/center_of_mass is given
+    // in entity space
     if (colliders[cur_col].type == POLY) {
-      glm_mat4_mulv3(to_world_coords, colliders[cur_col].data.center_of_mass,
+      glm_mat4_mulv3(cur_ent_to_world, colliders[cur_col].data.center_of_mass,
                      1.0, cur_coords);
     } else {
-      glm_mat4_mulv3(to_world_coords, colliders[cur_col].data.center, 1.0,
+      glm_mat4_mulv3(cur_ent_to_world, colliders[cur_col].data.center, 1.0,
                      cur_coords);
     }
     glm_vec3_sub(cur_coords, bones[root_bone].base,
@@ -40,20 +52,34 @@ int featherstone_abm(ENTITY *body) {
     parent_bone = bones[root_bone].parent;
     parent_col = -1;
     if (parent_bone != -1) {
+      // Transforms entity space vectors of parent link to world space
+      mat4 parent_ent_to_world = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_mul(body->final_b_mats[parent_bone], global_ent_to_world,
+                   parent_ent_to_world);
+
+      // Transforms bone space vectors of parent link to world space
+      mat4 parent_bone_to_world = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_ins3(bones[parent_bone].coordinate_matrix,
+                    parent_bone_to_world);
+      glm_mat4_mul(parent_ent_to_world, parent_bone_to_world,
+                   parent_bone_to_world);
+
       parent_col = col_from_bone[parent_bone];
       vec3 parent_coords = GLM_VEC3_ZERO_INIT;
+      // Uses entity space to world space because center/center_of_mass is
+      // given in entity space
       if (colliders[parent_col].type == POLY) {
-        glm_mat4_mulv3(to_world_coords,
+        glm_mat4_mulv3(parent_ent_to_world,
                        colliders[parent_col].data.center_of_mass, 1.0,
                        parent_coords);
       } else {
-        glm_mat4_mulv3(to_world_coords, colliders[parent_col].data.center, 1.0,
-                       parent_coords);
+        glm_mat4_mulv3(parent_ent_to_world, colliders[parent_col].data.center,
+                       1.0, parent_coords);
       }
 
-      compute_spatial_transformations(body->bone_mats[parent_bone],
+      compute_spatial_transformations(parent_bone_to_world,
                                       parent_coords,
-                                      body->bone_mats[root_bone],
+                                      cur_bone_to_world,
                                       cur_coords,
                                       p_data[cur_col].from_parent_lin,
                                       p_data[cur_col].ST_from_parent,
@@ -157,58 +183,50 @@ int featherstone_abm(ENTITY *body) {
   return 0;
 }
 
-void compute_spatial_transformations(mat4* parent_mats,
-                                     vec3 parent_coords,
-                                     mat4* child_mats,
-                                     vec3 child_coords,
-                                     vec3 parent_to_child_lin_dest,
-                                     mat6 parent_to_child_dest,
-                                     mat6 child_to_parent_dest) {
-  // Matrix rotating vectors in the parent bone's coordinates to world coords
-  mat4 parent_to_world = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_copy(parent_mats[ROTATION], parent_to_world);
+void compute_spatial_transformations(mat4 p_bone_to_world,
+                                     vec3 p_coords,
+                                     mat4 c_bone_to_world,
+                                     vec3 c_coords,
+                                     vec3 p_to_c_lin_dest,
+                                     mat6 p_to_c_dest,
+                                     mat6 c_to_p_dest) {
+  // Matrix rotating vectors in world space to the parent bone space
+  mat4 p_world_to_bone = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_inv(p_bone_to_world, p_world_to_bone);
+
+  // Matrix rotating vectors in the child bone space to the parent bone space
+  mat4 c_to_p_rot = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_mul(p_world_to_bone, c_bone_to_world, c_to_p_rot);
+
   // Inverse of above
-  mat4 world_to_parent = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_inv(parent_to_world, world_to_parent);
+  mat4 p_to_c_rot = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_inv(c_to_p_rot, p_to_c_rot);
 
-  // Matrix rotating vectors in the child bone's coordinates to world
-  // coordinates
-  mat4 child_to_world = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_copy(child_mats[ROTATION], child_to_world);
+  // Linear component of the spatial transformation matrix transforming vectors
+  // in the child bone space to the parent bone space
+  mat3 p_to_c_mat = GLM_MAT3_IDENTITY_INIT;
+  glm_vec3_sub(c_coords, p_coords, p_to_c_lin_dest);
+  vec3_singular_cross(p_to_c_lin_dest, p_to_c_mat);
 
-  // Matrix rotating vectors in child's bone coordinates to vectors in the
-  // current bone's coordinates
-  mat3 child_to_parent_rot = GLM_MAT3_IDENTITY_INIT;
-  glm_mat4_mul(world_to_parent, child_to_world, child_to_world);
-  glm_mat4_pick3(child_to_world, child_to_parent_rot);
+  // Linear component of the spatial transformation matrix transforming vectors
+  // in the parent bone space to the child bone space
+  mat3 c_to_p_mat = GLM_MAT3_IDENTITY_INIT;
+  vec3 c_to_p_lin = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(p_to_c_lin_dest, -1.0, c_to_p_lin);
+  vec3_singular_cross(c_to_p_lin, c_to_p_mat);
 
-  // Matrix rotating vectors in the current bone's coordinates to vectors
-  // in the child's bone coordinates
-  mat3 parent_to_child_rot = GLM_MAT3_IDENTITY_INIT;
-  glm_mat3_inv(child_to_parent_rot, parent_to_child_rot);
-
-  // Matrix who's diagonal is the vector from the parent bone tail to the
-  // child bone tail
-  mat3 parent_to_child_mat = GLM_MAT3_IDENTITY_INIT;
-  glm_vec3_sub(child_coords, parent_coords, parent_to_child_lin_dest);
-  vec3_singular_cross(parent_to_child_lin_dest, parent_to_child_mat);
-
-  // Matrix who's diagonal is the vector from the child bone tail to the
-  // parent bone tail
-  mat3 child_to_parent_mat = GLM_MAT3_IDENTITY_INIT;
-  vec3 child_to_parent_lin = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(parent_to_child_lin_dest, -1.0, child_to_parent_lin);
-  vec3_singular_cross(child_to_parent_lin, child_to_parent_mat);
+  mat3 c_to_p_rot_m3 = GLM_MAT3_IDENTITY_INIT;
+  glm_mat4_pick3(c_to_p_rot, c_to_p_rot_m3);
+  mat3 p_to_c_rot_m3 = GLM_MAT3_IDENTITY_INIT;
+  glm_mat4_pick3(p_to_c_rot, p_to_c_rot_m3);
 
   // Spatial transformation matrix transforming vectors in the child bone's
   // coords to vectors in the current bone's coords
-  mat6_spatial_transform(child_to_parent_rot, parent_to_child_mat,
-                         child_to_parent_dest);
+  mat6_spatial_transform(c_to_p_rot_m3, p_to_c_mat, c_to_p_dest);
 
   // Spatial transformation matrix transforming vectors in the current
   // bone's coords to vectors in the child bone's coords
-  mat6_spatial_transform(parent_to_child_rot, child_to_parent_mat,
-                         parent_to_child_dest);
+  mat6_spatial_transform(p_to_c_rot_m3, c_to_p_mat, p_to_c_dest);
 }
 
 void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,

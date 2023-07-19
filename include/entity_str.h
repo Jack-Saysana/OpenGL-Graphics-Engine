@@ -41,6 +41,7 @@ typedef struct collider {
   // Position in the model collider buffer of the colliders child list
   int children_offset;
   size_t num_children;
+  // verts, center_of_mass, and center are in entity space
   union {
     // POLYHEDRON DATA
     struct {
@@ -78,8 +79,10 @@ typedef struct animation {
 } ANIMATION;
 
 typedef struct bone {
+  // in entity space (origin in bone space)
   vec3 base;
-  vec3 basis_vectors[3];
+  // Transforms vectors in bone space to entity space
+  mat3 coordinate_matrix;
   int parent;
   int num_children;
 } BONE;
