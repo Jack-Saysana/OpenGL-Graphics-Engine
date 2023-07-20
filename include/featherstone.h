@@ -1,4 +1,5 @@
 #include <entity_str.h>
+#include <stdio.h>
 
 static vec3 BASIS_VECTORS[3] = {
   {1.0, 0.0, 0.0},
@@ -23,3 +24,5 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
                               P_DATA *p_data);
 
 void get_model_mat(ENTITY *entity, mat4 model);
+void print_vec6(vec6 v);
+void print_mat6(mat6 m);

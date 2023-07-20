@@ -42,6 +42,7 @@ typedef struct collider {
   int children_offset;
   size_t num_children;
   // verts, center_of_mass, and center are in entity space
+  // center_of_mass and center are the origin in bone space
   union {
     // POLYHEDRON DATA
     struct {
@@ -79,7 +80,7 @@ typedef struct animation {
 } ANIMATION;
 
 typedef struct bone {
-  // in entity space (origin in bone space)
+  // in entity space
   vec3 base;
   // Transforms vectors in bone space to entity space
   mat3 coordinate_matrix;
@@ -161,10 +162,10 @@ typedef struct p_data {
   // [X, Y, Z, ROTX, ROTY, ROTZ]
   unsigned int dofs[6];
 
-  // Vector pointing from link parent's COM to current link's COM
+  // Vector pointing from link parent's COM to current link's COM in bone space
   vec3 from_parent_lin;
 
-  // Vector pointing from link's joint to link's COM
+  // Vector pointing from link's joint to link's COM in bone space
   vec3 joint_to_com;
 
   // TEMP

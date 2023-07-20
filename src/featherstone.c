@@ -36,6 +36,12 @@ int featherstone_abm(ENTITY *body) {
     glm_mat4_ins3(bones[root_bone].coordinate_matrix, cur_bone_to_world);
     glm_mat4_mul(cur_ent_to_world, cur_bone_to_world, cur_bone_to_world);
 
+    // Transforms entity space vectors of current link to bone space of current
+    // link
+    mat4 cur_ent_to_bone = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_ins3(bones[root_bone].coordinate_matrix, cur_ent_to_bone);
+    glm_mat4_inv(cur_ent_to_bone, cur_ent_to_bone);
+
     vec3 cur_coords = GLM_VEC3_ZERO_INIT;
     // Uses entity space to world space because center/center_of_mass is given
     // in entity space
@@ -46,8 +52,11 @@ int featherstone_abm(ENTITY *body) {
       glm_mat4_mulv3(cur_ent_to_world, colliders[cur_col].data.center, 1.0,
                      cur_coords);
     }
+
     glm_vec3_sub(cur_coords, bones[root_bone].base,
                  p_data[cur_col].joint_to_com);
+    glm_mat4_mulv3(cur_ent_to_bone, p_data[cur_col].joint_to_com, 1.0,
+                   p_data[cur_col].joint_to_com);
 
     parent_bone = bones[root_bone].parent;
     parent_col = -1;
@@ -194,6 +203,10 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   mat4 p_world_to_bone = GLM_MAT4_IDENTITY_INIT;
   glm_mat4_inv(p_bone_to_world, p_world_to_bone);
 
+  // Matrix rotating vectors in world space to the child bone space
+  mat4 c_world_to_bone = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_inv(c_bone_to_world, c_world_to_bone);
+
   // Matrix rotating vectors in the child bone space to the parent bone space
   mat4 c_to_p_rot = GLM_MAT4_IDENTITY_INIT;
   glm_mat4_mul(p_world_to_bone, c_bone_to_world, c_to_p_rot);
@@ -205,14 +218,22 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   // Linear component of the spatial transformation matrix transforming vectors
   // in the child bone space to the parent bone space
   mat3 p_to_c_mat = GLM_MAT3_IDENTITY_INIT;
-  glm_vec3_sub(c_coords, p_coords, p_to_c_lin_dest);
+  // p_to_c is expected to be in the child bone space. Since c would be the
+  // origin in the child bone space, p_to_c is equivalent to the inverse of
+  // p in the child bone space
+  glm_mat4_mulv3(c_world_to_bone, p_coords, 1.0, p_to_c_lin_dest);
+  glm_vec3_negate(p_to_c_lin_dest);
   vec3_singular_cross(p_to_c_lin_dest, p_to_c_mat);
 
   // Linear component of the spatial transformation matrix transforming vectors
   // in the parent bone space to the child bone space
   mat3 c_to_p_mat = GLM_MAT3_IDENTITY_INIT;
   vec3 c_to_p_lin = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(p_to_c_lin_dest, -1.0, c_to_p_lin);
+  // c_to_p is expected to be in the parent bone space. Since p would be the
+  // origin in the parent bone space, c_to_p is equivalent to the inverse of
+  // c in the parent bone space
+  glm_mat4_mulv3(p_world_to_bone, c_coords, 1.0, c_to_p_lin);
+  glm_vec3_negate(c_to_p_lin);
   vec3_singular_cross(c_to_p_lin, c_to_p_mat);
 
   mat3 c_to_p_rot_m3 = GLM_MAT3_IDENTITY_INIT;
@@ -241,6 +262,12 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
   vec3 v = GLM_VEC3_ZERO_INIT;
   vec3 va = GLM_VEC3_ZERO_INIT;
   if (parent_col != -1) {
+    printf("\n\n%d -> %d\n", parent_col, cur_col);
+    print_mat6(p_data[cur_col].ST_from_parent);
+    printf("\n");
+    printf("v_hat:\n");
+    print_vec6(p_data[parent_col].v_hat);
+
     mat6_mulv(p_data[cur_col].ST_from_parent, p_data[parent_col].v_hat,
               parent_v_hat);
     // Because the angular component of a link is represented by the first half

@@ -286,6 +286,7 @@ int main() {
   printf("\n\nBefore:\n");
   print_p_data(ragdoll);
 
+  ragdoll->np_data[2].joint_angle_vels[3] = 1.0;
   featherstone_abm(ragdoll);
 
   printf("\n\nAfter:\n");
