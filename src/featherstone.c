@@ -86,6 +86,7 @@ int featherstone_abm(ENTITY *body) {
                        1.0, parent_coords);
       }
 
+      printf("\n\np: %d\nc: %d\n", parent_col, cur_col);
       compute_spatial_transformations(parent_bone_to_world,
                                       parent_coords,
                                       cur_bone_to_world,
@@ -200,28 +201,37 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
                                      mat6 p_to_c_dest,
                                      mat6 c_to_p_dest) {
   // Matrix rotating vectors in world space to the parent bone space
-  mat4 p_world_to_bone = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_inv(p_bone_to_world, p_world_to_bone);
+  mat3 p_world_to_bone = GLM_MAT3_IDENTITY_INIT;
+  // Remove translational component of mat4 since we only want rot matrix
+  glm_mat4_pick3(p_bone_to_world, p_world_to_bone);
+  glm_mat3_inv(p_world_to_bone, p_world_to_bone);
 
   // Matrix rotating vectors in world space to the child bone space
-  mat4 c_world_to_bone = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_inv(c_bone_to_world, c_world_to_bone);
+  mat3 c_world_to_bone = GLM_MAT3_IDENTITY_INIT;
+  // Remove translational component of mat4 since we only want rot matrix
+  glm_mat4_pick3(c_bone_to_world, c_world_to_bone);
+  glm_mat3_inv(c_world_to_bone, c_world_to_bone);
 
   // Matrix rotating vectors in the child bone space to the parent bone space
-  mat4 c_to_p_rot = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_mul(p_world_to_bone, c_bone_to_world, c_to_p_rot);
+  mat3 c_to_p_rot = GLM_MAT3_IDENTITY_INIT;
+  glm_mat4_pick3(c_bone_to_world, c_to_p_rot);
+  glm_mat3_mul(p_world_to_bone, c_to_p_rot, c_to_p_rot);
 
   // Inverse of above
-  mat4 p_to_c_rot = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_inv(c_to_p_rot, p_to_c_rot);
+  mat3 p_to_c_rot = GLM_MAT3_IDENTITY_INIT;
+  glm_mat3_inv(c_to_p_rot, p_to_c_rot);
 
   // Linear component of the spatial transformation matrix transforming vectors
   // in the child bone space to the parent bone space
   mat3 p_to_c_mat = GLM_MAT3_IDENTITY_INIT;
-  // p_to_c is expected to be in the child bone space. Since c would be the
-  // origin in the child bone space, p_to_c is equivalent to the inverse of
-  // p in the child bone space
-  glm_mat4_mulv3(c_world_to_bone, p_coords, 1.0, p_to_c_lin_dest);
+  // Parent to child in world coords
+  glm_vec3_sub(c_coords, p_coords, p_to_c_lin_dest);
+  printf("c_coords: (%f, %f, %f)\n", c_coords[0], c_coords[1], c_coords[2]);
+  printf("p_coords: (%f, %f, %f)\n", p_coords[0], p_coords[1], p_coords[2]);
+  // Rotate to bone coords of child
+  glm_mat3_mulv(c_world_to_bone, p_to_c_lin_dest, p_to_c_lin_dest);
+  printf("p->c: (%f, %f, %f)\n", p_to_c_lin_dest[0], p_to_c_lin_dest[1],
+         p_to_c_lin_dest[2]);
   glm_vec3_negate(p_to_c_lin_dest);
   vec3_singular_cross(p_to_c_lin_dest, p_to_c_mat);
 
@@ -232,22 +242,17 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   // c_to_p is expected to be in the parent bone space. Since p would be the
   // origin in the parent bone space, c_to_p is equivalent to the inverse of
   // c in the parent bone space
-  glm_mat4_mulv3(p_world_to_bone, c_coords, 1.0, c_to_p_lin);
+  glm_mat3_mulv(p_world_to_bone, c_coords, c_to_p_lin);
   glm_vec3_negate(c_to_p_lin);
   vec3_singular_cross(c_to_p_lin, c_to_p_mat);
 
-  mat3 c_to_p_rot_m3 = GLM_MAT3_IDENTITY_INIT;
-  glm_mat4_pick3(c_to_p_rot, c_to_p_rot_m3);
-  mat3 p_to_c_rot_m3 = GLM_MAT3_IDENTITY_INIT;
-  glm_mat4_pick3(p_to_c_rot, p_to_c_rot_m3);
-
   // Spatial transformation matrix transforming vectors in the child bone's
   // coords to vectors in the current bone's coords
-  mat6_spatial_transform(c_to_p_rot_m3, p_to_c_mat, c_to_p_dest);
+  mat6_spatial_transform(c_to_p_rot, p_to_c_mat, c_to_p_dest);
 
   // Spatial transformation matrix transforming vectors in the current
   // bone's coords to vectors in the child bone's coords
-  mat6_spatial_transform(p_to_c_rot_m3, c_to_p_mat, p_to_c_dest);
+  mat6_spatial_transform(p_to_c_rot, c_to_p_mat, p_to_c_dest);
 }
 
 void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
@@ -262,8 +267,10 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
   vec3 v = GLM_VEC3_ZERO_INIT;
   vec3 va = GLM_VEC3_ZERO_INIT;
   if (parent_col != -1) {
-    printf("\n\n%d -> %d\n", parent_col, cur_col);
+    printf("\n%d -> %d\n", parent_col, cur_col);
     print_mat6(p_data[cur_col].ST_from_parent);
+    printf("\n%d <- %d\n", parent_col, cur_col);
+    print_mat6(p_data[cur_col].ST_to_parent);
     printf("\n");
     printf("v_hat:\n");
     print_vec6(p_data[parent_col].v_hat);

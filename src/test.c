@@ -55,8 +55,15 @@ int enable_gravity = 1;
 
 void print_mat6(mat6 m) {
   for (int i = 0; i < 6; i++) {
-    printf("|%02f %02f %02f %02f %02f %02f|\n",
+    printf("|%.2f %.2f %.2f %.2f %.2f %.2f|\n",
            m[0][i], m[1][i], m[2][i], m[3][i], m[4][i], m[5][i]);
+  }
+}
+
+void print_mat3 (mat3 m) {
+  for (int i = 0; i < 6; i++) {
+    printf("|%.2f %.2f %.2f|\n",
+           m[0][i], m[1][i], m[2][i]);
   }
 }
 
@@ -64,19 +71,23 @@ void print_vec6(vec6 v) {
   printf("[%f %f %f %f %f %f]\n", v[0], v[1], v[2], v[3], v[4], v[5]);
 }
 
+void print_vec3(vec3 v) {
+  printf("[%f %f %f]\n", v[0], v[1], v[2]);
+}
+
 void print_p_data(ENTITY *ent) {
   mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(ent, global_ent_to_world);
 
-  printf("Num colliders: %lld\nNum bones: %lld\n", ent->model->num_colliders,
+  printf("Num colliders: %ld\nNum bones: %ld\n", ent->model->num_colliders,
          ent->model->num_bones);
   printf("Bone -> collider relations:\n");
   for (size_t i = 0; i < ent->model->num_bones; i++) {
-    printf("  %lld -> %d\n", i, ent->model->bone_collider_links[i]);
+    printf("  %ld -> %d\n", i, ent->model->bone_collider_links[i]);
   }
   printf("Collider -> bone relations:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
-    printf("  %lld -> %d\n", i, ent->model->collider_bone_links[i]);
+    printf("  %ld -> %d\n", i, ent->model->collider_bone_links[i]);
   }
   printf("Physics data:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
@@ -114,7 +125,7 @@ void print_p_data(ENTITY *ent) {
     glm_mat4_mulv3(cur_bone_to_world, axis_of_rot, 1.0, axis_of_rot);
     glm_vec3_normalize(axis_of_rot);
 
-    printf("  collider[%lld]:\n", i);
+    printf("  collider[%ld]:\n", i);
     if (parent_bone != -1) {
       printf("    Parent: %d\n", ent->model->bone_collider_links[parent_bone]);
     }
@@ -277,7 +288,7 @@ int main() {
   ragdoll->scale[0] = 2.0;
   ragdoll->scale[1] = 2.0;
   ragdoll->scale[2] = 2.0;
-  for (size_t i = 0; i < ragdoll->model->num_bones; i++) {
+  for (size_t i = 0; i < ragdoll->model->num_colliders; i++) {
     ragdoll->np_data[i].inv_mass = 1.0;
   }
 

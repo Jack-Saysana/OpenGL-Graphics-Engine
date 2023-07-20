@@ -26,3 +26,5 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
 void get_model_mat(ENTITY *entity, mat4 model);
 void print_vec6(vec6 v);
 void print_mat6(mat6 m);
+void print_vec3(vec3 v);
+void print_mat3(mat3 m);
