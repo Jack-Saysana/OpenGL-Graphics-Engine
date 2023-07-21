@@ -87,6 +87,15 @@ int featherstone_abm(ENTITY *body) {
       }
 
       printf("\n\np: %d\nc: %d\n", parent_col, cur_col);
+      printf("\np_bone_to_world:\n\n");
+      print_mat4(parent_bone_to_world);
+      printf("\np_ent_to_bone:\n");
+      print_mat3(bones[parent_bone].coordinate_matrix);
+      printf("\nc_bone_to_world:\n\n");
+      print_mat4(cur_bone_to_world);
+      printf("\nc_ent_to_bone:\n\n");
+      print_mat3(bones[root_bone].coordinate_matrix);
+      printf("\n");
       compute_spatial_transformations(parent_bone_to_world,
                                       parent_coords,
                                       cur_bone_to_world,

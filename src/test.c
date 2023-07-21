@@ -61,9 +61,16 @@ void print_mat6(mat6 m) {
 }
 
 void print_mat3 (mat3 m) {
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 3; i++) {
     printf("|%.2f %.2f %.2f|\n",
            m[0][i], m[1][i], m[2][i]);
+  }
+}
+
+void print_mat4 (mat4 m) {
+  for (int i = 0; i < 4; i++) {
+    printf("|%.2f %.2f %.2f %.2f|\n",
+           m[0][i], m[1][i], m[2][i], m[3][i]);
   }
 }
 

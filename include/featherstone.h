@@ -28,3 +28,4 @@ void print_vec6(vec6 v);
 void print_mat6(mat6 m);
 void print_vec3(vec3 v);
 void print_mat3(mat3 m);
+void print_mat4 (mat4 m);

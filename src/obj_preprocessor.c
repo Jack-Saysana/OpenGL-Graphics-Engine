@@ -267,13 +267,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
                           bones[b_len].base + 1,
                           bones[b_len].base + 2,
                           bones[b_len].coordinate_matrix[0],
-                          bones[b_len].coordinate_matrix[1],
-                          bones[b_len].coordinate_matrix[2],
                           bones[b_len].coordinate_matrix[0] + 1,
-                          bones[b_len].coordinate_matrix[1] + 1,
-                          bones[b_len].coordinate_matrix[2] + 1,
                           bones[b_len].coordinate_matrix[0] + 2,
+                          bones[b_len].coordinate_matrix[1],
+                          bones[b_len].coordinate_matrix[1] + 1,
                           bones[b_len].coordinate_matrix[1] + 2,
+                          bones[b_len].coordinate_matrix[2],
+                          bones[b_len].coordinate_matrix[2] + 1,
                           bones[b_len].coordinate_matrix[2] + 2,
                           &(bones[b_len].parent),
                           &(bones[b_len].num_children));
@@ -479,7 +479,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
-      sscanf(cur_line, "a %lld", &(cur_anim->duration));
+      sscanf(cur_line, "a %ld", &(cur_anim->duration));
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;
