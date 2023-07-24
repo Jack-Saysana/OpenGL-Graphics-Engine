@@ -62,7 +62,9 @@ size_t mat_buff_len;
 size_t mat_len;
 
 COLLIDER *colliders;
+COLLIDER *sorted_colliders;
 int *bone_links;
+int *sorted_bone_links;
 size_t *collider_children;
 size_t col_buff_len;
 size_t col_len;
@@ -71,6 +73,9 @@ int preprocess_lines(LINE_BUFFER *);
 int preprocess_face(FILE *, char *);
 int triangulate_polygon(FILE *, FACE_VERT *, size_t);
 int is_ear(int *, FACE_VERT *, float *);
+int sort_colliders(BONE *bones, COLLIDER *colliders, int *bone_links,
+                   COLLIDER *sorted_colliders, int *sorted_bone_links,
+                   size_t col_len, size_t b_len);
 uint64_t get_hash(char *str);
 int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
                  char *dir, char *lib);

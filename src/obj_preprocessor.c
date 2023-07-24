@@ -3,7 +3,7 @@
 int preprocess_lines(LINE_BUFFER *lb) {
   char *bin_path = malloc(strlen(lb->dir) + strlen(lb->filename) + 6);
   if (bin_path == NULL) {
-    printf("Unable to allocate line buffer path\n");
+    fprintf(stderr, "Unable to allocate line buffer path\n");
     return -1;
   }
   sprintf(bin_path, "%s/%s.bin", lb->dir, lb->filename);
@@ -13,7 +13,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   FILE *file = fopen(bin_path, "wb");
   if (file == NULL) {
-    printf("Unable to open preprocessed file\n");
+    fprintf(stderr, "Unable to open preprocessed file\n");
     free(bin_path);
     free_line_buffer(lb);
     return -1;
@@ -24,7 +24,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   if (bones == NULL) {
     free_line_buffer(lb);
     fclose(file);
-    printf("Unable to allocate bone buffer\n");
+    fprintf(stderr, "Unable to allocate bone buffer\n");
     return -1;
   }
   b_buff_len = BUFF_STARTING_LEN;
@@ -35,7 +35,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
-    printf("Unable to allocate bone id buffer\n");
+    fprintf(stderr, "Unable to allocate bone id buffer\n");
     return -1;
   }
 
@@ -45,7 +45,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fclose(file);
     free(bones);
     free(bone_ids);
-    printf("Unable to allocate bone weight buffer\n");
+    fprintf(stderr, "Unable to allocate bone weight buffer\n");
     return -1;
   }
 
@@ -56,7 +56,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bones);
     free(bone_ids);
     free(bone_weights);
-    printf("Unable to allocate collider link buffer\n");
+    fprintf(stderr, "Unable to allocate collider link buffer\n");
     return -1;
   }
 
@@ -68,7 +68,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bone_ids);
     free(bone_weights);
     free(collider_links);
-    printf("Unable to allocate vertex buffer\n");
+    fprintf(stderr, "Unable to allocate vertex buffer\n");
     return -1;
   }
   v_buff_len = BUFF_STARTING_LEN;
@@ -83,7 +83,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(bone_weights);
     free(collider_links);
     free(verticies);
-    printf("Unable to allocate normal buffer\n");
+    fprintf(stderr, "Unable to allocate normal buffer\n");
     return -1;
   }
   n_buff_len = BUFF_STARTING_LEN;
@@ -99,7 +99,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(collider_links);
     free(verticies);
     free(normals);
-    printf("Unable to allocate tex coord buffer\n");
+    fprintf(stderr, "Unable to allocate tex coord buffer\n");
     return -1;
   }
   t_buff_len = BUFF_STARTING_LEN;
@@ -116,7 +116,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(verticies);
     free(normals);
     free(tex_coords);
-    printf("Unable to allocate vbo index combos\n");
+    fprintf(stderr, "Unable to allocate vbo index combos\n");
     return -1;
   }
   vbo_buff_len = BUFF_STARTING_LEN;
@@ -134,7 +134,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(normals);
     free(tex_coords);
     free(vbo_index_combos);
-    printf("Unable to allocate face buffer\n");
+    fprintf(stderr, "Unable to allocate face buffer\n");
     return -1;
   }
   face_buff_len = BUFF_STARTING_LEN;
@@ -153,7 +153,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(tex_coords);
     free(vbo_index_combos);
     free(faces);
-    printf("Unable to allocate material buffer\n");
+    fprintf(stderr, "Unable to allocate material buffer\n");
     return -1;
   }
   mat_buff_len = BUFF_STARTING_LEN;
@@ -173,7 +173,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(vbo_index_combos);
     free(faces);
     free(materials);
-    printf("Unable to allocate animations buffer\n");
+    fprintf(stderr, "Unable to allocate animations buffer\n");
     return -1;
   }
   a_buff_len = BUFF_STARTING_LEN;
@@ -194,7 +194,26 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(faces);
     free(materials);
     free(animations);
-    printf("Unable to allocate colliders buffer\n");
+    fprintf(stderr, "Unable to allocate colliders buffer\n");
+    return -1;
+  }
+  sorted_colliders = malloc(sizeof(COLLIDER) * BUFF_STARTING_LEN);
+  if (colliders == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
+    free(collider_links);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free(materials);
+    free(animations);
+    free(colliders);
+    fprintf(stderr, "Unable to allocate sorted_colliders buffer\n");
     return -1;
   }
   bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
@@ -213,7 +232,29 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(materials);
     free(animations);
     free(colliders);
-    printf("Unable to allocate bone_links buffer\n");
+    free(sorted_colliders);
+    fprintf(stderr, "Unable to allocate bone_links buffer\n");
+    return -1;
+  }
+  sorted_bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
+  if (sorted_bone_links == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    free(bone_ids);
+    free(bone_weights);
+    free(collider_links);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free(materials);
+    free(animations);
+    free(colliders);
+    free(sorted_colliders);
+    free(bone_links);
+    fprintf(stderr, "Unable to allocate sorted_bone_links buffer\n");
     return -1;
   }
   collider_children = malloc(sizeof(size_t) * BUFF_STARTING_LEN);
@@ -232,8 +273,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(materials);
     free(animations);
     free(colliders);
+    free(sorted_colliders);
     free(bone_links);
-    printf("Unable to allocate collider children buffer\n");
+    free(sorted_bone_links);
+    fprintf(stderr, "Unable to allocate collider children buffer\n");
     return -1;
   }
   col_buff_len = BUFF_STARTING_LEN;
@@ -484,7 +527,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;
       if (cur_anim->keyframe_chains == NULL) {
-        printf("Unable to allocate keyframe chains for animation\n");
+        fprintf(stderr, "Unable to allocate keyframe chains for animation\n");
         status = -1;
       }
 
@@ -501,7 +544,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'c' && (cur_line[1] == 'l' || cur_line[1] == 'r'
                || cur_line[1] == 's')) {
       if (cur_anim == NULL) {
-        printf("No animation defined\n");
+        fprintf(stderr, "No animation defined\n");
         status = -1;
       }
 
@@ -523,7 +566,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
         cur_chain->num_frames = 0;
         cur_chain_buff_len = BUFF_STARTING_LEN;
         if (cur_chain->chain == NULL) {
-          printf("Unable to allocate keyframes of current chain\n");
+          fprintf(stderr, "Unable to allocate keyframes of current chain\n");
           status = -1;
         }
       }
@@ -540,7 +583,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'k' && cur_line[1] == 'p') {
       if (cur_chain == NULL) {
-        printf("No keyframe chain defined\n");
+        fprintf(stderr, "No keyframe chain defined\n");
         status = -1;
       }
 
@@ -583,7 +626,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(faces);
       free_materials(materials, mat_len);
       free(colliders);
+      free(sorted_colliders);
       free(bone_links);
+      free(sorted_bone_links);
       free(collider_children);
 
       for (int i = 0; i < a_len; i++) {
@@ -594,9 +639,40 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
       free(animations);
 
-      printf("Parse error at line %d\n", i);
+      fprintf(stderr, "Parse error at line %d\n", i);
       return -1;
     }
+  }
+
+  status = sort_colliders(bones, colliders, bone_links, sorted_colliders,
+                          sorted_bone_links, col_len, b_len);
+  if (status != 0) {
+    fclose(file);
+    free_line_buffer(lb);
+    free(bones);
+    free(collider_links);
+    free(bone_ids);
+    free(bone_weights);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free_materials(materials, mat_len);
+    free(colliders);
+    free(sorted_colliders);
+    free(bone_links);
+    free(sorted_bone_links);
+
+    for (int i = 0; i < a_len; i++) {
+      for (int j = 0; j < animations[i].num_chains; j++) {
+        free(animations[i].keyframe_chains[j].chain);
+      }
+      free(animations[i].keyframe_chains);
+    }
+    free(animations);
+    fprintf(stderr, "Collider sorting error\n");
+    return -1;
   }
 
   // Compute collider links for each bone since bones and colliders aren't
@@ -604,7 +680,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   for (int i = 0; i < b_len; i++) {
     collider_links[i] = -1;
     for (int j = 0; j < col_len; j++) {
-      if (bone_links[j] == i) {
+      if (sorted_bone_links[j] == i) {
         collider_links[i] = j;
         break;
       }
@@ -629,8 +705,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
   int root_bone = -1;
   int parent_col = -1;
   for (int i = 0; i < col_len; i++) {
-    colliders[i].children_offset = next;
-    colliders[i].num_children = 0;
+    sorted_colliders[i].children_offset = next;
+    sorted_colliders[i].num_children = 0;
     for (int j = 0; j < col_len; j++) {
       root_bone = bone_links[j];
       if (root_bone == -1 || bones[root_bone].parent == -1) {
@@ -640,12 +716,12 @@ int preprocess_lines(LINE_BUFFER *lb) {
       parent_col = collider_links[bones[root_bone].parent];
       if (parent_col == i) {
         collider_children[next] = j;
-        colliders[i].num_children++;
+        sorted_colliders[i].num_children++;
         next++;
       }
     }
     if (colliders[i].num_children == 0) {
-      colliders[i].children_offset = -1;
+      sorted_colliders[i].children_offset = -1;
     }
   }
 
@@ -689,8 +765,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   fwrite(bones, sizeof(BONE), b_len, file);
   fwrite(collider_links, sizeof(int), b_len, file);
-  fwrite(colliders, sizeof(COLLIDER), col_len, file);
-  fwrite(bone_links, sizeof(int), col_len, file);
+  fwrite(sorted_colliders, sizeof(COLLIDER), col_len, file);
+  fwrite(sorted_bone_links, sizeof(int), col_len, file);
   fwrite(collider_children, sizeof(size_t), col_len, file);
 
   for (size_t i = 0; i < vbo_len; i++) {
@@ -730,7 +806,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
   free(faces);
   free_materials(materials, mat_len);
   free(colliders);
+  free(sorted_colliders);
   free(bone_links);
+  free(sorted_bone_links);
 
   for (int i = 0; i < a_len; i++) {
     for (int j = 0; j < animations[i].num_chains; j++) {
@@ -739,6 +817,52 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(animations[i].keyframe_chains);
   }
   free(animations);
+
+  return 0;
+}
+
+int sort_colliders(BONE *bones, COLLIDER *colliders, int *bone_links,
+                   COLLIDER *sorted_colliders, int *sorted_bone_links,
+                   size_t num_cols, size_t num_bones) {
+  size_t cur_pos = 0;
+  // Bring all non-skeletal colliders to the front of the array
+  for (size_t cur_col = 0; cur_col < col_len; cur_col++) {
+    if (bone_links[cur_col] == -1) {
+      memcpy(sorted_colliders + cur_pos, colliders + cur_col,
+             sizeof(COLLIDER));
+      cur_pos++;
+    }
+  }
+
+  size_t top = 0;
+  int *collider_stack = malloc(sizeof(int) * num_cols);
+  if (collider_stack == NULL) {
+    return -1;
+  }
+  // Write sorted bone trees of each parent bone in the armature
+  for (size_t cur_bone = 0; cur_bone < num_bones; cur_bone++) {
+    if (bones[cur_bone].parent == -1) {
+      collider_stack[top] = cur_bone;
+      top++;
+      while (top) {
+        top--;
+        for (size_t i = 0; i < num_cols; i++) {
+          if (bone_links[i] == collider_stack[top]) {
+            memcpy(sorted_colliders + cur_pos, colliders + i,
+                   sizeof(COLLIDER));
+            cur_pos++;
+            break;
+          }
+        }
+        for (size_t i = 0; i < num_bones; i++) {
+          if (bones[i].parent == cur_bone) {
+            collider_stack[top] = i;
+            top++;
+          }
+        }
+      }
+    }
+  }
 
   return 0;
 }
@@ -764,18 +888,19 @@ int preprocess_face(FILE *file, char *line) {
 
       if (read_index >= 0 && cur_attrib == 0) {
         if (read_index > v_len - 1) {
-          printf("Preprocessor Error: Invalid vertex index\n");
+          fprintf(stderr, "Preprocessor Error: Invalid vertex index\n");
           return -1;
         }
         index_combo[0] = read_index;
       } else if (cur_attrib == 1) {
         if (read_index > t_len - 1) {
-          printf("Preprocessor Error: Invalid tex coord index\n");
+          fprintf(stderr, "Preprocessor Error: Invalid tex coord index\n");
           return -1;
         }
         index_combo[1] = read_index;
       } else if(read_index >= 0) {
-        printf("Preprocessor Error: Invalid number of vertex attributes\n");
+        fprintf(stderr,
+                "Preprocessor Error: Invalid number of vertex attributes\n");
         return -1;
       }
       cur_attrib++;
@@ -786,13 +911,13 @@ int preprocess_face(FILE *file, char *line) {
 
       if (cur_attrib == 0) {
         if (read_index > v_len - 1) {
-          printf("Preprocessor Error: Invalid vertex index\n");
+          fprintf(stderr, "Preprocessor Error: Invalid vertex index\n");
           return -1;
         }
         index_combo[0] = read_index;
       } else {
         if (read_index > n_len - 1) {
-          printf("Preprocessor Error:Invalid normal index\n");
+          fprintf(stderr, "Preprocessor Error:Invalid normal index\n");
           return -1;
         }
         index_combo[2] = read_index;
@@ -820,7 +945,8 @@ int preprocess_face(FILE *file, char *line) {
         }
 
         if (status != 0) {
-          printf("Preproccessor Error: Unable to realloc vbo indicies\n");
+          fprintf(stderr,
+                  "Preproccessor Error: Unable to realloc vbo indicies\n");
           return -1;
         }
       }
@@ -856,9 +982,10 @@ int preprocess_face(FILE *file, char *line) {
     faces[f_len][2] = face_list_head->next->index;
     f_len++;
     if (f_len == face_buff_len) {
-      status = double_buffer((void **) &faces, &face_buff_len, sizeof(int) * 3);
+      status = double_buffer((void **) &faces, &face_buff_len,
+                             sizeof(int) * 3);
       if (status != 0) {
-        printf("Unable to reallocate face buffer\n");
+        fprintf(stderr, "Unable to reallocate face buffer\n");
         return -1;
       }
     }
@@ -902,9 +1029,10 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
       faces[f_len][2] = cur_triangle[2];
       f_len++;
       if (f_len == face_buff_len) {
-        status = double_buffer((void **) &faces, &face_buff_len, sizeof(int) * 3);
+        status = double_buffer((void **) &faces, &face_buff_len,
+                               sizeof(int) * 3);
         if (status != 0) {
-          printf("Unable to reallocate face buffer\n");
+          fprintf(stderr, "Unable to reallocate face buffer\n");
           return -1;
         }
       }
@@ -927,7 +1055,7 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
   if (f_len == face_buff_len) {
     status = double_buffer((void **) &faces, &face_buff_len, sizeof(int) * 3);
     if (status != 0) {
-      printf("Unable to reallocate face buffer\n");
+      fprintf(stderr, "Unable to reallocate face buffer\n");
       return -1;
     }
   }
