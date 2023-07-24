@@ -237,22 +237,21 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   glm_vec3_sub(c_coords, p_coords, p_to_c_lin_dest);
   printf("c_coords: (%f, %f, %f)\n", c_coords[0], c_coords[1], c_coords[2]);
   printf("p_coords: (%f, %f, %f)\n", p_coords[0], p_coords[1], p_coords[2]);
-  // Rotate to bone coords of child
-  glm_mat3_mulv(c_world_to_bone, p_to_c_lin_dest, p_to_c_lin_dest);
+  // Rotate to bone coords of parent
+  glm_mat3_mulv(p_world_to_bone, p_to_c_lin_dest, p_to_c_lin_dest);
   printf("p->c: (%f, %f, %f)\n", p_to_c_lin_dest[0], p_to_c_lin_dest[1],
          p_to_c_lin_dest[2]);
-  glm_vec3_negate(p_to_c_lin_dest);
   vec3_singular_cross(p_to_c_lin_dest, p_to_c_mat);
 
   // Linear component of the spatial transformation matrix transforming vectors
   // in the parent bone space to the child bone space
   mat3 c_to_p_mat = GLM_MAT3_IDENTITY_INIT;
   vec3 c_to_p_lin = GLM_VEC3_ZERO_INIT;
-  // c_to_p is expected to be in the parent bone space. Since p would be the
-  // origin in the parent bone space, c_to_p is equivalent to the inverse of
-  // c in the parent bone space
-  glm_mat3_mulv(p_world_to_bone, c_coords, c_to_p_lin);
-  glm_vec3_negate(c_to_p_lin);
+  // Child to parent in world coords
+  glm_vec3_sub(p_coords, c_coords, c_to_p_lin);
+  // Rotate to bone coords of child
+  glm_mat3_mulv(c_world_to_bone, c_to_p_lin, c_to_p_lin);
+  printf("c->p: (%f, %f, %f)\n", c_to_p_lin[0], c_to_p_lin[1], c_to_p_lin[2]);
   vec3_singular_cross(c_to_p_lin, c_to_p_mat);
 
   // Spatial transformation matrix transforming vectors in the child bone's
