@@ -416,7 +416,19 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                sizeof(COLLIDER));
         if (status == 0) {
           col_buff_len /= 2;
+          status = double_buffer((void **) &sorted_colliders, &col_buff_len,
+                                 sizeof(COLLIDER));
+        }
+
+        if (status == 0) {
+          col_buff_len /= 2;
           status = double_buffer((void **) &bone_links, &col_buff_len,
+                                 sizeof(int));
+        }
+
+        if (status == 0) {
+          col_buff_len /= 2;
+          status = double_buffer((void **) &sorted_bone_links, &col_buff_len,
                                  sizeof(int));
         }
 
@@ -443,7 +455,19 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                sizeof(COLLIDER));
         if (status == 0) {
           col_buff_len /= 2;
+          status = double_buffer((void **) &sorted_colliders, &col_buff_len,
+                                 sizeof(COLLIDER));
+        }
+
+        if (status == 0) {
+          col_buff_len /= 2;
           status = double_buffer((void **) &bone_links, &col_buff_len,
+                                 sizeof(int));
+        }
+
+        if (status == 0) {
+          col_buff_len /= 2;
+          status = double_buffer((void **) &sorted_bone_links, &col_buff_len,
                                  sizeof(int));
         }
 
@@ -522,7 +546,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
-      sscanf(cur_line, "a %ld", &(cur_anim->duration));
+      sscanf(cur_line, "a %lld", &(cur_anim->duration));
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;
@@ -708,7 +732,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     sorted_colliders[i].children_offset = next;
     sorted_colliders[i].num_children = 0;
     for (int j = 0; j < col_len; j++) {
-      root_bone = bone_links[j];
+      root_bone = sorted_bone_links[j];
       if (root_bone == -1 || bones[root_bone].parent == -1) {
         continue;
       }
@@ -827,14 +851,16 @@ int sort_colliders(BONE *bones, COLLIDER *colliders, int *bone_links,
   size_t cur_pos = 0;
   // Bring all non-skeletal colliders to the front of the array
   for (size_t cur_col = 0; cur_col < col_len; cur_col++) {
-    if (bone_links[cur_col] == -1) {
+    if (colliders[cur_col].category != HURT_BOX || bone_links[cur_col] == -1) {
       memcpy(sorted_colliders + cur_pos, colliders + cur_col,
              sizeof(COLLIDER));
+      sorted_bone_links[cur_pos] = bone_links[cur_col];
       cur_pos++;
     }
   }
 
   size_t top = 0;
+  int cur = 0;
   int *collider_stack = malloc(sizeof(int) * num_cols);
   if (collider_stack == NULL) {
     return -1;
@@ -846,16 +872,18 @@ int sort_colliders(BONE *bones, COLLIDER *colliders, int *bone_links,
       top++;
       while (top) {
         top--;
+        cur = collider_stack[top];
         for (size_t i = 0; i < num_cols; i++) {
-          if (bone_links[i] == collider_stack[top]) {
+          if (bone_links[i] == cur) {
             memcpy(sorted_colliders + cur_pos, colliders + i,
                    sizeof(COLLIDER));
+            sorted_bone_links[cur_pos] = bone_links[i];
             cur_pos++;
             break;
           }
         }
         for (size_t i = 0; i < num_bones; i++) {
-          if (bones[i].parent == cur_bone) {
+          if (bones[i].parent == cur) {
             collider_stack[top] = i;
             top++;
           }

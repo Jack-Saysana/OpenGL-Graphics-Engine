@@ -20,7 +20,7 @@ int featherstone_abm(ENTITY *body) {
   // TODO joint_to_com can be precomputed
   // Calculate spatial velocities from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
-    if (links[cur_col].category != HIT_BOX) {
+    if (links[cur_col].category != HURT_BOX) {
       continue;
     }
 
@@ -115,7 +115,7 @@ int featherstone_abm(ENTITY *body) {
 
   // Calculate I-hat-A and Z-hat-A from outbound to inbound
   for (int i = num_links - 1; i >= 0; i--) {
-    if (links[i].category != HIT_BOX) {
+    if (links[i].category != HURT_BOX) {
       continue;
     }
 

@@ -8,6 +8,7 @@
 
 #define DEFAULT (0)
 #define HIT_BOX (1)
+#define HURT_BOX (2)
 
 extern MODEL *cube;
 extern MODEL *rect_prism;
@@ -86,19 +87,19 @@ void print_p_data(ENTITY *ent) {
   mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(ent, global_ent_to_world);
 
-  printf("Num colliders: %ld\nNum bones: %ld\n", ent->model->num_colliders,
+  printf("Num colliders: %lld\nNum bones: %lld\n", ent->model->num_colliders,
          ent->model->num_bones);
   printf("Bone -> collider relations:\n");
   for (size_t i = 0; i < ent->model->num_bones; i++) {
-    printf("  %ld -> %d\n", i, ent->model->bone_collider_links[i]);
+    printf("  %lld -> %d\n", i, ent->model->bone_collider_links[i]);
   }
   printf("Collider -> bone relations:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
-    printf("  %ld -> %d\n", i, ent->model->collider_bone_links[i]);
+    printf("  %lld -> %d\n", i, ent->model->collider_bone_links[i]);
   }
   printf("Physics data:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
-    if (ent->model->colliders[i].category != HIT_BOX) {
+    if (ent->model->colliders[i].category != HURT_BOX) {
       continue;
     }
 
@@ -132,7 +133,7 @@ void print_p_data(ENTITY *ent) {
     glm_mat4_mulv3(cur_bone_to_world, axis_of_rot, 1.0, axis_of_rot);
     glm_vec3_normalize(axis_of_rot);
 
-    printf("  collider[%ld]:\n", i);
+    printf("  collider[%lld]:\n", i);
     if (parent_bone != -1) {
       printf("    Parent: %d\n", ent->model->bone_collider_links[parent_bone]);
     }
@@ -304,7 +305,7 @@ int main() {
   printf("\n\nBefore:\n");
   print_p_data(ragdoll);
 
-  ragdoll->np_data[2].joint_angle_vels[3] = 1.0;
+  ragdoll->np_data[0].joint_angle_vels[3] = 1.0;
   featherstone_abm(ragdoll);
 
   printf("\n\nAfter:\n");
