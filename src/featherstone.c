@@ -17,7 +17,6 @@ int featherstone_abm(ENTITY *body) {
   mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(body, global_ent_to_world);
 
-  // TODO joint_to_com can be precomputed
   // Calculate spatial velocities from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
     if (links[cur_col].category != HURT_BOX) {
@@ -45,18 +44,29 @@ int featherstone_abm(ENTITY *body) {
     vec3 cur_coords = GLM_VEC3_ZERO_INIT;
     // Uses entity space to world space because center/center_of_mass is given
     // in entity space
+    // TODO joint_to_com can be precomputed
     if (colliders[cur_col].type == POLY) {
+      glm_vec3_sub(colliders[cur_col].data.center_of_mass,
+                   bones[root_bone].base, p_data[cur_col].joint_to_com);
       glm_mat4_mulv3(cur_ent_to_world, colliders[cur_col].data.center_of_mass,
                      1.0, cur_coords);
     } else {
+      glm_vec3_sub(colliders[cur_col].data.center, bones[root_bone].base,
+                   p_data[cur_col].joint_to_com);
       glm_mat4_mulv3(cur_ent_to_world, colliders[cur_col].data.center, 1.0,
                      cur_coords);
     }
 
-    glm_vec3_sub(cur_coords, bones[root_bone].base,
-                 p_data[cur_col].joint_to_com);
+    printf("joint_to_com[%d] (ent): %f %f %f\n", cur_col,
+           p_data[cur_col].joint_to_com[0],
+           p_data[cur_col].joint_to_com[1],
+           p_data[cur_col].joint_to_com[2]);
     glm_mat4_mulv3(cur_ent_to_bone, p_data[cur_col].joint_to_com, 1.0,
                    p_data[cur_col].joint_to_com);
+    printf("joint_to_com[%d] (bone): %f %f %f\n", cur_col,
+           p_data[cur_col].joint_to_com[0],
+           p_data[cur_col].joint_to_com[1],
+           p_data[cur_col].joint_to_com[2]);
 
     parent_bone = bones[root_bone].parent;
     parent_col = -1;
