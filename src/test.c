@@ -262,6 +262,41 @@ void sa_test() {
   printf("%f\n", d);
 }
 
+void calc_final_b_mats() {
+  mat4 model_mat = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(ragdoll, model_mat);
+
+  for (int i = 0; i < ragdoll->model->num_bones; i++) {
+    vec3 temp = GLM_VEC3_ZERO_INIT;
+    mat4 from_base = GLM_MAT4_IDENTITY_INIT;
+    mat4 to_base = GLM_MAT4_IDENTITY_INIT;
+    glm_vec3_copy(ragdoll->model->bones[i].base, temp);
+    glm_translate(to_base, temp);
+    glm_vec3_negate(temp);
+    glm_translate(from_base, temp);
+
+    glm_mat4_identity(ragdoll->final_b_mats[i]);
+    glm_mat4_mul(from_base, ragdoll->final_b_mats[i],
+                 ragdoll->final_b_mats[i]);
+    glm_mat4_mul(ragdoll->bone_mats[i][SCALE],
+                 ragdoll->final_b_mats[i], ragdoll->final_b_mats[i]);
+    glm_mat4_mul(ragdoll->bone_mats[i][ROTATION],
+                 ragdoll->final_b_mats[i], ragdoll->final_b_mats[i]);
+    glm_mat4_mul(to_base, ragdoll->final_b_mats[i],
+                 ragdoll->final_b_mats[i]);
+    glm_mat4_mul(ragdoll->bone_mats[i][LOCATION],
+                 ragdoll->final_b_mats[i], ragdoll->final_b_mats[i]);
+
+    /*
+    int parent = ragdoll->model->bones[i].parent;
+    if (parent != -1) {
+      glm_mat4_mul(ragdoll->final_b_mats[parent], ragdoll->final_b_mats[i],
+                   ragdoll->final_b_mats[i]);
+    }
+    */
+  }
+}
+
 int main() {
   GLFWwindow *window;
 
@@ -300,7 +335,19 @@ int main() {
     ragdoll->np_data[i].inv_mass = 1.0;
   }
 
-  sa_test();
+  // Test spatial algebra functions
+  //sa_test();
+
+  // Complex featherstone abm test
+  // Bone 1 normal
+  // Bone 2 +90 degrees
+  // Bone 3 +45 degrees
+  versor quat = GLM_QUAT_IDENTITY_INIT;
+  glm_quatv(quat, 90.0, ragdoll->model->bones[1].coordinate_matrix[0]);
+  glm_quat_mat4(quat, ragdoll->bone_mats[1][ROTATION]);
+  glm_quatv(quat, -45.0, ragdoll->model->bones[2].coordinate_matrix[0]);
+  glm_quat_mat4(quat, ragdoll->bone_mats[2][ROTATION]);
+  calc_final_b_mats();
 
   printf("\n\nBefore:\n");
   print_p_data(ragdoll);
@@ -310,7 +357,6 @@ int main() {
 
   printf("\n\nAfter:\n");
   print_p_data(ragdoll);
-
 
 
 
