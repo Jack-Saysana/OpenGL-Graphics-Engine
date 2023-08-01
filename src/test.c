@@ -287,14 +287,37 @@ void calc_final_b_mats() {
     glm_mat4_mul(ragdoll->bone_mats[i][LOCATION],
                  ragdoll->final_b_mats[i], ragdoll->final_b_mats[i]);
 
-    /*
-    int parent = ragdoll->model->bones[i].parent;
-    if (parent != -1) {
-      glm_mat4_mul(ragdoll->final_b_mats[parent], ragdoll->final_b_mats[i],
-                   ragdoll->final_b_mats[i]);
-    }
-    */
+    // int parent = ragdoll->model->bones[i].parent;
+    // if (parent != -1) {
+    //   glm_mat4_mul(ragdoll->final_b_mats[parent], ragdoll->final_b_mats[i],
+    //                ragdoll->final_b_mats[i]);
+    // }
   }
+
+  /*
+  for (int cur_col = 0; cur_col < ragdoll->model->num_colliders; cur_col++) {
+    int bone = ragdoll->model->collider_bone_links[cur_col];
+    vec3 temp = GLM_VEC3_ZERO_INIT;
+    mat4 from_base = GLM_MAT4_IDENTITY_INIT;
+    mat4 to_base = GLM_MAT4_IDENTITY_INIT;
+    glm_vec3_copy(ragdoll->model->bones[bone].base, temp);
+    glm_translate(to_base, temp);
+    glm_vec3_negate(temp);
+    glm_translate(from_base, temp);
+
+    glm_mat4_identity(ragdoll->final_b_mats[bone]);
+    glm_mat4_mul(from_base, ragdoll->final_b_mats[bone],
+                 ragdoll->final_b_mats[bone]);
+    glm_mat4_mul(ragdoll->bone_mats[i][SCALE],
+                 ragdoll->final_b_mats[bone], ragdoll->final_b_mats[bone]);
+    glm_mat4_mul(ragdoll->bone_mats[i][ROTATION],
+                 ragdoll->final_b_mats[bone], ragdoll->final_b_mats[bone]);
+    glm_mat4_mul(to_base, ragdoll->final_b_mats[bone],
+                 ragdoll->final_b_mats[bone]);
+    glm_mat4_mul(ragdoll->bone_mats[i][LOCATION],
+                 ragdoll->final_b_mats[bone], ragdoll->final_b_mats[bone]);
+  }
+  */
 }
 
 int main() {
@@ -345,8 +368,8 @@ int main() {
   versor quat = GLM_QUAT_IDENTITY_INIT;
   glm_quatv(quat, 90.0, ragdoll->model->bones[1].coordinate_matrix[0]);
   glm_quat_mat4(quat, ragdoll->bone_mats[1][ROTATION]);
-  glm_quatv(quat, -45.0, ragdoll->model->bones[2].coordinate_matrix[0]);
-  glm_quat_mat4(quat, ragdoll->bone_mats[2][ROTATION]);
+  glm_quatv(quat, -45.0, ragdoll->model->bones[3].coordinate_matrix[0]);
+  glm_quat_mat4(quat, ragdoll->bone_mats[3][ROTATION]);
   calc_final_b_mats();
 
   printf("\n\nBefore:\n");
