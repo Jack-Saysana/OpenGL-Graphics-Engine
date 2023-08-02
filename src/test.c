@@ -87,15 +87,15 @@ void print_p_data(ENTITY *ent) {
   mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(ent, global_ent_to_world);
 
-  printf("Num colliders: %lld\nNum bones: %lld\n", ent->model->num_colliders,
+  printf("Num colliders: %ld\nNum bones: %ld\n", ent->model->num_colliders,
          ent->model->num_bones);
   printf("Bone -> collider relations:\n");
   for (size_t i = 0; i < ent->model->num_bones; i++) {
-    printf("  %lld -> %d\n", i, ent->model->bone_collider_links[i]);
+    printf("  %ld -> %d\n", i, ent->model->bone_collider_links[i]);
   }
   printf("Collider -> bone relations:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
-    printf("  %lld -> %d\n", i, ent->model->collider_bone_links[i]);
+    printf("  %ld -> %d\n", i, ent->model->collider_bone_links[i]);
   }
   printf("Physics data:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
@@ -133,7 +133,7 @@ void print_p_data(ENTITY *ent) {
     glm_mat4_mulv3(cur_bone_to_world, axis_of_rot, 1.0, axis_of_rot);
     glm_vec3_normalize(axis_of_rot);
 
-    printf("  collider[%lld]:\n", i);
+    printf("  collider[%ld]:\n", i);
     if (parent_bone != -1) {
       printf("    Parent: %d\n", ent->model->bone_collider_links[parent_bone]);
     }
@@ -270,7 +270,7 @@ void calc_final_b_mats() {
     vec3 temp = GLM_VEC3_ZERO_INIT;
     mat4 from_base = GLM_MAT4_IDENTITY_INIT;
     mat4 to_base = GLM_MAT4_IDENTITY_INIT;
-    glm_vec3_copy(ragdoll->model->bones[i].base, temp);
+    glm_mat4_mulv3(model_mat, ragdoll->model->bones[i].base, 1.0, temp);
     glm_translate(to_base, temp);
     glm_vec3_negate(temp);
     glm_translate(from_base, temp);
@@ -287,37 +287,12 @@ void calc_final_b_mats() {
     glm_mat4_mul(ragdoll->bone_mats[i][LOCATION],
                  ragdoll->final_b_mats[i], ragdoll->final_b_mats[i]);
 
-    // int parent = ragdoll->model->bones[i].parent;
-    // if (parent != -1) {
-    //   glm_mat4_mul(ragdoll->final_b_mats[parent], ragdoll->final_b_mats[i],
-    //                ragdoll->final_b_mats[i]);
-    // }
+    int parent = ragdoll->model->bones[i].parent;
+    if (parent != -1) {
+      glm_mat4_mul(ragdoll->final_b_mats[parent], ragdoll->final_b_mats[i],
+                   ragdoll->final_b_mats[i]);
+    }
   }
-
-  /*
-  for (int cur_col = 0; cur_col < ragdoll->model->num_colliders; cur_col++) {
-    int bone = ragdoll->model->collider_bone_links[cur_col];
-    vec3 temp = GLM_VEC3_ZERO_INIT;
-    mat4 from_base = GLM_MAT4_IDENTITY_INIT;
-    mat4 to_base = GLM_MAT4_IDENTITY_INIT;
-    glm_vec3_copy(ragdoll->model->bones[bone].base, temp);
-    glm_translate(to_base, temp);
-    glm_vec3_negate(temp);
-    glm_translate(from_base, temp);
-
-    glm_mat4_identity(ragdoll->final_b_mats[bone]);
-    glm_mat4_mul(from_base, ragdoll->final_b_mats[bone],
-                 ragdoll->final_b_mats[bone]);
-    glm_mat4_mul(ragdoll->bone_mats[i][SCALE],
-                 ragdoll->final_b_mats[bone], ragdoll->final_b_mats[bone]);
-    glm_mat4_mul(ragdoll->bone_mats[i][ROTATION],
-                 ragdoll->final_b_mats[bone], ragdoll->final_b_mats[bone]);
-    glm_mat4_mul(to_base, ragdoll->final_b_mats[bone],
-                 ragdoll->final_b_mats[bone]);
-    glm_mat4_mul(ragdoll->bone_mats[i][LOCATION],
-                 ragdoll->final_b_mats[bone], ragdoll->final_b_mats[bone]);
-  }
-  */
 }
 
 int main() {
@@ -363,12 +338,12 @@ int main() {
 
   // Complex featherstone abm test
   // Bone 1 normal
-  // Bone 2 +90 degrees
-  // Bone 3 +45 degrees
+  // Bone 2 -45 degrees
+  // Bone 3 -45 degrees
   versor quat = GLM_QUAT_IDENTITY_INIT;
-  glm_quatv(quat, 90.0, ragdoll->model->bones[1].coordinate_matrix[0]);
+  glm_quatv(quat, glm_rad(-45.0), ragdoll->model->bones[1].coordinate_matrix[0]);
   glm_quat_mat4(quat, ragdoll->bone_mats[1][ROTATION]);
-  glm_quatv(quat, -45.0, ragdoll->model->bones[3].coordinate_matrix[0]);
+  glm_quatv(quat, glm_rad(-45.0), ragdoll->model->bones[3].coordinate_matrix[0]);
   glm_quat_mat4(quat, ragdoll->bone_mats[3][ROTATION]);
   calc_final_b_mats();
 
