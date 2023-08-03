@@ -73,8 +73,7 @@ void free_faces(F_HEAP *heap);
 
 void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
                      vec3 p_loc);
-void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
-                         float inv_mass, mat4 dest);
+void calc_inertia_tensor(ENTITY *ent, size_t col);
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void vec3_remove_noise(vec3 vec, float threshold);

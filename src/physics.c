@@ -988,12 +988,13 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_copy(b_ang_vel, *(b_args->ang_velocity));
 }
 
-void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
-                         float inv_mass, mat4 dest) {
-  glm_mat4_identity(dest);
+void calc_inertia_tensor(ENTITY *ent, size_t col) {
+  COLLIDER *collider = ent->model->colliders + col;
+  P_DATA *p_data = ent->np_data + col;
+  glm_mat4_identity(p_data->inv_inertia);
   if (collider->type == POLY) {
-    vec3 *raw_verts = ent->model->colliders[col_offset].data.verts;
-    unsigned int num_raw = ent->model->colliders[col_offset].data.num_used;
+    vec3 *raw_verts = collider->data.verts;
+    unsigned int num_raw = collider->data.num_used;
     float height = ent->scale[1] *
                    (raw_verts[max_dot(raw_verts, num_raw, U_DIR)][1] -
                     raw_verts[max_dot(raw_verts, num_raw, D_DIR)][1]);
@@ -1003,14 +1004,17 @@ void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
     float depth = ent->scale[2] *
                   (raw_verts[max_dot(raw_verts, num_raw, F_DIR)][2] -
                    raw_verts[max_dot(raw_verts, num_raw, B_DIR)][2]);
-    float denominator = 12.0 * inv_mass;
-    dest[0][0] = ((height * height) + (depth * depth)) / denominator;
-    dest[1][1] = ((width * width) + (depth * depth)) / denominator;
-    dest[2][2] = ((width * width) + (height * height)) / denominator;
+    float denominator = 12.0 * p_data->inv_mass;
+    p_data->inv_inertia[0][0] = ((height * height) + (depth * depth)) /
+                                denominator;
+    p_data->inv_inertia[1][1] = ((width * width) + (depth * depth)) /
+                                denominator;
+    p_data->inv_inertia[2][2] = ((width * width) + (height * height)) /
+                                denominator;
   } else {
     float i_val = (0.4 * collider->data.radius * collider->data.radius) /
-                  inv_mass;
-    glm_mat4_scale(dest, i_val);
+                  p_data->inv_mass;
+    glm_mat4_scale(p_data->inv_inertia, i_val);
   }
-  dest[3][3] = 1.0;
+  p_data->inv_inertia[3][3] = 1.0;
 }

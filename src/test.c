@@ -49,6 +49,7 @@ void free_entity(ENTITY *);
 void free_model(MODEL *);
 int init_scene();
 void get_model_mat(ENTITY *entity, mat4 model);
+void calc_inertia_tensor(ENTITY *ent, size_t col);
 
 // Not used but defition needed
 vec3 col_point = { 0.0, 0.0, 0.0 };
@@ -333,6 +334,7 @@ int main() {
   ragdoll->scale[2] = 2.0;
   for (size_t i = 0; i < ragdoll->model->num_colliders; i++) {
     ragdoll->np_data[i].inv_mass = 1.0;
+    calc_inertia_tensor(ragdoll, i);
   }
 
   // Test spatial algebra functions

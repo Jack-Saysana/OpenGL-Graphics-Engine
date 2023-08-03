@@ -117,6 +117,7 @@ int featherstone_abm(ENTITY *body) {
     compute_spatial_velocity(cur_col, parent_col, colliders, p_data);
   }
 
+  // TODO I_hat can be precomputed
   // Calculate I-hat and Z-hat from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
     if (links[cur_col].category != HURT_BOX) {
@@ -138,8 +139,8 @@ int featherstone_abm(ENTITY *body) {
     glm_mat4_pick3(temp, inertia_tensor);
 
     // I_hat
-    mat6_compose(mat3_zero, mass_mat, inertia_tensor, mat3_zero,
-                 p_data[cur_col]->I_hat);
+    mat6_compose(MAT3_ZERO, mass_mat, inertia_tensor, MAT3_ZERO,
+                 p_data[cur_col].I_hat);
 
     // Convert gravity to bone space
     mat3 world_to_ent = GLM_MAT3_IDENTITY_INIT;
@@ -157,11 +158,11 @@ int featherstone_abm(ENTITY *body) {
 
     float *ang_vel = (float *) p_data[cur_col].v_hat;
     vec3 za_ang = GLM_VEC3_ZERO_INIT;
-    glm_mat3_mulv(inertia_tensor, (vec3) ang_vel, za_ang);
-    glm_vec3_cross((vec3) ang_vel, za_ang, za_ang);
+    glm_mat3_mulv(inertia_tensor, ang_vel, za_ang);
+    glm_vec3_cross(ang_vel, za_ang, za_ang);
 
     // Z_hat
-    vec6_compose(za_linear, za_ang, p_data[cur_col]->Z_hat);
+    vec6_compose(za_linear, za_ang, p_data[cur_col].Z_hat);
   }
 
   /*
