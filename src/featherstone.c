@@ -117,12 +117,54 @@ int featherstone_abm(ENTITY *body) {
     compute_spatial_velocity(cur_col, parent_col, colliders, p_data);
   }
 
-  /*
-  // TODO A lot of this can be precomputed and never changes (I-hat, za_linear)
   // Calculate I-hat and Z-hat from inbound to outbound
-  for (int i = 0; i < num_links; i++) {
+  for (int cur_col = 0; cur_col < num_links; cur_col++) {
+    if (links[cur_col].category != HURT_BOX) {
+      continue;
+    }
+
+    root_bone = bone_from_col[cur_col];
+
+    mat4 temp = GLM_MAT4_IDENTITY_INIT;
+
+    // M
+    float mass = 1.0 / p_data[cur_col].inv_mass;
+    mat3 mass_mat = GLM_MAT3_IDENTITY_INIT;
+    glm_mat3_scale(mass_mat, mass);
+
+    // I
+    mat3 inertia_tensor = GLM_MAT3_IDENTITY_INIT;
+    glm_mat4_inv(p_data[cur_col].inv_inertia, temp);
+    glm_mat4_pick3(temp, inertia_tensor);
+
+    // I_hat
+    mat6_compose(mat3_zero, mass_mat, inertia_tensor, mat3_zero,
+                 p_data[cur_col]->I_hat);
+
+    // Convert gravity to bone space
+    mat3 world_to_ent = GLM_MAT3_IDENTITY_INIT;
+    glm_mat4_inv(body->final_b_mats[root_bone], temp);
+    glm_mat4_pick3(temp, world_to_ent);
+    mat3 ent_to_bone = GLM_MAT3_IDENTITY_INIT;
+    glm_mat3_inv(bones[root_bone].coordinate_matrix, ent_to_bone);
+    mat3 world_to_bone = GLM_MAT3_IDENTITY_INIT;
+    glm_mat3_mul(ent_to_bone, world_to_ent, world_to_bone);
+    vec3 gravity = { 0.0, -1.0, 0.0 };
+    glm_mat3_mulv(world_to_bone, gravity, gravity);
+
+    vec3 za_linear = GLM_VEC3_ZERO_INIT;
+    glm_vec3_scale(gravity, -mass, za_linear);
+
+    float *ang_vel = (float *) p_data[cur_col].v_hat;
+    vec3 za_ang = GLM_VEC3_ZERO_INIT;
+    glm_mat3_mulv(inertia_tensor, (vec3) ang_vel, za_ang);
+    glm_vec3_cross((vec3) ang_vel, za_ang, za_ang);
+
+    // Z_hat
+    vec6_compose(za_linear, za_ang, p_data[cur_col]->Z_hat);
   }
 
+  /*
   // Calculate I-hat-A and Z-hat-A from outbound to inbound
   for (int i = num_links - 1; i >= 0; i--) {
     if (links[i].category != HURT_BOX) {

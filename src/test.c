@@ -87,15 +87,15 @@ void print_p_data(ENTITY *ent) {
   mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(ent, global_ent_to_world);
 
-  printf("Num colliders: %ld\nNum bones: %ld\n", ent->model->num_colliders,
+  printf("Num colliders: %lld\nNum bones: %lld\n", ent->model->num_colliders,
          ent->model->num_bones);
   printf("Bone -> collider relations:\n");
   for (size_t i = 0; i < ent->model->num_bones; i++) {
-    printf("  %ld -> %d\n", i, ent->model->bone_collider_links[i]);
+    printf("  %lld -> %d\n", i, ent->model->bone_collider_links[i]);
   }
   printf("Collider -> bone relations:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
-    printf("  %ld -> %d\n", i, ent->model->collider_bone_links[i]);
+    printf("  %lld -> %d\n", i, ent->model->collider_bone_links[i]);
   }
   printf("Physics data:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
@@ -118,10 +118,12 @@ void print_p_data(ENTITY *ent) {
                      1.0, cur_coords);
     }
 
+    mat3 cur_bone_to_world_rot = GLM_MAT3_IDENTITY_INIT;
     mat4 cur_bone_to_world = GLM_MAT4_IDENTITY_INIT;
     glm_mat4_ins3(ent->model->bones[root_bone].coordinate_matrix,
                   cur_bone_to_world);
     glm_mat4_mul(cur_ent_to_world, cur_bone_to_world, cur_bone_to_world);
+    glm_mat4_pick3(cur_bone_to_world, cur_bone_to_world_rot);
 
     vec3 cur_joint = GLM_VEC3_ZERO_INIT;
     glm_mat4_mulv3(cur_ent_to_world, ent->model->bones[root_bone].base, 1.0,
@@ -130,10 +132,10 @@ void print_p_data(ENTITY *ent) {
     int parent_bone = ent->model->bones[root_bone].parent;
 
     vec3 axis_of_rot = { 1.0, 0.0, 0.0 };
-    glm_mat4_mulv3(cur_bone_to_world, axis_of_rot, 1.0, axis_of_rot);
+    glm_mat3_mulv(cur_bone_to_world_rot, axis_of_rot, axis_of_rot);
     glm_vec3_normalize(axis_of_rot);
 
-    printf("  collider[%ld]:\n", i);
+    printf("  collider[%lld]:\n", i);
     if (parent_bone != -1) {
       printf("    Parent: %d\n", ent->model->bone_collider_links[parent_bone]);
     }
