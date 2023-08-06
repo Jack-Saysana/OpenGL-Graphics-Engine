@@ -22,6 +22,8 @@ void mat6_sub(mat6 m1, mat6 m2, mat6 dest);
 void mat6_mul(mat6 m1, mat6 m2, mat6 dest);
 // dest = mv
 void mat6_mulv(mat6 m, vec6 v, vec6 dest);
+// dest = s*m
+void mat6_scale(mat6 m, float s, mat6 dest);
 // R = rotate_fg
 // T = translate_fg
 // dest = [[R, 0],[TR, R]]

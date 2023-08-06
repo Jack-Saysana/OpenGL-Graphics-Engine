@@ -221,6 +221,12 @@ void sa_test() {
   print_vec6(v1);
   printf("\n");
 
+  mat6_compose(m2, m3, m4, m5, m6);
+  mat6_scale(m6, 2.0, m6);
+  printf("scale\n");
+  print_mat6(m6);
+  printf("\n");
+
   mat3 r = {
     {1.0, 4.0, 7.0},
     {2.0, 5.0, 8.0},
