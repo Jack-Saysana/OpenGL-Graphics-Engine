@@ -255,44 +255,42 @@ void mat6_mulv(mat6 m, vec6 v, vec6 dest) {
 }
 
 void mat6_scale(mat6 m, float s, mat6 dest) {
-  mat6 c = MAT6_ZERO_INIT;
-  c[0][0] = s * m[0][0];
-  c[0][1] = s * m[0][1];
-  c[0][2] = s * m[0][2];
-  c[0][3] = s * m[0][3];
-  c[0][4] = s * m[0][4];
-  c[0][5] = s * m[0][5];
-  c[1][0] = s * m[1][0];
-  c[1][1] = s * m[1][1];
-  c[1][2] = s * m[1][2];
-  c[1][3] = s * m[1][3];
-  c[1][4] = s * m[1][4];
-  c[1][5] = s * m[1][5];
-  c[2][0] = s * m[2][0];
-  c[2][1] = s * m[2][1];
-  c[2][2] = s * m[2][2];
-  c[2][3] = s * m[2][3];
-  c[2][4] = s * m[2][4];
-  c[2][5] = s * m[2][5];
-  c[3][0] = s * m[3][0];
-  c[3][1] = s * m[3][1];
-  c[3][2] = s * m[3][2];
-  c[3][3] = s * m[3][3];
-  c[3][4] = s * m[3][4];
-  c[3][5] = s * m[3][5];
-  c[4][0] = s * m[4][0];
-  c[4][1] = s * m[4][1];
-  c[4][2] = s * m[4][2];
-  c[4][3] = s * m[4][3];
-  c[4][4] = s * m[4][4];
-  c[4][5] = s * m[4][5];
-  c[5][0] = s * m[5][0];
-  c[5][1] = s * m[5][1];
-  c[5][2] = s * m[5][2];
-  c[5][3] = s * m[5][3];
-  c[5][4] = s * m[5][4];
-  c[5][5] = s * m[5][5];
-  mat6_copy(c, dest);
+  dest[0][0] = s * m[0][0];
+  dest[0][1] = s * m[0][1];
+  dest[0][2] = s * m[0][2];
+  dest[0][3] = s * m[0][3];
+  dest[0][4] = s * m[0][4];
+  dest[0][5] = s * m[0][5];
+  dest[1][0] = s * m[1][0];
+  dest[1][1] = s * m[1][1];
+  dest[1][2] = s * m[1][2];
+  dest[1][3] = s * m[1][3];
+  dest[1][4] = s * m[1][4];
+  dest[1][5] = s * m[1][5];
+  dest[2][0] = s * m[2][0];
+  dest[2][1] = s * m[2][1];
+  dest[2][2] = s * m[2][2];
+  dest[2][3] = s * m[2][3];
+  dest[2][4] = s * m[2][4];
+  dest[2][5] = s * m[2][5];
+  dest[3][0] = s * m[3][0];
+  dest[3][1] = s * m[3][1];
+  dest[3][2] = s * m[3][2];
+  dest[3][3] = s * m[3][3];
+  dest[3][4] = s * m[3][4];
+  dest[3][5] = s * m[3][5];
+  dest[4][0] = s * m[4][0];
+  dest[4][1] = s * m[4][1];
+  dest[4][2] = s * m[4][2];
+  dest[4][3] = s * m[4][3];
+  dest[4][4] = s * m[4][4];
+  dest[4][5] = s * m[4][5];
+  dest[5][0] = s * m[5][0];
+  dest[5][1] = s * m[5][1];
+  dest[5][2] = s * m[5][2];
+  dest[5][3] = s * m[5][3];
+  dest[5][4] = s * m[5][4];
+  dest[5][5] = s * m[5][5];
 }
 
 void mat6_spatial_transform(mat3 rotate_fg, mat3 translate_fg, mat6 dest) {
@@ -382,6 +380,15 @@ void vec6_sub(vec6 a, vec6 b, vec6 dest) {
   c[5] = a[5]-b[5];
 
   vec6_copy(c, dest);
+}
+
+void vec6_scale(vec6 a, float s, vec6 dest) {
+  dest[0] = a[0] * s;
+  dest[1] = a[1] * s;
+  dest[2] = a[2] * s;
+  dest[3] = a[3] * s;
+  dest[4] = a[4] * s;
+  dest[5] = a[5] * s;
 }
 
 void vec6_spatial_transpose_mulm(vec6 v, mat6 m, vec6 dest) {

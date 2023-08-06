@@ -39,6 +39,8 @@ void vec6_compose(vec3 a, vec3 b, vec6 dest);
 void vec6_add(vec6 a, vec6 b, vec6 dest);
 // dest = a - b
 void vec6_sub(vec6 a, vec6 b, vec6 dest);
+// dest = s*a
+void vec6_scale(vec6 a, float s, vec6 dest);
 // v = [a, b]
 // v' = transpose(transpose(b), transpose(a))
 // dest = v'm

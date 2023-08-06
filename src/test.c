@@ -265,25 +265,31 @@ void sa_test() {
   print_vec6(v1);
   printf("\n");
 
-  vec6 v2 = {4.0, 5.0, 6.0, 1.0, 2.0, 3.0};
-  mat6_compose(m2, m3, m4, m5, m6);
-  vec6 v3 = VEC6_ZERO_INIT;
-  vec6_spatial_transpose_mulm(v2, m6, v3);
-  printf("vec6'mat6:\n");
-  print_vec6(v3);
+  vec6 v2 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  vec6_scale(v2, 2.0, v2);
+  printf("scale:\n");
+  print_vec6(v2);
   printf("\n");
 
-  vec6 v4 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-  vec6_spatial_transpose_mulv(v4, v2, m6);
+  vec6 v3 = {4.0, 5.0, 6.0, 1.0, 2.0, 3.0};
+  mat6_compose(m2, m3, m4, m5, m6);
+  vec6 v4 = VEC6_ZERO_INIT;
+  vec6_spatial_transpose_mulm(v3, m6, v4);
+  printf("vec6'mat6:\n");
+  print_vec6(v4);
+  printf("\n");
+
+  vec6 v5 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  vec6_spatial_transpose_mulv(v5, v3, m6);
   printf("ab':\n");
   print_mat6(m6);
   printf("\n");
 
-  vec6 v5 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-  float d = vec6_dot(v5, v5);
+  vec6 v6 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  float d = vec6_dot(v6, v6);
   printf("dot:\n");
   printf("%f\n", d);
-  d = vec6_inner_product(v5, v5);
+  d = vec6_inner_product(v6, v6);
   printf("inner product:\n");
   printf("%f\n", d);
 }
