@@ -392,6 +392,11 @@ void vec6_spatial_transpose_mulv(vec6 a, vec6 b, mat6 dest) {
 }
 
 float vec6_dot(vec6 a, vec6 b) {
+  float c = a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4]+a[5]*b[5];
+  return c;
+}
+
+float vec6_inner_product(vec6 a, vec6 b) {
   float c = a[3]*b[0]+a[4]*b[1]+a[5]*b[2]+a[0]*b[3]+a[1]*b[4]+a[2]*b[5];
   return c;
 }

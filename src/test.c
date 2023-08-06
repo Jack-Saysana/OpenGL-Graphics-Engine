@@ -277,6 +277,9 @@ void sa_test() {
   float d = vec6_dot(v5, v5);
   printf("dot:\n");
   printf("%f\n", d);
+  d = vec6_inner_product(v5, v5);
+  printf("inner product:\n");
+  printf("%f\n", d);
 }
 
 void calc_final_b_mats() {

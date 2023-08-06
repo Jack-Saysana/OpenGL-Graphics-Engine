@@ -46,10 +46,14 @@ void vec6_spatial_transpose_mulm(vec6 v, mat6 m, vec6 dest);
 // b' = transpose(transpose(b2), transpose(b1))
 // dest = ab'
 void vec6_spatial_transpose_mulv(vec6 a, vec6 b, mat6 dest);
+// a = [a1, a2, a3, a4, a5, a6]
+// b = [b1, b2, b3, b4, b5, b6]
+// dest = a1 * b1 + a2 * b2 + a3 * b3 + a4 * b4 + a5 * b5 + a6 * b6
+float vec6_dot(vec6 a, vec6 b);
 // a = [a1, a2]
 // b = [b1, b2]
-// = a2*b1 + a1*b2
-float vec6_dot(vec6 a, vec6 b);
+// = a'b = a2*b1 + a1*b2
+float vec6_inner_product(vec6 a, vec6 b);
 
 // MISC CUSTOM OPERATIONS
 void vec3_singular_cross(vec3 a, mat3 dest);
