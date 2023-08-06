@@ -352,6 +352,45 @@ void vec6_spatial_transpose_mulm(vec6 v, mat6 m, vec6 dest) {
   dest[5] = v[3]*m[5][0]+v[4]*m[5][1]+v[5]*m[5][2]+v[0]*m[5][3]+v[1]*m[5][4]+v[2]*m[5][5];
 }
 
+void vec6_spatial_transpose_mulv(vec6 a, vec6 b, mat6 dest) {
+  dest[0][0] = a[0] * b[3];
+  dest[1][0] = a[0] * b[4];
+  dest[2][0] = a[0] * b[5];
+  dest[3][0] = a[0] * b[0];
+  dest[4][0] = a[0] * b[1];
+  dest[5][0] = a[0] * b[2];
+  dest[0][1] = a[1] * b[3];
+  dest[1][1] = a[1] * b[4];
+  dest[2][1] = a[1] * b[5];
+  dest[3][1] = a[1] * b[0];
+  dest[4][1] = a[1] * b[1];
+  dest[5][1] = a[1] * b[2];
+  dest[0][2] = a[2] * b[3];
+  dest[1][2] = a[2] * b[4];
+  dest[2][2] = a[2] * b[5];
+  dest[3][2] = a[2] * b[0];
+  dest[4][2] = a[2] * b[1];
+  dest[5][2] = a[2] * b[2];
+  dest[0][3] = a[3] * b[3];
+  dest[1][3] = a[3] * b[4];
+  dest[2][3] = a[3] * b[5];
+  dest[3][3] = a[3] * b[0];
+  dest[4][3] = a[3] * b[1];
+  dest[5][3] = a[3] * b[2];
+  dest[0][4] = a[4] * b[3];
+  dest[1][4] = a[4] * b[4];
+  dest[2][4] = a[4] * b[5];
+  dest[3][4] = a[4] * b[0];
+  dest[4][4] = a[4] * b[1];
+  dest[5][4] = a[4] * b[2];
+  dest[0][5] = a[5] * b[3];
+  dest[1][5] = a[5] * b[4];
+  dest[2][5] = a[5] * b[5];
+  dest[3][5] = a[5] * b[0];
+  dest[4][5] = a[5] * b[1];
+  dest[5][5] = a[5] * b[2];
+}
+
 float vec6_dot(vec6 a, vec6 b) {
   float c = a[3]*b[0]+a[4]*b[1]+a[5]*b[2]+a[0]*b[3]+a[1]*b[4]+a[2]*b[5];
   return c;

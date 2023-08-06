@@ -207,8 +207,10 @@ int featherstone_abm(ENTITY *body) {
   /*
   // Calculate I-hat-A and Z-hat-A from outbound to inbound
   for (int cur_col = num_links - 1; cur_col >= 0; cur_col--) {
+    mat6_copy(p_data[cur_col].I_hat, p_data[cur_col].I_hat_A);
     for (int cur_child = 0; cur_child < colliders[cur_col].num_children;
          cur_child++) {
+      int child_col = colliders[cur_col].children_offset + cur_child;
     }
   }
 

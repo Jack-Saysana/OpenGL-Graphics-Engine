@@ -38,9 +38,14 @@ void vec6_add(vec6 a, vec6 b, vec6 dest);
 // dest = a - b
 void vec6_sub(vec6 a, vec6 b, vec6 dest);
 // v = [a, b]
-// v' = transpose(transpose(a), transpose(b))
+// v' = transpose(transpose(b), transpose(a))
 // dest = v'm
 void vec6_spatial_transpose_mulm(vec6 v, mat6 m, vec6 dest);
+// a = [a1, a2]
+// b = [b1, b2]
+// b' = transpose(transpose(b2), transpose(b1))
+// dest = ab'
+void vec6_spatial_transpose_mulv(vec6 a, vec6 b, mat6 dest);
 // a = [a1, a2]
 // b = [b1, b2]
 // = a2*b1 + a1*b2

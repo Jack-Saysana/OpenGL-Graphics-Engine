@@ -88,15 +88,15 @@ void print_p_data(ENTITY *ent) {
   mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(ent, global_ent_to_world);
 
-  printf("Num colliders: %lld\nNum bones: %lld\n", ent->model->num_colliders,
+  printf("Num colliders: %ld\nNum bones: %ld\n", ent->model->num_colliders,
          ent->model->num_bones);
   printf("Bone -> collider relations:\n");
   for (size_t i = 0; i < ent->model->num_bones; i++) {
-    printf("  %lld -> %d\n", i, ent->model->bone_collider_links[i]);
+    printf("  %ld -> %d\n", i, ent->model->bone_collider_links[i]);
   }
   printf("Collider -> bone relations:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
-    printf("  %lld -> %d\n", i, ent->model->collider_bone_links[i]);
+    printf("  %ld -> %d\n", i, ent->model->collider_bone_links[i]);
   }
   printf("Physics data:\n");
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
@@ -136,7 +136,7 @@ void print_p_data(ENTITY *ent) {
     glm_mat3_mulv(cur_bone_to_world_rot, axis_of_rot, axis_of_rot);
     glm_vec3_normalize(axis_of_rot);
 
-    printf("  collider[%lld]:\n", i);
+    printf("  collider[%ld]:\n", i);
     if (parent_bone != -1) {
       printf("    Parent: %d\n", ent->model->bone_collider_links[parent_bone]);
     }
@@ -259,8 +259,22 @@ void sa_test() {
   print_vec6(v1);
   printf("\n");
 
-  vec6 v2 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-  float d = vec6_dot(v2, v2);
+  vec6 v2 = {4.0, 5.0, 6.0, 1.0, 2.0, 3.0};
+  mat6_compose(m2, m3, m4, m5, m6);
+  vec6 v3 = VEC6_ZERO_INIT;
+  vec6_spatial_transpose_mulm(v2, m6, v3);
+  printf("vec6'mat6:\n");
+  print_vec6(v3);
+  printf("\n");
+
+  vec6 v4 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  vec6_spatial_transpose_mulv(v4, v2, m6);
+  printf("ab':\n");
+  print_mat6(m6);
+  printf("\n");
+
+  vec6 v5 = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  float d = vec6_dot(v5, v5);
   printf("dot:\n");
   printf("%f\n", d);
 }
@@ -338,7 +352,7 @@ int main() {
   }
 
   // Test spatial algebra functions
-  //sa_test();
+  // sa_test();
 
   // Complex featherstone abm test
   // Bone 1 normal
