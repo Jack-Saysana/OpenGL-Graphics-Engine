@@ -146,8 +146,17 @@ void print_p_data(ENTITY *ent) {
     printf("    %f %f %f\n", cur_coords[0], cur_coords[1], cur_coords[2]);
     printf("    joint:\n");
     printf("    %f %f %f\n", cur_joint[0], cur_joint[1], cur_joint[2]);
+    printf("    I_hat:\n");
+    print_mat6(ent->np_data[i].I_hat);
+    printf("    Z_hat:\n");
+    print_vec6(ent->np_data[i].Z_hat);
+    printf("    Coriolis:\n");
+    print_vec6(ent->np_data[i].coriolis_vector);
     printf("    v-hat:\n");
     print_vec6(ent->np_data[i].v_hat);
+    printf("    a-hat:\n");
+    print_vec6(ent->np_data[i].a_hat);
+    printf("\n");
   }
 }
 
@@ -369,21 +378,31 @@ int main() {
   // Test spatial algebra functions
   // sa_test();
 
+  // Simple featherstone abm test
+  // All bones normal
+  versor quat = GLM_QUAT_IDENTITY_INIT;
+  glm_quatv(quat, glm_rad(0.0), ragdoll->model->bones[1].coordinate_matrix[0]);
+  glm_quat_mat4(quat, ragdoll->bone_mats[1][ROTATION]);
+  glm_quatv(quat, glm_rad(0.0), ragdoll->model->bones[3].coordinate_matrix[0]);
+  glm_quat_mat4(quat, ragdoll->bone_mats[3][ROTATION]);
+
   // Complex featherstone abm test
   // Bone 1 normal
   // Bone 2 -45 degrees
   // Bone 3 -45 degrees
-  versor quat = GLM_QUAT_IDENTITY_INIT;
+  /*
   glm_quatv(quat, glm_rad(-45.0), ragdoll->model->bones[1].coordinate_matrix[0]);
   glm_quat_mat4(quat, ragdoll->bone_mats[1][ROTATION]);
   glm_quatv(quat, glm_rad(-45.0), ragdoll->model->bones[3].coordinate_matrix[0]);
   glm_quat_mat4(quat, ragdoll->bone_mats[3][ROTATION]);
+  */
+
   calc_final_b_mats();
 
   printf("\n\nBefore:\n");
   print_p_data(ragdoll);
 
-  ragdoll->np_data[0].joint_angle_vels[3] = 1.0;
+  ragdoll->np_data[0].vel_angles[3] = 1.0;
   featherstone_abm(ragdoll);
 
   printf("\n\nAfter:\n");

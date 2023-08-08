@@ -46,7 +46,8 @@ ENTITY *init_entity(MODEL *model) {
       vec6_zero(ent->np_data[i].coriolis_vector);
       vec6_zero(ent->np_data[i].a_hat);
       vec6_zero(ent->np_data[i].v_hat);
-      vec6_zero(ent->np_data[i].joint_angle_vels);
+      vec6_zero(ent->np_data[i].vel_angles);
+      vec6_zero(ent->np_data[i].accel_angles);
       ent->np_data[i].dofs[0] = 0;
       ent->np_data[i].dofs[1] = 0;
       ent->np_data[i].dofs[2] = 0;
@@ -57,6 +58,8 @@ ENTITY *init_entity(MODEL *model) {
       glm_vec3_zero(ent->np_data[i].joint_to_com);
       ent->np_data[i].inv_mass = 0.0;
       ent->np_data[i].Q = 0.0;
+      ent->np_data[i].s_inner_I_dot_s = 0.0;
+      ent->np_data[i].scalar = 0.0;
     }
   } else {
     ent->tree_offsets = NULL;

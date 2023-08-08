@@ -154,10 +154,12 @@ typedef struct p_data {
   // Spatial velocity
   vec6 v_hat;
 
-  // Joint angle of each degree of freedom
-  vec6 joint_angle_vels;
+  // Joint angle velocity of each degree of freedom
+  vec6 vel_angles;
+  // Joint angle acceleration of each degree of freedom
+  vec6 accel_angles;
   // Buffer specifiying the degrees of freedom for link (0 for inactive,
-  // nonzero fro active)
+  // nonzero for active)
   // Layout:
   // [X, Y, Z, ROTX, ROTY, ROTZ]
   unsigned int dofs[6];
@@ -175,6 +177,10 @@ typedef struct p_data {
   float inv_mass;
   // Magnitude of the spatial force acting on the links joint
   float Q;
+  // Shortcut for dot(s'I_hat_A, s_hat)
+  float s_inner_I_dot_s;
+  // Shortcut for s'(Z_hat_A + I_hat(coriolis))
+  float scalar;
 } P_DATA;
 
 typedef struct entity {
