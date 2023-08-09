@@ -332,6 +332,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = POLY;
+      colliders[col_len].children_offset = 0xBAADF00D;
+      colliders[col_len].num_children = 0xBAADF00D;
       sscanf(cur_line, "hp %d %d %d %f %f %f \
                                     %f %f %f \
                                     %f %f %f \
@@ -368,19 +370,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                     colliders[col_len].data.verts[7]+1,
                                     colliders[col_len].data.verts[7]+2);
 
-      vec3 dirs[8] = {
-        { 1.0, 1.0, 1.0 },
-        { -1.0, 1.0, 1.0 },
-        { -1.0, 1.0, -1.0 },
-        { 1.0, 1.0, -1.0 },
-        { 1.0, -1.0, -1.0 },
-        { -1.0, -1.0, -1.0 },
-        { -1.0, -1.0, 1.0 },
-        { 1.0, -1.0, 1.0}
-      };
       vec3 *verts = colliders[col_len].data.verts;
       vec3 center_of_mass = GLM_VEC3_ZERO_INIT;
-      vec3 unsorted[8];
       unsigned int num_used = colliders[col_len].data.num_used;
       for (unsigned int i = 0; i < num_used; i++) {
         glm_vec3_add(verts[i], center_of_mass, center_of_mass);
@@ -389,26 +380,6 @@ int preprocess_lines(LINE_BUFFER *lb) {
       center_of_mass[1] /= num_used;
       center_of_mass[2] /= num_used;
       glm_vec3_copy(center_of_mass, colliders[col_len].data.center_of_mass);
-
-      for (unsigned int i = 0; i < num_used; i++) {
-        glm_vec3_sub(verts[i], center_of_mass, unsorted[i]);
-        glm_vec3_normalize(unsorted[i]);
-      }
-
-      vec3 temp = GLM_VEC3_ZERO_INIT;
-      int best = 0;
-      for (int i = 0; i < 8; i++) {
-        best = max_dot(unsorted, num_used, dirs[i]);
-        if (best != i) {
-          glm_vec3_copy(verts[i], temp);
-          glm_vec3_copy(verts[best], verts[i]);
-          glm_vec3_copy(temp, verts[best]);
-
-          glm_vec3_copy(unsorted[i], temp);
-          glm_vec3_copy(unsorted[best], unsorted[i]);
-          glm_vec3_copy(temp, unsorted[best]);
-        }
-      }
 
       col_len++;
       if (col_len == col_buff_len) {
@@ -441,6 +412,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'h' && cur_line[1] == 's' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = SPHERE;
+      colliders[col_len].children_offset = 0xBAADF00D;
+      colliders[col_len].num_children = 0xBAADF00D;
       sscanf(cur_line, "hs %d %d %f %f %f %f",
              &(colliders[col_len].category),
              bone_links + col_len,
@@ -546,7 +519,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
-      sscanf(cur_line, "a %lld", &(cur_anim->duration));
+      sscanf(cur_line, "a %ld", &(cur_anim->duration));
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;
@@ -721,6 +694,51 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
+  // Convert colliders to be given in bone space and "sort" the verticies for
+  // polygonal colliders
+  vec3 dirs[8] = {
+    { 1.0, 1.0, 1.0 },
+    { -1.0, 1.0, 1.0 },
+    { -1.0, 1.0, -1.0 },
+    { 1.0, 1.0, -1.0 },
+    { 1.0, -1.0, -1.0 },
+    { -1.0, -1.0, -1.0 },
+    { -1.0, -1.0, 1.0 },
+    { 1.0, -1.0, 1.0}
+  };
+  for (int i = 0; i < col_len; i++) {
+    int root_bone = sorted_bone_links[i];
+    if (root_bone != -1 && sorted_colliders[i].type == POLY) {
+      mat4 entity_to_bone = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_ins3(bones[root_bone].coordinate_matrix, entity_to_bone);
+      glm_vec4(sorted_colliders[i].data.center_of_mass, 1.0,
+               entity_to_bone[3]);
+      glm_mat4_inv(entity_to_bone, entity_to_bone);
+
+      // Convert collider verticies to bone space
+      for (int j = 0; j < sorted_colliders[i].data.num_used; j++) {
+        glm_mat4_mulv3(entity_to_bone, sorted_colliders[i].data.verts[j], 1.0,
+                       sorted_colliders[i].data.verts[j]);
+      }
+
+      // Sort verticies to the appropriate winding order
+      if (sorted_colliders[i].data.num_used == 8) {
+        vec3 temp = GLM_VEC3_ZERO_INIT;
+        int best = 0;
+        for (int j = 0; j < 8; j++) {
+          best = max_dot(sorted_colliders[i].data.verts,
+                         sorted_colliders[i].data.num_used, dirs[j]);
+          if (best != j) {
+            glm_vec3_copy(sorted_colliders[i].data.verts[j], temp);
+            glm_vec3_copy(sorted_colliders[i].data.verts[best],
+                          sorted_colliders[i].data.verts[j]);
+            glm_vec3_copy(temp, sorted_colliders[i].data.verts[best]);
+          }
+        }
+      }
+    }
+  }
+
   // Populate collider children buffer
   for (int i = 0; i < col_len; i++) {
     collider_children[i] = 0xBAADF00D;
@@ -789,6 +807,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   fwrite(bones, sizeof(BONE), b_len, file);
   fwrite(collider_links, sizeof(int), b_len, file);
+
   fwrite(sorted_colliders, sizeof(COLLIDER), col_len, file);
   fwrite(sorted_bone_links, sizeof(int), col_len, file);
   fwrite(collider_children, sizeof(size_t), col_len, file);
@@ -879,7 +898,6 @@ int sort_colliders(BONE *bones, COLLIDER *colliders, int *bone_links,
                    sizeof(COLLIDER));
             sorted_bone_links[cur_pos] = bone_links[i];
             cur_pos++;
-            break;
           }
         }
         for (size_t i = 0; i < num_bones; i++) {
