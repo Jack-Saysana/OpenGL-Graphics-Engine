@@ -180,7 +180,6 @@ MODEL *load_model(char *path) {
 
   COLLIDER *colliders = NULL;
   int *bone_links = NULL;
-  size_t *collider_children = NULL;
   if (col_len) {
     colliders = malloc(sizeof(COLLIDER) * col_len);
     if (colliders == NULL) {
@@ -213,23 +212,6 @@ MODEL *load_model(char *path) {
       printf("Unable to allocate bone links\n");
       return NULL;
     }
-    collider_children = malloc(sizeof(size_t) * col_len);
-    if (collider_children == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      free(indicies);
-      free(animations);
-      free(model);
-      free(k_chain_block);
-      free(keyframe_block);
-      free(sled_block);
-      free(colliders);
-      free(bone_links);
-      printf("Unable to allocate collider children\n");
-      return NULL;
-    }
   }
 
   if (bones) {
@@ -243,9 +225,6 @@ MODEL *load_model(char *path) {
   }
   if (bone_links) {
     fread(bone_links, sizeof(int), col_len, file);
-  }
-  if (collider_children) {
-    fread(collider_children, sizeof(size_t), col_len, file);
   }
   if (vertices) {
     fread(vertices, sizeof(VBO), v_len, file);
@@ -337,7 +316,6 @@ MODEL *load_model(char *path) {
   model->bone_collider_links = collider_links;
   model->colliders = colliders;
   model->collider_bone_links = bone_links;
-  model->collider_children = collider_children;
   model->num_animations = a_len;
   model->num_bones = b_len;
   model->num_colliders = col_len;

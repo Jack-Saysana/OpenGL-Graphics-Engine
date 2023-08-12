@@ -107,11 +107,6 @@ typedef struct model {
   /* Each element's index corresponds to the bone of the same index.
      Element value corresponds to collider represneted by bone */
   int *bone_collider_links;
-  /* Buffer denoting the indicies of colliders which are the children of other
-     colliders in the collider tree. The buffer is separated into smaller lists
-     which represent the children of a particular collider. The position and
-     length of a collider's child list is given in the COLLIDER struct. */
-  size_t *collider_children;
   size_t num_animations;
   size_t num_bones;
   size_t num_colliders;

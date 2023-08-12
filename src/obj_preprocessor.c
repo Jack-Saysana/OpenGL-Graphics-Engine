@@ -197,25 +197,6 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate colliders buffer\n");
     return -1;
   }
-  sorted_colliders = malloc(sizeof(COLLIDER) * BUFF_STARTING_LEN);
-  if (colliders == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free(materials);
-    free(animations);
-    free(colliders);
-    fprintf(stderr, "Unable to allocate sorted_colliders buffer\n");
-    return -1;
-  }
   bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
   if (bone_links == NULL) {
     free_line_buffer(lb);
@@ -232,51 +213,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(materials);
     free(animations);
     free(colliders);
-    free(sorted_colliders);
     fprintf(stderr, "Unable to allocate bone_links buffer\n");
-    return -1;
-  }
-  sorted_bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
-  if (sorted_bone_links == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free(materials);
-    free(animations);
-    free(colliders);
-    free(sorted_colliders);
-    free(bone_links);
-    fprintf(stderr, "Unable to allocate sorted_bone_links buffer\n");
-    return -1;
-  }
-  collider_children = malloc(sizeof(size_t) * BUFF_STARTING_LEN);
-  if (collider_children == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free(materials);
-    free(animations);
-    free(colliders);
-    free(sorted_colliders);
-    free(bone_links);
-    free(sorted_bone_links);
-    fprintf(stderr, "Unable to allocate collider children buffer\n");
     return -1;
   }
   col_buff_len = BUFF_STARTING_LEN;
@@ -332,8 +269,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = POLY;
-      colliders[col_len].children_offset = 0xBAADF00D;
-      colliders[col_len].num_children = 0xBAADF00D;
+      colliders[col_len].children_offset = -1;
+      colliders[col_len].num_children = 0;
       sscanf(cur_line, "hp %d %d %d %f %f %f \
                                     %f %f %f \
                                     %f %f %f \
@@ -387,33 +324,15 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                sizeof(COLLIDER));
         if (status == 0) {
           col_buff_len /= 2;
-          status = double_buffer((void **) &sorted_colliders, &col_buff_len,
-                                 sizeof(COLLIDER));
-        }
-
-        if (status == 0) {
-          col_buff_len /= 2;
           status = double_buffer((void **) &bone_links, &col_buff_len,
                                  sizeof(int));
-        }
-
-        if (status == 0) {
-          col_buff_len /= 2;
-          status = double_buffer((void **) &sorted_bone_links, &col_buff_len,
-                                 sizeof(int));
-        }
-
-        if (status == 0) {
-          col_buff_len /= 2;
-          status = double_buffer((void **) &collider_children, &col_buff_len,
-                                 sizeof(size_t));
         }
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 's' &&
                cur_line[2] == ' ') {
       colliders[col_len].type = SPHERE;
-      colliders[col_len].children_offset = 0xBAADF00D;
-      colliders[col_len].num_children = 0xBAADF00D;
+      colliders[col_len].children_offset = -1;
+      colliders[col_len].num_children = 0;
       sscanf(cur_line, "hs %d %d %f %f %f %f",
              &(colliders[col_len].category),
              bone_links + col_len,
@@ -428,26 +347,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                sizeof(COLLIDER));
         if (status == 0) {
           col_buff_len /= 2;
-          status = double_buffer((void **) &sorted_colliders, &col_buff_len,
-                                 sizeof(COLLIDER));
-        }
-
-        if (status == 0) {
-          col_buff_len /= 2;
           status = double_buffer((void **) &bone_links, &col_buff_len,
                                  sizeof(int));
-        }
-
-        if (status == 0) {
-          col_buff_len /= 2;
-          status = double_buffer((void **) &sorted_bone_links, &col_buff_len,
-                                 sizeof(int));
-        }
-
-        if (status == 0) {
-          col_buff_len /= 2;
-          status = double_buffer((void **) &collider_children, &col_buff_len,
-                                 sizeof(size_t));
         }
       }
     } else if (cur_line[0] == 'v' && cur_line[1] == 't' &&
@@ -623,10 +524,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(faces);
       free_materials(materials, mat_len);
       free(colliders);
-      free(sorted_colliders);
       free(bone_links);
-      free(sorted_bone_links);
-      free(collider_children);
 
       for (int i = 0; i < a_len; i++) {
         for (int j = 0; j < animations[i].num_chains; j++) {
@@ -641,43 +539,12 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
-  status = sort_colliders(bones, colliders, bone_links, sorted_colliders,
-                          sorted_bone_links, col_len, b_len);
-  if (status != 0) {
-    fclose(file);
-    free_line_buffer(lb);
-    free(bones);
-    free(collider_links);
-    free(bone_ids);
-    free(bone_weights);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free_materials(materials, mat_len);
-    free(colliders);
-    free(sorted_colliders);
-    free(bone_links);
-    free(sorted_bone_links);
-
-    for (int i = 0; i < a_len; i++) {
-      for (int j = 0; j < animations[i].num_chains; j++) {
-        free(animations[i].keyframe_chains[j].chain);
-      }
-      free(animations[i].keyframe_chains);
-    }
-    free(animations);
-    fprintf(stderr, "Collider sorting error\n");
-    return -1;
-  }
-
   // Compute collider links for each bone since bones and colliders aren't
   // neccessariy 1:1
   for (int i = 0; i < b_len; i++) {
     collider_links[i] = -1;
     for (int j = 0; j < col_len; j++) {
-      if (sorted_bone_links[j] == i) {
+      if (bone_links[j] == i) {
         collider_links[i] = j;
         break;
       }
@@ -694,6 +561,34 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
+  status = sort_colliders();
+  if (status != 0) {
+    fclose(file);
+    free_line_buffer(lb);
+    free(bones);
+    free(collider_links);
+    free(bone_ids);
+    free(bone_weights);
+    free(verticies);
+    free(normals);
+    free(tex_coords);
+    free(vbo_index_combos);
+    free(faces);
+    free_materials(materials, mat_len);
+    free(colliders);
+    free(bone_links);
+
+    for (int i = 0; i < a_len; i++) {
+      for (int j = 0; j < animations[i].num_chains; j++) {
+        free(animations[i].keyframe_chains[j].chain);
+      }
+      free(animations[i].keyframe_chains);
+    }
+    free(animations);
+    fprintf(stderr, "Collider sorting error\n");
+    return -1;
+  }
+
   // Convert colliders to be given in bone space and "sort" the verticies for
   // polygonal colliders
   vec3 dirs[8] = {
@@ -707,63 +602,35 @@ int preprocess_lines(LINE_BUFFER *lb) {
     { 1.0, -1.0, 1.0}
   };
   for (int i = 0; i < col_len; i++) {
-    int root_bone = sorted_bone_links[i];
-    if (root_bone != -1 && sorted_colliders[i].type == POLY) {
+    int root_bone = bone_links[i];
+    if (root_bone != -1 && colliders[i].type == POLY) {
       mat4 entity_to_bone = GLM_MAT4_IDENTITY_INIT;
       glm_mat4_ins3(bones[root_bone].coordinate_matrix, entity_to_bone);
-      glm_vec4(sorted_colliders[i].data.center_of_mass, 1.0,
+      glm_vec4(colliders[i].data.center_of_mass, 1.0,
                entity_to_bone[3]);
       glm_mat4_inv(entity_to_bone, entity_to_bone);
 
       // Convert collider verticies to bone space
-      for (int j = 0; j < sorted_colliders[i].data.num_used; j++) {
-        glm_mat4_mulv3(entity_to_bone, sorted_colliders[i].data.verts[j], 1.0,
-                       sorted_colliders[i].data.verts[j]);
+      for (int j = 0; j < colliders[i].data.num_used; j++) {
+        glm_mat4_mulv3(entity_to_bone, colliders[i].data.verts[j], 1.0,
+                       colliders[i].data.verts[j]);
       }
 
       // Sort verticies to the appropriate winding order
-      if (sorted_colliders[i].data.num_used == 8) {
+      if (colliders[i].data.num_used == 8) {
         vec3 temp = GLM_VEC3_ZERO_INIT;
         int best = 0;
         for (int j = 0; j < 8; j++) {
-          best = max_dot(sorted_colliders[i].data.verts,
-                         sorted_colliders[i].data.num_used, dirs[j]);
+          best = max_dot(colliders[i].data.verts, colliders[i].data.num_used,
+                         dirs[j]);
           if (best != j) {
-            glm_vec3_copy(sorted_colliders[i].data.verts[j], temp);
-            glm_vec3_copy(sorted_colliders[i].data.verts[best],
-                          sorted_colliders[i].data.verts[j]);
-            glm_vec3_copy(temp, sorted_colliders[i].data.verts[best]);
+            glm_vec3_copy(colliders[i].data.verts[j], temp);
+            glm_vec3_copy(colliders[i].data.verts[best],
+                          colliders[i].data.verts[j]);
+            glm_vec3_copy(temp, colliders[i].data.verts[best]);
           }
         }
       }
-    }
-  }
-
-  // Populate collider children buffer
-  for (int i = 0; i < col_len; i++) {
-    collider_children[i] = 0xBAADF00D;
-  }
-  size_t next = 0;
-  int root_bone = -1;
-  int parent_col = -1;
-  for (int i = 0; i < col_len; i++) {
-    sorted_colliders[i].children_offset = next;
-    sorted_colliders[i].num_children = 0;
-    for (int j = 0; j < col_len; j++) {
-      root_bone = sorted_bone_links[j];
-      if (root_bone == -1 || bones[root_bone].parent == -1) {
-        continue;
-      }
-
-      parent_col = collider_links[bones[root_bone].parent];
-      if (parent_col == i) {
-        collider_children[next] = j;
-        sorted_colliders[i].num_children++;
-        next++;
-      }
-    }
-    if (colliders[i].num_children == 0) {
-      sorted_colliders[i].children_offset = -1;
     }
   }
 
@@ -808,9 +675,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fwrite(bones, sizeof(BONE), b_len, file);
   fwrite(collider_links, sizeof(int), b_len, file);
 
-  fwrite(sorted_colliders, sizeof(COLLIDER), col_len, file);
-  fwrite(sorted_bone_links, sizeof(int), col_len, file);
-  fwrite(collider_children, sizeof(size_t), col_len, file);
+  fwrite(colliders, sizeof(COLLIDER), col_len, file);
+  fwrite(bone_links, sizeof(int), col_len, file);
 
   for (size_t i = 0; i < vbo_len; i++) {
     fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);
@@ -849,9 +715,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   free(faces);
   free_materials(materials, mat_len);
   free(colliders);
-  free(sorted_colliders);
   free(bone_links);
-  free(sorted_bone_links);
 
   for (int i = 0; i < a_len; i++) {
     for (int j = 0; j < animations[i].num_chains; j++) {
@@ -864,46 +728,96 @@ int preprocess_lines(LINE_BUFFER *lb) {
   return 0;
 }
 
-int sort_colliders(BONE *bones, COLLIDER *colliders, int *bone_links,
-                   COLLIDER *sorted_colliders, int *sorted_bone_links,
-                   size_t num_cols, size_t num_bones) {
+int sort_colliders() {
   size_t cur_pos = 0;
   // Bring all non-skeletal colliders to the front of the array
   for (size_t cur_col = 0; cur_col < col_len; cur_col++) {
     if (colliders[cur_col].category != HURT_BOX || bone_links[cur_col] == -1) {
-      memcpy(sorted_colliders + cur_pos, colliders + cur_col,
-             sizeof(COLLIDER));
-      sorted_bone_links[cur_pos] = bone_links[cur_col];
+      swap_colliders(cur_col, cur_pos);
       cur_pos++;
     }
   }
 
-  size_t top = 0;
-  int cur = 0;
-  int *collider_stack = malloc(sizeof(int) * num_cols);
-  if (collider_stack == NULL) {
+  // Queue used for traversing and sorting the collider tree in a breadth-first
+  // manner (BFS must be used here because the collider array will be expected
+  // to be organized in a heap-like manner, requiring a breadth-first ordering)
+  size_t front = 0;
+  size_t end = 0;
+  int dequeued_col = 0;
+  int *collider_queue = malloc(sizeof(int) * col_len);
+  if (collider_queue == NULL) {
     return -1;
   }
-  // Write sorted bone trees of each parent bone in the armature
-  for (size_t cur_bone = 0; cur_bone < num_bones; cur_bone++) {
+
+  // Stack used for traversing the sub-bone-tree of each collider in a depth
+  // first manner (the usage of DFS vs BFS doesn't actually matter here)
+  size_t top = 0;
+  int popped_bone = 0;
+  int *bone_stack = malloc(sizeof(int) * b_len);
+  if (bone_stack == NULL) {
+    free(collider_queue);
+    return -1;
+  }
+
+  // Write sorted collider trees of each parent collider in the armature
+  for (size_t cur_bone = 0; cur_bone < b_len; cur_bone++) {
+    // Find root bone of root collider
     if (bones[cur_bone].parent == -1) {
-      collider_stack[top] = cur_bone;
-      top++;
-      while (top) {
-        top--;
-        cur = collider_stack[top];
-        for (size_t i = 0; i < num_cols; i++) {
-          if (bone_links[i] == cur) {
-            memcpy(sorted_colliders + cur_pos, colliders + i,
-                   sizeof(COLLIDER));
-            sorted_bone_links[cur_pos] = bone_links[i];
-            cur_pos++;
-          }
-        }
-        for (size_t i = 0; i < num_bones; i++) {
-          if (bones[i].parent == cur) {
-            collider_stack[top] = i;
-            top++;
+      // Add root collider to sorted list
+      int cur_col = collider_links[cur_bone];
+      swap_colliders(cur_col, cur_pos);
+      cur_pos++;
+
+      // Enqueue root bone of collider
+      collider_queue[end] = cur_bone;
+      end = (end + 1) % col_len;
+
+      while (front != end) {
+        // Dequeue collider root to be travered
+        dequeued_col = collider_queue[front];
+        front = (front + 1) % col_len;
+
+        // Put root bone of collider on the stack
+        bone_stack[top] = dequeued_col;
+        top++;
+
+        // Traverse the sub-tree extending from the collider's root bone,
+        // finding and enqueuing all root bones of child colliders
+        while (top) {
+          // Pop top of stack
+          top--;
+          popped_bone = bone_stack[top];
+          for (size_t cur_child = 0; cur_child < b_len; cur_child++) {
+            // Find all children to popped bone
+            if (bones[cur_child].parent == popped_bone) {
+              // If child is root bone of a child collider, add the child
+              // collider to the sorted list and enqueue the root bone of the
+              // child collider
+              if (bone_links[collider_links[cur_child]] == cur_child &&
+                  collider_links[cur_child] != collider_links[popped_bone]) {
+                cur_col = collider_links[cur_child];
+                swap_colliders(cur_col, cur_pos);
+
+                // Update child info of popped bone
+                int parent_col = collider_links[popped_bone];
+                if (colliders[parent_col].children_offset == -1) {
+                  colliders[parent_col].children_offset = cur_pos;
+                }
+                colliders[parent_col].num_children++;
+
+                cur_pos++;
+
+                collider_queue[end] = cur_child;
+                end = (end + 1) % col_len;
+              } else if (collider_links[cur_child] ==
+                         collider_links[popped_bone]) {
+                // The child bone is still apart of the current collider, so
+                // continue traversing the tree by pushing the child bone onto
+                // the stack
+                bone_stack[top] = cur_child;
+                top++;
+              }
+            }
           }
         }
       }
@@ -911,6 +825,27 @@ int sort_colliders(BONE *bones, COLLIDER *colliders, int *bone_links,
   }
 
   return 0;
+}
+
+void swap_colliders(size_t cur, size_t dest) {
+  if (cur != dest) {
+    COLLIDER temp_collider;
+    memcpy(&temp_collider, colliders + dest, sizeof(COLLIDER));
+    memcpy(colliders + dest, colliders + cur, sizeof(COLLIDER));
+    memcpy(colliders + cur, &temp_collider, sizeof(COLLIDER));
+
+    int temp_bone_link = bone_links[dest];
+    bone_links[dest] = bone_links[cur];
+    bone_links[cur] = temp_bone_link;
+
+    for (int i = 0; i < b_len; i++) {
+      if (collider_links[i] == dest) {
+        collider_links[i] = cur;
+      } else if (collider_links[i] == cur) {
+        collider_links[i] = dest;
+      }
+    }
+  }
 }
 
 int preprocess_face(FILE *file, char *line) {
