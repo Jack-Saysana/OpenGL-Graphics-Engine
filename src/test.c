@@ -146,10 +146,16 @@ void print_p_data(ENTITY *ent) {
     printf("    %f %f %f\n", cur_coords[0], cur_coords[1], cur_coords[2]);
     printf("    joint:\n");
     printf("    %f %f %f\n", cur_joint[0], cur_joint[1], cur_joint[2]);
+    printf("    to parent:\n");
+    print_mat6(ent->np_data[i].ST_to_parent);
+    printf("    from parent:\n");
+    print_mat6(ent->np_data[i].ST_from_parent);
     printf("    I_hat:\n");
     print_mat6(ent->np_data[i].I_hat);
     printf("    Z_hat:\n");
     print_vec6(ent->np_data[i].Z_hat);
+    printf("    s_hat:\n");
+    print_vec6(ent->np_data[i].s_hat);
     printf("    Coriolis:\n");
     print_vec6(ent->np_data[i].coriolis_vector);
     printf("    v-hat:\n");
@@ -218,8 +224,34 @@ void sa_test() {
   print_vec6(res);
   printf("\n");
 
-  mat6_mul(m1, m1, m1);
-  printf("m1*m1:\n");
+  printf("\n");
+  print_mat6(m1);
+  mat3 m7 = {
+    {36.0, 30.0, 24.0},
+    {35.0, 29.0, 23.0},
+    {34.0, 28.0, 22.0}
+  };
+  mat3 m8 = {
+    {33.0, 27.0, 21.0},
+    {32.0, 26.0, 20.0},
+    {31.0, 25.0, 19.0}
+  };
+  mat3 m9 = {
+    {18.0, 12.0, 6.0},
+    {17.0, 11.0, 5.0},
+    {16.0, 10.0, 4.0}
+  };
+  mat3 m10 = {
+    {15.0, 9.0, 3.0},
+    {14.0, 8.0, 2.0},
+    {13.0, 7.0, 1.0}
+  };
+  mat6 m11 = MAT6_ZERO_INIT;
+  mat6_compose(m7, m8, m9, m10, m11);
+  printf("\n");
+  print_mat6(m11);
+  mat6_mul(m1, m11, m1);
+  printf("m1*m11:\n");
   print_mat6(m1);
   printf("\n");
 
@@ -373,6 +405,8 @@ int main() {
   for (size_t i = 0; i < ragdoll->model->num_colliders; i++) {
     ragdoll->np_data[i].inv_mass = 1.0;
     calc_inertia_tensor(ragdoll, i);
+    glm_mat4_inv(ragdoll->np_data[i].inv_inertia,
+                 ragdoll->np_data[i].inv_inertia);
   }
 
   // Test spatial algebra functions
