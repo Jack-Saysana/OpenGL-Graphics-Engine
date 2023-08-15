@@ -425,9 +425,11 @@ int main() {
   // Bone 2 -45 degrees
   // Bone 3 -45 degrees
   /*
-  glm_quatv(quat, glm_rad(-45.0), ragdoll->model->bones[1].coordinate_matrix[0]);
+  glm_quatv(quat, glm_rad(-45.0),
+            ragdoll->model->bones[1].coordinate_matrix[0]);
   glm_quat_mat4(quat, ragdoll->bone_mats[1][ROTATION]);
-  glm_quatv(quat, glm_rad(-45.0), ragdoll->model->bones[3].coordinate_matrix[0]);
+  glm_quatv(quat, glm_rad(-45.0),
+            ragdoll->model->bones[3].coordinate_matrix[0]);
   glm_quat_mat4(quat, ragdoll->bone_mats[3][ROTATION]);
   */
 

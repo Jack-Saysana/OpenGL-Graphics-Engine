@@ -56,20 +56,8 @@ int featherstone_abm(ENTITY *body) {
                      cur_coords);
     }
 
-    /*
-    printf("joint_to_com[%d] (ent): %f %f %f\n", cur_col,
-           p_data[cur_col].joint_to_com[0],
-           p_data[cur_col].joint_to_com[1],
-           p_data[cur_col].joint_to_com[2]);
-    */
     glm_mat4_mulv3(cur_ent_to_bone, p_data[cur_col].joint_to_com, 1.0,
                    p_data[cur_col].joint_to_com);
-    /*
-    printf("joint_to_com[%d] (bone): %f %f %f\n", cur_col,
-           p_data[cur_col].joint_to_com[0],
-           p_data[cur_col].joint_to_com[1],
-           p_data[cur_col].joint_to_com[2]);
-    */
 
     parent_bone = bones[root_bone].parent;
     parent_col = -1;
@@ -99,18 +87,6 @@ int featherstone_abm(ENTITY *body) {
                        1.0, parent_coords);
       }
 
-      /*
-      printf("\n\np: %d\nc: %d\n", parent_col, cur_col);
-      printf("\np_bone_to_world:\n\n");
-      print_mat4(parent_bone_to_world);
-      printf("\np_ent_to_bone:\n");
-      print_mat3(bones[parent_bone].coordinate_matrix);
-      printf("\nc_bone_to_world:\n\n");
-      print_mat4(cur_bone_to_world);
-      printf("\nc_ent_to_bone:\n\n");
-      print_mat3(bones[root_bone].coordinate_matrix);
-      printf("\n");
-      */
       compute_spatial_transformations(parent_bone_to_world,
                                       parent_coords,
                                       cur_bone_to_world,
@@ -169,14 +145,7 @@ int featherstone_abm(ENTITY *body) {
     float *ang_vel = (float *) p_data[cur_col].v_hat;
     vec3 za_ang = GLM_VEC3_ZERO_INIT;
     glm_mat3_mulv(inertia_tensor, ang_vel, za_ang);
-    /*
-    printf("Collider[%d]:\n", cur_col);
-    printf("Iw:\n");
-    printf("%f %f %f\n", za_ang[0], za_ang[1], za_ang[2]);
     glm_vec3_cross(ang_vel, za_ang, za_ang);
-    printf("w x Iw:\n");
-    printf("%f %f %f\n", za_ang[0], za_ang[1], za_ang[2]);
-    */
 
     // Z_hat
     vec6_compose(za_linear, za_ang, p_data[cur_col].Z_hat);
@@ -184,31 +153,39 @@ int featherstone_abm(ENTITY *body) {
     // TODO account for different types of joints and accumulation of different
     // DOFs
     // Vector representing joint axis scaled by joint velocity magnitude
-    vec3 v = GLM_VEC3_ZERO_INIT;
-    vec3 coriolis_first = GLM_VEC3_ZERO_INIT;
-    glm_vec3_scale(BASIS_VECTORS[0], p_data[cur_col].vel_angles[3], v);
-    glm_vec3_cross(ang_vel, v, coriolis_first);
-
-    vec3 v_cross_d = GLM_VEC3_ZERO_INIT;
-    glm_vec3_cross(v, p_data[cur_col].joint_to_com, v_cross_d);
-
-    vec3 ang_vel_cross_r = GLM_VEC3_ZERO_INIT;
-    glm_vec3_cross(ang_vel, p_data[cur_col].from_parent_lin, ang_vel_cross_r);
-
-    vec3 temp_vec3 = GLM_VEC3_ZERO_INIT;
-    vec3 coriolis_last = GLM_VEC3_ZERO_INIT;
-    glm_vec3_scale(ang_vel, 2.0, coriolis_last);
-    glm_vec3_cross(coriolis_last, v_cross_d, coriolis_last);
-
-    glm_vec3_cross(ang_vel, ang_vel_cross_r, temp_vec3);
-    glm_vec3_add(coriolis_last, temp_vec3, coriolis_last);
-
-    glm_vec3_cross(v, v_cross_d, temp_vec3);
-    glm_vec3_add(coriolis_last, temp_vec3, coriolis_last);
-
     // Coriolis Vector
-    vec6_compose(coriolis_first, coriolis_last,
-                 p_data[cur_col].coriolis_vector);
+    vec3 temp_vec3 = GLM_VEC3_ZERO_INIT;
+    vec6_zero(p_data[cur_col].coriolis_vector);
+    int parent_bone = bones[root_bone].parent;
+    if (parent_bone != -1) {
+      vec3 p_ang_vel = GLM_VEC3_ZERO_INIT;
+      glm_vec3_copy(p_data[bone_from_col[parent_bone]].v_hat, p_ang_vel);
+
+      vec3 v = GLM_VEC3_ZERO_INIT;
+      vec3 coriolis_first = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(BASIS_VECTORS[0], p_data[cur_col].vel_angles[3], v);
+      glm_vec3_cross(p_ang_vel, v, coriolis_first);
+
+      vec3 v_cross_d = GLM_VEC3_ZERO_INIT;
+      glm_vec3_cross(v, p_data[cur_col].joint_to_com, v_cross_d);
+
+      vec3 p_ang_vel_cross_r = GLM_VEC3_ZERO_INIT;
+      glm_vec3_cross(p_ang_vel, p_data[cur_col].from_parent_lin,
+                     p_ang_vel_cross_r);
+
+      vec3 coriolis_last = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(p_ang_vel, 2.0, coriolis_last);
+      glm_vec3_cross(coriolis_last, v_cross_d, coriolis_last);
+
+      glm_vec3_cross(p_ang_vel, p_ang_vel_cross_r, temp_vec3);
+      glm_vec3_add(coriolis_last, temp_vec3, coriolis_last);
+
+      glm_vec3_cross(v, v_cross_d, temp_vec3);
+      glm_vec3_add(coriolis_last, temp_vec3, coriolis_last);
+
+      vec6_compose(coriolis_first, coriolis_last,
+                   p_data[cur_col].coriolis_vector);
+    }
 
     // TODO account for different types of joints
     glm_vec3_cross(BASIS_VECTORS[0], p_data[cur_col].joint_to_com, temp_vec3);
@@ -224,6 +201,7 @@ int featherstone_abm(ENTITY *body) {
 
     mat6_copy(p_data[cur_col].I_hat, p_data[cur_col].I_hat_A);
     vec6_copy(p_data[cur_col].Z_hat, p_data[cur_col].Z_hat_A);
+    vec6_zero(p_data[cur_col].coriolis_vector);
 
     mat6 temp_mat6 = MAT6_ZERO_INIT;
     vec6 temp_vec6 = VEC6_ZERO_INIT;
@@ -234,18 +212,24 @@ int featherstone_abm(ENTITY *body) {
       // Is
       mat6_mulv(p_data[child_col].I_hat_A, p_data[child_col].s_hat,
                 I_hat_s_hat);
+
+      // Iss'
       vec6_spatial_transpose_mulv(I_hat_s_hat, p_data[child_col].s_hat,
                                   temp_mat6);
+
+      // Iss'I
       mat6_mul(temp_mat6, p_data[child_col].I_hat_A, temp_mat6);
 
       vec6_spatial_transpose_mulm(p_data[child_col].s_hat,
                                   p_data[child_col].I_hat_A, temp_vec6);
+
       // s'Is
       p_data[child_col].s_inner_I_dot_s = vec6_dot(temp_vec6,
                                                    p_data[child_col].s_hat);
 
       mat6_scale(temp_mat6, 1.0 / p_data[child_col].s_inner_I_dot_s,
                  temp_mat6);
+
       mat6_sub(p_data[child_col].I_hat_A, temp_mat6, temp_mat6);
       mat6_mul(p_data[child_col].ST_to_parent, temp_mat6, temp_mat6);
       mat6_mul(temp_mat6, p_data[child_col].ST_from_parent, temp_mat6);
@@ -257,13 +241,16 @@ int featherstone_abm(ENTITY *body) {
                 I_hat_coriolis);
 
       vec6_add(p_data[child_col].Z_hat_A, I_hat_coriolis, temp_vec6);
+
       // TODO calculate Q_i, which will take into account external forces
       // applied to the joint
       p_data[child_col].scalar = vec6_inner_product(p_data[child_col].s_hat,
                                                     temp_vec6);
+
       p_data[child_col].scalar = (p_data[child_col].Q -
                                   p_data[child_col].scalar) /
                                  p_data[child_col].s_inner_I_dot_s;
+
       vec6_scale(I_hat_s_hat, p_data[child_col].scalar, temp_vec6);
       vec6_add(temp_vec6, I_hat_coriolis, temp_vec6);
       vec6_add(temp_vec6, p_data[child_col].Z_hat_A, temp_vec6);
@@ -302,8 +289,8 @@ int featherstone_abm(ENTITY *body) {
                 temp_vec6);
       vec6_add(temp_vec6, p_data[cur_col].coriolis_vector,
                p_data[cur_col].a_hat);
-      vec6_scale(p_data[cur_col].coriolis_vector,
-                 p_data[cur_col].accel_angles[3], temp_vec6);
+      vec6_scale(p_data[cur_col].s_hat, p_data[cur_col].accel_angles[3],
+                 temp_vec6);
       // a_hat
       vec6_add(p_data[cur_col].a_hat, temp_vec6, p_data[cur_col].a_hat);
     }
@@ -346,13 +333,8 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   vec3 p_to_c_lin = GLM_VEC3_ZERO_INIT;
   // Parent to child in world coords
   glm_vec3_sub(c_coords, p_coords, p_to_c_lin);
-  /*
-  printf("c_coords: (%f, %f, %f)\n", c_coords[0], c_coords[1], c_coords[2]);
-  printf("p_coords: (%f, %f, %f)\n", p_coords[0], p_coords[1], p_coords[2]);
-  */
   // Rotate to bone coords of parent
   glm_mat3_mulv(p_world_to_bone, p_to_c_lin, p_to_c_lin);
-  //printf("p->c: (%f, %f, %f)\n", p_to_c_lin[0], p_to_c_lin[1], p_to_c_lin[2]);
   vec3_singular_cross(p_to_c_lin, p_to_c_mat);
 
   // Linear component of the spatial transformation matrix transforming vectors
@@ -364,7 +346,6 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   // Rotate to bone coords of child
   glm_mat3_mulv(c_world_to_bone, c_to_p_lin, c_to_p_lin);
   glm_vec3_negate_to(c_to_p_lin, p_to_c_lin_dest);
-  //printf("c->p: (%f, %f, %f)\n", c_to_p_lin[0], c_to_p_lin[1], c_to_p_lin[2]);
   vec3_singular_cross(c_to_p_lin, c_to_p_mat);
 
   // Spatial transformation matrix transforming vectors in the child bone's
@@ -388,16 +369,6 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
   vec3 v = GLM_VEC3_ZERO_INIT;
   vec3 va = GLM_VEC3_ZERO_INIT;
   if (parent_col != -1) {
-    /*
-    printf("\n%d -> %d\n", parent_col, cur_col);
-    print_mat6(p_data[cur_col].ST_from_parent);
-    printf("\n%d <- %d\n", parent_col, cur_col);
-    print_mat6(p_data[cur_col].ST_to_parent);
-    printf("\n");
-    printf("v_hat:\n");
-    print_vec6(p_data[parent_col].v_hat);
-    */
-
     mat6_mulv(p_data[cur_col].ST_from_parent, p_data[parent_col].v_hat,
               parent_v_hat);
     // Because the angular component of a link is represented by the first half
@@ -413,13 +384,6 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
   }
 
   // Accumulate velocities from prismatic DOFS
-  /*for (int j = 0; j < 3; j++) {
-    if (p_data->dofs[j]) {
-      glm_vec3_scale(BASIS_VECTORS[j], p_data[cur_col].vel_angles[j],
-                     temp);
-      glm_vec3_add(temp, v, v);
-    }
-  }*/
   // TODO Make this more flexible so more than just having the X-Axis as the
   // only degree of freedom
   glm_vec3_scale(BASIS_VECTORS[0], p_data[cur_col].vel_angles[3], temp);
