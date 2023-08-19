@@ -616,19 +616,20 @@ int preprocess_lines(LINE_BUFFER *lb) {
                        colliders[i].data.verts[j]);
       }
 
-      // Sort verticies to the appropriate winding order
-      if (colliders[i].data.num_used == 8) {
-        vec3 temp = GLM_VEC3_ZERO_INIT;
-        int best = 0;
-        for (int j = 0; j < 8; j++) {
-          best = max_dot(colliders[i].data.verts, colliders[i].data.num_used,
-                         dirs[j]);
-          if (best != j) {
-            glm_vec3_copy(colliders[i].data.verts[j], temp);
-            glm_vec3_copy(colliders[i].data.verts[best],
-                          colliders[i].data.verts[j]);
-            glm_vec3_copy(temp, colliders[i].data.verts[best]);
-          }
+    }
+
+    // Sort verticies to the appropriate winding order
+    if (colliders[i].type == POLY && colliders[i].data.num_used == 8) {
+      vec3 temp = GLM_VEC3_ZERO_INIT;
+      int best = 0;
+      for (int j = 0; j < 8; j++) {
+        best = max_dot(colliders[i].data.verts, colliders[i].data.num_used,
+                       dirs[j]);
+        if (best != j) {
+          glm_vec3_copy(colliders[i].data.verts[j], temp);
+          glm_vec3_copy(colliders[i].data.verts[best],
+                        colliders[i].data.verts[j]);
+          glm_vec3_copy(temp, colliders[i].data.verts[best]);
         }
       }
     }
