@@ -189,7 +189,7 @@ typedef struct entity {
   size_t list_offsets[2];
   /* Location, rotation and scale matricies for each bone */
   mat4 (*bone_mats)[3];
-  /* "Narrow" physics data for each bone */
+  /* "Narrow" physics data for each collider */
   P_DATA *np_data;
   /* Model matrix for each bone, including those inherited by parent bones */
   mat4 *final_b_mats;

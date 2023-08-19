@@ -172,12 +172,26 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
   get_model_mat(entity, model);
   for (int i = 0; i < entity->model->num_colliders; i++) {
     bone = entity->model->collider_bone_links[i];
-    if (bone >= 0 && bone < entity->model->num_bones) {
-      glm_mat4_mul(model, entity->final_b_mats[bone], used);
+    type = entity->model->colliders[i].type;
+
+    if (bone != -1) {
+      mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
+                    bone_to_entity);
+      if (type == POLY) {
+        glm_vec3_copy(entity->model->colliders[i].data.center_of_mass,
+                      bone_to_entity[3]);
+      } else {
+        glm_vec3_copy(entity->model->colliders[i].data.center,
+                      bone_to_entity[3]);
+      }
+
+      mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_mul(entity->final_b_mats[bone], bone_to_entity, bone_to_world);
+      glm_mat4_mul(model, bone_to_world, used);
     } else {
       glm_mat4_copy(model, used);
     }
-    type = entity->model->colliders[i].type;
 
     if (type == POLY) {
       glGenVertexArrays(1, VAO + i);
