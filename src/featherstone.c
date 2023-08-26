@@ -161,7 +161,7 @@ int featherstone_abm(ENTITY *body) {
     int parent_bone = bones[root_bone].parent;
     if (parent_bone != -1) {
       vec3 p_ang_vel = GLM_VEC3_ZERO_INIT;
-      glm_vec3_copy(p_data[bone_from_col[parent_bone]].v_hat, p_ang_vel);
+      glm_vec3_copy(p_data[col_from_bone[parent_bone]].v_hat, p_ang_vel);
 
       vec3 v = GLM_VEC3_ZERO_INIT;
       vec3 coriolis_first = GLM_VEC3_ZERO_INIT;
