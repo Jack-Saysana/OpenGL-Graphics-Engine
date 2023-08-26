@@ -449,6 +449,27 @@ float vec6_inner_product(vec6 a, vec6 b) {
   return c;
 }
 
+void vec6_remove_noise(vec6 vec, float threshold) {
+  if (vec[0] < threshold && vec[0] > -threshold) {
+    vec[0] = 0.0;
+  }
+  if (vec[1] < threshold && vec[1] > -threshold) {
+    vec[1] = 0.0;
+  }
+  if (vec[2] < threshold && vec[2] > -threshold) {
+    vec[2] = 0.0;
+  }
+  if (vec[3] < threshold && vec[3] > -threshold) {
+    vec[3] = 0.0;
+  }
+  if (vec[4] < threshold && vec[4] > -threshold) {
+    vec[4] = 0.0;
+  }
+  if (vec[5] < threshold && vec[5] > -threshold) {
+    vec[5] = 0.0;
+  }
+}
+
 void vec3_singular_cross(vec3 a, mat3 dest) {
   dest[0][0] = 0.0;
   dest[0][1] = a[2];

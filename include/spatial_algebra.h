@@ -59,5 +59,7 @@ float vec6_dot(vec6 a, vec6 b);
 // = a'b = a2*b1 + a1*b2
 float vec6_inner_product(vec6 a, vec6 b);
 
+void vec6_remove_noise(vec6 vec, float threshold);
+
 // MISC CUSTOM OPERATIONS
 void vec3_singular_cross(vec3 a, mat3 dest);

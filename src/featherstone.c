@@ -95,6 +95,7 @@ int featherstone_abm(ENTITY *body) {
                                       p_data[cur_col].ST_from_parent,
                                       p_data[cur_col].ST_to_parent);
     }
+
     compute_spatial_velocity(cur_col, parent_col, colliders, p_data);
   }
 
@@ -140,11 +141,12 @@ int featherstone_abm(ENTITY *body) {
     glm_mat3_mulv(world_to_bone, G_VEC, gravity);
 
     vec3 za_linear = GLM_VEC3_ZERO_INIT;
-    glm_vec3_scale(gravity, -mass, za_linear);
+    glm_vec3_scale(gravity, mass, za_linear);
 
     float *ang_vel = (float *) p_data[cur_col].v_hat;
     vec3 za_ang = GLM_VEC3_ZERO_INIT;
     glm_mat3_mulv(inertia_tensor, ang_vel, za_ang);
+
     glm_vec3_cross(ang_vel, za_ang, za_ang);
 
     // Z_hat
@@ -291,8 +293,15 @@ int featherstone_abm(ENTITY *body) {
                p_data[cur_col].a_hat);
       vec6_scale(p_data[cur_col].s_hat, p_data[cur_col].accel_angles[3],
                  temp_vec6);
+
       // a_hat
       vec6_add(p_data[cur_col].a_hat, temp_vec6, p_data[cur_col].a_hat);
+      for (int i = 0; i < 6; i++) {
+        if (p_data[cur_col].a_hat[i] < 0.001 &&
+            p_data[cur_col].a_hat[i] > -0.001) {
+          p_data[cur_col].a_hat[i] = 0.0;
+        }
+      }
     }
   }
 
@@ -371,16 +380,15 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
   if (parent_col != -1) {
     mat6_mulv(p_data[cur_col].ST_from_parent, p_data[parent_col].v_hat,
               parent_v_hat);
+
     // Because the angular component of a link is represented by the first half
     // of v_hat, we can just pass v_hat in as a vec3 to use the angular
     // velocity
     glm_vec3_copy(parent_v_hat, va);
+
     // The linear component is represented by the second half of v_hat, so we
     // extract the last half of v_hat when using linear velocity
     glm_vec3_copy(((float *) parent_v_hat) + 3, v);
-    glm_vec3_cross(p_data[cur_col].v_hat, p_data[cur_col].from_parent_lin,
-                   temp);
-    glm_vec3_add(va, temp, va);
   }
 
   // Accumulate velocities from prismatic DOFS

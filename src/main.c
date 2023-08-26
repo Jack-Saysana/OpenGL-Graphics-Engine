@@ -59,6 +59,7 @@ float lastY = 300;
 float last_push = 0.0;
 int toggled = 1;
 int space_pressed = 0;
+int z_pressed = 0;
 int cursor_on = 1;
 int draw = 0;
 
@@ -66,6 +67,9 @@ int draw = 0;
 int cur_frame = 0;
 vec3 col_point = { 0.0, 0.0, 0.0 };
 int enable_gravity = 1;
+
+int featherstone_abm(ENTITY *body);
+void integrate_ragdoll(ENTITY *subject);
 
 int main() {
   GLFWwindow *window;
@@ -172,14 +176,18 @@ int main() {
   ragdoll->scale[0] = 2.0;
   ragdoll->scale[1] = 2.0;
   ragdoll->scale[2] = 2.0;
-  for (size_t i = 0; i < ragdoll->model->num_bones; i++) {
+  for (size_t i = 0; i < ragdoll->model->num_colliders; i++) {
     ragdoll->np_data[i].inv_mass = 1.0;
   }
+  //ragdoll->np_data[0].vel_angles[3] = 1.0;
+  /*
   status = insert_entity(ragdoll);
   if (status != 0) {
     glfwTerminate();
   }
+  */
 
+  /*
   obstacle->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(obstacle);
   if (status != 0) {
@@ -197,6 +205,7 @@ int main() {
   if (status != 0) {
     glfwTerminate();
   }
+  */
 
   for (int i = 0; i < NUM_BOXES; i++) {
     boxes[i]->inv_mass = 1.0;
@@ -272,7 +281,7 @@ int main() {
 
     /* Animation */
 
-    animate(player, 1, cur_frame);
+    animate(player, 0, cur_frame);
 
     /* Physics */
 
@@ -284,6 +293,10 @@ int main() {
     if (status != 0) {
       break;
     }
+
+    integrate_ragdoll(ragdoll);
+    featherstone_abm(ragdoll);
+
     /*fprintf(stderr, "%f %f %f\n",
             boxes[0]->ang_velocity[0],
             boxes[0]->ang_velocity[1],
@@ -301,7 +314,7 @@ int main() {
                          -camera_model_pos[2] };
 
     glm_mat4_identity(view);
-    camera_offset[1] = -dude->bones[18].coords[1];
+    camera_offset[1] = -dude->bones[18].base[1];
     glm_translate(view, camera_offset);
     glm_rotate_x(view, glm_rad(pitch), view);
     glm_rotate_y(view, glm_rad(yaw), view);
@@ -358,7 +371,7 @@ int main() {
     glBindVertexArray(pt_VAO);
     draw_colliders(basic_shader, player, sphere);
     draw_colliders(basic_shader, ragdoll, sphere);
-    draw_colliders(basic_shader, obstacle, sphere);
+    //draw_colliders(basic_shader, obstacle, sphere);
     draw_colliders(basic_shader, floor_entity, sphere);
     for (int i = 0; i < NUM_BOXES; i++) {
       draw_colliders(basic_shader, boxes[i], sphere);
@@ -366,11 +379,11 @@ int main() {
 
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), cube_col[0],
                 cube_col[1], cube_col[2]);
-    draw_colliders(basic_shader, box_entity, sphere);
+    //draw_colliders(basic_shader, box_entity, sphere);
 
     glUniform3f(glGetUniformLocation(basic_shader, "test_col"), s_col[0],
                 s_col[1], s_col[2]);
-    draw_colliders(basic_shader, sphere_entity, sphere);
+    //draw_colliders(basic_shader, sphere_entity, sphere);
 
     /* Player */
 
@@ -391,8 +404,8 @@ int main() {
                        (float *) view);
 
     glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 1.0);
-    draw_entity(test_shader, box_entity);
-    draw_entity(test_shader, obstacle);
+    //draw_entity(test_shader, box_entity);
+    //draw_entity(test_shader, obstacle);
     draw_entity(test_shader, floor_entity);
     for (int i = 0; i < NUM_BOXES; i++) {
       draw_entity(test_shader, boxes[i]);
@@ -442,6 +455,120 @@ int main() {
   glfwTerminate();
 
   return 0;
+}
+
+void integrate_ragdoll(ENTITY *subject) {
+  for (int cur_bone = 0; cur_bone < subject->model->num_bones; cur_bone++) {
+    int cur_col = subject->model->bone_collider_links[cur_bone];
+    int collider_root_bone = subject->model->collider_bone_links[cur_col];
+
+    if (collider_root_bone == cur_bone) {
+      // Integrate acceleration
+      vec6 delta_vel = VEC6_ZERO_INIT;
+      vec6_scale(subject->np_data[cur_col].accel_angles, delta_time, delta_vel);
+      vec6_scale(subject->np_data[cur_col].vel_angles, 0.999,
+                 subject->np_data[cur_col].vel_angles);
+      vec6_add(subject->np_data[cur_col].vel_angles, delta_vel,
+               subject->np_data[cur_col].vel_angles);
+      vec6_remove_noise(subject->np_data[cur_col].vel_angles, 0.0001);
+
+      vec6_scale(subject->np_data[cur_col].a_hat, delta_time, delta_vel);
+      vec6_scale(subject->np_data[cur_col].v_hat, 0.999,
+                 subject->np_data[cur_col].v_hat);
+      vec6_add(subject->np_data[cur_col].v_hat, delta_vel,
+               subject->np_data[cur_col].v_hat);
+      vec6_remove_noise(subject->np_data[cur_col].v_hat, 0.0001);
+
+      // Convert velocity from bone to world space
+      mat3 bone_to_entity = GLM_MAT3_IDENTITY_INIT;
+      glm_mat3_copy(subject->model->bones[cur_bone].coordinate_matrix,
+                    bone_to_entity);
+
+      mat3 entity_to_world = GLM_MAT3_IDENTITY_INIT;
+      glm_mat4_pick3(subject->final_b_mats[cur_bone], entity_to_world);
+
+      mat3 bone_to_world = GLM_MAT3_IDENTITY_INIT;
+      glm_mat3_mul(entity_to_world, bone_to_entity, bone_to_world);
+
+      float *vel = ((float *) subject->np_data[cur_col].v_hat) + 3;
+      float *ang_vel = subject->np_data[cur_col].v_hat;
+
+      vec3 world_vel = GLM_VEC3_ZERO_INIT;
+      glm_mat3_mulv(bone_to_world, vel, world_vel);
+
+      vec3 world_ang_vel = GLM_VEC3_ZERO_INIT;
+      glm_mat3_mulv(bone_to_world, ang_vel, world_ang_vel);
+
+      // Integrate velocity
+      vec3 delta_pos = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(world_vel, delta_time, delta_pos);
+      glm_translate(subject->bone_mats[cur_bone][LOCATION], delta_pos);
+
+      versor delta_rot = GLM_QUAT_IDENTITY_INIT;
+      versor ang_vel_quat = { world_ang_vel[0], world_ang_vel[1],
+                              world_ang_vel[2], 0.0 };
+      versor temp_quat = GLM_QUAT_IDENTITY_INIT;
+      glm_mat4_quat(subject->bone_mats[cur_bone][ROTATION], temp_quat);
+      glm_quat_mul(ang_vel_quat, temp_quat, delta_rot);
+      glm_vec4_scale(delta_rot, delta_time * 0.5, delta_rot);
+      glm_quat_add(delta_rot, temp_quat, temp_quat);
+      glm_quat_normalize(temp_quat);
+      glm_quat_mat4(temp_quat, subject->bone_mats[cur_bone][ROTATION]);
+
+      // Combine rotation, location and scale into final bone matrix
+      vec3 temp = GLM_VEC3_ZERO_INIT;
+      mat4 from_center = GLM_MAT4_IDENTITY_INIT;
+      mat4 to_center = GLM_MAT4_IDENTITY_INIT;
+      if (subject->model->colliders[cur_col].type == SPHERE) {
+        glm_vec3_copy(subject->model->colliders[cur_col].data.center, temp);
+      } else {
+        glm_vec3_copy(subject->model->colliders[cur_col].data.center_of_mass,
+                      temp);
+      }
+      glm_translate(to_center, temp);
+      glm_vec3_negate(temp);
+      glm_translate(from_center, temp);
+
+      glm_mat4_identity(subject->final_b_mats[cur_bone]);
+      glm_mat4_mul(from_center, subject->final_b_mats[cur_bone],
+                   subject->final_b_mats[cur_bone]);
+      glm_mat4_mul(subject->bone_mats[cur_bone][SCALE],
+                   subject->final_b_mats[cur_bone],
+                   subject->final_b_mats[cur_bone]);
+      glm_mat4_mul(subject->bone_mats[cur_bone][ROTATION],
+                   subject->final_b_mats[cur_bone],
+                   subject->final_b_mats[cur_bone]);
+      glm_mat4_mul(to_center, subject->final_b_mats[cur_bone],
+                   subject->final_b_mats[cur_bone]);
+      glm_mat4_mul(subject->bone_mats[cur_bone][LOCATION],
+                   subject->final_b_mats[cur_bone],
+                   subject->final_b_mats[cur_bone]);
+
+      int parent_bone = subject->model->bones[cur_bone].parent;
+      if (parent_bone != -1) {
+        vec3 base_loc = GLM_VEC3_ZERO_INIT;
+        glm_mat4_mulv3(subject->final_b_mats[cur_bone],
+                       subject->model->bones[cur_bone].base, 1.0, base_loc);
+
+        vec3 p_head_loc = GLM_VEC3_ZERO_INIT;
+        glm_mat4_mulv3(subject->final_b_mats[parent_bone],
+                       subject->model->bones[parent_bone].head, 1.0,
+                       p_head_loc);
+
+        vec3 anchor = GLM_VEC3_ZERO_INIT;
+        glm_vec3_sub(p_head_loc, base_loc, anchor);
+        mat4 anchor_mat = GLM_MAT4_IDENTITY_INIT;
+        glm_translate(anchor_mat, anchor);
+        glm_mat4_mul(anchor_mat, subject->final_b_mats[cur_bone],
+                     subject->final_b_mats[cur_bone]);
+        glm_mat4_mul(anchor_mat, subject->bone_mats[cur_bone][LOCATION],
+                     subject->bone_mats[cur_bone][LOCATION]);
+      }
+    } else {
+      glm_mat4_copy(subject->final_b_mats[collider_root_bone],
+                    subject->final_b_mats[cur_bone]);
+    }
+  }
 }
 
 vec3 quad_translate[8] = {
@@ -538,6 +665,17 @@ void keyboard_input(GLFWwindow *window) {
       last_push = glfwGetTime();
     }
   }
+  /*
+  if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+    if (z_pressed == 0) {
+      integrate_ragdoll(ragdoll);
+      featherstone_abm(ragdoll);
+      z_pressed = 1;
+    }
+  } else {
+    z_pressed = 0;
+  }
+  */
   if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
     if (toggled) {
       if (draw == 1) {
