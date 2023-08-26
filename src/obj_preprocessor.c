@@ -242,7 +242,11 @@ int preprocess_lines(LINE_BUFFER *lb) {
                           %f %f %f \
                           %f %f %f \
                           %f %f %f \
+                          %f %f %f \
                           %d %d",
+                          bones[b_len].head,
+                          bones[b_len].head + 1,
+                          bones[b_len].head + 2,
                           bones[b_len].base,
                           bones[b_len].base + 1,
                           bones[b_len].base + 2,
