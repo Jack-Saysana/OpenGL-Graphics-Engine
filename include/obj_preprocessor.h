@@ -4,6 +4,16 @@
 #include <stdint.h>
 #include <entity_str.h>
 
+typedef enum {
+  NO_OP = -2,
+  NEWMTL = -1,
+  AMB = 0,
+  DIFF = 1,
+  SPEC = 2,
+  SPEC_EXPONENT = 3,
+  BUMP = 4
+} PROP_TYPE;
+
 #define BUFF_STARTING_LEN (10)
 #define NUM_PROPS (5)
 

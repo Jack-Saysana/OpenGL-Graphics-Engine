@@ -1,4 +1,5 @@
 #include <init.h>
+#include <string.h>
 
 unsigned int shader;
 unsigned int u_shader;
@@ -23,9 +24,9 @@ ENTITY *sphere_entity;
 ENTITY **boxes;
 ENTITY **spheres;
 ENTITY **rects;
-const int NUM_BOXES = 1;
-const int NUM_SPHERES = 1;
-const int NUM_RECTS = 1;
+const int NUM_BOXES = 0;
+const int NUM_SPHERES = 0;
+const int NUM_RECTS = 0;
 ENTITY *ragdoll;
 
 extern vec3 m_box_pos;
@@ -115,7 +116,11 @@ int init_scene() {
   }
 
   test = load_model(
-      DIR"/resources/test/test.obj"
+      //DIR"/resources/three_link/three_link_2.obj"
+      //DIR"/resources/three_link/three_link.obj"
+      //DIR"/resources/two_link/two_link.obj"
+      //DIR"/resources/dual_link/dual_link.obj"
+      DIR"/resources/three_link/three_link_4.obj"
       );
   if (test == NULL) {
     printf("Unable to load test model\n");
@@ -152,6 +157,44 @@ int init_scene() {
   if (vector == NULL) {
     printf("Unable to load vector model\n");
     return -1;
+  }
+
+  load_model(DIR"/resources/EOW/medium_ship/medium_ship.obj");
+  load_model(DIR"/resources/EOW/large_ship/large_ship.obj");
+  load_model(DIR"/resources/EOW/custom_ship/custom_ship.obj");
+  load_model(DIR"/resources/EOW/trade_ship/trade_ship.obj");
+  load_model(DIR"/resources/EOW/enemy_ship/enemy_ship.obj");
+  load_model(DIR"/resources/EOW/enemy/enemy.obj");
+  load_model(DIR"/resources/EOW/merchant/merchant.obj");
+  load_model(DIR"/resources/EOW/player/player.obj");
+  load_model(DIR"/resources/quad/quad.obj");
+  load_model(DIR"/resources/circle/circle.obj");
+  load_model(DIR"/resources/chest/chest.obj");
+  load_model(DIR"/resources/planet/planet.obj");
+  load_model(DIR"/resources/EOW_frames/player_still.obj");
+  load_model(DIR"/resources/EOW_frames/player_walk_1.obj");
+  load_model(DIR"/resources/EOW_frames/player_walk_2.obj");
+  load_model(DIR"/resources/EOW_frames/player_walk_3.obj");
+  load_model(DIR"/resources/EOW_frames/enemy_still.obj");
+  load_model(DIR"/resources/EOW_frames/enemy_walk_1.obj");
+  load_model(DIR"/resources/EOW_frames/enemy_walk_2.obj");
+  load_model(DIR"/resources/EOW_frames/enemy_walk_3.obj");
+  char path[100] = DIR"/resources/Dinklebitmap/x.obj";
+  for (char cur = ' '; cur < 127; cur++) {
+    if (cur == '/') {
+      //printf("%s\n", DIR"/resources/Dinklebitmap/fs.obj");
+      load_model(DIR"/resources/Dinklebitmap/fs.obj");
+    } else if (cur == ' ') {
+      load_model(DIR"/resources/Dinklebitmap/space.obj");
+    } else if (cur == '\\') {
+      load_model(DIR"/resources/Dinklebitmap/bs.obj");
+    } else if (cur == '.') {
+      load_model(DIR"/resources/Dinklebitmap/period.obj");
+    }else {
+      path[strlen(path) - 5] = cur;
+      //printf("%s\n", path);
+      load_model(path);
+    }
   }
 
   player = init_entity(dude);
@@ -225,6 +268,7 @@ int init_scene() {
   }
 
   ragdoll = init_entity(test);
+  //ragdoll = init_entity(dude);
   glm_vec3_copy(ragdoll_pos, ragdoll->translation);
   if (ragdoll == NULL) {
     printf("Unable to load ragdoll\n");

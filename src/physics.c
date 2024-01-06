@@ -418,7 +418,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
       glm_vec3_copy(col_face[j], b_face[j]);
     }
     if (col_face_len == 0) {
-      printf("Bigg");
+      printf("Should never occur");
     }
     b_face_len = col_face_len;
     col_face_len = 0;

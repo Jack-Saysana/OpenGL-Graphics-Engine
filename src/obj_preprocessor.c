@@ -708,6 +708,22 @@ int preprocess_lines(LINE_BUFFER *lb) {
   }
 
   fclose(file);
+
+  // =============== EXPORTS .OBJ INFO ONLY ===================
+  char *simple_bin_path = malloc(strlen(lb->dir) + strlen(lb->filename) + 7);
+  sprintf(simple_bin_path, "%s/%s.bin2", lb->dir, lb->filename);
+  FILE *simple_file = fopen(simple_bin_path, "wb");
+  fwrite(&vbo_len, sizeof(size_t), 1, simple_file);
+  fwrite(&f_len, sizeof(size_t), 1, simple_file);
+  for (size_t i = 0; i < vbo_len; i++) {
+    fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, simple_file);
+    fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, simple_file);
+    fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, simple_file);
+  }
+  fwrite(faces, sizeof(int) * 3, f_len, simple_file);
+  fclose(simple_file);
+  // ==========================================================
+
   free_line_buffer(lb);
   free(bones);
   free(collider_links);

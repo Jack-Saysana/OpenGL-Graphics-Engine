@@ -252,15 +252,20 @@ int collision_test(ENTITY *subject, size_t offset) {
     }
   }
 
-  mat4 s_model = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(subject, s_model);
+  mat4 s_bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+  mat4 s_entity_to_world = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(subject, s_entity_to_world);
   int bone = subject->model->collider_bone_links[offset];
   if (bone != -1) {
-    glm_mat4_mul(s_model, subject->final_b_mats[bone], s_model);
+    glm_mat4_ins3(subject->model->bones[bone].coordinate_matrix,
+                  s_bone_to_entity);
+    glm_mat4_mul(s_entity_to_world, subject->final_b_mats[bone],
+                 s_entity_to_world);
   }
+
   COLLIDER s_col;
-  global_collider(s_model, subject->model->colliders + offset,
-                  &s_col);
+  global_collider(s_bone_to_entity, s_entity_to_world,
+                  subject->model->colliders + offset, &s_col);
   if (subject->model->colliders[offset].type == SPHERE) {
     s_col.data.radius *= subject->scale[0];
   }
@@ -278,17 +283,24 @@ int collision_test(ENTITY *subject, size_t offset) {
 
   int collision = 0;
   int status = 0;
-  mat4 p_model = GLM_MAT4_IDENTITY_INIT;
+  mat4 p_bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+  mat4 p_entity_to_world = GLM_MAT4_IDENTITY_INIT;
 
   for (size_t i = 0; i < col_res.list_len; i++) {
     p_obj = col_res.list[i];
     p_ent = p_obj->entity;
-    get_model_mat(p_ent, p_model);
+
+    glm_mat4_identity(p_bone_to_entity);
+    get_model_mat(p_ent, p_entity_to_world);
     bone = p_ent->model->collider_bone_links[p_obj->collider_offset];
     if (bone != -1) {
-      glm_mat4_mul(p_model, p_ent->final_b_mats[bone], p_model);
+      glm_mat4_ins3(p_ent->model->bones[bone].coordinate_matrix,
+                    p_bone_to_entity);
+      glm_mat4_mul(p_entity_to_world, p_ent->final_b_mats[bone],
+                   p_entity_to_world);
     }
-    global_collider(p_model,
+
+    global_collider(p_bone_to_entity, p_entity_to_world,
                     p_ent->model->colliders + p_obj->collider_offset,
                     &collider);
     if (p_ent->model->colliders[p_obj->collider_offset].type == SPHERE) {
@@ -590,20 +602,24 @@ int enable_hurtboxes(ENTITY *entity) {
   return 0;
 }
 
-void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest) {
+void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
+                     COLLIDER *source, COLLIDER *dest) {
   dest->type = source->type;
   dest->category = source->category;
   if (dest->type == POLY) {
     dest->data.num_used = source->data.num_used;
     for (int i = 0; i < source->data.num_used; i++) {
-      glm_mat4_mulv3(model_mat, source->data.verts[i], 1.0,
+      glm_mat4_mulv3(bone_to_entity, source->data.verts[i], 1.0,
+                     dest->data.verts[i]);
+      glm_mat4_mulv3(entity_to_world, dest->data.verts[i], 1.0,
                      dest->data.verts[i]);
     }
-    glm_mat4_mulv3(model_mat, source->data.center_of_mass, 1.0,
+    glm_mat4_mulv3(entity_to_world, source->data.center_of_mass, 1.0,
                    dest->data.center_of_mass);
   } else if (dest->type == SPHERE) {
     dest->data.radius = source->data.radius;
-    glm_mat4_mulv3(model_mat, source->data.center, 1.0, dest->data.center);
+    glm_mat4_mulv3(entity_to_world, source->data.center, 1.0,
+                   dest->data.center);
   }
 }
 

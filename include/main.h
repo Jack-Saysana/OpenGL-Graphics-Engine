@@ -85,3 +85,4 @@ void get_model_mat(ENTITY *entity, mat4 model);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
 
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
+void vec3_remove_noise(vec3 v, float threshold);

@@ -96,7 +96,8 @@ int collision_test(ENTITY *subject, size_t offset);
 void remove_from_elist(ENTITY **list, int type, size_t index, size_t *len);
 int add_to_elist(ENTITY ***list, size_t *len, size_t *buff_size,
                  ENTITY *entity);
-void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
+void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
+                     COLLIDER *source, COLLIDER *dest);
 
 // Outside helpers
 OCT_TREE *init_tree();

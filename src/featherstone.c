@@ -1,5 +1,28 @@
 #include <featherstone.h>
 
+void print_vec6(vec6 v) {
+  printf("%f %f %f %f %f %f\n", v[0], v[1], v[2], v[3], v[4], v[5]);
+}
+void print_vec3(vec3 v) {
+  printf("%f %f %f\n", v[0], v[1], v[2]);
+}
+void print_mat6(mat6 m) {
+  for (int i = 0; i < 6; i++) {
+    printf("|%f %f %f %f %f %f|\n",
+           m[0][i],
+           m[1][i],
+           m[2][i],
+           m[3][i],
+           m[4][i],
+           m[5][i]);
+  }
+}
+void print_mat3(mat3 m) {
+  for (int i = 0; i < 3; i++) {
+    printf("|%f %f %f|\n", m[0][i], m[1][i], m[2][i]);
+  }
+}
+
 int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
 
@@ -94,9 +117,31 @@ int featherstone_abm(ENTITY *body) {
                                       p_data[cur_col].from_parent_lin,
                                       p_data[cur_col].ST_from_parent,
                                       p_data[cur_col].ST_to_parent);
+
+#ifdef DEBUG_FS
+      // TESTING
+      printf("%dX%d:\n", cur_col, parent_col);
+      print_mat6(p_data[cur_col].ST_from_parent);
+      printf("\n%dX%d:\n", parent_col, cur_col);
+      print_mat6(p_data[cur_col].ST_to_parent);
+      printf("\nv_hat[%d]:\n", cur_col);
+      print_vec6(p_data[cur_col].v_hat);
+#endif
     }
 
     compute_spatial_velocity(cur_col, parent_col, colliders, p_data);
+
+#ifdef DEBUG_FS
+    // TESTING
+    printf("\ns[%d]:\n", cur_col);
+    print_vec6(p_data[cur_col].s_hat[0]);
+
+    printf("\nv[%d]:\n", cur_col);
+    print_vec6(p_data[cur_col].v_hat);
+
+    printf("\nc[%d]:\n", cur_col);
+    print_vec6(p_data[cur_col].coriolis_vector[0]);
+#endif
   }
 
   // TODO I_hat can be precomputed
@@ -141,7 +186,7 @@ int featherstone_abm(ENTITY *body) {
     glm_mat3_mulv(world_to_bone, G_VEC, gravity);
 
     vec3 za_linear = GLM_VEC3_ZERO_INIT;
-    glm_vec3_scale(gravity, mass, za_linear);
+    glm_vec3_scale(gravity, -mass, za_linear);
 
     float *ang_vel = (float *) p_data[cur_col].v_hat;
     vec3 za_ang = GLM_VEC3_ZERO_INIT;
@@ -152,47 +197,14 @@ int featherstone_abm(ENTITY *body) {
     // Z_hat
     vec6_compose(za_linear, za_ang, p_data[cur_col].Z_hat);
 
-    // TODO account for different types of joints and accumulation of different
-    // DOFs
-    // Vector representing joint axis scaled by joint velocity magnitude
-    // Coriolis Vector
-    vec3 temp_vec3 = GLM_VEC3_ZERO_INIT;
-    vec6_zero(p_data[cur_col].coriolis_vector);
-    int parent_bone = bones[root_bone].parent;
-    if (parent_bone != -1) {
-      vec3 p_ang_vel = GLM_VEC3_ZERO_INIT;
-      glm_vec3_copy(p_data[col_from_bone[parent_bone]].v_hat, p_ang_vel);
+#ifdef DEBUG_FS
+    // TESTING
+    printf("\nI_hat[%d]:\n", cur_col);
+    print_mat6(p_data[cur_col].I_hat);
 
-      vec3 v = GLM_VEC3_ZERO_INIT;
-      vec3 coriolis_first = GLM_VEC3_ZERO_INIT;
-      glm_vec3_scale(BASIS_VECTORS[0], p_data[cur_col].vel_angles[3], v);
-      glm_vec3_cross(p_ang_vel, v, coriolis_first);
-
-      vec3 v_cross_d = GLM_VEC3_ZERO_INIT;
-      glm_vec3_cross(v, p_data[cur_col].joint_to_com, v_cross_d);
-
-      vec3 p_ang_vel_cross_r = GLM_VEC3_ZERO_INIT;
-      glm_vec3_cross(p_ang_vel, p_data[cur_col].from_parent_lin,
-                     p_ang_vel_cross_r);
-
-      vec3 coriolis_last = GLM_VEC3_ZERO_INIT;
-      glm_vec3_scale(p_ang_vel, 2.0, coriolis_last);
-      glm_vec3_cross(coriolis_last, v_cross_d, coriolis_last);
-
-      glm_vec3_cross(p_ang_vel, p_ang_vel_cross_r, temp_vec3);
-      glm_vec3_add(coriolis_last, temp_vec3, coriolis_last);
-
-      glm_vec3_cross(v, v_cross_d, temp_vec3);
-      glm_vec3_add(coriolis_last, temp_vec3, coriolis_last);
-
-      vec6_compose(coriolis_first, coriolis_last,
-                   p_data[cur_col].coriolis_vector);
-    }
-
-    // TODO account for different types of joints
-    glm_vec3_cross(BASIS_VECTORS[0], p_data[cur_col].joint_to_com, temp_vec3);
-    // Spatial Joint Axis
-    vec6_compose(BASIS_VECTORS[0], temp_vec3, p_data[cur_col].s_hat);
+    printf("Z_hat[%d]:\n", cur_col);
+    print_vec6(p_data[cur_col].Z_hat);
+#endif
   }
 
   // Calculate I-hat-A and Z-hat-A from outbound to inbound
@@ -203,63 +215,36 @@ int featherstone_abm(ENTITY *body) {
 
     mat6_copy(p_data[cur_col].I_hat, p_data[cur_col].I_hat_A);
     vec6_copy(p_data[cur_col].Z_hat, p_data[cur_col].Z_hat_A);
-    vec6_zero(p_data[cur_col].coriolis_vector);
 
-    mat6 temp_mat6 = MAT6_ZERO_INIT;
-    vec6 temp_vec6 = VEC6_ZERO_INIT;
+    mat6 child_i_data = MAT6_ZERO_INIT;
+    vec6 child_z_data = VEC6_ZERO_INIT;
     for (int cur_child = 0; cur_child < colliders[cur_col].num_children;
          cur_child++) {
       int child_col = colliders[cur_col].children_offset + cur_child;
-      vec6 I_hat_s_hat = VEC6_ZERO_INIT;
-      // Is
-      mat6_mulv(p_data[child_col].I_hat_A, p_data[child_col].s_hat,
-                I_hat_s_hat);
-
-      // Iss'
-      vec6_spatial_transpose_mulv(I_hat_s_hat, p_data[child_col].s_hat,
-                                  temp_mat6);
-
-      // Iss'I
-      mat6_mul(temp_mat6, p_data[child_col].I_hat_A, temp_mat6);
-
-      vec6_spatial_transpose_mulm(p_data[child_col].s_hat,
-                                  p_data[child_col].I_hat_A, temp_vec6);
-
-      // s'Is
-      p_data[child_col].s_inner_I_dot_s = vec6_dot(temp_vec6,
-                                                   p_data[child_col].s_hat);
-
-      mat6_scale(temp_mat6, 1.0 / p_data[child_col].s_inner_I_dot_s,
-                 temp_mat6);
-
-      mat6_sub(p_data[child_col].I_hat_A, temp_mat6, temp_mat6);
-      mat6_mul(p_data[child_col].ST_to_parent, temp_mat6, temp_mat6);
-      mat6_mul(temp_mat6, p_data[child_col].ST_from_parent, temp_mat6);
-      // I_hat_A
-      mat6_add(p_data[cur_col].I_hat_A, temp_mat6, p_data[cur_col].I_hat_A);
-
-      vec6 I_hat_coriolis = VEC6_ZERO_INIT;
-      mat6_mulv(p_data[child_col].I_hat_A, p_data[child_col].coriolis_vector,
-                I_hat_coriolis);
-
-      vec6_add(p_data[child_col].Z_hat_A, I_hat_coriolis, temp_vec6);
-
-      // TODO calculate Q_i, which will take into account external forces
-      // applied to the joint
-      p_data[child_col].scalar = vec6_inner_product(p_data[child_col].s_hat,
-                                                    temp_vec6);
-
-      p_data[child_col].scalar = (p_data[child_col].Q -
-                                  p_data[child_col].scalar) /
-                                 p_data[child_col].s_inner_I_dot_s;
-
-      vec6_scale(I_hat_s_hat, p_data[child_col].scalar, temp_vec6);
-      vec6_add(temp_vec6, I_hat_coriolis, temp_vec6);
-      vec6_add(temp_vec6, p_data[child_col].Z_hat_A, temp_vec6);
-      mat6_mulv(p_data[child_col].ST_to_parent, temp_vec6, temp_vec6);
-      // Z_hat_A
-      vec6_add(p_data[cur_col].Z_hat_A, temp_vec6, p_data[cur_col].Z_hat_A);
+      compute_articulated_data(child_col, 0, p_data, child_i_data,
+                               child_z_data);
+#ifdef DEBUG_FS
+      printf("Z_DATA[%d]:\n", child_col);
+      print_vec6(child_z_data);
+#endif
+      vec6_add(p_data[cur_col].Z_hat_A, child_z_data,
+               p_data[cur_col].Z_hat_A);
+      mat6_add(p_data[cur_col].I_hat_A, child_i_data,
+               p_data[cur_col].I_hat_A);
     }
+
+    /*
+    for (int dof = p_data[cur_col].num_dofs - 1; dof >= 1; dof--) {
+      compute_articulated_data(cur_col, dof, 0, p_data);
+    }
+    */
+#ifdef DEBUG_FS
+    // TESTING
+    printf("\nI_A[%d]:\n", cur_col);
+    print_mat6(p_data[cur_col].I_hat_A);
+    printf("Z_A[%d]:\n", cur_col);
+    print_vec6(p_data[cur_col].Z_hat_A);
+#endif
   }
 
   // Calculate q** and spatial acceleration from inbound to outbound
@@ -272,37 +257,74 @@ int featherstone_abm(ENTITY *body) {
 
     int root_bone = bone_from_col[cur_col];
     parent_bone = bones[root_bone].parent;
+
+    vec6 temp_vec6 = VEC6_ZERO_INIT;
     if (parent_bone != -1) {
-      vec6 temp_vec6 = VEC6_ZERO_INIT;
       int parent_col = col_from_bone[parent_bone];
-      vec6_spatial_transpose_mulm(p_data[cur_col].s_hat,
-                                  p_data[cur_col].I_hat_A, temp_vec6);
-      mat6_mulv(p_data[cur_col].ST_from_parent, temp_vec6, temp_vec6);
-      // TODO take into account multiple dofs
-      p_data[cur_col].accel_angles[3] = vec6_dot(temp_vec6,
-                                                 p_data[parent_col].a_hat);
+      mat6_mulv(p_data[cur_col].ST_from_parent, p_data[parent_col].a_hat,
+                temp_vec6);
+      p_data[cur_col].accel_angles[0] = vec6_dot(p_data[cur_col].s_inner_I[0],
+                                                 temp_vec6);
+
       // q**
-      p_data[cur_col].accel_angles[3] = (p_data[cur_col].Q -
-                                         p_data[cur_col].accel_angles[3] -
-                                         p_data[cur_col].scalar) /
-                                         p_data[cur_col].s_inner_I_dot_s;
+      p_data[cur_col].accel_angles[0] = (p_data[cur_col].Q -
+                                         p_data[cur_col].accel_angles[0] -
+                                         p_data[cur_col].SZI[0]) /
+                                         p_data[cur_col].s_inner_I_dot_s[0];
 
       mat6_mulv(p_data[cur_col].ST_from_parent, p_data[parent_col].a_hat,
                 temp_vec6);
-      vec6_add(temp_vec6, p_data[cur_col].coriolis_vector,
+#ifdef DEBUG_FS
+      printf("\nA_DATA[%d]:\n", cur_col);
+      printf("  %dX%d * a[%d]:\n", cur_col, parent_col, parent_col);
+      print_vec6(temp_vec6);
+#endif
+      vec6_add(temp_vec6, p_data[cur_col].coriolis_vector[0],
                p_data[cur_col].a_hat);
-      vec6_scale(p_data[cur_col].s_hat, p_data[cur_col].accel_angles[3],
+#ifdef DEBUG_FS
+      printf("  c[%d]:\n", cur_col);
+      print_vec6(p_data[cur_col].coriolis_vector[0]);
+#endif
+      vec6_scale(p_data[cur_col].s_hat[0], p_data[cur_col].accel_angles[0],
+                 temp_vec6);
+#ifdef DEBUG_FS
+      printf("  q[%d] * s[%d]:\n", cur_col, cur_col);
+      print_vec6(temp_vec6);
+#endif
+
+      // a_hat
+      vec6_add(p_data[cur_col].a_hat, temp_vec6, p_data[cur_col].a_hat);
+      vec6_remove_noise(p_data[cur_col].a_hat, 0.001);
+
+#ifdef DEBUG_FS
+      printf("q[%d]:\n%f\n", cur_col, p_data[cur_col].accel_angles[0]);
+      printf("\na[%d]:\n", cur_col);
+      print_vec6(p_data[cur_col].a_hat);
+#endif
+    }
+
+    /*
+    for (int dof = 1; dof < p_data[cur_col].num_dofs; dof++) {
+      p_data[cur_col].accel_angles[dof] = vec6_dot(p_data[cur_col].
+                                                   s_inner_I[dof],
+                                                   p_data[cur_col].a_hat);
+      // q**
+      p_data[cur_col].accel_angles[dof] = (p_data[cur_col].Q -
+                                           p_data[cur_col].accel_angles[dof] -
+                                           p_data[cur_col].SZI[dof]) /
+                                           p_data[cur_col].
+                                           s_inner_I_dot_s[dof];
+
+      vec6_add(p_data[parent_col].a_hat, p_data[cur_col].coriolis_vector[dof],
+               p_data[cur_col].a_hat);
+      vec6_scale(p_data[cur_col].s_hat[dof], p_data[cur_col].accel_angles[dof],
                  temp_vec6);
 
       // a_hat
       vec6_add(p_data[cur_col].a_hat, temp_vec6, p_data[cur_col].a_hat);
-      for (int i = 0; i < 6; i++) {
-        if (p_data[cur_col].a_hat[i] < 0.001 &&
-            p_data[cur_col].a_hat[i] > -0.001) {
-          p_data[cur_col].a_hat[i] = 0.0;
-        }
-      }
+      vec6_remove_noise(p_data[cur_col].a_hat, 0.001);
     }
+    */
   }
 
   return 0;
@@ -315,6 +337,7 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
                                      vec3 p_to_c_lin_dest,
                                      mat6 p_to_c_dest,
                                      mat6 c_to_p_dest) {
+
   // Matrix rotating vectors in world space to the parent bone space
   mat3 p_world_to_bone = GLM_MAT3_IDENTITY_INIT;
   // Remove translational component of mat4 since we only want rot matrix
@@ -330,6 +353,7 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   // Matrix rotating vectors in the child bone space to the parent bone space
   mat3 c_to_p_rot = GLM_MAT3_IDENTITY_INIT;
   glm_mat4_pick3(c_bone_to_world, c_to_p_rot);
+  // TODO possible source of error, switch around c_to_p_rot and p_world_to_bone?
   glm_mat3_mul(p_world_to_bone, c_to_p_rot, c_to_p_rot);
 
   // Inverse of above
@@ -391,15 +415,117 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
     glm_vec3_copy(((float *) parent_v_hat) + 3, v);
   }
 
-  // Accumulate velocities from prismatic DOFS
-  // TODO Make this more flexible so more than just having the X-Axis as the
-  // only degree of freedom
-  glm_vec3_scale(BASIS_VECTORS[0], p_data[cur_col].vel_angles[3], temp);
-  glm_vec3_add(temp, va, va);
+  // Accumulate velocities from each degree of freedom and calculate each dof's
+  // spatial joint axis and coriolis vector
+  for (int dof = 0; dof < p_data[cur_col].num_dofs; dof++) {
+    // Spatial Joint Axis
+    glm_vec3_cross(p_data[cur_col].dofs[dof], p_data[cur_col].joint_to_com,
+                   temp);
+    vec6_compose(p_data[cur_col].dofs[dof], temp, p_data[cur_col].s_hat[dof]);
 
-  glm_vec3_cross(BASIS_VECTORS[0], p_data[cur_col].joint_to_com, temp);
-  glm_vec3_scale(temp, p_data[cur_col].vel_angles[3], temp);
-  glm_vec3_add(temp, v, v);
+    // Coriolis vector
+    vec3 d = GLM_VEC3_ZERO_INIT;
+    //if (dof == p_data[cur_col].num_dofs - 1) {
+      glm_vec3_copy(p_data[cur_col].joint_to_com, d);
+    //}
+    vec3 r = GLM_VEC3_ZERO_INIT;
+    //if (dof == 0) {
+      glm_vec3_copy(p_data[cur_col].from_parent_lin, r);
+    //}
+
+    vec6_zero(p_data[cur_col].coriolis_vector[dof]);
+    vec3 u_scaled = GLM_VEC3_ZERO_INIT;
+    glm_vec3_scale(p_data[cur_col].dofs[dof], p_data[cur_col].vel_angles[dof],
+                   u_scaled);
+
+    vec3 coriolis_first = GLM_VEC3_ZERO_INIT;
+    glm_vec3_cross(va, u_scaled, coriolis_first);
+
+    vec3 u_scaled_cross_d = GLM_VEC3_ZERO_INIT;
+    glm_vec3_cross(u_scaled, d, u_scaled_cross_d);
+
+    vec3 va_cross_r = GLM_VEC3_ZERO_INIT;
+    glm_vec3_cross(va, r, va_cross_r);
+
+    vec3 coriolis_last = GLM_VEC3_ZERO_INIT;
+    glm_vec3_scale(va, 2.0, coriolis_last);
+    glm_vec3_cross(coriolis_last, u_scaled_cross_d, coriolis_last);
+
+    glm_vec3_cross(va, va_cross_r, temp);
+    glm_vec3_add(coriolis_last, temp, coriolis_last);
+
+    glm_vec3_cross(u_scaled, u_scaled_cross_d, temp);
+    glm_vec3_add(coriolis_last, temp, coriolis_last);
+
+    vec6_compose(coriolis_first, coriolis_last,
+                 p_data[cur_col].coriolis_vector[dof]);
+
+    // Accumulate velocities
+    glm_vec3_scale(p_data[cur_col].dofs[dof], p_data[cur_col].vel_angles[dof],
+                   temp);
+    glm_vec3_add(temp, va, va);
+
+    glm_vec3_cross(p_data[cur_col].dofs[dof], p_data[cur_col].joint_to_com,
+                   temp);
+    glm_vec3_scale(temp, p_data[cur_col].vel_angles[dof], temp);
+    glm_vec3_add(temp, v, v);
+  }
 
   vec6_compose(va, v, p_data[cur_col].v_hat);
+}
+
+void compute_articulated_data(int col, int dof, P_DATA *p_data, mat6 i_dest,
+                              vec6 z_dest) {
+  vec6 temp_vec6 = VEC6_ZERO_INIT;
+  mat6 temp_mat6 = MAT6_ZERO_INIT;
+
+  // ========== Articulated I data ===========
+  vec6 I_hat_s_hat = VEC6_ZERO_INIT;
+  // Is
+  mat6_mulv(p_data[col].I_hat_A, p_data[col].s_hat[dof], I_hat_s_hat);
+
+  // Iss'
+  vec6_spatial_transpose_mulv(I_hat_s_hat, p_data[col].s_hat[dof],
+                              temp_mat6);
+
+  // Iss'I
+  mat6_mul(temp_mat6, p_data[col].I_hat_A, temp_mat6);
+
+  // s'I
+  vec6_spatial_transpose_mulm(p_data[col].s_hat[dof], p_data[col].I_hat_A,
+                              p_data[col].s_inner_I[dof]);
+
+  // s'Is
+  p_data[col].s_inner_I_dot_s[dof] = vec6_dot(p_data[col].s_inner_I[dof],
+                                              p_data[col].s_hat[dof]);
+
+  mat6_scale(temp_mat6, 1.0 / p_data[col].s_inner_I_dot_s[dof], temp_mat6);
+
+  mat6_sub(p_data[col].I_hat_A, temp_mat6, i_dest);
+
+  mat6_mul(p_data[col].ST_to_parent, i_dest, i_dest);
+  mat6_mul(i_dest, p_data[col].ST_from_parent, i_dest);
+
+  // ============ Articulated Z data ============
+  vec6 I_hat_coriolis = VEC6_ZERO_INIT;
+  mat6_mulv(p_data[col].I_hat_A,
+            p_data[col].coriolis_vector[dof], I_hat_coriolis);
+
+  vec6_add(p_data[col].Z_hat_A, I_hat_coriolis, temp_vec6);
+
+  // s'(Z_hat_A + I_hat_coriolis))
+  p_data[col].SZI[dof] = vec6_inner_product(p_data[col].s_hat[dof],
+                                            temp_vec6);
+
+  // TODO calculate Q_i, which will take into account external forces
+  // applied to the joint
+  p_data[col].Q = 0.0;
+  float scalar = (p_data[col].Q - p_data[col].SZI[dof]) /
+                  p_data[col].s_inner_I_dot_s[dof];
+
+  vec6_scale(I_hat_s_hat, scalar, temp_vec6);
+  vec6_add(temp_vec6, I_hat_coriolis, temp_vec6);
+  vec6_add(temp_vec6, p_data[col].Z_hat_A, z_dest);
+
+  mat6_mulv(p_data[col].ST_to_parent, z_dest, z_dest);
 }

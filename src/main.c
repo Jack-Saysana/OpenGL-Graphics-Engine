@@ -59,7 +59,6 @@ float lastY = 300;
 float last_push = 0.0;
 int toggled = 1;
 int space_pressed = 0;
-int z_pressed = 0;
 int cursor_on = 1;
 int draw = 0;
 
@@ -178,8 +177,16 @@ int main() {
   ragdoll->scale[2] = 2.0;
   for (size_t i = 0; i < ragdoll->model->num_colliders; i++) {
     ragdoll->np_data[i].inv_mass = 1.0;
+    if (i == ragdoll->model->num_colliders - 1) {
+      ragdoll->np_data[i].inv_mass = 0.5;
+    }
+
+    vec3 dof = { 1.0, 0.0, 0.0 };
+
+    ragdoll->np_data[i].num_dofs = 1;
+    glm_vec3_copy(dof, ragdoll->np_data[i].dofs[0]);
   }
-  //ragdoll->np_data[0].vel_angles[3] = 1.0;
+  //ragdoll->np_data[0].vel_angles[0] = 1.0;
   /*
   status = insert_entity(ragdoll);
   if (status != 0) {
@@ -187,6 +194,7 @@ int main() {
   }
   */
 
+  // Insertion of test entities into the physics simulation
   /*
   obstacle->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(obstacle);
@@ -294,16 +302,8 @@ int main() {
       break;
     }
 
-    integrate_ragdoll(ragdoll);
     featherstone_abm(ragdoll);
-
-    /*fprintf(stderr, "%f %f %f\n",
-            boxes[0]->ang_velocity[0],
-            boxes[0]->ang_velocity[1],
-            boxes[0]->ang_velocity[2]);
-    fflush(stderr);*/
-    //fprintf(stderr, "%f\n", glm_vec3_norm(boxes[0]->ang_velocity));
-    //fflush(stderr);
+    integrate_ragdoll(ragdoll);
 
     glm_vec3_sub(player->translation, displacement, displacement);
     glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
@@ -458,24 +458,28 @@ int main() {
 }
 
 void integrate_ragdoll(ENTITY *subject) {
+  float increment = 0.001;
+
   for (int cur_bone = 0; cur_bone < subject->model->num_bones; cur_bone++) {
     int cur_col = subject->model->bone_collider_links[cur_bone];
     int collider_root_bone = subject->model->collider_bone_links[cur_col];
 
     if (collider_root_bone == cur_bone) {
       // Integrate acceleration
-      vec6 delta_vel = VEC6_ZERO_INIT;
-      vec6_scale(subject->np_data[cur_col].accel_angles, delta_time, delta_vel);
-      vec6_scale(subject->np_data[cur_col].vel_angles, 0.999,
-                 subject->np_data[cur_col].vel_angles);
-      vec6_add(subject->np_data[cur_col].vel_angles, delta_vel,
-               subject->np_data[cur_col].vel_angles);
-      vec6_remove_noise(subject->np_data[cur_col].vel_angles, 0.0001);
+      vec3 delta_vec3 = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(subject->np_data[cur_col].accel_angles, increment,
+                     delta_vec3);
+      glm_vec3_scale(subject->np_data[cur_col].vel_angles, 0.999,
+                     subject->np_data[cur_col].vel_angles);
+      glm_vec3_add(subject->np_data[cur_col].vel_angles, delta_vec3,
+                   subject->np_data[cur_col].vel_angles);
+      vec3_remove_noise(subject->np_data[cur_col].vel_angles, 0.0001);
 
-      vec6_scale(subject->np_data[cur_col].a_hat, delta_time, delta_vel);
+      vec6 delta_vec6 = VEC6_ZERO_INIT;
+      vec6_scale(subject->np_data[cur_col].a_hat, increment, delta_vec6);
       vec6_scale(subject->np_data[cur_col].v_hat, 0.999,
                  subject->np_data[cur_col].v_hat);
-      vec6_add(subject->np_data[cur_col].v_hat, delta_vel,
+      vec6_add(subject->np_data[cur_col].v_hat, delta_vec6,
                subject->np_data[cur_col].v_hat);
       vec6_remove_noise(subject->np_data[cur_col].v_hat, 0.0001);
 
@@ -500,18 +504,23 @@ void integrate_ragdoll(ENTITY *subject) {
       glm_mat3_mulv(bone_to_world, ang_vel, world_ang_vel);
 
       // Integrate velocity
-      vec3 delta_pos = GLM_VEC3_ZERO_INIT;
-      glm_vec3_scale(world_vel, delta_time, delta_pos);
-      glm_translate(subject->bone_mats[cur_bone][LOCATION], delta_pos);
+      glm_vec3_scale(subject->np_data[cur_col].vel_angles, increment,
+                     delta_vec3);
+      glm_vec3_add(subject->np_data[cur_col].joint_angles, delta_vec3,
+                   subject->np_data[cur_col].joint_angles);
 
-      versor delta_rot = GLM_QUAT_IDENTITY_INIT;
-      versor ang_vel_quat = { world_ang_vel[0], world_ang_vel[1],
-                              world_ang_vel[2], 0.0 };
+      glm_vec3_scale(world_vel, increment, delta_vec3);
+      glm_translate(subject->bone_mats[cur_bone][LOCATION], delta_vec3);
+
+      vec3 delta_rot = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(world_ang_vel, increment, delta_rot);
+      versor rot_quat = GLM_QUAT_IDENTITY_INIT;
+      glm_quatv(rot_quat, glm_vec3_norm(delta_rot), delta_rot);
+      glm_quat_normalize(rot_quat);
       versor temp_quat = GLM_QUAT_IDENTITY_INIT;
       glm_mat4_quat(subject->bone_mats[cur_bone][ROTATION], temp_quat);
-      glm_quat_mul(ang_vel_quat, temp_quat, delta_rot);
-      glm_vec4_scale(delta_rot, delta_time * 0.5, delta_rot);
-      glm_quat_add(delta_rot, temp_quat, temp_quat);
+      glm_quat_normalize(temp_quat);
+      glm_quat_mul(rot_quat, temp_quat, temp_quat);
       glm_quat_normalize(temp_quat);
       glm_quat_mat4(temp_quat, subject->bone_mats[cur_bone][ROTATION]);
 
@@ -665,17 +674,6 @@ void keyboard_input(GLFWwindow *window) {
       last_push = glfwGetTime();
     }
   }
-  /*
-  if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-    if (z_pressed == 0) {
-      integrate_ragdoll(ragdoll);
-      featherstone_abm(ragdoll);
-      z_pressed = 1;
-    }
-  } else {
-    z_pressed = 0;
-  }
-  */
   if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
     if (toggled) {
       if (draw == 1) {
