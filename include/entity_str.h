@@ -135,45 +135,33 @@ typedef struct p_data {
   // Inverse inertia tensor, given in bone space
   mat4 inv_inertia;
 
-  // Spatial joint axis of each DOF
-  vec6 s_hat[3];
+  // Spatial joint axis
+  vec6 s_hat;
 
   // Spatial zero acceleration
   vec6 Z_hat;
   // Articulated spatial zero acceleration
   vec6 Z_hat_A;
 
-  // Coriolis vector for each DOF
-  vec6 coriolis_vector[3];
+  // Coriolis vector
+  vec6 coriolis_vector;
 
   // Spatial acceleration
   vec6 a_hat;
   // Spatial velocity
   vec6 v_hat;
 
-  // Shortcut of s'I_hat_A for each DOF
-  vec6 s_inner_I[3];
+  // Shortcut of s'I_hat_A
+  vec6 s_inner_I;
 
-  // Joint angle acceleration of each degree of freedom
-  vec3 accel_angles;
-  // Joint angle velocity of each degree of freedom
-  vec3 vel_angles;
-  // Joint angle of each degree of freedom
-  vec3 joint_angles;
-
-  // Buffer specifiying the degrees of freedom for link
-  vec3 dofs[3];
+  // Buffer specifiying the degree of freedom for link
+  vec3 dof;
 
   // Vector pointing from link parent's COM to current link's COM in bone space
   vec3 from_parent_lin;
 
   // Vector pointing from link's joint to link's COM in bone space
   vec3 joint_to_com;
-
-  // Shortcut for dot(s'I_hat_A, s_hat) for each DOF
-  vec3 s_inner_I_dot_s;
-  // Shortcut for s'(Z_hat_A + I_hat(coriolis)) for each DOF
-  vec3 SZI;
 
   // TEMP
   vec3 velocity;
@@ -185,7 +173,17 @@ typedef struct p_data {
   // Magnitude of the spatial force acting on the links joint
   float Q;
 
-  int num_dofs;
+  // Shortcut for dot(s'I_hat_A, s_hat)
+  float s_inner_I_dot_s;
+  // Shortcut for s'(Z_hat_A + I_hat(coriolis))
+  float SZI;
+
+  // Joint angle acceleration
+  float accel_angle;
+  // Joint angle velocity
+  float vel_angle;
+  // Joint angle
+  float joint_angle;
 } P_DATA;
 
 typedef struct entity {

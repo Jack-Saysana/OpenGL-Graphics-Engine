@@ -261,3 +261,18 @@ void vec3_remove_noise(vec3 vec, float threshold) {
     vec[2] = 0.0;
   }
 }
+
+/*
+ * ================== REMOVE_NOISE =======================
+ *
+ * Zeros out a float given a specific threshold
+ *
+ * =======================================================
+ */
+float remove_noise(float val, float threshold) {
+  if (val < threshold && val > -threshold) {
+    return 0;
+  } else {
+    return val;
+  }
+}

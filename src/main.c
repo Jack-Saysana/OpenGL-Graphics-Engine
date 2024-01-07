@@ -183,8 +183,7 @@ int main() {
 
     vec3 dof = { 1.0, 0.0, 0.0 };
 
-    ragdoll->np_data[i].num_dofs = 1;
-    glm_vec3_copy(dof, ragdoll->np_data[i].dofs[0]);
+    glm_vec3_copy(dof, ragdoll->np_data[i].dof);
   }
   //ragdoll->np_data[0].vel_angles[0] = 1.0;
   /*
@@ -466,14 +465,10 @@ void integrate_ragdoll(ENTITY *subject) {
 
     if (collider_root_bone == cur_bone) {
       // Integrate acceleration
-      vec3 delta_vec3 = GLM_VEC3_ZERO_INIT;
-      glm_vec3_scale(subject->np_data[cur_col].accel_angles, increment,
-                     delta_vec3);
-      glm_vec3_scale(subject->np_data[cur_col].vel_angles, 0.999,
-                     subject->np_data[cur_col].vel_angles);
-      glm_vec3_add(subject->np_data[cur_col].vel_angles, delta_vec3,
-                   subject->np_data[cur_col].vel_angles);
-      vec3_remove_noise(subject->np_data[cur_col].vel_angles, 0.0001);
+      float delta = subject->np_data[cur_col].accel_angle * increment;
+      subject->np_data[cur_col].vel_angle *= 0.999;
+      subject->np_data[cur_col].vel_angle += delta;
+      remove_noise(subject->np_data[cur_col].vel_angle, 0.0001);
 
       vec6 delta_vec6 = VEC6_ZERO_INIT;
       vec6_scale(subject->np_data[cur_col].a_hat, increment, delta_vec6);
@@ -504,11 +499,10 @@ void integrate_ragdoll(ENTITY *subject) {
       glm_mat3_mulv(bone_to_world, ang_vel, world_ang_vel);
 
       // Integrate velocity
-      glm_vec3_scale(subject->np_data[cur_col].vel_angles, increment,
-                     delta_vec3);
-      glm_vec3_add(subject->np_data[cur_col].joint_angles, delta_vec3,
-                   subject->np_data[cur_col].joint_angles);
+      delta = subject->np_data[cur_col].vel_angle * increment;
+      subject->np_data[cur_col].joint_angle += delta;
 
+      vec3 delta_vec3 = GLM_VEC3_ZERO_INIT;
       glm_vec3_scale(world_vel, increment, delta_vec3);
       glm_translate(subject->bone_mats[cur_bone][LOCATION], delta_vec3);
 
