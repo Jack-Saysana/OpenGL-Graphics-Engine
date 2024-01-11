@@ -4,10 +4,9 @@
 #include <cglm/cam.h>
 #include <math.h>
 #include <stdlib.h>
+#include <const.h>
+#include <ui_component_str.h>
 #include <entity_str.h>
-
-#define RES_X (640.0)
-#define RES_Y (400.0)
 
 extern vec3 U_DIR;
 extern vec3 D_DIR;
@@ -50,14 +49,18 @@ extern float delta_time;
 extern float last_frame;
 extern OCT_TREE *physics_tree;
 
-int init_scene();
+// ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
+void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
+                   unsigned int shader, size_t offset, int depth);
+void framebuffer_size_callback(GLFWwindow *, int, int);
 void keyboard_input(GLFWwindow *window);
 void mouse_input(GLFWwindow *widnow, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
-void framebuffer_size_callback(GLFWwindow *, int, int);
-void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
-                   unsigned int shader, size_t offset, int depth);
+
+// ====================== EXTERNALLY DEFINED FUNCTIONS =======================
+
+int init_scene();
 
 unsigned int init_shader_prog(char *, char *, char *);
 MODEL *load_model(char *path);
@@ -84,6 +87,20 @@ void free_oct_tree(OCT_TREE *tree);
 void get_model_mat(ENTITY *entity, mat4 model);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
 
+int init_ui(float, float);
+int add_ui_comp(UI_COMP *, vec2, float, float, int);
+int render_ui();
+
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 v, float threshold);
 float remove_noise(float, float);
+
+void set_mat4(char *, mat4, unsigned int);
+void set_mat3(char *, mat3, unsigned int);
+void set_vec4(char *, vec4, unsigned int);
+void set_vec3(char *, vec3, unsigned int);
+void set_vec2(char *, vec2, unsigned int);
+void set_float(char *, float, unsigned int);
+void set_int(char *, int, unsigned int);
+void set_uint(char *, unsigned int, unsigned int);
+void set_iarr(char *, int *, size_t, unsigned int);

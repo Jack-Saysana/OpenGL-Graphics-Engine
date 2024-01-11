@@ -15,6 +15,7 @@ MODEL *floor_model;
 MODEL *platform;
 MODEL *sphere;
 MODEL *vector;
+MODEL *quad;
 
 ENTITY *player;
 ENTITY *obstacle;
@@ -156,6 +157,14 @@ int init_scene() {
       );
   if (vector == NULL) {
     printf("Unable to load vector model\n");
+    return -1;
+  }
+
+  quad = load_model(
+      DIR"/resources/quad/quad.obj"
+      );
+  if (quad == NULL) {
+    printf("Unable to load quad model\n");
     return -1;
   }
 

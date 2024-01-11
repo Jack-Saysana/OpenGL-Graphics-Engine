@@ -15,6 +15,7 @@ extern MODEL *floor_model;
 extern MODEL *platform;
 extern MODEL *sphere;
 extern MODEL *vector;
+extern MODEL *quad;
 
 extern ENTITY *player;
 extern ENTITY *obstacle;
@@ -112,30 +113,28 @@ int main() {
   vec3 s_col = GLM_VEC3_ONE_INIT;
   glm_quatv(player->rotation, camera_model_rot, up);
 
-  mat4 projection = GLM_MAT4_IDENTITY_INIT;
+  mat4 ortho_proj = GLM_MAT4_IDENTITY_INIT;
+  mat4 persp_proj = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   mat4 view = GLM_MAT4_IDENTITY_INIT;
 
-  glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, projection);
+  glm_ortho(-1.0, 1.0, -1.0, 1.0, 0.0, 100.0, ortho_proj);
+  glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, persp_proj);
+
   glUseProgram(shader);
-  glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1,
-                     GL_FALSE, (float *)projection);
+  set_mat4("projection", persp_proj, shader);
 
   glUseProgram(u_shader);
-  glUniformMatrix4fv(glGetUniformLocation(u_shader, "projection"), 1,
-                     GL_FALSE, (float *)projection);
+  set_mat4("projection", persp_proj, u_shader);
 
   glUseProgram(bone_shader);
-  glUniformMatrix4fv(glGetUniformLocation(bone_shader, "projection"), 1,
-                     GL_FALSE, (float *)projection);
+  set_mat4("projection", persp_proj, bone_shader);
 
   glUseProgram(basic_shader);
-  glUniformMatrix4fv(glGetUniformLocation(basic_shader, "projection"), 1,
-                     GL_FALSE, (float *)projection);
+  set_mat4("projection", persp_proj, basic_shader);
 
   glUseProgram(test_shader);
-  glUniformMatrix4fv(glGetUniformLocation(test_shader, "projection"), 1,
-                     GL_FALSE, (float *)projection);
+  set_mat4("projection", persp_proj, test_shader);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -155,6 +154,15 @@ int main() {
                         (void *) 0);
   glEnableVertexAttribArray(0);
   glBindVertexArray(0);
+
+  // UI SET UP
+  init_ui(RES_X, RES_Y);
+  add_ui_comp(UI_ROOT_COMP, (vec2) { 0.0, 0.0 }, 0.1, 0.1,
+              RELATIVE_POS | POS_UNIT_RATIO | SIZE_UNIT_RATIO);
+  add_ui_comp(UI_ROOT_COMP, (vec2) { 0.0, 0.0 }, 0.1, 0.1,
+              RELATIVE_POS | POS_UNIT_RATIO | SIZE_UNIT_RATIO);
+  add_ui_comp(UI_ROOT_COMP, (vec2) { 0.0, 0.0 }, 0.1, 0.1,
+              RELATIVE_POS | POS_UNIT_RATIO | SIZE_UNIT_RATIO);
 
   // SIMULATION SET UP
 
@@ -301,8 +309,8 @@ int main() {
       break;
     }
 
-    featherstone_abm(ragdoll);
-    integrate_ragdoll(ragdoll);
+    //featherstone_abm(ragdoll);
+    //integrate_ragdoll(ragdoll);
 
     glm_vec3_sub(player->translation, displacement, displacement);
     glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
@@ -332,20 +340,17 @@ int main() {
 
     glPointSize(10.0);
     glUseProgram(basic_shader);
-    glUniformMatrix4fv(glGetUniformLocation(basic_shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-    glUniformMatrix4fv(glGetUniformLocation(basic_shader, "view"), 1,
-                       GL_FALSE, (float *) view);
-    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 0.0, 1.0, 1.0);
+    set_mat4("model", model, basic_shader);
+    set_mat4("view", view, basic_shader);
+    set_vec3("test_col", (vec3) { 0.0, 1.0, 1.0 }, basic_shader);
     glBindVertexArray(pt_VAO);
     glDrawArrays(GL_POINTS, 0, 1);
 
     /* Test collision point */
 
     glm_translate(model, col_point);
-    glUniformMatrix4fv(glGetUniformLocation(basic_shader, "model"), 1,
-                       GL_FALSE, (float *) model);
-    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 1.0, 0.0, 0.0);
+    set_mat4("model", model, basic_shader);
+    set_vec3("test_col", (vec3) { 1.0, 0.0, 0.0 }, basic_shader);
     glDrawArrays(GL_POINTS, 0, 1);
     glBindVertexArray(0);
 
@@ -355,42 +360,37 @@ int main() {
     glm_quatv(player->rotation, camera_model_rot, up);
 
     glUseProgram(bone_shader);
-    glUniform3f(glGetUniformLocation(bone_shader, "test_col"), 0.0, 0.0, 1.0);
-    glUniformMatrix4fv(glGetUniformLocation(bone_shader, "view"), 1,
-                       GL_FALSE, (float *) view);
+    set_vec3("test_col", (vec3) { 0.0, 0.0, 1.0 }, bone_shader);
+    set_mat4("view", view, bone_shader);
 
     draw_skeleton(bone_shader, player);
-    draw_skeleton(bone_shader, ragdoll);
+    //draw_skeleton(bone_shader, ragdoll);
 
     /* Colliders */
 
     glPointSize(5.0);
     glUseProgram(basic_shader);
-    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), 1.0, 0.0, 1.0);
+    set_vec3("test_col", (vec3) { 1.0, 0.0, 1.0 }, basic_shader);
     glBindVertexArray(pt_VAO);
     draw_colliders(basic_shader, player, sphere);
-    draw_colliders(basic_shader, ragdoll, sphere);
+    //draw_colliders(basic_shader, ragdoll, sphere);
     //draw_colliders(basic_shader, obstacle, sphere);
     draw_colliders(basic_shader, floor_entity, sphere);
     for (int i = 0; i < NUM_BOXES; i++) {
       draw_colliders(basic_shader, boxes[i], sphere);
     }
 
-    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), cube_col[0],
-                cube_col[1], cube_col[2]);
+    set_vec3("test_col", cube_col, basic_shader);
     //draw_colliders(basic_shader, box_entity, sphere);
 
-    glUniform3f(glGetUniformLocation(basic_shader, "test_col"), s_col[0],
-                s_col[1], s_col[2]);
+    set_vec3("test_col", s_col, basic_shader);
     //draw_colliders(basic_shader, sphere_entity, sphere);
 
     /* Player */
 
     glUseProgram(shader);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1,
-                       GL_FALSE, (float *) view);
-    glUniform3f(glGetUniformLocation(shader, "camera_pos"), camera_pos[0],
-                camera_pos[1], camera_pos[2]);
+    set_mat4("view", view, shader);
+    set_vec3("camera_pos", camera_pos, shader);
     if (draw) {
       draw_entity(shader, player);
       //draw_entity(shader, ragdoll);
@@ -399,10 +399,8 @@ int main() {
     /* Objects */
 
     glUseProgram(test_shader);
-    glUniformMatrix4fv(glGetUniformLocation(test_shader, "view"), 1, GL_FALSE,
-                       (float *) view);
-
-    glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 1.0);
+    set_mat4("view", view, test_shader);
+    set_vec3("test_col", (vec3) { 1.0, 1.0, 1.0 }, test_shader);
     //draw_entity(test_shader, box_entity);
     //draw_entity(test_shader, obstacle);
     draw_entity(test_shader, floor_entity);
@@ -415,6 +413,9 @@ int main() {
     for (int i = 0; i < NUM_RECTS; i++) {
       draw_entity(test_shader, rects[i]);
     }
+
+    /* Misc */
+    render_ui();
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);

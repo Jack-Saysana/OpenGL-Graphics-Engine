@@ -22,6 +22,11 @@ void print_mat3(mat3 m) {
     printf("|%f %f %f|\n", m[0][i], m[1][i], m[2][i]);
   }
 }
+void print_mat4(mat4 m) {
+  for (int i = 0; i < 4; i++) {
+    printf("|%f %f %f %f|\n", m[0][i], m[1][i], m[2][i], m[3][i]);
+  }
+}
 
 int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
