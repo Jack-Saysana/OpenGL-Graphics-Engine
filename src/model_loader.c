@@ -21,14 +21,14 @@ MODEL *load_model(char *path) {
     }
   }
 
-  size_t b_len;
-  size_t col_len;
-  size_t v_len;
-  size_t i_len;
-  size_t a_len;
-  size_t total_chains;
-  size_t total_keyframes;
-  size_t total_frames;
+  size_t b_len = 0;
+  size_t col_len = 0;
+  size_t v_len = 0;
+  size_t i_len = 0;
+  size_t a_len = 0;
+  size_t total_chains = 0;
+  size_t total_keyframes = 0;
+  size_t total_frames = 0;
   fread(&b_len, sizeof(size_t), 1, file);
   fread(&col_len, sizeof(size_t), 1, file);
   fread(&v_len, sizeof(size_t), 1, file);
@@ -38,8 +38,8 @@ MODEL *load_model(char *path) {
   fread(&total_keyframes, sizeof(size_t), 1, file);
   fread(&total_frames, sizeof(size_t), 1, file);
 
-  int material_flag;
-  int path_len;
+  int material_flag = 0;
+  int path_len = 0;
   MATERIAL *obj_mat = NULL;
   fread(&material_flag, sizeof(int), 1, file);
   if (material_flag) {

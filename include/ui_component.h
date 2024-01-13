@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <cglm/cglm.h>
+#include <globals.h>
 #include <const.h>
 #include <entity_str.h>
 #include <ui_component_str.h>
@@ -29,8 +30,10 @@ vec2 UI_PIVOT_OFFSETS[9] = {
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-int init_ui_comp(UI_COMP *, vec2, float, float, PIVOT, TEXT_ANCHOR, int, int);
+int init_ui_comp(UI_COMP *, vec2, float, float, PIVOT, TEXT_ANCHOR, int, int,
+                 int);
 void free_ui_comp(UI_COMP *);
+void calc_pix_stats(UI_COMP *, UI_COMP *, vec2, vec2, float *);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 

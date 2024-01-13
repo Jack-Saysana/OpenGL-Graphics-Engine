@@ -1,5 +1,7 @@
 #include <ui_component.h>
 
+// ============================== INITIALIZATION =============================
+
 /*
   Initializes root component of the UI. Must me called only once before
   further creation/usage of UI components.
@@ -12,20 +14,21 @@
   0 if successful
   -1 if error has occured
 */
-int init_ui(float res_x, float res_y) {
+int init_ui() {
   // Initialize root ui component
-  int status = init_ui_comp(&ui_root, (vec2) {0.0, 0.0}, res_x, res_y,
+  int status = init_ui_comp(&ui_root, (vec2) {0.0, 0.0}, RES_X, RES_Y,
                             PIVOT_CENTER, T_CENTER,
                             ABSOLUTE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL,
-                            UI_ENABLED);
+                            UI_TRUE, UI_TRUE);
   if (status) {
     fprintf(stderr, "Error initializing root ui component.\n");
     return -1;
   }
 
   glm_vec2_copy((vec2) { 0.0, 0.0 }, ui_root.pix_pos);
-  ui_root.pix_width = res_x;
-  ui_root.pix_height = res_y;
+  ui_root.pix_width = RES_X;
+  ui_root.pix_height = RES_Y;
+  ui_root.display = UI_FALSE;
 
   // Initialized base quad model used for rendering ui components
   ui_quad = load_model("resources/quad/quad.obj");
@@ -67,6 +70,77 @@ int init_ui(float res_x, float res_y) {
 }
 
 /*
+  Initialize a new UI component given the position, width, height, pivot, text
+  anchor, numerical options and enabled variables.
+*/
+int init_ui_comp(UI_COMP *comp, vec2 pos, float width, float height,
+                  PIVOT pivot, TEXT_ANCHOR txt_anc, int opts, int enabled,
+                  int display) {
+  comp->children = malloc(sizeof(UI_COMP) * CHILD_BUF_SIZE_INIT);
+  if (comp->children == NULL) {
+    return -1;
+  }
+  comp->num_children = 0;
+  comp->child_buf_size = CHILD_BUF_SIZE_INIT;
+
+  glm_vec2_copy(pos, comp->pos);
+  comp->width = width;
+  comp->height = height;
+  comp->pivot = pivot;
+  comp->txt_anc = txt_anc;
+  comp->numerical_options = opts;
+  comp->display = display;
+  comp->enabled = enabled;
+  return 0;
+}
+
+// ================================= CLEANUP =================================
+
+int free_ui() {
+  render_stack[0] = &ui_root;
+  render_stk_top = 1;
+
+  UI_COMP *cur_comp = NULL;
+  while (render_stk_top) {
+    cur_comp = render_stack[render_stk_top - 1];
+    if (cur_comp->num_children) {
+      for (size_t i = 0; i < cur_comp->num_children; i++) {
+        render_stack[render_stk_top] = cur_comp->children + i;
+        render_stk_top++;
+        if (render_stk_top == render_stk_size) {
+          int status = double_buffer((void **) &render_stack, &render_stk_size,
+                                     sizeof(UI_COMP *));
+          if (status) {
+            fprintf(stderr, "UI Error: Unable to grow ui free stack\n");
+            return -1;
+          }
+        }
+      }
+
+      cur_comp->num_children = 0;
+    } else {
+      free_ui_comp(cur_comp);
+      render_stk_top--;
+    }
+  }
+
+  free(render_stack);
+  free_model(ui_quad);
+  glDeleteProgram(ui_shader);
+
+  ui_quad = NULL;
+  render_stack = NULL;
+
+  return 0;
+}
+
+void free_ui_comp(UI_COMP *comp) {
+  free(comp->children);
+}
+
+// ============================ ADDING COMPONENTS ============================
+
+/*
   Main API function for adding components to the rendering list
 
   Parameters:
@@ -86,67 +160,91 @@ int init_ui(float res_x, float res_y) {
         right
 
     - Option 2: Ratio vs Pixel position unit
+      - POS_X_UNIT_RATIO_X: Pos[X] is a ratio of the parent component's width
+      - POS_X_UNIT_RATIO_Y: Pos[X] is a ratio of the parent component's height
+      - POS_X_UNIT_PIXEL: Pos[Y] is a pixel offset
+
+      - POS_Y_UNIT_RATIO_X: Pos[Y] is a ratio of the parent component's width
+      - POS_Y_UNIT_RATIO_Y: Pos[Y] is a ratio of the parent component's height
+      - POS_Y_UNIT_PIXEL: Pos[Y] is a pixel offset
+
+      - POS_UNIT_RATIO_X: Pos[X] is a ratio of the parent component's width
+                          Pos[Y] is a ratio of the parent component's width
+                       (equivalent to POS_X_UNIT_RATIO_X | POS_Y_UNIT_RATIO_X)
+
+      - POS_UNIT_RATIO_Y: Pos[X] is a ratio of the parent component's height
+                          Pos[Y] is a ratio of the parent component's height
+                       (equivalent to POS_X_UNIT_RATIO_Y | POS_Y_UNIT_RATIO_Y)
+
+      - POS_UNIT_PIXEL: Pos[X] and pos[Y] are pixel offsets
+                       (equivalent to POS_X_UNIT_PIXEL | POS_Y_UNIT_PIXEL)
+
       - POS_UNIT_RATIO: Pos[X] is a ratio of the parent component's width
                         Pos[Y] is a ratio of the parent component's height
-      - POS_UNIT_PIXEL: Pos[X] and pos[Y] are pixel offsets
+                       (equivalent to POS_X_UNIT_RATIO_X | POS_Y_UNIT_RATIO_Y)
 
     - Option 3: Ratio vs pixel size unit
+      - WIDTH_UNIT_RATIO_X: Width is a ratio of the parent component's width
+      - WIDTH_UNIT_RATIO_Y: Width is a ratio of the parent component's height
+      - WIDTH_UNIT_PIXEL: Width is in units of pixels
+
+      - HEIGHT_UNIT_RATIO_X: Height is a ratio of the parent component's width
+      - HEIGHT_UNIT_RATIO_Y: Height is a ratio of the parent component's height
+      - HEIGHT_UNIT_PIXEL: Height is in units of pixels
+
+      - SIZE_UNIT_RATIO_X: width is a ratio of the parent component's width
+                           height is a ratio of the parent component's width
+                       (equivalent to WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_X)
+
+      - SIZE_UNIT_RATIO_Y: width is a ratio of the parent component's height
+                           height is a ratio of the parent component's height
+                       (equivalent to WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y)
+
+      - SIZE_UNIT_PIXEL: width and height are in units of pixels
+                       (equivalent to WIDTH_UNIT_PIXEL | HEIGHT_UNIT_PIXEL)
+
       - SIZE_UNIT_RATIO: width is a ratio of the parent component's width
                          height is a ratio of the parent component's height
-      - SIZE_UNIT_PIXEL: width and height are in units of pixels
+                       (equivalent to WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_Y)
+
   - PIVOT pivot: Point on the new component which is located at pos
 */
-int add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
-                int options) {
-  int status = init_ui_comp(parent->children + parent->num_children, pos,
-                            width, height, PIVOT_TOP_LEFT, T_CENTER, options,
-                            UI_ENABLED);
+UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
+                     int options) {
+  UI_COMP *comp = parent->children + parent->num_children;
+  int status = init_ui_comp(comp, pos, width, height, PIVOT_TOP_LEFT, T_CENTER,
+                            options, UI_TRUE, UI_TRUE);
   if (status) {
     fprintf(stderr, "Unable to initialize ui component\n");
-    return -1;
+    return NULL;
   }
 
   parent->num_children++;
   if (parent->num_children == parent->child_buf_size) {
-    status = double_buffer((void **) parent->children, &parent->child_buf_size,
-                           sizeof(UI_COMP));
+    status = double_buffer((void **) &parent->children,
+                           &parent->child_buf_size, sizeof(UI_COMP));
     if (status) {
       parent->num_children--;
       free_ui_comp(parent->children + parent->num_children);
       fprintf(stderr, "Unable to allocate ui component\n");
-      return -1;
+      return NULL;
     }
   }
 
-  return 0;
+  return comp;
 }
 
-/*
-  Initialize a new UI component given the position, width, height, pivot, text
-  anchor, numerical options and enabled variables.
-*/
-int init_ui_comp(UI_COMP *comp, vec2 pos, float width, float height,
-                  PIVOT pivot, TEXT_ANCHOR txt_anc, int opts, int enabled) {
-  comp->children = malloc(sizeof(UI_COMP) * CHILD_BUF_SIZE_INIT);
-  if (comp->children == NULL) {
-    return -1;
-  }
-  comp->num_children = 0;
-  comp->child_buf_size = CHILD_BUF_SIZE_INIT;
+// ============================ EDITING COMPONENTS ===========================
 
-  glm_vec2_copy(pos, comp->pos);
-  comp->width = width;
-  comp->height = height;
+void set_pivot(UI_COMP *comp, PIVOT pivot) {
   comp->pivot = pivot;
-  comp->txt_anc = txt_anc;
-  comp->numerical_options = opts;
-  comp->enabled = enabled;
-  return 0;
 }
 
-void free_ui_comp(UI_COMP *comp) {
-  free(comp->children);
+void set_display(UI_COMP *comp, int display) {
+  comp->display = display;
 }
+
+// ================================ RENDERING ================================
 
 /*
   Render a singular UI component to the screen. Assumes the pixel information
@@ -183,16 +281,24 @@ void render_comp(UI_COMP *comp) {
   information of each component before rendering them.
 */
 int render_ui() {
+  if (!ui_root.enabled) {
+    return 0;
+  }
+
   render_stk_top = 1;
 
-  render_comp(&ui_root);
+  ui_root.pix_width = RES_X;
+  ui_root.pix_height = RES_Y;
+  if (ui_root.display) {
+    render_comp(&ui_root);
+  }
   render_stack[0] = &ui_root;
 
   UI_COMP *cur_comp = NULL;
   UI_COMP *cur_child = NULL;
   vec2 top_left = GLM_VEC2_ZERO_INIT;
   vec2 next_rel_pos = GLM_VEC2_ZERO_INIT;
-  vec2 cur_offset = GLM_VEC2_ZERO_INIT;
+  float next_line_y = 0.0;
   while (render_stk_top) {
     render_stk_top--;
     cur_comp = render_stack[render_stk_top];
@@ -204,13 +310,14 @@ int render_ui() {
                           UI_PIVOT_OFFSETS[cur_comp->pivot][Y] *
                           cur_comp->pix_height * 0.5
                         };
-    glm_vec2_sub(cur_comp->pix_pos, pivot_offset,
-                 top_left);
 
     // Get pixel coordinate of top left of parent
+    glm_vec2_sub(cur_comp->pix_pos, pivot_offset,
+                 top_left);
     glm_vec2_add(top_left, (vec2) { -cur_comp->pix_width * 0.5,
                  cur_comp->pix_height * 0.5 }, top_left);
     glm_vec2_copy(top_left, next_rel_pos);
+    next_line_y = top_left[Y];
 
     for (size_t i = 0; i < cur_comp->num_children; i++) {
       cur_child = cur_comp->children + i;
@@ -218,57 +325,123 @@ int render_ui() {
         continue;
       }
 
-      // Calculate child pixel sizing
-      if (cur_child->numerical_options & SIZE_UNIT_PIXEL) {
-        // Component is sized based on pixels
-        cur_child->pix_width = cur_child->width;
-        cur_child->pix_height = cur_child->height;
-      } else {
-        // Component is sized relative to parent
-        cur_child->pix_width = cur_comp->pix_width * cur_child->width;
-        cur_child->pix_height = cur_comp->pix_height * cur_child->height;
-      }
-
-      // Calculate child pixel offset
-      if (cur_child->numerical_options & POS_UNIT_PIXEL) {
-        // Component offset is measured in pixels
-        glm_vec2_copy(cur_child->pos, cur_offset);
-      } else {
-        // Component offset is measured relative to size of parent
-        cur_offset[X] = cur_comp->pix_width * cur_child->pos[X];
-        cur_offset[Y] = cur_comp->pix_height * cur_child->pos[Y];
-      }
-
-      // Calculate child pixel position
-      if (cur_child->numerical_options & ABSOLUTE_POS) {
-        // Component is offset from top left of parent
-        glm_vec2_copy(top_left, cur_child->pix_pos);
-      } else {
-        // Component is offset from default relative placement
-        glm_vec2_copy(next_rel_pos, cur_child->pix_pos);
-        next_rel_pos[X] += cur_child->pix_width;
-        next_rel_pos[X] += cur_offset[X];
-      }
-      glm_vec2_add(cur_child->pix_pos, cur_offset, cur_child->pix_pos);
+      // Calculate pixelized position and size of child component
+      calc_pix_stats(cur_comp, cur_child, top_left, next_rel_pos,
+                     &next_line_y);
 
       // Render child component
-      render_comp(cur_child);
+      if (cur_child->display) {
+        render_comp(cur_child);
+      }
 
       // Push child component on stack
       render_stack[render_stk_top] = cur_child;
       render_stk_top++;
       if (render_stk_top == render_stk_size) {
-        int status = double_buffer((void **) render_stack, &render_stk_size,
+        int status = double_buffer((void **) &render_stack, &render_stk_size,
                                    sizeof(UI_COMP *));
         if (status) {
-          free(render_stack);
           fprintf(stderr, "UI Error: Unable to grow ui render stack\n");
           return -1;
         }
       }
     }
   }
-  //render_comp(&ui_root);
 
   return 0;
+}
+
+void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
+                    vec2 next_rel_pos, float *next_line_y) {
+  vec2 cur_offset = GLM_VEC2_ZERO_INIT;
+
+  // Calculate child pixel sizing
+  int width_opt = child->numerical_options & WIDTH_UNIT_PIXEL;
+  if (width_opt == WIDTH_UNIT_RATIO_X) {
+    // Width measured relative to width of parent
+    child->pix_width = parent->pix_width * child->width;
+  } else if (width_opt == WIDTH_UNIT_RATIO_Y) {
+    // Width measured relative to height of parent
+    child->pix_width = parent->pix_height * child->width;
+  } else {
+    // Width measured in pixels
+    child->pix_width = child->width;
+  }
+
+  int height_opt = child->numerical_options & HEIGHT_UNIT_PIXEL;
+  if (height_opt == HEIGHT_UNIT_RATIO_X) {
+    // Height measured relative to width of parent
+    child->pix_height = parent->pix_width * child->height;
+  } else if (height_opt == HEIGHT_UNIT_RATIO_Y) {
+    // Height measured relative to height of parent
+    child->pix_height = parent->pix_height * child->height;
+  } else {
+    // Height measured in pixels
+    child->pix_height = child->height;
+  }
+
+  // Calculate child pixel offset
+  int pos_x_opt = child->numerical_options & POS_X_UNIT_PIXEL;
+  if (pos_x_opt == POS_X_UNIT_RATIO_X) {
+    // X offset is measured relative to width of parent
+    cur_offset[X] = parent->pix_width * child->pos[X];
+  } else if (pos_x_opt == POS_X_UNIT_RATIO_Y) {
+    // X offset is measured relative to height of parent
+    cur_offset[X] = parent->pix_height * child->pos[X];
+  } else {
+    // X offset is measured in pixels
+    cur_offset[X] = child->pos[X];
+  }
+
+  int pos_y_opt = child->numerical_options & POS_Y_UNIT_PIXEL;
+  if (pos_y_opt == POS_Y_UNIT_RATIO_X) {
+    // Y offset measured relative to width of parent
+    cur_offset[Y] = parent->pix_width * child->pos[Y];
+  } else if (pos_y_opt == POS_Y_UNIT_RATIO_Y) {
+    // Y offset measured relative to height of parent
+    cur_offset[Y] = parent->pix_height * child->pos[Y];
+  } else {
+    // Y offset measured in pixels
+    cur_offset[Y] = child->pos[Y];
+  }
+
+  // Calculate child pixel position
+  if (child->numerical_options & ABSOLUTE_POS) {
+    // Component is offset from top left of parent
+    glm_vec2_copy(top_left, child->pix_pos);
+  } else {
+    // Component is offset from default relative placement
+    float parent_max_x = ((UI_PIVOT_OFFSETS[parent->pivot][X] -
+                           UI_PIVOT_OFFSETS[PIVOT_RIGHT][X]) *
+                          parent->pix_width * 0.5) + parent->pix_pos[X];
+
+    vec2 child_b_right = GLM_VEC2_ZERO_INIT;
+    glm_vec2_sub(UI_PIVOT_OFFSETS[child->pivot],
+                 UI_PIVOT_OFFSETS[PIVOT_BOTTOM_RIGHT], child_b_right);
+    float child_max_x = (child_b_right[X] * child->pix_width * 0.5) +
+                        next_rel_pos[X] + cur_offset[X];
+    if (child_max_x > parent_max_x) {
+      next_rel_pos[X] = top_left[X];
+      next_rel_pos[Y] = *next_line_y;
+    }
+
+    glm_vec2_copy(next_rel_pos, child->pix_pos);
+
+    float child_min_y = (child_b_right[Y] * child->pix_height * 0.5) +
+                        child->pix_pos[Y] + cur_offset[Y];
+    if (child_min_y < *next_line_y) {
+      *next_line_y = child_min_y;
+    }
+
+    // Calculate pixel offset from pix_pos to center of the component
+    vec2 pivot_compensation = {
+      UI_PIVOT_OFFSETS[child->pivot][X] * child->width * 0.5,
+      UI_PIVOT_OFFSETS[child->pivot][Y] * child->height * 0.5
+    };
+
+    // Update default position for next sibling component
+    next_rel_pos[X] += cur_offset[X] + (child->pix_width * 0.5) +
+                       pivot_compensation[X];
+  }
+  glm_vec2_add(child->pix_pos, cur_offset, child->pix_pos);
 }

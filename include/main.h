@@ -4,6 +4,7 @@
 #include <cglm/cam.h>
 #include <math.h>
 #include <stdlib.h>
+#include <globals.h>
 #include <const.h>
 #include <ui_component_str.h>
 #include <entity_str.h>
@@ -87,9 +88,12 @@ void free_oct_tree(OCT_TREE *tree);
 void get_model_mat(ENTITY *entity, mat4 model);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
 
-int init_ui(float, float);
-int add_ui_comp(UI_COMP *, vec2, float, float, int);
+int init_ui();
+int free_ui();
+UI_COMP *add_ui_comp(UI_COMP *, vec2, float, float, int);
 int render_ui();
+void set_pivot(UI_COMP *, PIVOT);
+void set_display(UI_COMP *, int);
 
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 v, float threshold);

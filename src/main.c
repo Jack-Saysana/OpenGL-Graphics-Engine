@@ -64,6 +64,7 @@ int cursor_on = 1;
 int draw = 0;
 
 // MISC DATA
+mat4 persp_proj = GLM_MAT4_IDENTITY_INIT;
 int cur_frame = 0;
 vec3 col_point = { 0.0, 0.0, 0.0 };
 int enable_gravity = 1;
@@ -114,27 +115,11 @@ int main() {
   glm_quatv(player->rotation, camera_model_rot, up);
 
   mat4 ortho_proj = GLM_MAT4_IDENTITY_INIT;
-  mat4 persp_proj = GLM_MAT4_IDENTITY_INIT;
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   mat4 view = GLM_MAT4_IDENTITY_INIT;
 
   glm_ortho(-1.0, 1.0, -1.0, 1.0, 0.0, 100.0, ortho_proj);
   glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, persp_proj);
-
-  glUseProgram(shader);
-  set_mat4("projection", persp_proj, shader);
-
-  glUseProgram(u_shader);
-  set_mat4("projection", persp_proj, u_shader);
-
-  glUseProgram(bone_shader);
-  set_mat4("projection", persp_proj, bone_shader);
-
-  glUseProgram(basic_shader);
-  set_mat4("projection", persp_proj, basic_shader);
-
-  glUseProgram(test_shader);
-  set_mat4("projection", persp_proj, test_shader);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -156,13 +141,37 @@ int main() {
   glBindVertexArray(0);
 
   // UI SET UP
-  init_ui(RES_X, RES_Y);
-  add_ui_comp(UI_ROOT_COMP, (vec2) { 0.0, 0.0 }, 0.1, 0.1,
-              RELATIVE_POS | POS_UNIT_RATIO | SIZE_UNIT_RATIO);
-  add_ui_comp(UI_ROOT_COMP, (vec2) { 0.0, 0.0 }, 0.1, 0.1,
-              RELATIVE_POS | POS_UNIT_RATIO | SIZE_UNIT_RATIO);
-  add_ui_comp(UI_ROOT_COMP, (vec2) { 0.0, 0.0 }, 0.1, 0.1,
-              RELATIVE_POS | POS_UNIT_RATIO | SIZE_UNIT_RATIO);
+  init_ui();
+  UI_COMP *c1 = add_ui_comp(UI_ROOT_COMP, (vec2) { 0.5, -0.5 }, 0.75, 0.5,
+                            ABSOLUTE_POS | POS_UNIT_RATIO |
+                            WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y);
+  set_pivot(c1, PIVOT_CENTER);
+
+  UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 64.0, 32.0,
+                            RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  set_pivot(c2, PIVOT_TOP_LEFT);
+
+  UI_COMP *c3 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
+                            RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  set_pivot(c3, PIVOT_TOP_LEFT);
+
+  UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
+                            RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  set_pivot(c4, PIVOT_TOP_LEFT);
+
+  UI_COMP *c5 = add_ui_comp(c1, (vec2) { 0.1, -15.0 }, 64.0, 32.0,
+                            RELATIVE_POS | POS_X_UNIT_RATIO_X |
+                            POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  set_pivot(c5, PIVOT_TOP_LEFT);
+
+  add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0, RELATIVE_POS |
+              POS_X_UNIT_RATIO_X | POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 64.0, 32.0, RELATIVE_POS |
+              POS_X_UNIT_RATIO_X | POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 64.0, 32.0, RELATIVE_POS |
+              POS_X_UNIT_RATIO_X | POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 64.0, 32.0, RELATIVE_POS |
+              POS_X_UNIT_RATIO_X | POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
 
   // SIMULATION SET UP
 
@@ -293,6 +302,21 @@ int main() {
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(shader);
+    set_mat4("projection", persp_proj, shader);
+
+    glUseProgram(u_shader);
+    set_mat4("projection", persp_proj, u_shader);
+
+    glUseProgram(bone_shader);
+    set_mat4("projection", persp_proj, bone_shader);
+
+    glUseProgram(basic_shader);
+    set_mat4("projection", persp_proj, basic_shader);
+
+    glUseProgram(test_shader);
+    set_mat4("projection", persp_proj, test_shader);
 
     /* Animation */
 
@@ -451,6 +475,7 @@ int main() {
   free_model(floor_model);
   free_model(sphere);
   free_model(vector);
+  free_ui();
 
   glfwTerminate();
 
@@ -608,6 +633,9 @@ void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
+  RES_X = (float) width;
+  RES_Y = (float) height;
+  glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, persp_proj);
 }
 
 void keyboard_input(GLFWwindow *window) {

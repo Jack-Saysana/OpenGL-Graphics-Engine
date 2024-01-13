@@ -168,44 +168,6 @@ int init_scene() {
     return -1;
   }
 
-  load_model(DIR"/resources/EOW/medium_ship/medium_ship.obj");
-  load_model(DIR"/resources/EOW/large_ship/large_ship.obj");
-  load_model(DIR"/resources/EOW/custom_ship/custom_ship.obj");
-  load_model(DIR"/resources/EOW/trade_ship/trade_ship.obj");
-  load_model(DIR"/resources/EOW/enemy_ship/enemy_ship.obj");
-  load_model(DIR"/resources/EOW/enemy/enemy.obj");
-  load_model(DIR"/resources/EOW/merchant/merchant.obj");
-  load_model(DIR"/resources/EOW/player/player.obj");
-  load_model(DIR"/resources/quad/quad.obj");
-  load_model(DIR"/resources/circle/circle.obj");
-  load_model(DIR"/resources/chest/chest.obj");
-  load_model(DIR"/resources/planet/planet.obj");
-  load_model(DIR"/resources/EOW_frames/player_still.obj");
-  load_model(DIR"/resources/EOW_frames/player_walk_1.obj");
-  load_model(DIR"/resources/EOW_frames/player_walk_2.obj");
-  load_model(DIR"/resources/EOW_frames/player_walk_3.obj");
-  load_model(DIR"/resources/EOW_frames/enemy_still.obj");
-  load_model(DIR"/resources/EOW_frames/enemy_walk_1.obj");
-  load_model(DIR"/resources/EOW_frames/enemy_walk_2.obj");
-  load_model(DIR"/resources/EOW_frames/enemy_walk_3.obj");
-  char path[100] = DIR"/resources/Dinklebitmap/x.obj";
-  for (char cur = ' '; cur < 127; cur++) {
-    if (cur == '/') {
-      //printf("%s\n", DIR"/resources/Dinklebitmap/fs.obj");
-      load_model(DIR"/resources/Dinklebitmap/fs.obj");
-    } else if (cur == ' ') {
-      load_model(DIR"/resources/Dinklebitmap/space.obj");
-    } else if (cur == '\\') {
-      load_model(DIR"/resources/Dinklebitmap/bs.obj");
-    } else if (cur == '.') {
-      load_model(DIR"/resources/Dinklebitmap/period.obj");
-    }else {
-      path[strlen(path) - 5] = cur;
-      //printf("%s\n", path);
-      load_model(path);
-    }
-  }
-
   player = init_entity(dude);
   if (player == NULL) {
     printf("Unable to load player\n");

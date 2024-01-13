@@ -11,15 +11,37 @@ engine.
 
 #define UI_ROOT_COMP (&ui_root)
 
-#define RELATIVE_POS      (0x0)
-#define ABSOLUTE_POS      (0x1)
-#define POS_UNIT_RATIO    (0x0)
-#define POS_UNIT_PIXEL    (0x2)
-#define SIZE_UNIT_RATIO   (0x0)
-#define SIZE_UNIT_PIXEL   (0x4)
+#define RELATIVE_POS          (0x0)
+#define ABSOLUTE_POS          (0x1)
 
-#define UI_ENABLED  (1)
-#define UI_DISABLED (0)
+#define POS_X_UNIT_RATIO_X    (0x2)
+#define POS_X_UNIT_RATIO_Y    (0x4)
+#define POS_X_UNIT_PIXEL      (0x6)
+
+#define POS_Y_UNIT_RATIO_X    (0x8)
+#define POS_Y_UNIT_RATIO_Y    (0x10)
+#define POS_Y_UNIT_PIXEL      (0x18)
+
+#define POS_UNIT_RATIO_X      (0xA)
+#define POS_UNIT_RATIO_Y      (0x14)
+#define POS_UNIT_PIXEL        (0x1E)
+#define POS_UNIT_RATIO        (0x12)
+
+#define WIDTH_UNIT_RATIO_X    (0x20)
+#define WIDTH_UNIT_RATIO_Y    (0x40)
+#define WIDTH_UNIT_PIXEL      (0x60)
+
+#define HEIGHT_UNIT_RATIO_X   (0x80)
+#define HEIGHT_UNIT_RATIO_Y   (0x100)
+#define HEIGHT_UNIT_PIXEL     (0x180)
+
+#define SIZE_UNIT_RATIO_X     (0xA0)
+#define SIZE_UNIT_RATIO_Y     (0x140)
+#define SIZE_UNIT_PIXEL       (0x1E0)
+#define SIZE_UNIT_RATIO       (0x120)
+
+#define UI_TRUE  (1)
+#define UI_FALSE (0)
 
 #define FLEX (0)
 #define INVALID_COMP_OPTIONS (0xFFFFFFFF)
@@ -79,7 +101,7 @@ typedef struct ui_component {
 
   /*
   Determines "pivot point" of component, i.e which point on the component will
-  be located at the position given by "pos".
+  be located at the offset given by "pos".
   */
   PIVOT pivot;
   // Specifies text alignment inside component
@@ -100,6 +122,17 @@ typedef struct ui_component {
     Pixel: Size given in terms of screen pixels
   */
   int numerical_options;
+
+  /*
+  Whether or not the component will be rendered. Children will still be
+  rendered and callbacks will still fire.
+  */
+  int display;
+
+  /*
+  Whether or not the component and it's children will be rendered and its
+  event callbacks will fire.
+  */
   int enabled;
 } UI_COMP;
 
