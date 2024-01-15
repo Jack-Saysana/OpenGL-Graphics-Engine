@@ -30,6 +30,9 @@ const int NUM_SPHERES = 0;
 const int NUM_RECTS = 0;
 ENTITY *ragdoll;
 
+F_GLYPH *font;
+int font_len;
+
 extern vec3 m_box_pos;
 extern vec3 m_box_scale;
 extern vec3 m_sphere_pos;
@@ -165,6 +168,13 @@ int init_scene() {
       );
   if (quad == NULL) {
     printf("Unable to load quad model\n");
+    return -1;
+  }
+
+  font_len = import_font(DIR"/resources/font/fixed_sys.bin",
+                         DIR"/resources/font/fixed_sys.png", &font);
+  if (font_len == -1) {
+    fprintf(stderr, "Unable to load font\n");
     return -1;
   }
 

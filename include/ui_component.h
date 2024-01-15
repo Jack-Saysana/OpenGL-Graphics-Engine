@@ -1,3 +1,4 @@
+#include <string.h>
 #include <glad/glad.h>
 #include <cglm/cglm.h>
 #include <globals.h>
@@ -10,11 +11,12 @@
 // ================================= GLOBALS =================================
 
 UI_COMP ui_root = INVALID_COMP_INIT;
-MODEL *ui_quad = NULL;
-unsigned int ui_shader = 0;
-UI_COMP **render_stack = NULL;
-size_t render_stk_top = 0;
-size_t render_stk_size = 0;
+static MODEL *ui_quad = NULL;
+static unsigned int ui_shader = 0;
+static unsigned int text_shader = 0;
+static UI_COMP **render_stack = NULL;
+static size_t render_stk_top = 0;
+static size_t render_stk_size = 0;
 
 vec2 UI_PIVOT_OFFSETS[9] = {
   { 0.0,  0.0 }, // CENTER
@@ -30,8 +32,8 @@ vec2 UI_PIVOT_OFFSETS[9] = {
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-int init_ui_comp(UI_COMP *, vec2, float, float, PIVOT, TEXT_ANCHOR, int, int,
-                 int);
+int init_ui_comp(UI_COMP *, char *, vec2, float, float, PIVOT, TEXT_ANCHOR,
+                 int, int, int);
 void free_ui_comp(UI_COMP *);
 void calc_pix_stats(UI_COMP *, UI_COMP *, vec2, vec2, float *);
 
@@ -42,6 +44,9 @@ MODEL *load_model(char *);
 void free_model(MODEL *);
 
 unsigned int init_shader_prog(char *, char *, char *);
+
+int draw_text(char *, size_t, TEXT_ANCHOR, vec2, float, float, float, float,
+              unsigned int);
 
 void set_mat4(char *, mat4, unsigned int);
 

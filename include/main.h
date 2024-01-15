@@ -8,6 +8,7 @@
 #include <const.h>
 #include <ui_component_str.h>
 #include <entity_str.h>
+#include <font_str.h>
 
 extern vec3 U_DIR;
 extern vec3 D_DIR;
@@ -94,6 +95,9 @@ UI_COMP *add_ui_comp(UI_COMP *, vec2, float, float, int);
 int render_ui();
 void set_pivot(UI_COMP *, PIVOT);
 void set_display(UI_COMP *, int);
+void set_text(UI_COMP *, char *, float);
+
+void draw_glyph(F_GLYPH *, unsigned int);
 
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 v, float threshold);

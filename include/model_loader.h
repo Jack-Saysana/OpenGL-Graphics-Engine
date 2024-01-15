@@ -41,7 +41,7 @@ typedef struct vbo {
 } VBO;
 
 MODEL *load_model(char *);
-unsigned int genTextureId(char *tex_path);
+unsigned int gen_texture_id(char *tex_path);
 LINE_BUFFER *get_lines(char *);
 int preprocess_lines(LINE_BUFFER *);
 void free_line_buffer(LINE_BUFFER *);

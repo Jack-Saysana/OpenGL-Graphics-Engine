@@ -16,19 +16,18 @@
 */
 int init_ui() {
   // Initialize root ui component
-  int status = init_ui_comp(&ui_root, (vec2) {0.0, 0.0}, RES_X, RES_Y,
+  int status = init_ui_comp(&ui_root, "", (vec2) {0.0, 0.0}, RES_X, RES_Y,
                             PIVOT_CENTER, T_CENTER,
                             ABSOLUTE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL,
-                            UI_TRUE, UI_TRUE);
+                            UI_TRUE, UI_FALSE);
   if (status) {
     fprintf(stderr, "Error initializing root ui component.\n");
     return -1;
   }
 
-  glm_vec2_copy((vec2) { 0.0, 0.0 }, ui_root.pix_pos);
+  glm_vec3_copy((vec3) { 0.0, 0.0, 0.0 }, ui_root.pix_pos);
   ui_root.pix_width = RES_X;
   ui_root.pix_height = RES_Y;
-  ui_root.display = UI_FALSE;
 
   // Initialized base quad model used for rendering ui components
   ui_quad = load_model("resources/quad/quad.obj");
@@ -38,7 +37,7 @@ int init_ui() {
     return -1;
   }
 
-  // Initialize shader used for rendering ui components
+  // Initialize shaders used for rendering ui components
   ui_shader = init_shader_prog(
       "src/shaders/ui/shader.vs",
       NULL,
@@ -48,6 +47,19 @@ int init_ui() {
     free_ui_comp(&ui_root);
     free_model(ui_quad);
     fprintf(stderr, "Error loading ui shaders\n");
+    return -1;
+  }
+
+  text_shader = init_shader_prog(
+      "src/shaders/font/shader.vs",
+      NULL,
+      "src/shaders/font/shader.fs"
+      );
+  if (text_shader == -1) {
+    free_ui_comp(&ui_root);
+    free_model(ui_quad);
+    glDeleteProgram(text_shader);
+    fprintf(stderr, "Error loading ui text shaders\n");
     return -1;
   }
 
@@ -66,6 +78,9 @@ int init_ui() {
   glUseProgram(ui_shader);
   set_mat4("proj", ui_proj, ui_shader);
 
+  glUseProgram(text_shader);
+  set_mat4("proj", ui_proj, text_shader);
+
   return 0;
 }
 
@@ -73,15 +88,18 @@ int init_ui() {
   Initialize a new UI component given the position, width, height, pivot, text
   anchor, numerical options and enabled variables.
 */
-int init_ui_comp(UI_COMP *comp, vec2 pos, float width, float height,
-                  PIVOT pivot, TEXT_ANCHOR txt_anc, int opts, int enabled,
-                  int display) {
+int init_ui_comp(UI_COMP *comp, char *text, vec2 pos, float width,
+                 float height, PIVOT pivot, TEXT_ANCHOR txt_anc, int opts,
+                 int enabled, int display) {
   comp->children = malloc(sizeof(UI_COMP) * CHILD_BUF_SIZE_INIT);
   if (comp->children == NULL) {
     return -1;
   }
   comp->num_children = 0;
   comp->child_buf_size = CHILD_BUF_SIZE_INIT;
+
+  comp->text = text;
+  comp->text_len = strlen(text);
 
   glm_vec2_copy(pos, comp->pos);
   comp->width = width;
@@ -127,6 +145,7 @@ int free_ui() {
   free(render_stack);
   free_model(ui_quad);
   glDeleteProgram(ui_shader);
+  glDeleteProgram(text_shader);
 
   ui_quad = NULL;
   render_stack = NULL;
@@ -192,28 +211,40 @@ void free_ui_comp(UI_COMP *comp) {
       - HEIGHT_UNIT_RATIO_Y: Height is a ratio of the parent component's height
       - HEIGHT_UNIT_PIXEL: Height is in units of pixels
 
+      - LINE_UNIT_RATIO_X: Text line height is a ratio of the component's width
+      - LINE_UNIT_RATIO_Y: Text line height is a ratio of the component's
+                           height
+      - LINE_UNIT_RATIO_PIXEL: Text line height is in units of pixels
+
       - SIZE_UNIT_RATIO_X: width is a ratio of the parent component's width
                            height is a ratio of the parent component's width
-                       (equivalent to WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_X)
+                           line height is a ratio of the component's width
+        (equivalent to WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_X |
+                       LINE_UNIT_RATIO_X)
 
       - SIZE_UNIT_RATIO_Y: width is a ratio of the parent component's height
                            height is a ratio of the parent component's height
-                       (equivalent to WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y)
+                           line height is a ratio of the component's height
+        (equivalent to WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y |
+                       LINE_UNIT_RATIO_Y)
 
-      - SIZE_UNIT_PIXEL: width and height are in units of pixels
-                       (equivalent to WIDTH_UNIT_PIXEL | HEIGHT_UNIT_PIXEL)
+      - SIZE_UNIT_PIXEL: width, height and line height are in units of pixels
+        (equivalent to WIDTH_UNIT_PIXEL | HEIGHT_UNIT_PIXEL |
+                       LINE_UNIT_RATIO_PIXEL)
 
       - SIZE_UNIT_RATIO: width is a ratio of the parent component's width
                          height is a ratio of the parent component's height
-                       (equivalent to WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_Y)
+                         text line height is a ratio of component's height
+        (equivalent to WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_Y |
+                       LINE_UNIT_RATIO_Y)
 
   - PIVOT pivot: Point on the new component which is located at pos
 */
 UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
                      int options) {
   UI_COMP *comp = parent->children + parent->num_children;
-  int status = init_ui_comp(comp, pos, width, height, PIVOT_TOP_LEFT, T_CENTER,
-                            options, UI_TRUE, UI_TRUE);
+  int status = init_ui_comp(comp, "", pos, width, height, PIVOT_TOP_LEFT,
+                            T_CENTER, options, UI_TRUE, UI_TRUE);
   if (status) {
     fprintf(stderr, "Unable to initialize ui component\n");
     return NULL;
@@ -244,6 +275,12 @@ void set_display(UI_COMP *comp, int display) {
   comp->display = display;
 }
 
+void set_text(UI_COMP *comp, char *str, float line_height) {
+  comp->text = str;
+  comp->text_len = strlen(str);
+  comp->line_height = line_height;
+}
+
 // ================================ RENDERING ================================
 
 /*
@@ -259,21 +296,33 @@ void render_comp(UI_COMP *comp) {
                         UI_PIVOT_OFFSETS[comp->pivot][Y] * screen_height * 0.5
                       };
   vec2 screen_pos = {
-                      ((comp->pix_pos[X] / ui_root.pix_width) +
-                       pivot_offset[X]) * 2.0,
-                      ((comp->pix_pos[Y] / ui_root.pix_height) +
-                       pivot_offset[Y]) * 2.0
+                      (comp->pix_pos[X] / ui_root.pix_width) +
+                      pivot_offset[X],
+                      (comp->pix_pos[Y] / ui_root.pix_height) +
+                      pivot_offset[Y]
                     };
 
   mat4 comp_model_mat = GLM_MAT4_IDENTITY_INIT;
   // Scale quad to component width
-  glm_translate(comp_model_mat, (vec3) { screen_pos[X], screen_pos[Y], 0.0 });
-  glm_scale(comp_model_mat, (vec3) { screen_width, screen_height, 1.0 });
+  glm_translate(comp_model_mat, (vec3) { screen_pos[X] * 2.0,
+                                         screen_pos[Y] * 2.0,
+                                         -comp->pix_pos[Z]});
+  glm_scale(comp_model_mat, (vec3) { screen_width * 2.0, screen_height * 2.0,
+                                     1.0 });
 
   // Draw quad
   glUseProgram(ui_shader);
   set_mat4("model", comp_model_mat, ui_shader);
   draw_model(ui_shader, ui_quad);
+
+  // Draw text
+  if (comp->text_len) {
+    draw_text(comp->text, comp->text_len, comp->txt_anc,
+              (vec2) { screen_pos[X] * ui_root.pix_width,
+                       screen_pos[Y] * ui_root.pix_height }, ui_root.pix_width,
+              ui_root.pix_height, comp->pix_width, comp->pix_line_height,
+              text_shader);
+  }
 }
 
 /*
@@ -351,6 +400,8 @@ int render_ui() {
   return 0;
 }
 
+// ================================= HELPERS =================================
+
 void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
                     vec2 next_rel_pos, float *next_line_y) {
   vec2 cur_offset = GLM_VEC2_ZERO_INIT;
@@ -378,6 +429,18 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
   } else {
     // Height measured in pixels
     child->pix_height = child->height;
+  }
+
+  int line_height_opt = child->numerical_options & LINE_UNIT_PIXEL;
+  if (line_height_opt == LINE_UNIT_RATIO_X) {
+    // Line height measured relative to width of child
+    child->pix_line_height = child->pix_width * child->line_height;
+  } else if (line_height_opt == LINE_UNIT_RATIO_Y) {
+    // Line height measured relative to height of child
+    child->pix_line_height = child->pix_height * child->line_height;
+  } else {
+    // Line height measured in pixels
+    child->pix_line_height = child->line_height;
   }
 
   // Calculate child pixel offset
@@ -444,4 +507,5 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
                        pivot_compensation[X];
   }
   glm_vec2_add(child->pix_pos, cur_offset, child->pix_pos);
+  child->pix_pos[Z] = parent->pix_pos[Z] + 0.001;
 }

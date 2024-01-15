@@ -35,15 +35,18 @@ engine.
 #define HEIGHT_UNIT_RATIO_Y   (0x100)
 #define HEIGHT_UNIT_PIXEL     (0x180)
 
-#define SIZE_UNIT_RATIO_X     (0xA0)
-#define SIZE_UNIT_RATIO_Y     (0x140)
-#define SIZE_UNIT_PIXEL       (0x1E0)
-#define SIZE_UNIT_RATIO       (0x120)
+#define LINE_UNIT_RATIO_X     (0x200)
+#define LINE_UNIT_RATIO_Y     (0x400)
+#define LINE_UNIT_PIXEL       (0x600)
+
+#define SIZE_UNIT_RATIO_X     (0x2A0)
+#define SIZE_UNIT_RATIO_Y     (0x540)
+#define SIZE_UNIT_PIXEL       (0x7E0)
+#define SIZE_UNIT_RATIO       (0x520)
 
 #define UI_TRUE  (1)
 #define UI_FALSE (0)
 
-#define FLEX (0)
 #define INVALID_COMP_OPTIONS (0xFFFFFFFF)
 #define CHILD_BUF_SIZE_INIT (5)
 
@@ -73,11 +76,15 @@ typedef struct ui_component {
   size_t num_children;
   size_t child_buf_size;
 
+  char *text;
+  size_t text_len;
+
   // Position
   vec2 pos;
   // Sizing (Unit determines on the options passed into "numerical_options")
   float width;
   float height;
+  float line_height;
 
   /*
     Position in pixels relative to center of root ui component
@@ -87,7 +94,7 @@ typedef struct ui_component {
     component can change based on the position of its parent, even if "pos"
     remains fixed.
   */
-  vec2 pix_pos;
+  vec3 pix_pos;
   /*
     Sizing in pixels (same as above if componment uses pixels as sizing units)
 
@@ -98,6 +105,7 @@ typedef struct ui_component {
   */
   float pix_width;
   float pix_height;
+  float pix_line_height;
 
   /*
   Determines "pivot point" of component, i.e which point on the component will
@@ -108,18 +116,7 @@ typedef struct ui_component {
   TEXT_ANCHOR txt_anc;
   /*
   Bitstring determining the options regarding positioning and unit type.
-  Position options:
-    Absolute: Position given relative to top left corner of parent
-    Relative: Position given relative to default placement of component within
-              parent
-
-  Position Unit options:
-    Ratio: Position given in terms of percentages of parent
-    Pixel: Position given in terms of screen pixels
-
-  Size Unit options:
-    Ratio: Size given in terms of percentages of parent
-    Pixel: Size given in terms of screen pixels
+  See add_ui_comp() for details
   */
   int numerical_options;
 
@@ -138,9 +135,11 @@ typedef struct ui_component {
 
 #define INVALID_COMP_INIT { NULL,                 \
                             0, 0,                 \
+                            NULL, 0,              \
                             { 0.0, 0.0 },         \
-                            0.0, 0.0,             \
+                            0.0, 0.0, 0.0,        \
                             { 0.0, 0.0 },         \
+                            0.0, 0.0, 0.0,        \
                             PIVOT_CENTER,         \
                             T_CENTER,             \
                             INVALID_COMP_OPTIONS, \

@@ -30,6 +30,9 @@ extern const int NUM_SPHERES;
 extern const int NUM_RECTS;
 extern ENTITY *ragdoll;
 
+extern F_GLYPH *font;
+extern int font_len;
+
 vec3 m_box_pos = { 7.0, 4.0, -2.0 };
 vec3 m_box_scale = { 0.5, 0.5, 0.5 };
 vec3 m_sphere_pos = { -3.0, 3.0, -3.0 };
@@ -147,10 +150,12 @@ int main() {
                             WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y);
   set_pivot(c1, PIVOT_CENTER);
 
-  UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 64.0, 32.0,
+  UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 128.0, 64.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
   set_pivot(c2, PIVOT_TOP_LEFT);
+  set_text(c2, "Hello!\nmy name is\nJack!!!", 16.0);
 
+  /*
   UI_COMP *c3 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
   set_pivot(c3, PIVOT_TOP_LEFT);
@@ -172,6 +177,7 @@ int main() {
               POS_X_UNIT_RATIO_X | POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
   add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 64.0, 32.0, RELATIVE_POS |
               POS_X_UNIT_RATIO_X | POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
+  */
 
   // SIMULATION SET UP
 
@@ -439,7 +445,9 @@ int main() {
     }
 
     /* Misc */
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     render_ui();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);
