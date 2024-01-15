@@ -79,6 +79,9 @@ typedef struct ui_component {
   char *text;
   size_t text_len;
 
+  // Specifies text color
+  vec3 text_col;
+
   // Position
   vec2 pos;
   // Sizing (Unit determines on the options passed into "numerical_options")
@@ -136,6 +139,7 @@ typedef struct ui_component {
 #define INVALID_COMP_INIT { NULL,                 \
                             0, 0,                 \
                             NULL, 0,              \
+                            { 0.0, 0.0, 0.0 },    \
                             { 0.0, 0.0 },         \
                             0.0, 0.0, 0.0,        \
                             { 0.0, 0.0 },         \

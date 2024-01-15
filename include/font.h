@@ -20,5 +20,6 @@ unsigned int gen_texture_id(char *);
 
 void set_int(char *, int, unsigned int);
 void set_mat4(char *, mat4, unsigned int);
+void set_vec3(char *, vec3, unsigned int);
 
 int double_buffer(void **, size_t *, size_t);

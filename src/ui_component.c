@@ -16,8 +16,8 @@
 */
 int init_ui() {
   // Initialize root ui component
-  int status = init_ui_comp(&ui_root, "", (vec2) {0.0, 0.0}, RES_X, RES_Y,
-                            PIVOT_CENTER, T_CENTER,
+  int status = init_ui_comp(&ui_root, "", GLM_VEC3_ZERO, GLM_VEC2_ZERO, RES_X,
+                            RES_Y, PIVOT_CENTER, T_CENTER,
                             ABSOLUTE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL,
                             UI_TRUE, UI_FALSE);
   if (status) {
@@ -88,9 +88,9 @@ int init_ui() {
   Initialize a new UI component given the position, width, height, pivot, text
   anchor, numerical options and enabled variables.
 */
-int init_ui_comp(UI_COMP *comp, char *text, vec2 pos, float width,
-                 float height, PIVOT pivot, TEXT_ANCHOR txt_anc, int opts,
-                 int enabled, int display) {
+int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec2 pos,
+                 float width, float height, PIVOT pivot, TEXT_ANCHOR txt_anc,
+                 int opts, int enabled, int display) {
   comp->children = malloc(sizeof(UI_COMP) * CHILD_BUF_SIZE_INIT);
   if (comp->children == NULL) {
     return -1;
@@ -100,6 +100,7 @@ int init_ui_comp(UI_COMP *comp, char *text, vec2 pos, float width,
 
   comp->text = text;
   comp->text_len = strlen(text);
+  glm_vec3_copy(text_col, comp->text_col);
 
   glm_vec2_copy(pos, comp->pos);
   comp->width = width;
@@ -243,8 +244,9 @@ void free_ui_comp(UI_COMP *comp) {
 UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
                      int options) {
   UI_COMP *comp = parent->children + parent->num_children;
-  int status = init_ui_comp(comp, "", pos, width, height, PIVOT_TOP_LEFT,
-                            T_CENTER, options, UI_TRUE, UI_TRUE);
+  int status = init_ui_comp(comp, "", GLM_VEC3_ZERO, pos, width, height,
+                            PIVOT_TOP_LEFT, T_CENTER, options, UI_TRUE,
+                            UI_TRUE);
   if (status) {
     fprintf(stderr, "Unable to initialize ui component\n");
     return NULL;
@@ -275,10 +277,15 @@ void set_display(UI_COMP *comp, int display) {
   comp->display = display;
 }
 
-void set_text(UI_COMP *comp, char *str, float line_height) {
+void set_text(UI_COMP *comp, char *str, float line_height, vec3 col) {
   comp->text = str;
   comp->text_len = strlen(str);
   comp->line_height = line_height;
+  glm_vec3_copy(col, comp->text_col);
+}
+
+void set_text_col(UI_COMP *comp, vec3 col) {
+  glm_vec3_copy(col, comp->text_col);
 }
 
 // ================================ RENDERING ================================
@@ -317,7 +324,7 @@ void render_comp(UI_COMP *comp) {
 
   // Draw text
   if (comp->text_len) {
-    draw_text(comp->text, comp->text_len, comp->txt_anc,
+    draw_text(comp->text, comp->text_len, comp->text_col, comp->txt_anc,
               (vec2) { screen_pos[X] * ui_root.pix_width,
                        screen_pos[Y] * ui_root.pix_height }, ui_root.pix_width,
               ui_root.pix_height, comp->pix_width, comp->pix_line_height,

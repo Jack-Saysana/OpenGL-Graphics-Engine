@@ -121,8 +121,8 @@ void free_font(F_GLYPH *glyphs, int num_glyphs) {
 
 // ================================ RENDERING ================================
 
-int draw_text(char *str, size_t str_len, TEXT_ANCHOR txt_anc, vec2 pos,
-              float screen_width, float screen_height, float width,
+int draw_text(char *str, size_t str_len, vec3 col, TEXT_ANCHOR txt_anc,
+              vec2 pos, float screen_width, float screen_height, float width,
               float line_height, unsigned int shader) {
   // Calculate the number of lines in the text and the length of each line
   float *line_widths = malloc(sizeof(float) * BUFF_START_LEN);
@@ -273,6 +273,7 @@ int draw_text(char *str, size_t str_len, TEXT_ANCHOR txt_anc, vec2 pos,
               (vec3) { 2.0 * (line_height / screen_width),
                        2.0 * (line_height / screen_height), 1.0 });
     set_mat4("model", glyph_model_mat, shader);
+    set_vec3("text_col", col, shader);
     draw_glyph(cur_char, shader);
 
     cur_pos[X] += cur_adv;

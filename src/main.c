@@ -153,7 +153,7 @@ int main() {
   UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 128.0, 64.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
   set_pivot(c2, PIVOT_TOP_LEFT);
-  set_text(c2, "Hello!\nmy name is\nJack!!!", 16.0);
+  set_text(c2, "Hello!\nmy name is\nJack!!!", 16.0, GLM_VEC3_ZERO);
 
   /*
   UI_COMP *c3 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,

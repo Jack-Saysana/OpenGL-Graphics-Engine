@@ -95,7 +95,8 @@ UI_COMP *add_ui_comp(UI_COMP *, vec2, float, float, int);
 int render_ui();
 void set_pivot(UI_COMP *, PIVOT);
 void set_display(UI_COMP *, int);
-void set_text(UI_COMP *, char *, float);
+void set_text(UI_COMP *, char *, float, vec3);
+void set_text_col(UI_COMP *, vec3);
 
 void draw_glyph(F_GLYPH *, unsigned int);
 
