@@ -76,41 +76,15 @@ int featherstone_abm(ENTITY *body);
 void integrate_ragdoll(ENTITY *subject);
 
 int main() {
-  GLFWwindow *window;
-
-  if (!glfwInit()) {
-    return -1;
-  }
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  window = glfwCreateWindow(RES_X, RES_Y, "Jack", NULL, NULL);
-  if (window == NULL) {
-    printf("Failed to create GLFW window\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-  glfwSetCursorPosCallback(window, mouse_input);
-  glfwSetScrollCallback(window, scroll_callback);
-
-  glfwMakeContextCurrent(window);
-
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    printf("Failed to initialize GLAD\n");
-    glfwTerminate();
-    return -1;
-  }
-
-  glViewport(0, 0, RES_X, RES_Y);
+  GLFWwindow *window = init_gl("Jack");
+  register_fb_size_callback(framebuffer_size_callback);
+  register_mouse_movement_callback(mouse_input);
+  register_scroll_callback(scroll_callback);
 
   int status = init_scene();
   if (status) {
-    glfwTerminate();
-    return -1;
+    cleanup_gl();
+    return 1;
   }
 
   vec3 cube_col = GLM_VEC3_ONE_INIT;
@@ -188,14 +162,16 @@ int main() {
 
   status = init_simulation();
   if (status != 0) {
-    glfwTerminate();
+    cleanup_gl();
+    return 1;
   }
 
   player->type |= T_DRIVING;
   player->inv_mass = 1.0;
   status = insert_entity(player);
   if (status != 0) {
-    glfwTerminate();
+    cleanup_gl();
+    return 1;
   }
 
   //ragdoll->type |= T_DRIVING;
@@ -259,7 +235,8 @@ int main() {
 
     status = insert_entity(boxes[i]);
     if (status) {
-      glfwTerminate();
+      cleanup_gl();
+      return 1;
     }
   }
 
@@ -275,7 +252,8 @@ int main() {
 
     status = insert_entity(spheres[i]);
     if (status) {
-      glfwTerminate();
+      cleanup_gl();
+      return 1;
     }
   }
 
@@ -291,7 +269,8 @@ int main() {
 
     status = insert_entity(rects[i]);
     if (status) {
-      glfwTerminate();
+      cleanup_gl();
+      return 1;
     }
   }
 
@@ -299,7 +278,8 @@ int main() {
   glm_mat4_zero(floor_entity->inv_inertia);
   status = insert_entity(floor_entity);
   if (status != 0) {
-    glfwTerminate();
+    cleanup_gl();
+    return 1;
   }
 
   while (!glfwWindowShouldClose(window)) {
@@ -490,7 +470,7 @@ int main() {
   free_model(vector);
   free_ui();
 
-  glfwTerminate();
+  cleanup_gl();
 
   return 0;
 }
@@ -644,13 +624,6 @@ void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
   }
 }
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  glViewport(0, 0, width, height);
-  RES_X = (float) width;
-  RES_Y = (float) height;
-  glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, persp_proj);
-}
-
 void keyboard_input(GLFWwindow *window) {
   float cam_speed = 4.0 * delta_time;
   glm_vec3_zero(movement);
@@ -728,6 +701,13 @@ void keyboard_input(GLFWwindow *window) {
   }
 }
 
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  glViewport(0, 0, width, height);
+  RES_X = (float) width;
+  RES_Y = (float) height;
+  glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, persp_proj);
+}
+
 void mouse_input(GLFWwindow *window, double xpos, double ypos) {
   if (cursor_on == 0) {
     if (firstMouse) {
@@ -770,3 +750,4 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     camera_offset[2] = -3.0;
   }
 }
+

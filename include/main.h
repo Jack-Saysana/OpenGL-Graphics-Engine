@@ -62,6 +62,13 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
+GLFWwindow *init_gl(char *);
+void cleanup_gl();
+int register_fb_size_callback(void (*)(GLFWwindow *, int, int));
+int register_mouse_movement_callback(void (*)(GLFWwindow *, double, double));
+int register_scroll_callback(void (*)(GLFWwindow *, double, double));
+int register_mouse_button_callback(void (*)(GLFWwindow *, int, int, int));
+
 int init_scene();
 
 unsigned int init_shader_prog(char *, char *, char *);
