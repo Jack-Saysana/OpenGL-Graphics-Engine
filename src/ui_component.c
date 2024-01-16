@@ -19,13 +19,14 @@ int init_ui() {
   int status = init_ui_comp(&ui_root, "", GLM_VEC3_ZERO, GLM_VEC2_ZERO, RES_X,
                             RES_Y, PIVOT_CENTER, T_CENTER,
                             ABSOLUTE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL,
-                            UI_TRUE, UI_FALSE);
+                            UI_TRUE, UI_FALSE, 0, 0, NULL, NULL, NULL, NULL,
+                            NULL, NULL);
   if (status) {
     fprintf(stderr, "Error initializing root ui component.\n");
     return -1;
   }
 
-  glm_vec3_copy((vec3) { 0.0, 0.0, 0.0 }, ui_root.pix_pos);
+  glm_vec3_copy((vec3) { 0.0, 0.0, 0.1 }, ui_root.pix_pos);
   ui_root.pix_width = RES_X;
   ui_root.pix_height = RES_Y;
 
@@ -85,12 +86,16 @@ int init_ui() {
 }
 
 /*
-  Initialize a new UI component given the position, width, height, pivot, text
-  anchor, numerical options and enabled variables.
+  Initialize a new UI component given the members of a UI_COMP struct.
 */
 int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec2 pos,
                  float width, float height, PIVOT pivot, TEXT_ANCHOR txt_anc,
-                 int opts, int enabled, int display) {
+                 int opts, int enabled, int display, int textured,
+                 unsigned int texture,
+                 void (*on_click)(UI_COMP *, void *),
+                 void (*on_release)(UI_COMP *, void *),
+                 void (*on_hover)(UI_COMP *, void *),
+                 void *click_args, void *release_args, void *hover_args) {
   comp->children = malloc(sizeof(UI_COMP) * CHILD_BUF_SIZE_INIT);
   if (comp->children == NULL) {
     return -1;
@@ -110,6 +115,15 @@ int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec2 pos,
   comp->numerical_options = opts;
   comp->display = display;
   comp->enabled = enabled;
+  comp->textured = textured;
+  comp->texture = texture;
+
+  comp->on_click = on_click;
+  comp->on_release = on_release;
+  comp->on_hover = on_hover;
+  comp->click_args = click_args;
+  comp->release_args = release_args;
+  comp->hover_args = hover_args;
   return 0;
 }
 
@@ -246,7 +260,7 @@ UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
   UI_COMP *comp = parent->children + parent->num_children;
   int status = init_ui_comp(comp, "", GLM_VEC3_ZERO, pos, width, height,
                             PIVOT_TOP_LEFT, T_CENTER, options, UI_TRUE,
-                            UI_TRUE);
+                            UI_TRUE, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL);
   if (status) {
     fprintf(stderr, "Unable to initialize ui component\n");
     return NULL;
@@ -269,23 +283,34 @@ UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
 
 // ============================ EDITING COMPONENTS ===========================
 
-void set_pivot(UI_COMP *comp, PIVOT pivot) {
+void set_ui_pivot(UI_COMP *comp, PIVOT pivot) {
   comp->pivot = pivot;
 }
 
-void set_display(UI_COMP *comp, int display) {
+void set_ui_display(UI_COMP *comp, int display) {
   comp->display = display;
 }
 
-void set_text(UI_COMP *comp, char *str, float line_height, vec3 col) {
+void set_ui_text(UI_COMP *comp, char *str, float line_height, vec3 col) {
   comp->text = str;
   comp->text_len = strlen(str);
   comp->line_height = line_height;
   glm_vec3_copy(col, comp->text_col);
 }
 
-void set_text_col(UI_COMP *comp, vec3 col) {
+void set_ui_text_col(UI_COMP *comp, vec3 col) {
   glm_vec3_copy(col, comp->text_col);
+}
+
+void set_ui_texture(UI_COMP *comp, char *path) {
+  if (comp->textured) {
+    glDeleteTextures(1, &comp->texture);
+  }
+
+  comp->textured = 1;
+  if (gen_texture_id(path, &comp->texture)) {
+    comp->textured = 0;
+  }
 }
 
 // ================================ RENDERING ================================
@@ -319,14 +344,17 @@ void render_comp(UI_COMP *comp) {
 
   // Draw quad
   glUseProgram(ui_shader);
+  set_int("textured", comp->textured, ui_shader);
   set_mat4("model", comp_model_mat, ui_shader);
+  ui_quad->textures[0] = comp->texture;
   draw_model(ui_shader, ui_quad);
 
   // Draw text
   if (comp->text_len) {
     draw_text(comp->text, comp->text_len, comp->text_col, comp->txt_anc,
-              (vec2) { screen_pos[X] * ui_root.pix_width,
-                       screen_pos[Y] * ui_root.pix_height }, ui_root.pix_width,
+              (vec3) { screen_pos[X] * ui_root.pix_width,
+                       screen_pos[Y] * ui_root.pix_height,
+                       comp->pix_pos[Z] }, ui_root.pix_width,
               ui_root.pix_height, comp->pix_width, comp->pix_line_height,
               text_shader);
   }
@@ -406,6 +434,18 @@ int render_ui() {
 
   return 0;
 }
+
+// ============================== EVENT HANDLING =============================
+
+/*
+int ui_hover_events() {
+
+}
+
+int ui_click_events() {
+
+}
+*/
 
 // ================================= HELPERS =================================
 
@@ -514,5 +554,5 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
                        pivot_compensation[X];
   }
   glm_vec2_add(child->pix_pos, cur_offset, child->pix_pos);
-  child->pix_pos[Z] = parent->pix_pos[Z] + 0.001;
+  child->pix_pos[Z] = parent->pix_pos[Z] - 0.01;
 }

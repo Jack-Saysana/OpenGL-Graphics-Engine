@@ -125,6 +125,8 @@ int main() {
   glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, persp_proj);
 
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -148,26 +150,29 @@ int main() {
   UI_COMP *c1 = add_ui_comp(UI_ROOT_COMP, (vec2) { 0.5, -0.5 }, 0.75, 0.5,
                             ABSOLUTE_POS | POS_UNIT_RATIO |
                             WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y);
-  set_pivot(c1, PIVOT_CENTER);
+  set_ui_pivot(c1, PIVOT_CENTER);
+  set_ui_texture(c1, "resources/ui/ui_bg.png");
 
   UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 128.0, 64.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
-  set_pivot(c2, PIVOT_TOP_LEFT);
-  set_text(c2, "Hello!\nmy name is\nJack!!!", 16.0, GLM_VEC3_ZERO);
+  set_ui_pivot(c2, PIVOT_TOP_LEFT);
+  set_ui_text(c2, "Hello!\nmy name is\nJack!!!", 16.0, GLM_VEC3_ZERO);
+  set_ui_texture(c2, "resources/ui/ui_bg.png");
+
+  UI_COMP *c3 = add_ui_comp(c1, (vec2) { 0.99, -0.01 }, 16.0, 16.0,
+                            ABSOLUTE_POS | POS_UNIT_RATIO_X | SIZE_UNIT_PIXEL);
+  set_ui_pivot(c3, PIVOT_TOP_RIGHT);
+  set_ui_texture(c3, "resources/ui/ui_close_unpressed.png");
 
   /*
-  UI_COMP *c3 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
-                            RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
-  set_pivot(c3, PIVOT_TOP_LEFT);
-
   UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
-  set_pivot(c4, PIVOT_TOP_LEFT);
+  set_ui_pivot(c4, PIVOT_TOP_LEFT);
 
   UI_COMP *c5 = add_ui_comp(c1, (vec2) { 0.1, -15.0 }, 64.0, 32.0,
                             RELATIVE_POS | POS_X_UNIT_RATIO_X |
                             POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);
-  set_pivot(c5, PIVOT_TOP_LEFT);
+  set_ui_pivot(c5, PIVOT_TOP_LEFT);
 
   add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0, RELATIVE_POS |
               POS_X_UNIT_RATIO_X | POS_Y_UNIT_PIXEL | SIZE_UNIT_PIXEL);

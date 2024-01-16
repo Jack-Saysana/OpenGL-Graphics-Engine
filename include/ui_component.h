@@ -33,7 +33,9 @@ vec2 UI_PIVOT_OFFSETS[9] = {
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
 int init_ui_comp(UI_COMP *, char *, vec3, vec2, float, float, PIVOT,
-                 TEXT_ANCHOR, int, int, int);
+                 TEXT_ANCHOR, int, int, int, int, unsigned int,
+                 void (*)(UI_COMP *, void *), void (*)(UI_COMP *, void *),
+                 void (*)(UI_COMP *, void *), void *, void *, void *);
 void free_ui_comp(UI_COMP *);
 void calc_pix_stats(UI_COMP *, UI_COMP *, vec2, vec2, float *);
 
@@ -43,12 +45,15 @@ void draw_model(unsigned int, MODEL *);
 MODEL *load_model(char *);
 void free_model(MODEL *);
 
+int gen_texture_id(char *, unsigned int *);
+
 unsigned int init_shader_prog(char *, char *, char *);
 
-int draw_text(char *, size_t, vec3, TEXT_ANCHOR, vec2, float, float, float,
+int draw_text(char *, size_t, vec3, TEXT_ANCHOR, vec3, float, float, float,
               float, unsigned int);
 
 void set_mat4(char *, mat4, unsigned int);
+void set_int(char *, int, unsigned int);
 
 void print_mat4(mat4);
 int double_buffer(void **, size_t *, size_t);

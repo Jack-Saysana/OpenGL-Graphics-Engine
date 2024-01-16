@@ -4,10 +4,14 @@ in vec2 tex_coords;
 
 out vec4 frag_col;
 
+uniform int textured;
 uniform struct Material {
   sampler2D amb_map;
 } material;
 
 void main() {
-  frag_col = vec4(1.0, 1.0, 1.0, 1.0);//texture(material.amb_map, tex_coords);
+  frag_col = vec4(1.0);
+  if (textured != 0) {
+    frag_col = texture(material.amb_map, tex_coords);
+  }
 }

@@ -101,7 +101,7 @@ int import_font(char *bin_path, char *tex_path, F_GLYPH **dest) {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    cur_char->texture = gen_texture_id(tex_path);
+    gen_texture_id(tex_path, &cur_char->texture);
   }
 
   return 0;
@@ -122,7 +122,7 @@ void free_font(F_GLYPH *glyphs, int num_glyphs) {
 // ================================ RENDERING ================================
 
 int draw_text(char *str, size_t str_len, vec3 col, TEXT_ANCHOR txt_anc,
-              vec2 pos, float screen_width, float screen_height, float width,
+              vec3 pos, float screen_width, float screen_height, float width,
               float line_height, unsigned int shader) {
   // Calculate the number of lines in the text and the length of each line
   float *line_widths = malloc(sizeof(float) * BUFF_START_LEN);
@@ -268,7 +268,8 @@ int draw_text(char *str, size_t str_len, vec3 col, TEXT_ANCHOR txt_anc,
     glm_mat4_identity(glyph_model_mat);
     glm_translate(glyph_model_mat,
                   (vec3) { 2.0 * (cur_pos[X] / screen_width),
-                           2.0 * (cur_pos[Y] / screen_height), 0.0 });
+                           2.0 * (cur_pos[Y] / screen_height),
+                           -(pos[Z] - 0.001) });
     glm_scale(glyph_model_mat,
               (vec3) { 2.0 * (line_height / screen_width),
                        2.0 * (line_height / screen_height), 1.0 });

@@ -71,6 +71,13 @@ typedef enum text_anchor {
 } TEXT_ANCHOR;
 
 typedef struct ui_component {
+  void (*on_click)(struct ui_component *, void *);
+  void (*on_release)(struct ui_component *, void *);
+  void (*on_hover)(struct ui_component *, void *);
+  void *click_args;
+  void *release_args;
+  void *hover_args;
+
   // List of child components
   struct ui_component *children;
   size_t num_children;
@@ -134,9 +141,17 @@ typedef struct ui_component {
   event callbacks will fire.
   */
   int enabled;
+
+  // Whether or not the component is textured
+  int textured;
+
+  // Texture of component
+  unsigned int texture;
 } UI_COMP;
 
-#define INVALID_COMP_INIT { NULL,                 \
+#define INVALID_COMP_INIT { NULL, NULL, NULL,     \
+                            NULL, NULL, NULL,     \
+                            NULL,                 \
                             0, 0,                 \
                             NULL, 0,              \
                             { 0.0, 0.0, 0.0 },    \
@@ -147,7 +162,7 @@ typedef struct ui_component {
                             PIVOT_CENTER,         \
                             T_CENTER,             \
                             INVALID_COMP_OPTIONS, \
-                            0 }
+                            0, 0, 0, 0}
 
 extern UI_COMP ui_root;
 #endif

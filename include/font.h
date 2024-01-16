@@ -16,7 +16,7 @@ float get_next_x(vec2, float, float, float, TEXT_ANCHOR);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
-unsigned int gen_texture_id(char *);
+int gen_texture_id(char *, unsigned int *);
 
 void set_int(char *, int, unsigned int);
 void set_mat4(char *, mat4, unsigned int);

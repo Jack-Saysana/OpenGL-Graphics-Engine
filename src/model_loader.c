@@ -324,7 +324,7 @@ MODEL *load_model(char *path) {
   if (obj_mat != NULL) {
     for (int i = 0; i < NUM_PROPS; i++) {
       if (obj_mat->mat_paths[i] != NULL) {
-        model->textures[i] = gen_texture_id(obj_mat->mat_paths[i]);
+        gen_texture_id(obj_mat->mat_paths[i], model->textures + i);
       } else {
         model->textures[i] = 0xBAADF00D;
       }
@@ -344,7 +344,7 @@ MODEL *load_model(char *path) {
   return model;
 }
 
-unsigned int gen_texture_id(char *tex_path) {
+int gen_texture_id(char *tex_path, unsigned int *dest) {
   unsigned int texture;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
@@ -373,9 +373,11 @@ unsigned int gen_texture_id(char *tex_path) {
                  GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
   } else {
-    printf("Failed to load texture at: %s\n", tex_path);
+    fprintf(stderr, "Failed to load texture at: %s\n", tex_path);
+    return -1;
   }
   stbi_image_free(data);
 
-  return texture;
+  *dest = texture;
+  return 0;
 }
