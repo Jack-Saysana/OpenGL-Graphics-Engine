@@ -1,4 +1,4 @@
-#include <init.h>
+#include <test_init.h>
 #include <string.h>
 
 unsigned int shader;
