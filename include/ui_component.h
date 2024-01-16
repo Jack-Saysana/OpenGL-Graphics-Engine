@@ -1,5 +1,6 @@
 #include <string.h>
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
 #include <globals.h>
 #include <const.h>
@@ -39,7 +40,12 @@ int init_ui_comp(UI_COMP *, char *, vec3, vec2, float, float, PIVOT,
 void free_ui_comp(UI_COMP *);
 void calc_pix_stats(UI_COMP *, UI_COMP *, vec2, vec2, float *);
 
+static void check_hover_event(UI_COMP *);
+static void on_click_callback(GLFWwindow *, int, int, int);
+
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
+
+int register_mouse_button_callback(void (*)(GLFWwindow *, int, int, int));
 
 void draw_model(unsigned int, MODEL *);
 MODEL *load_model(char *);

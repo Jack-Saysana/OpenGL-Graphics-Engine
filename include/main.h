@@ -60,6 +60,10 @@ void keyboard_input(GLFWwindow *window);
 void mouse_input(GLFWwindow *widnow, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 
+void test_callback_click(UI_COMP *, void *);
+void test_callback_release(UI_COMP *, void *);
+void test_callback_hover(UI_COMP *, void *);
+
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 GLFWwindow *init_gl(char *);
@@ -105,6 +109,9 @@ void set_ui_display(UI_COMP *, int);
 void set_ui_text(UI_COMP *, char *, float, vec3);
 void set_ui_text_col(UI_COMP *, vec3);
 void set_ui_texture(UI_COMP *, char *);
+void set_ui_on_click(UI_COMP *, void (*)(UI_COMP *, void *), void *);
+void set_ui_on_release(UI_COMP *, void (*)(UI_COMP *, void *), void *);
+void set_ui_on_hover(UI_COMP *, void (*)(UI_COMP *, void *), void *);
 
 void draw_glyph(F_GLYPH *, unsigned int);
 

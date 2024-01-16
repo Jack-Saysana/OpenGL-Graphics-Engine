@@ -165,12 +165,23 @@ int register_mouse_button_callback(void (*cb)(GLFWwindow *, int, int, int)) {
 // ============================ CALLBACK HANDLING ============================
 
 void fbs_callback(GLFWwindow *window, int width, int height) {
+  // Bare minimum framebuffer size callback
+  glViewport(0, 0, width, height);
+  RES_X = (float) width;
+  RES_Y = (float) height;
+
+  // Do additional registered callbacks
   for (size_t i = 0; i < fbs_len; i++) {
     fb_size_callbacks[i](window, width, height);
   }
 }
 
 void mm_callback(GLFWwindow *window, double x_pos, double y_pos) {
+  // Bare minimum mouse movement callback
+  MOUSE_POS[X] = x_pos;
+  MOUSE_POS[Y] = y_pos;
+
+  // Do additional registered callbacks
   for (size_t i = 0; i < mm_len; i++) {
     mouse_mov_callbacks[i](window, x_pos, y_pos);
   }

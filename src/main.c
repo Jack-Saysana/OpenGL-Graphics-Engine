@@ -63,7 +63,6 @@ float lastY = 300;
 float last_push = 0.0;
 int toggled = 1;
 int space_pressed = 0;
-int cursor_on = 1;
 int draw = 0;
 
 // MISC DATA
@@ -126,17 +125,22 @@ int main() {
                             WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y);
   set_ui_pivot(c1, PIVOT_CENTER);
   set_ui_texture(c1, "resources/ui/ui_bg.png");
+  set_ui_on_click(c1, test_callback_click, NULL);
+  set_ui_on_release(c1, test_callback_release, NULL);
+  set_ui_on_hover(c1, test_callback_hover, NULL);
 
   UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 128.0, 64.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
   set_ui_pivot(c2, PIVOT_TOP_LEFT);
   set_ui_text(c2, "Hello!\nmy name is\nJack!!!", 16.0, GLM_VEC3_ZERO);
   set_ui_texture(c2, "resources/ui/ui_bg.png");
+  set_ui_on_click(c2, test_callback_click, NULL);
 
   UI_COMP *c3 = add_ui_comp(c1, (vec2) { 0.99, -0.01 }, 16.0, 16.0,
                             ABSOLUTE_POS | POS_UNIT_RATIO_X | SIZE_UNIT_PIXEL);
   set_ui_pivot(c3, PIVOT_TOP_RIGHT);
   set_ui_texture(c3, "resources/ui/ui_close_unpressed.png");
+  set_ui_on_click(c3, test_callback_click, NULL);
 
   /*
   UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
@@ -283,7 +287,7 @@ int main() {
   }
 
   while (!glfwWindowShouldClose(window)) {
-    if (cursor_on) {
+    if (CURSOR_ENABLED) {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     } else {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
@@ -687,11 +691,11 @@ void keyboard_input(GLFWwindow *window) {
     if (toggled) {
       if (draw == 1) {
         draw = 0;
-        cursor_on = 1;
+        CURSOR_ENABLED = 1;
         enable_gravity = 0;
       } else {
         draw = 1;
-        cursor_on = 0;
+        CURSOR_ENABLED = 0;
         enable_gravity = 1;
       }
       toggled = 0;
@@ -702,14 +706,11 @@ void keyboard_input(GLFWwindow *window) {
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  glViewport(0, 0, width, height);
-  RES_X = (float) width;
-  RES_Y = (float) height;
   glm_perspective(glm_rad(45.0f), RES_X / RES_Y, 0.1f, 100.0f, persp_proj);
 }
 
 void mouse_input(GLFWwindow *window, double xpos, double ypos) {
-  if (cursor_on == 0) {
+  if (CURSOR_ENABLED == 0) {
     if (firstMouse) {
       lastX = xpos;
       lastY = yaw;
@@ -751,3 +752,17 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
   }
 }
 
+void test_callback_click(UI_COMP *comp, void *args) {
+  fprintf(stderr, "Clicked (%f, %f), %f, %f\n", comp->pos[X], comp->pos[Y],
+          comp->width, comp->height);
+}
+
+void test_callback_release(UI_COMP *comp, void *args) {
+  fprintf(stderr, "Released (%f, %f), %f, %f\n", comp->pos[X], comp->pos[Y],
+          comp->width, comp->height);
+}
+
+void test_callback_hover(UI_COMP *comp, void *args) {
+  fprintf(stderr, "Hover (%f, %f), %f, %f\n", comp->pos[X], comp->pos[Y],
+          comp->width, comp->height);
+}

@@ -16,8 +16,8 @@
 */
 int init_ui() {
   // Initialize root ui component
-  int status = init_ui_comp(&ui_root, "", GLM_VEC3_ZERO, GLM_VEC2_ZERO, RES_X,
-                            RES_Y, PIVOT_CENTER, T_CENTER,
+  int status = init_ui_comp(&ui_root, "", GLM_VEC3_ZERO, GLM_VEC2_ZERO, 0.0,
+                            0.0, PIVOT_CENTER, T_CENTER,
                             ABSOLUTE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL,
                             UI_TRUE, UI_FALSE, 0, 0, NULL, NULL, NULL, NULL,
                             NULL, NULL);
@@ -27,8 +27,6 @@ int init_ui() {
   }
 
   glm_vec3_copy((vec3) { 0.0, 0.0, 0.1 }, ui_root.pix_pos);
-  ui_root.pix_width = RES_X;
-  ui_root.pix_height = RES_Y;
 
   // Initialized base quad model used for rendering ui components
   ui_quad = load_model("resources/quad/quad.obj");
@@ -67,6 +65,7 @@ int init_ui() {
   // Initialize render stack
   render_stack = malloc(sizeof(UI_COMP *) * STK_SIZE_INIT);
   if (render_stack == NULL) {
+    fprintf(stderr, "Error allocating render stack\n");
     return -1;
   }
   render_stk_top = 0;
@@ -81,6 +80,12 @@ int init_ui() {
 
   glUseProgram(text_shader);
   set_mat4("proj", ui_proj, text_shader);
+
+  // Register mouse click callback
+  status = register_mouse_button_callback(on_click_callback);
+  if (status) {
+    return -1;
+  }
 
   return 0;
 }
@@ -110,6 +115,11 @@ int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec2 pos,
   glm_vec2_copy(pos, comp->pos);
   comp->width = width;
   comp->height = height;
+
+  glm_vec2_zero(comp->pix_pos);
+  comp->pix_width = 0.0;
+  comp->pix_height = 0.0;
+
   comp->pivot = pivot;
   comp->txt_anc = txt_anc;
   comp->numerical_options = opts;
@@ -313,6 +323,24 @@ void set_ui_texture(UI_COMP *comp, char *path) {
   }
 }
 
+void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
+                     void *args) {
+  comp->on_click = cb;
+  comp->click_args = args;
+}
+
+void set_ui_on_release(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
+                       void *args) {
+  comp->on_release = cb;
+  comp->release_args = args;
+}
+
+void set_ui_on_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
+                     void *args) {
+  comp->on_hover = cb;
+  comp->hover_args = args;
+}
+
 // ================================ RENDERING ================================
 
 /*
@@ -412,6 +440,10 @@ int render_ui() {
       // Calculate pixelized position and size of child component
       calc_pix_stats(cur_comp, cur_child, top_left, next_rel_pos,
                      &next_line_y);
+      // Check hover callback event
+      if (CURSOR_ENABLED && cur_child->on_hover) {
+        check_hover_event(cur_child);
+      }
 
       // Render child component
       if (cur_child->display) {
@@ -437,15 +469,67 @@ int render_ui() {
 
 // ============================== EVENT HANDLING =============================
 
-/*
-int ui_hover_events() {
-
+void check_hover_event(UI_COMP *comp) {
+  vec2 mouse_pos = { MOUSE_POS[X] - (RES_X * 0.5),
+                     MOUSE_POS[Y] - (RES_Y * 0.5) };
+  vec2 pivot_offset = {
+    UI_PIVOT_OFFSETS[comp->pivot][X] * 0.5 * comp->pix_width,
+    UI_PIVOT_OFFSETS[comp->pivot][Y] * 0.5 * comp->pix_height
+  };
+  vec2 comp_middle = GLM_VEC2_ZERO_INIT;
+  glm_vec2_add(comp->pix_pos, pivot_offset, comp_middle);
+  if (mouse_pos[X] <= comp_middle[X] + (comp->pix_width * 0.5) &&
+      mouse_pos[X] >= comp_middle[X] - (comp->pix_width * 0.5) &&
+      mouse_pos[Y] <= comp_middle[Y] + (comp->pix_height * 0.5) &&
+      mouse_pos[Y] >= comp_middle[Y] - (comp->pix_height * 0.5)) {
+    comp->on_hover(comp, comp->hover_args);
+  }
 }
 
-int ui_click_events() {
+void on_click_callback(GLFWwindow *window, int button, int action, int mods) {
+  if (!CURSOR_ENABLED || !ui_root.enabled || render_stack == NULL ||
+      ui_root.pix_width == 0.0) {
+    return;
+  }
+  vec2 mouse_pos = { MOUSE_POS[X] - (RES_X * 0.5),
+                     (RES_Y - MOUSE_POS[Y]) - (RES_Y * 0.5) };
 
+  render_stack[0] = &ui_root;
+  render_stk_top = 1;
+
+  UI_COMP *cur_comp = NULL;
+  UI_COMP *cur_child = NULL;
+  vec2 child_middle = GLM_VEC2_ZERO_INIT;
+  while (render_stk_top) {
+    cur_comp = render_stack[render_stk_top - 1];
+    render_stk_top--;
+    for (size_t i = 0; i < cur_comp->num_children; i++) {
+      cur_child = cur_comp->children + i;
+      if (!cur_child->enabled) {
+        continue;
+      }
+
+      vec2 pivot_offset = {
+        UI_PIVOT_OFFSETS[cur_child->pivot][X] * 0.5 * cur_child->pix_width,
+        UI_PIVOT_OFFSETS[cur_child->pivot][Y] * 0.5 * cur_child->pix_height
+      };
+      glm_vec2_add(cur_child->pix_pos, pivot_offset, child_middle);
+      if (mouse_pos[X] <= child_middle[X] + (cur_child->pix_width * 0.5) &&
+          mouse_pos[X] >= child_middle[X] - (cur_child->pix_width * 0.5) &&
+          mouse_pos[Y] <= child_middle[Y] + (cur_child->pix_height * 0.5) &&
+          mouse_pos[Y] >= child_middle[Y] - (cur_child->pix_height * 0.5)) {
+        if (cur_child->on_click && action == GLFW_PRESS) {
+          cur_child->on_click(cur_child, cur_child->click_args);
+        } else if (cur_child->on_release && action == GLFW_RELEASE) {
+          cur_child->on_release(cur_child, cur_child->release_args);
+        }
+      }
+
+      render_stack[render_stk_top] = cur_child;
+      render_stk_top++;
+    }
+  }
 }
-*/
 
 // ================================= HELPERS =================================
 
