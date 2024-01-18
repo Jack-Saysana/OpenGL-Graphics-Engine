@@ -149,9 +149,9 @@ int simulate_frame() {
           glm_vec3_copy(entity->np_data[bone].velocity, col_vel);
           glm_vec3_copy(entity->np_data[bone].ang_velocity, col_ang_vel);
           if (colliders[col].category == HURT_BOX &&
-              (col_vel[0] != 0.0 || col_vel[1] != 0.0 || col_vel[2] != 0.0 ||
+              ((col_vel[0] != 0.0 || col_vel[1] != 0.0 || col_vel[2] != 0.0 ||
                col_ang_vel[0] != 0.0 || col_ang_vel[1] != 0.0 ||
-               col_ang_vel[2] != 0.0)) {
+               col_ang_vel[2] != 0.0) || moving)) {
             moving = 1;
             status = oct_tree_delete(physics_tree,
                                      entity->tree_offsets[col][PHYS_TREE]);
@@ -207,6 +207,7 @@ int collision_test(ENTITY *subject, size_t offset) {
       glm_quat_normalize(subject->rotation);
     } else {
       subject->np_data[bone].velocity[1] -= (delta_time * GRAVITY);
+      // spring_response(subject, bone, offset, delta_time);
       glm_vec3_scale(subject->np_data[bone].velocity, delta_time, delta_d);
       glm_translate(subject->bone_mats[bone][LOCATION], delta_d);
 
@@ -295,6 +296,7 @@ int collision_test(ENTITY *subject, size_t offset) {
       collider.data.radius *= p_ent->scale[0];
     }
 
+    //if (p_ent != subject) {
     if ((subject->type & T_DRIVING && p_ent != subject) ||
         ((subject->type & T_DRIVING) == 0 &&
          (p_ent != subject || p_obj->collider_offset != offset))) {

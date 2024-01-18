@@ -169,9 +169,9 @@ int main() {
 
   //ragdoll->type |= T_DRIVING;
   ragdoll->inv_mass = 1.0;
-  ragdoll->scale[0] = 2.0;
-  ragdoll->scale[1] = 2.0;
-  ragdoll->scale[2] = 2.0;
+  ragdoll->scale[0] = 1.0;
+  ragdoll->scale[1] = 1.0;
+  ragdoll->scale[2] = 1.0;
   for (size_t i = 0; i < ragdoll->model->num_bones; i++) {
     ragdoll->np_data[i].inv_mass = 1.0;
   }
@@ -272,7 +272,7 @@ int main() {
 
     /* Animation */
 
-    animate(player, 1, cur_frame);
+    animate(player, 0, cur_frame);
 
     /* Physics */
 
@@ -301,7 +301,7 @@ int main() {
                          -camera_model_pos[2] };
 
     glm_mat4_identity(view);
-    camera_offset[1] = -dude->bones[18].coords[1];
+    camera_offset[1] = -dude->bones[1].coords[1];
     glm_translate(view, camera_offset);
     glm_rotate_x(view, glm_rad(pitch), view);
     glm_rotate_y(view, glm_rad(yaw), view);

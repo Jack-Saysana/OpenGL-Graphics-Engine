@@ -253,7 +253,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   unsigned int a_face_len = 1;
   for (unsigned int i = 1; i < num_used; i++) {
     cur_index = (starting_index + i) % num_used;
-    glm_vec3_sub(a->data.verts[cur_index], a_face[0], cur_vert);
+    glm_vec3_sub(a->data.verts[cur_index], a_face[starting_index], cur_vert);
     face_test = glm_vec3_dot(ap_vec, cur_vert);
     if ((face_test >= -0.0001 && face_test <= 0.0001) &&
         (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
@@ -268,8 +268,8 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   // Surface of collision is a face
   vec3 edge1 = GLM_VEC3_ZERO_INIT;
   vec3 edge2 = GLM_VEC3_ZERO_INIT;
-  if (a_face_len > FACE_COL) {
-    glm_vec3_sub(a_face[3], a_face[0], edge1);
+  if (a_face_len >= FACE_COL) {
+    glm_vec3_sub(a_face[2], a_face[0], edge1);
     glm_vec3_sub(a_face[1], a_face[0], edge2);
     glm_vec3_cross(edge1, edge2, a_norm);
   }
@@ -294,7 +294,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   unsigned int b_face_len = 1;
   for (unsigned int i = 1; i < num_used; i++) {
     cur_index = (starting_index + i) % num_used;
-    glm_vec3_sub(b->data.verts[cur_index], b_face[0], cur_vert);
+    glm_vec3_sub(b->data.verts[cur_index], b_face[starting_index], cur_vert);
     face_test = glm_vec3_dot(bp_vec, cur_vert);
     if ((face_test >= -0.0001 && face_test <= 0.0001) &&
         (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
@@ -307,8 +307,8 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   }
 
   // Surface of collision is a face
-  if (b_face_len > FACE_COL) {
-    glm_vec3_sub(b_face[3], b_face[0], edge1);
+  if (b_face_len >= FACE_COL) {
+    glm_vec3_sub(b_face[2], b_face[0], edge1);
     glm_vec3_sub(b_face[1], b_face[0], edge2);
     glm_vec3_cross(edge1, edge2, b_norm);
   }
@@ -380,6 +380,14 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   vec3 col_face[8];
   unsigned int col_face_len = 0;
 
+  // DEBUG CODE
+  vec3 backup[8];
+  unsigned int backup_len = b_face_len;
+  for (unsigned int i = 0; i < b_face_len; i++) {
+    glm_vec3_copy(b_face[i], backup[i]);
+  }
+  // END DEBUG CODE
+
   // Clip face b to fit into face a using Sutherland-Hodgeman
   for (unsigned int i = 0; i < a_face_len; i++) {
     next_vert = (i + 1) % a_face_len;
@@ -414,11 +422,13 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
       }
     }
 
+    // DEBUG CODE
+    if (col_face_len == 0) {
+      printf("%f %d\n", backup[0][0], backup_len);
+    }
+    // END DEBUG CODE
     for (unsigned int j = 0; j < col_face_len; j++) {
       glm_vec3_copy(col_face[j], b_face[j]);
-    }
-    if (col_face_len == 0) {
-      printf("Bigg");
     }
     b_face_len = col_face_len;
     col_face_len = 0;
@@ -907,11 +917,11 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_cross(a_rel, col_tan, a_cross_t);
   vec3 b_cross_t = GLM_VEC3_ZERO_INIT;
   glm_vec3_cross(b_rel, col_tan, b_cross_t);
-  if (a->inv_mass != 0.0) {
+  if (a_args->inv_mass != 0.0) {
     glm_mat4_mulv3(a_inv_inertia, a_cross_t, 1.0, a_ang_comp);
     glm_vec3_cross(a_ang_comp, a_rel, a_ang_comp);
   }
-  if (b->inv_mass != 0.0) {
+  if (b_args->inv_mass != 0.0) {
     glm_mat4_mulv3(b_inv_inertia, b_cross_t, 1.0, b_ang_comp);
     glm_vec3_cross(b_ang_comp, b_rel, b_ang_comp);
   }
@@ -1014,3 +1024,195 @@ void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
   }
   dest[3][3] = 1.0;
 }
+
+// int get_collider_from_bone(MODEL *model, int bone) {
+//   for (int i = 0; i < model->num_colliders; i++) {
+//     if (model->collider_bone_links[i] == bone &&
+//         model->colliders[i].category == HURT_BOX) {
+//       return i;
+//     }
+//   }
+//   return -1;
+// }
+
+// int spring_response(ENTITY *entity, int bone, int b_col, float delta_time) {
+//   mat4 global_model = GLM_MAT4_IDENTITY_INIT;
+//   get_model_mat(entity, global_model);
+
+//   COLLIDER global_b_col;
+//   global_collider(global_model, entity->model->colliders + b_col,
+//                   &global_b_col);
+//   if (entity->model->colliders[b_col].type == SPHERE) {
+//     global_b_col.data.radius *= entity->scale[0];
+//   }
+
+//   COLLIDER global_col;
+
+//   BONE *bones = entity->model->bones;
+//   int **bone_relations = entity->model->bone_relations;
+
+//   // Find closest ancestor bone with a collider
+//   int parent = bones[bone].parent;
+//   int collider = get_collider_from_bone(entity->model, parent);
+//   while (parent != -1 && collider == -1) {
+//     parent = bones[parent].parent;
+//     collider = get_collider_from_bone(entity->model, parent);
+//   }
+
+//   // Connect to parent / other root bones
+//   if (parent != -1) {
+//     // Found ancestor bone with collider to attach
+//     global_collider(global_model, entity->model->colliders + collider,
+//                     &global_col);
+//     if (entity->model->colliders[collider].type == SPHERE) {
+//       global_col.data.radius *= entity->scale[0];
+//     }
+
+//     spring_calc(entity, parent, &global_col, bone, &global_b_col, delta_time);
+//   } else {
+//     // No ancestor bone with collider, attach to all other root bones
+//     for (int i = 0; i < entity->model->num_bones; i++) {
+//       if (i != bone && bones[i].parent == -1 &&
+//           (collider = get_collider_from_bone(entity->model, i) != -1)) {
+//         global_collider(global_model, entity->model->colliders + collider,
+//                         &global_col);
+//         if (entity->model->colliders[collider].type == SPHERE) {
+//           global_col.data.radius *= entity->scale[0];
+//         }
+
+//         spring_calc(entity, i, &global_col, bone, &global_b_col, delta_time);
+//       }
+//     }
+//   }
+
+//   // Connect to children bones
+//   int *children_stack = malloc(entity->model->num_bones * sizeof(int));
+//   size_t top = bones[bone].num_children;
+//   if (children_stack == NULL) {
+//     return -1;
+//   }
+//   for (int i = 0; i < top; i++) {
+//     children_stack[i] = bone_relations[bone][i];
+//   }
+
+//   int cur_child = -1;
+//   while (top) {
+//     top--;
+//     cur_child = children_stack[top];
+//     collider = get_collider_from_bone(entity->model, cur_child);
+//     if (collider == -1) {
+//       glm_mat4_copy(entity->final_b_mats[bones[cur_child].parent],
+//                     entity->final_b_mats[cur_child]);
+//       for (int i = 0; i < bones[cur_child].num_children; i++) {
+//         children_stack[top] = bone_relations[cur_child][i];
+//         top++;
+//       }
+//     } else {
+//       global_collider(global_model, entity->model->colliders + collider,
+//                       &global_col);
+//       if (entity->model->colliders[collider].type == SPHERE) {
+//         global_col.data.radius *= entity->scale[0];
+//       }
+
+//       spring_calc(entity, bone, &global_b_col, cur_child, &global_col,
+//                   delta_time);
+//     }
+//   }
+//   free(children_stack);
+
+//   return 0;
+// }
+
+// void spring_calc(ENTITY *entity, int p_bone, COLLIDER *p_col, int c_bone,
+//                  COLLIDER *c_col, float delta_time) {
+//   vec3 parent_point = GLM_VEC3_ZERO_INIT;
+//   glm_mat4_mulv3(entity->final_b_mats[p_bone],
+//                  entity->model->bones[c_bone].coords, 1.0, parent_point);
+//   vec3 child_point = GLM_VEC3_ZERO_INIT;
+//   glm_mat4_mulv3(entity->final_b_mats[c_bone],
+//                  entity->model->bones[c_bone].coords, 1.0, child_point);
+//   float dist = abs(glm_vec3_distance(child_point, parent_point) - 0.0001);
+
+//   vec3 p_rel = GLM_VEC3_ZERO_INIT;
+//   if (p_col->type == POLY) {
+//     glm_vec3_sub(parent_point, p_col->data.center_of_mass, p_rel);
+//   } else {
+//     glm_vec3_sub(parent_point, p_col->data.center, p_rel);
+//   }
+//   vec3 c_rel = GLM_VEC3_ZERO_INIT;
+//   if (c_col->type == POLY) {
+//     glm_vec3_sub(child_point, c_col->data.center_of_mass, c_rel);
+//   } else {
+//     glm_vec3_sub(child_point, c_col->data.center, c_rel);
+//   }
+
+//   vec3 p_velocity = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_cross(entity->np_data[p_bone].ang_velocity, p_rel, p_velocity);
+//   glm_vec3_add(p_velocity, entity->np_data[p_bone].velocity, p_velocity);
+//   vec3 c_velocity = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_cross(entity->np_data[c_bone].ang_velocity, c_rel, c_velocity);
+//   glm_vec3_add(c_velocity, entity->np_data[c_bone].velocity, c_velocity);
+
+//   mat4 p_inv_inertia = GLM_MAT4_ZERO_INIT;
+//   global_inv_inertia(entity->np_data[p_bone].inv_inertia,
+//                      entity->bone_mats[p_bone][ROTATION], p_inv_inertia);
+//   mat4 c_inv_inertia = GLM_MAT4_ZERO_INIT;
+//   global_inv_inertia(entity->np_data[c_bone].inv_inertia,
+//                      entity->bone_mats[c_bone][ROTATION], c_inv_inertia);
+
+//   // Direction from parent to child
+//   vec3 p_dir = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_sub(child_point, parent_point, p_dir);
+//   glm_vec3_normalize(p_dir);
+
+//   vec3 rel_vel = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_sub(c_velocity, p_velocity, rel_vel);
+//   float damp_force = glm_vec3_dot(p_dir, rel_vel) * 0.05;
+//   float total_force = (dist * 20.0) + damp_force;
+//   float impulse = total_force * delta_time;
+
+//   vec3 delta_vp = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_scale(p_dir, impulse * entity->np_data[p_bone].inv_mass,
+//                  delta_vp);
+//   glm_vec3_scale(entity->np_data[p_bone].velocity, DAMP_FACTOR,
+//                  entity->np_data[p_bone].velocity);
+//   glm_vec3_add(entity->np_data[p_bone].velocity, delta_vp,
+//                entity->np_data[p_bone].velocity);
+//   vec3_remove_noise(entity->np_data[p_bone].velocity, 0.0001);
+//   vec3 delta_vc = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_scale(entity->np_data[c_bone].velocity, DAMP_FACTOR,
+//                  entity->np_data[c_bone].velocity);
+//   glm_vec3_scale(p_dir, impulse * entity->np_data[c_bone].inv_mass,
+//                  delta_vc);
+//   glm_vec3_sub(entity->np_data[c_bone].velocity, delta_vc,
+//                entity->np_data[c_bone].velocity);
+//   vec3_remove_noise(entity->np_data[c_bone].velocity, 0.0001);
+
+//   /*
+//   vec3 delta_ang_vp = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_cross(p_rel, p_dir, delta_ang_vp);
+//   glm_mat4_mulv3(p_inv_inertia, delta_ang_vp, 1.0, delta_ang_vp);
+//   glm_vec3_scale(delta_ang_vp, impulse, delta_ang_vp);
+//   glm_vec3_scale(entity->np_data[p_bone].ang_velocity, DAMP_FACTOR,
+//                  entity->np_data[p_bone].ang_velocity);
+//   glm_vec3_add(entity->np_data[p_bone].ang_velocity, delta_ang_vp,
+//                entity->np_data[p_bone].ang_velocity);
+//   vec3_remove_noise(entity->np_data[p_bone].ang_velocity, 0.0001);
+//   vec3 delta_ang_vc = GLM_VEC3_ZERO_INIT;
+//   glm_vec3_cross(c_rel, p_dir, delta_ang_vp);
+//   glm_mat4_mulv3(c_inv_inertia, delta_ang_vc, 1.0, delta_ang_vc);
+//   glm_vec3_scale(delta_ang_vc, impulse, delta_ang_vc);
+//   glm_vec3_scale(entity->np_data[c_bone].ang_velocity, DAMP_FACTOR,
+//                  entity->np_data[c_bone].ang_velocity);
+//   glm_vec3_sub(entity->np_data[c_bone].ang_velocity, delta_ang_vc,
+//                entity->np_data[c_bone].ang_velocity);
+//   vec3_remove_noise(entity->np_data[c_bone].ang_velocity, 0.0001);
+//   */
+// }
+
+// void global_inv_inertia(mat4 inv_inertia, mat4 rotation, mat4 dest) {
+//   mat4 rot_transpose = GLM_MAT4_IDENTITY_INIT;
+//   glm_mat4_transpose_to(rotation, rot_transpose);
+//   glm_mat4_mul(rotation, inv_inertia, dest);
+//   glm_mat4_mul(dest, rot_transpose, dest);
+// }

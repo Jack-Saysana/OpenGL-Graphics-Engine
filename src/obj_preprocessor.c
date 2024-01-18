@@ -27,6 +27,14 @@ int preprocess_lines(LINE_BUFFER *lb) {
     printf("Unable to allocate bone buffer\n");
     return -1;
   }
+  bone_relations = malloc(sizeof(int *) * BUFF_STARTING_LEN);
+  if (bone_relations == NULL) {
+    free_line_buffer(lb);
+    fclose(file);
+    free(bones);
+    printf("Unable to allocate bone relation buffer\n");
+    return -1;
+  }
   b_buff_len = BUFF_STARTING_LEN;
   b_len = 0;
 
@@ -35,6 +43,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     printf("Unable to allocate bone id buffer\n");
     return -1;
   }
@@ -44,6 +53,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     printf("Unable to allocate bone weight buffer\n");
     return -1;
@@ -54,6 +64,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     printf("Unable to allocate vertex buffer\n");
@@ -67,6 +78,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -81,6 +93,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -96,6 +109,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -112,6 +126,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -129,6 +144,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -147,6 +163,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -166,6 +183,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -183,6 +201,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free_line_buffer(lb);
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(bone_ids);
     free(bone_weights);
     free(verticies);
@@ -218,14 +237,33 @@ int preprocess_lines(LINE_BUFFER *lb) {
     if (cur_line[0] == 'f') {
       status = preprocess_face(file, cur_line + 2);
     } else if (cur_line[0] == 'b') {
-      sscanf(cur_line, "b %f %f %f %d %d", bones[b_len].coords,
-                                        bones[b_len].coords + 1,
-                                        bones[b_len].coords + 2,
-                                        &(bones[b_len].parent),
-                                        &(bones[b_len].num_children));
-      b_len++;
-      if (b_len == b_buff_len) {
-        status = double_buffer((void **) &bones, &b_buff_len, sizeof(BONE));
+      sscanf(cur_line, "b %f %f %f \
+                          %f %f %f %d %d", bones[b_len].coords,
+                                           bones[b_len].coords + 1,
+                                           bones[b_len].coords + 2,
+                                           bones[b_len].tail,
+                                           bones[b_len].tail + 1,
+                                           bones[b_len].tail + 2,
+                                           &(bones[b_len].parent),
+                                           &(bones[b_len].num_children));
+      bone_relations[b_len] = NULL;
+      if (bones[b_len].num_children) {
+        bone_relations[b_len] = malloc(sizeof(int) *
+                                       bones[b_len].num_children);
+      }
+      if (bones[b_len].num_children && bone_relations[b_len] == NULL) {
+        status = -1;
+      } else {
+        b_len++;
+        if (b_len == b_buff_len) {
+          status = double_buffer((void **) &bone_relations, &b_buff_len,
+                                 sizeof(int *));
+          if (status == 0) {
+            b_buff_len /= 2;
+            status = double_buffer((void **) &bones, &b_buff_len,
+                                   sizeof(BONE));
+          }
+        }
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
@@ -521,6 +559,11 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
       free(animations);
 
+      for (int i = 0; i < b_len; i++) {
+        free(bone_relations[i]);
+      }
+      free(bone_relations);
+
       printf("Parse error at line %d\n", i);
       return -1;
     }
@@ -531,6 +574,17 @@ int preprocess_lines(LINE_BUFFER *lb) {
     total_frames += (animations[i].duration * animations[i].num_chains);
     for (int j = 0; j < animations[i].num_chains; j++) {
       total_keyframes += animations[i].keyframe_chains[j].num_frames;
+    }
+  }
+
+  int cur_child = 0;
+  for (int i = 0; i < b_len; i++) {
+    cur_child = 0;
+    for (int j = i + 1; j < b_len && cur_child < bones[i].num_children; j++) {
+      if (bones[j].parent == i) {
+        bone_relations[i][cur_child] = j;
+        cur_child++;
+      }
     }
   }
 
@@ -565,6 +619,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   for (size_t i = 0; i < b_len; i++) {
     fwrite(bones + i, sizeof(BONE), 1, file);
+    fwrite(bone_relations[i], sizeof(int), bones[i].num_children, file);
   }
 
   for (size_t i = 0; i < col_len; i++) {
@@ -619,6 +674,11 @@ int preprocess_lines(LINE_BUFFER *lb) {
     free(animations[i].keyframe_chains);
   }
   free(animations);
+
+  for (int i = 0; i < b_len; i++) {
+    free(bone_relations[i]);
+  }
+  free(bone_relations);
 
   return 0;
 }

@@ -136,10 +136,33 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
   mat4 used = GLM_MAT4_IDENTITY_INIT;
   int bone = 0;
   COL_TYPE type = POLY;
-  unsigned int *VAO = malloc(sizeof(unsigned int) *
-                             entity->model->num_colliders);
-  unsigned int *VBO = malloc(sizeof(unsigned int) *
-                             entity->model->num_colliders);
+  unsigned int VAO;
+  unsigned int VBO;
+  unsigned int indicies[] = {
+    // TOP
+    0, 1, 2,
+    2, 3, 0,
+    // BOTTOM
+    4, 5, 6,
+    6, 7, 4,
+    // LEFT
+    1, 6, 5,
+    5, 2, 1,
+    // RIGHT
+    0, 3, 4,
+    4, 7, 0,
+    // FORWARD
+    0, 7, 6,
+    6, 1, 0,
+    // BACK
+    2, 5, 4,
+    4, 3, 2
+  };
+  unsigned int EBO;
+  glGenBuffers(1, &EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies,
+               GL_STATIC_DRAW);
 
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   get_model_mat(entity, model);
@@ -153,10 +176,10 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
     type = entity->model->colliders[i].type;
 
     if (type == POLY) {
-      glGenVertexArrays(1, VAO + i);
-      glBindVertexArray(VAO[i]);
-      glGenBuffers(1, VBO + i);
-      glBindBuffer(GL_ARRAY_BUFFER, VBO[i]);
+      glGenVertexArrays(1, &VAO);
+      glBindVertexArray(VAO);
+      glGenBuffers(1, &VBO);
+      glBindBuffer(GL_ARRAY_BUFFER, VBO);
       glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 *
                    entity->model->colliders[i].data.num_used,
                    entity->model->colliders[i].data.verts, GL_STATIC_DRAW);
@@ -167,10 +190,15 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
       glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
                        (float *) used);
 
-      glDrawArrays(GL_POINTS, 0, entity->model->colliders[i].data.num_used);
+      if (entity->model->colliders[i].data.num_used == 8) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+      } else {
+        glDrawArrays(GL_POINTS, 0, entity->model->colliders[i].data.num_used);
+      }
       glBindVertexArray(0);
-      glDeleteVertexArrays(1, VAO + i);
-      glDeleteBuffers(1, VBO + i);
+      glDeleteVertexArrays(1, &VAO);
+      glDeleteBuffers(1, &VBO);
     } else if (type == SPHERE) {
       glm_translate(used, entity->model->colliders[i].data.center);
       glm_scale_uni(used, entity->model->colliders[i].data.radius);
@@ -179,8 +207,7 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
       draw_model(shader, sphere);
     }
   }
-  free(VAO);
-  free(VBO);
+  glDeleteBuffers(1, &EBO);
 }
 
 void free_entity(ENTITY *entity) {

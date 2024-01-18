@@ -56,11 +56,19 @@ MODEL *load_model(char *path) {
   }
 
   BONE *bones = NULL;
+  int **bone_relations = NULL;
   if (b_len) {
     bones = malloc(sizeof(BONE) * b_len);
     if (bones == NULL) {
       fclose(file);
       printf("Unable to allocate bone buffer\n");
+      return NULL;
+    }
+    bone_relations = malloc(sizeof(int *) * b_len);
+    if (bone_relations == NULL) {
+      fclose(file);
+      free(bone_relations);
+      printf("Unable to allocate bone relation buffer\n");
       return NULL;
     }
   }
@@ -71,6 +79,7 @@ MODEL *load_model(char *path) {
     if (vertices == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       printf("Unable to allocate vertex buffer\n");
       return NULL;
     }
@@ -82,6 +91,7 @@ MODEL *load_model(char *path) {
     if (indicies == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       free(vertices);
       printf("Unable to allocate indicies buffer\n");
       return NULL;
@@ -94,6 +104,7 @@ MODEL *load_model(char *path) {
     if (animations == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       free(vertices);
       free(indicies);
       printf("Unable to allocate animation buffer\n");
@@ -105,6 +116,7 @@ MODEL *load_model(char *path) {
   if (model == NULL) {
     fclose(file);
     free(bones);
+    free(bone_relations);
     free(vertices);
     free(indicies);
     free(animations);
@@ -119,6 +131,7 @@ MODEL *load_model(char *path) {
     if (k_chain_block == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       free(vertices);
       free(indicies);
       free(animations);
@@ -135,6 +148,7 @@ MODEL *load_model(char *path) {
     if (keyframe_block == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       free(vertices);
       free(indicies);
       free(animations);
@@ -152,6 +166,7 @@ MODEL *load_model(char *path) {
     if (sled_block == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       free(vertices);
       free(indicies);
       free(animations);
@@ -170,6 +185,7 @@ MODEL *load_model(char *path) {
     if (colliders == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       free(vertices);
       free(indicies);
       free(animations);
@@ -184,6 +200,7 @@ MODEL *load_model(char *path) {
     if (bone_links == NULL) {
       fclose(file);
       free(bones);
+      free(bone_relations);
       free(vertices);
       free(indicies);
       free(animations);
@@ -197,8 +214,28 @@ MODEL *load_model(char *path) {
     }
   }
 
-  if (bones) {
-    fread(bones, sizeof(BONE), b_len, file);
+  for (int i = 0; i < b_len; i++) {
+    fread(bones + i, sizeof(BONE), 1, file);
+    bone_relations[i] = malloc(sizeof(int) * bones[i].num_children);
+    if (bone_relations[i] == NULL) {
+      fclose(file);
+      free(bones);
+      free(vertices);
+      free(indicies);
+      free(animations);
+      free(model);
+      free(k_chain_block);
+      free(keyframe_block);
+      free(sled_block);
+      free(colliders);
+      for (int j = 0; j < i; j++) {
+        free(bone_relations[j]);
+      }
+      free(bone_relations);
+      printf("Unable to allocate bone children\n");
+      return NULL;
+    }
+    fread(bone_relations[i], sizeof(int), bones[i].num_children, file);
   }
   if (colliders) {
     fread(colliders, sizeof(COLLIDER), col_len, file);
@@ -293,6 +330,7 @@ MODEL *load_model(char *path) {
   model->keyframe_block = keyframe_block;
   model->sled_block = sled_block;
   model->bones = bones;
+  model->bone_relations = bone_relations;
   model->colliders = colliders;
   model->collider_bone_links = bone_links;
   model->num_animations = a_len;
