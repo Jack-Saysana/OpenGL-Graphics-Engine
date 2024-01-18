@@ -74,9 +74,11 @@ typedef struct ui_component {
   void (*on_click)(struct ui_component *, void *);
   void (*on_release)(struct ui_component *, void *);
   void (*on_hover)(struct ui_component *, void *);
+  void (*on_no_hover)(struct ui_component *, void *);
   void *click_args;
   void *release_args;
   void *hover_args;
+  void *no_hover_args;
 
   // List of child components
   struct ui_component *children;
@@ -90,11 +92,12 @@ typedef struct ui_component {
   vec3 text_col;
 
   // Position
-  vec2 pos;
+  vec3 pos;
   // Sizing (Unit determines on the options passed into "numerical_options")
   float width;
   float height;
   float line_height;
+  int manual_layer;
 
   /*
     Position in pixels relative to center of root ui component
@@ -151,12 +154,13 @@ typedef struct ui_component {
 
 #define INVALID_COMP_INIT { NULL, NULL, NULL,     \
                             NULL, NULL, NULL,     \
+                            NULL, NULL,           \
                             NULL,                 \
                             0, 0,                 \
                             NULL, 0,              \
                             { 0.0, 0.0, 0.0 },    \
-                            { 0.0, 0.0 },         \
-                            0.0, 0.0, 0.0,        \
+                            { 0.0, 0.0, 0.0 },    \
+                            0.0, 0.0, 0.0, 0,     \
                             { 0.0, 0.0 },         \
                             0.0, 0.0, 0.0,        \
                             PIVOT_CENTER,         \

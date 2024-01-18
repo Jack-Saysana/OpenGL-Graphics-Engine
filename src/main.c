@@ -125,22 +125,29 @@ int main() {
                             WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y);
   set_ui_pivot(c1, PIVOT_CENTER);
   set_ui_texture(c1, "resources/ui/ui_bg.png");
-  set_ui_on_click(c1, test_callback_click, NULL);
-  set_ui_on_release(c1, test_callback_release, NULL);
-  set_ui_on_hover(c1, test_callback_hover, NULL);
+  //set_ui_on_click(c1, test_callback_click, NULL);
+  //set_ui_on_release(c1, test_callback_release, NULL);
 
   UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 128.0, 64.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
   set_ui_pivot(c2, PIVOT_TOP_LEFT);
   set_ui_text(c2, "Hello!\nmy name is\nJack!!!", 16.0, GLM_VEC3_ZERO);
   set_ui_texture(c2, "resources/ui/ui_bg.png");
-  set_ui_on_click(c2, test_callback_click, NULL);
+  //set_ui_on_click(c2, test_callback_click, NULL);
 
   UI_COMP *c3 = add_ui_comp(c1, (vec2) { 0.99, -0.01 }, 16.0, 16.0,
                             ABSOLUTE_POS | POS_UNIT_RATIO_X | SIZE_UNIT_PIXEL);
   set_ui_pivot(c3, PIVOT_TOP_RIGHT);
   set_ui_texture(c3, "resources/ui/ui_close_unpressed.png");
-  set_ui_on_click(c3, test_callback_click, NULL);
+  //set_ui_on_click(c3, test_callback_click, NULL);
+
+  UI_COMP *tool_tip = add_ui_comp(UI_ROOT_COMP, (vec2) { 0.0, 0.0 }, 64.0,
+                                  64.0, ABSOLUTE_POS | POS_UNIT_PIXEL |
+                                  SIZE_UNIT_PIXEL);
+  set_ui_display(tool_tip, 0);
+  set_ui_on_hover(c1, test_callback_hover, (void *) tool_tip);
+  set_ui_no_hover(c1, test_callback_no_hover, (void *) tool_tip);
+  set_manual_layer(c1, 0.2);
 
   /*
   UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
@@ -763,6 +770,12 @@ void test_callback_release(UI_COMP *comp, void *args) {
 }
 
 void test_callback_hover(UI_COMP *comp, void *args) {
-  fprintf(stderr, "Hover (%f, %f), %f, %f\n", comp->pos[X], comp->pos[Y],
-          comp->width, comp->height);
+  UI_COMP *tool_tip = (UI_COMP *) args;
+  set_ui_display(tool_tip, 1);
+  set_ui_pos(tool_tip, (vec2) { MOUSE_POS[X], -MOUSE_POS[Y] });
+}
+
+void test_callback_no_hover(UI_COMP *comp, void *args) {
+  UI_COMP *tool_tip = (UI_COMP *) args;
+  set_ui_display(tool_tip, 0);
 }

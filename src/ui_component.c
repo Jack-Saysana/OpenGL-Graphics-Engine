@@ -16,11 +16,11 @@
 */
 int init_ui() {
   // Initialize root ui component
-  int status = init_ui_comp(&ui_root, "", GLM_VEC3_ZERO, GLM_VEC2_ZERO, 0.0,
-                            0.0, PIVOT_CENTER, T_CENTER,
+  int status = init_ui_comp(&ui_root, "", GLM_VEC3_ZERO, GLM_VEC3_ZERO, 0.0,
+                            0.0, 0.0, 0, PIVOT_CENTER, T_CENTER,
                             ABSOLUTE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL,
                             UI_TRUE, UI_FALSE, 0, 0, NULL, NULL, NULL, NULL,
-                            NULL, NULL);
+                            NULL, NULL, NULL, NULL);
   if (status) {
     fprintf(stderr, "Error initializing root ui component.\n");
     return -1;
@@ -93,14 +93,17 @@ int init_ui() {
 /*
   Initialize a new UI component given the members of a UI_COMP struct.
 */
-int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec2 pos,
-                 float width, float height, PIVOT pivot, TEXT_ANCHOR txt_anc,
+int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec3 pos,
+                 float width, float height, float line_height,
+                 int manual_layer, PIVOT pivot, TEXT_ANCHOR txt_anc,
                  int opts, int enabled, int display, int textured,
                  unsigned int texture,
                  void (*on_click)(UI_COMP *, void *),
                  void (*on_release)(UI_COMP *, void *),
                  void (*on_hover)(UI_COMP *, void *),
-                 void *click_args, void *release_args, void *hover_args) {
+                 void (*on_no_hover)(UI_COMP *, void *),
+                 void *click_args, void *release_args, void *hover_args,
+                 void *no_hover_args) {
   comp->children = malloc(sizeof(UI_COMP) * CHILD_BUF_SIZE_INIT);
   if (comp->children == NULL) {
     return -1;
@@ -112,9 +115,11 @@ int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec2 pos,
   comp->text_len = strlen(text);
   glm_vec3_copy(text_col, comp->text_col);
 
-  glm_vec2_copy(pos, comp->pos);
+  glm_vec3_copy(pos, comp->pos);
   comp->width = width;
   comp->height = height;
+  comp->line_height = line_height;
+  comp->manual_layer = manual_layer;
 
   glm_vec2_zero(comp->pix_pos);
   comp->pix_width = 0.0;
@@ -131,9 +136,11 @@ int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec2 pos,
   comp->on_click = on_click;
   comp->on_release = on_release;
   comp->on_hover = on_hover;
+  comp->on_no_hover = on_no_hover;
   comp->click_args = click_args;
   comp->release_args = release_args;
   comp->hover_args = hover_args;
+  comp->no_hover_args = no_hover_args;
   return 0;
 }
 
@@ -268,9 +275,11 @@ void free_ui_comp(UI_COMP *comp) {
 UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
                      int options) {
   UI_COMP *comp = parent->children + parent->num_children;
-  int status = init_ui_comp(comp, "", GLM_VEC3_ZERO, pos, width, height,
-                            PIVOT_TOP_LEFT, T_CENTER, options, UI_TRUE,
-                            UI_TRUE, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+  int status = init_ui_comp(comp, "", GLM_VEC3_ZERO,
+                            (vec3) { pos[X], pos[Y], 0.0 }, width, height, 0.0,
+                            0, PIVOT_TOP_LEFT, T_CENTER, options, UI_TRUE,
+                            UI_TRUE, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+                            NULL, NULL);
   if (status) {
     fprintf(stderr, "Unable to initialize ui component\n");
     return NULL;
@@ -292,6 +301,19 @@ UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
 }
 
 // ============================ EDITING COMPONENTS ===========================
+
+void set_ui_pos(UI_COMP *comp, vec2 pos) {
+  glm_vec2_copy(pos, comp->pos);
+}
+
+void set_manual_layer(UI_COMP *comp, float layer) {
+  comp->manual_layer = 1;
+  comp->pos[Z] = layer;
+}
+
+void disable_manual_layer(UI_COMP *comp) {
+  comp->manual_layer = 0;
+}
 
 void set_ui_pivot(UI_COMP *comp, PIVOT pivot) {
   comp->pivot = pivot;
@@ -339,6 +361,12 @@ void set_ui_on_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
                      void *args) {
   comp->on_hover = cb;
   comp->hover_args = args;
+}
+
+void set_ui_no_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
+                     void *args) {
+  comp->on_no_hover = cb;
+  comp->no_hover_args = args;
 }
 
 // ================================ RENDERING ================================
@@ -441,7 +469,7 @@ int render_ui() {
       calc_pix_stats(cur_comp, cur_child, top_left, next_rel_pos,
                      &next_line_y);
       // Check hover callback event
-      if (CURSOR_ENABLED && cur_child->on_hover) {
+      if (CURSOR_ENABLED && (cur_child->on_hover || cur_child->on_no_hover)) {
         check_hover_event(cur_child);
       }
 
@@ -482,7 +510,13 @@ void check_hover_event(UI_COMP *comp) {
       mouse_pos[X] >= comp_middle[X] - (comp->pix_width * 0.5) &&
       mouse_pos[Y] <= comp_middle[Y] + (comp->pix_height * 0.5) &&
       mouse_pos[Y] >= comp_middle[Y] - (comp->pix_height * 0.5)) {
-    comp->on_hover(comp, comp->hover_args);
+    if (comp->on_hover) {
+      comp->on_hover(comp, comp->hover_args);
+    }
+  } else {
+    if (comp->on_no_hover) {
+      comp->on_no_hover(comp, comp->no_hover_args);
+    }
   }
 }
 
@@ -638,5 +672,9 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
                        pivot_compensation[X];
   }
   glm_vec2_add(child->pix_pos, cur_offset, child->pix_pos);
-  child->pix_pos[Z] = parent->pix_pos[Z] - 0.01;
+  if (child->manual_layer) {
+    child->pix_pos[Z] = child->pos[Z];
+  } else {
+    child->pix_pos[Z] = parent->pix_pos[Z] - 0.01;
+  }
 }
