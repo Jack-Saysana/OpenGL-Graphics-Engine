@@ -238,6 +238,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     if (cur_line[0] == 'f') {
       status = preprocess_face(file, cur_line + 2);
     } else if (cur_line[0] == 'b') {
+      memset(bones + b_len, 0, sizeof(BONE));
       sscanf(cur_line, "b %f %f %f \
                           %f %f %f \
                           %f %f %f \
@@ -272,6 +273,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
+      memset(colliders + col_len, 0, sizeof(COLLIDER));
       colliders[col_len].type = POLY;
       colliders[col_len].children_offset = -1;
       colliders[col_len].num_children = 0;
@@ -334,6 +336,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 's' &&
                cur_line[2] == ' ') {
+      memset(colliders + col_len, 0, sizeof(COLLIDER));
       colliders[col_len].type = SPHERE;
       colliders[col_len].children_offset = -1;
       colliders[col_len].num_children = 0;
@@ -424,6 +427,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
+      memset(cur_anim, 0, sizeof(ANIMATION));
       sscanf(cur_line, "a %ld", &(cur_anim->duration));
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
@@ -452,6 +456,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
       if (status == 0) {
         cur_chain = cur_anim->keyframe_chains + cur_anim->num_chains;
+        memset(cur_chain, 0, sizeof(K_CHAIN));
 
         cur_chain->type = LOCATION;
         if (cur_line[1] == 'r') {
@@ -491,6 +496,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
       if (status == 0) {
         size_t frame_index = cur_chain->num_frames;
+        memset(cur_chain->chain + frame_index, 0, sizeof(KEYFRAME));
         if (cur_chain->type == ROTATION) {
           sscanf(cur_line, "kp %d %f %f %f %f",
                  &(cur_chain->chain[frame_index].frame),
@@ -605,6 +611,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     { -1.0, -1.0, 1.0 },
     { 1.0, -1.0, 1.0}
   };
+  vec3 unsorted[8];
   for (int i = 0; i < col_len; i++) {
     int root_bone = bone_links[i];
     if (root_bone != -1 && colliders[i].type == POLY) {
@@ -624,16 +631,25 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
     // Sort verticies to the appropriate winding order
     if (colliders[i].type == POLY && colliders[i].data.num_used == 8) {
+      for (int j = 0; j < 8; j++) {
+        glm_vec3_sub(colliders[i].data.verts[j],
+                     colliders[i].data.center_of_mass, unsorted[j]);
+        glm_vec3_normalize(unsorted[j]);
+      }
+
       vec3 temp = GLM_VEC3_ZERO_INIT;
       int best = 0;
       for (int j = 0; j < 8; j++) {
-        best = max_dot(colliders[i].data.verts, colliders[i].data.num_used,
-                       dirs[j]);
+        best = max_dot(unsorted, colliders[i].data.num_used, dirs[j]);
         if (best != j) {
           glm_vec3_copy(colliders[i].data.verts[j], temp);
           glm_vec3_copy(colliders[i].data.verts[best],
                         colliders[i].data.verts[j]);
           glm_vec3_copy(temp, colliders[i].data.verts[best]);
+
+          glm_vec3_copy(unsorted[j], temp);
+          glm_vec3_copy(unsorted[best], unsorted[j]);
+          glm_vec3_copy(temp, unsorted[best]);
         }
       }
     }
@@ -684,11 +700,28 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fwrite(bone_links, sizeof(int), col_len, file);
 
   for (size_t i = 0; i < vbo_len; i++) {
-    fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);
-    fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, file);
-    fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, file);
-    fwrite(bone_ids[vbo_index_combos[i][0]], sizeof(int), 4, file);
-    fwrite(bone_weights[vbo_index_combos[i][0]], sizeof(float), 4, file);
+    if (vbo_index_combos[i][0] != -1) {
+      fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);
+    } else {
+      fwrite(GLM_VEC3_ZERO, sizeof(float), 3, file);
+    }
+    if (vbo_index_combos[i][2] != -1) {
+      fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, file);
+    } else {
+      fwrite(GLM_VEC3_ZERO, sizeof(float), 3, file);
+    }
+    if (vbo_index_combos[i][1] != -1) {
+      fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, file);
+    } else {
+      fwrite((vec2) { 0.0, 0.0 }, sizeof(float), 2, file);
+    }
+    if (vbo_index_combos[i][0] != -1) {
+      fwrite(bone_ids[vbo_index_combos[i][0]], sizeof(int), 4, file);
+      fwrite(bone_weights[vbo_index_combos[i][0]], sizeof(float), 4, file);
+    } else {
+      fwrite((ivec4) { 0, 0, 0, 0 }, sizeof(int), 4, file);
+      fwrite(GLM_VEC4_ZERO, sizeof(float), 4, file);
+    }
   }
   fwrite(faces, sizeof(int) * 3, f_len, file);
 
@@ -716,9 +749,21 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fwrite(&vbo_len, sizeof(size_t), 1, simple_file);
   fwrite(&f_len, sizeof(size_t), 1, simple_file);
   for (size_t i = 0; i < vbo_len; i++) {
-    fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, simple_file);
-    fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, simple_file);
-    fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, simple_file);
+    if (vbo_index_combos[i][0] != -1) {
+      fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, simple_file);
+    } else {
+      fwrite(GLM_VEC3_ZERO, sizeof(float), 3, simple_file);
+    }
+    if (vbo_index_combos[i][2] != -1) {
+      fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, simple_file);
+    } else {
+      fwrite(GLM_VEC3_ZERO, sizeof(float), 3, simple_file);
+    }
+    if (vbo_index_combos[i][1] != -1) {
+      fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, simple_file);
+    } else {
+      fwrite((ivec2) { 0, 0 }, sizeof(float), 2, simple_file);
+    }
   }
   fwrite(faces, sizeof(int) * 3, f_len, simple_file);
   fclose(simple_file);

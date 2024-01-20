@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <cglm/quat.h>
 #include <cglm/affine.h>
+#include <const.h>
 #include <entity_str.h>
 
 #define BUFF_STARTING_LEN (10)
@@ -80,6 +81,8 @@ OCT_TREE *physics_tree = NULL;
 OCT_TREE *combat_tree = NULL;
 OCT_TREE *event_tree = NULL;
 
+// ====================== INTERNALLY DEFINED FUNCTIONS =======================
+
 // Front Facing
 int init_simulation();
 int simulate_frame();
@@ -99,7 +102,8 @@ int add_to_elist(ENTITY ***list, size_t *len, size_t *buff_size,
 void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
                      COLLIDER *source, COLLIDER *dest);
 
-// Outside helpers
+// ====================== EXTERNALLY DEFINED FUNCTIONS =======================
+
 OCT_TREE *init_tree();
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 int oct_tree_delete(OCT_TREE *tree, size_t obj_offset);
@@ -116,3 +120,4 @@ void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void get_model_mat(ENTITY *entity, mat4 model);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
+
