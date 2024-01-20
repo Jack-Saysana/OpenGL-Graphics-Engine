@@ -3,15 +3,6 @@
 extern vec3 col_point;
 extern int enable_gravity;
 
-
-
-extern ENTITY *player;
-extern ENTITY *ragdoll;
-extern ENTITY **boxes;
-extern ENTITY **rects;
-
-
-
 int init_simulation() {
   if (dynamic_ents != NULL || driving_ents != NULL) {
     fprintf(stderr, "Simulation already initialized."\
