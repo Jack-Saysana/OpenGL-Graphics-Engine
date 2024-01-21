@@ -319,6 +319,10 @@ void set_ui_pivot(UI_COMP *comp, PIVOT pivot) {
   comp->pivot = pivot;
 }
 
+void set_ui_enabled(UI_COMP *comp, int enabled) {
+  comp->enabled = enabled;
+}
+
 void set_ui_display(UI_COMP *comp, int display) {
   comp->display = display;
 }

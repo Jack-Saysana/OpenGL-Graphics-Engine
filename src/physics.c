@@ -418,7 +418,9 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
       glm_vec3_copy(col_face[j], b_face[j]);
     }
     if (col_face_len == 0) {
-      printf("Should never occur");
+      fprintf(stderr,
+              "Error: Collision detection mesh with invalid winding order\n");
+      exit(1);
     }
     b_face_len = col_face_len;
     col_face_len = 0;
@@ -955,6 +957,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
     glm_vec3_sub(delta_ang_va, delta_ang_va_f, delta_ang_va);
   }
 #endif
+
   // Dampen and update ang velocity
   glm_vec3_scale(a_ang_vel, DAMP_FACTOR, a_ang_vel);
   glm_vec3_add(a_ang_vel, delta_ang_va, a_ang_vel);
@@ -988,13 +991,13 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_copy(b_ang_vel, *(b_args->ang_velocity));
 }
 
-void calc_inertia_tensor(ENTITY *ent, size_t col) {
-  COLLIDER *collider = ent->model->colliders + col;
-  P_DATA *p_data = ent->np_data + col;
-  glm_mat4_identity(p_data->inv_inertia);
-  if (collider->type == POLY) {
-    vec3 *raw_verts = collider->data.verts;
-    unsigned int num_raw = collider->data.num_used;
+void calc_inertia_tensor(ENTITY *ent, size_t raw_col_offset,
+                         COLLIDER *global_col, float inv_mass, mat4 dest) {
+  COLLIDER *raw_col = ent->model->colliders + raw_col_offset;
+  glm_mat4_identity(dest);
+  if (global_col->type == POLY) {
+    vec3 *raw_verts = raw_col->data.verts;
+    unsigned int num_raw = raw_col->data.num_used;
     float height = ent->scale[1] *
                    (raw_verts[max_dot(raw_verts, num_raw, U_DIR)][1] -
                     raw_verts[max_dot(raw_verts, num_raw, D_DIR)][1]);
@@ -1004,17 +1007,14 @@ void calc_inertia_tensor(ENTITY *ent, size_t col) {
     float depth = ent->scale[2] *
                   (raw_verts[max_dot(raw_verts, num_raw, F_DIR)][2] -
                    raw_verts[max_dot(raw_verts, num_raw, B_DIR)][2]);
-    float denominator = 12.0 * p_data->inv_mass;
-    p_data->inv_inertia[0][0] = ((height * height) + (depth * depth)) /
-                                denominator;
-    p_data->inv_inertia[1][1] = ((width * width) + (depth * depth)) /
-                                denominator;
-    p_data->inv_inertia[2][2] = ((width * width) + (height * height)) /
-                                denominator;
+    float denominator = 12.0 * inv_mass;
+    dest[0][0] = ((height * height) + (depth * depth)) / denominator;
+    dest[1][1] = ((width * width) + (depth * depth)) / denominator;
+    dest[2][2] = ((width * width) + (height * height)) / denominator;
   } else {
-    float i_val = (0.4 * collider->data.radius * collider->data.radius) /
-                  p_data->inv_mass;
-    glm_mat4_scale(p_data->inv_inertia, i_val);
+    float i_val = (0.4 * global_col->data.radius * global_col->data.radius) /
+                  inv_mass;
+    glm_mat4_scale(dest, i_val);
   }
-  p_data->inv_inertia[3][3] = 1.0;
+  dest[3][3] = 1.0;
 }

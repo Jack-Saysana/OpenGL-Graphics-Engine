@@ -123,6 +123,7 @@ int main() {
   UI_COMP *c1 = add_ui_comp(UI_ROOT_COMP, (vec2) { 0.5, -0.5 }, 0.75, 0.5,
                             ABSOLUTE_POS | POS_UNIT_RATIO |
                             WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y);
+  set_ui_enabled(c1, 0);
   set_ui_pivot(c1, PIVOT_CENTER);
   set_ui_texture(c1, "resources/ui/ui_bg.png");
   //set_ui_on_click(c1, test_callback_click, NULL);
@@ -209,7 +210,6 @@ int main() {
   */
 
   // Insertion of test entities into the physics simulation
-  /*
   obstacle->type |= T_DRIVING;// | T_IMMUTABLE;
   status = insert_entity(obstacle);
   if (status != 0) {
@@ -227,7 +227,6 @@ int main() {
   if (status != 0) {
     glfwTerminate();
   }
-  */
 
   for (int i = 0; i < NUM_BOXES; i++) {
     boxes[i]->inv_mass = 1.0;
@@ -407,10 +406,10 @@ int main() {
     }
 
     set_vec3("test_col", cube_col, basic_shader);
-    //draw_colliders(basic_shader, box_entity, sphere);
+    draw_colliders(basic_shader, box_entity, sphere);
 
     set_vec3("test_col", s_col, basic_shader);
-    //draw_colliders(basic_shader, sphere_entity, sphere);
+    draw_colliders(basic_shader, sphere_entity, sphere);
 
     /* Player */
 
@@ -427,8 +426,8 @@ int main() {
     glUseProgram(test_shader);
     set_mat4("view", view, test_shader);
     set_vec3("test_col", (vec3) { 1.0, 1.0, 1.0 }, test_shader);
-    //draw_entity(test_shader, box_entity);
-    //draw_entity(test_shader, obstacle);
+    draw_entity(test_shader, box_entity);
+    draw_entity(test_shader, obstacle);
     draw_entity(test_shader, floor_entity);
     for (int i = 0; i < NUM_BOXES; i++) {
       draw_entity(test_shader, boxes[i]);

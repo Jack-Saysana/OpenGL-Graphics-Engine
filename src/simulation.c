@@ -248,8 +248,14 @@ int collision_test(ENTITY *subject, size_t offset) {
   get_model_mat(subject, s_entity_to_world);
   int bone = subject->model->collider_bone_links[offset];
   if (bone != -1) {
+    COLLIDER *raw_col = subject->model->colliders + offset;
     glm_mat4_ins3(subject->model->bones[bone].coordinate_matrix,
                   s_bone_to_entity);
+    if (raw_col->type == POLY) {
+      glm_vec4(raw_col->data.center_of_mass, 1.0, s_bone_to_entity[3]);
+    } else {
+      glm_vec4(raw_col->data.center, 1.0, s_bone_to_entity[3]);
+    }
     glm_mat4_mul(s_entity_to_world, subject->final_b_mats[bone],
                  s_entity_to_world);
   }
@@ -285,8 +291,14 @@ int collision_test(ENTITY *subject, size_t offset) {
     get_model_mat(p_ent, p_entity_to_world);
     bone = p_ent->model->collider_bone_links[p_obj->collider_offset];
     if (bone != -1) {
+      COLLIDER *raw_col = p_ent->model->colliders + p_obj->collider_offset;
       glm_mat4_ins3(p_ent->model->bones[bone].coordinate_matrix,
                     p_bone_to_entity);
+      if (raw_col->type == POLY) {
+        glm_vec4(raw_col->data.center_of_mass, 1.0, p_bone_to_entity[3]);
+      } else {
+        glm_vec4(raw_col->data.center, 1.0, p_bone_to_entity[3]);
+      }
       glm_mat4_mul(p_entity_to_world, p_ent->final_b_mats[bone],
                    p_entity_to_world);
     }
@@ -597,6 +609,8 @@ void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
                      COLLIDER *source, COLLIDER *dest) {
   dest->type = source->type;
   dest->category = source->category;
+  dest->children_offset = 0;
+  dest->num_children = 0;
   if (dest->type == POLY) {
     dest->data.num_used = source->data.num_used;
     for (int i = 0; i < source->data.num_used; i++) {
@@ -605,10 +619,14 @@ void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
       glm_mat4_mulv3(entity_to_world, dest->data.verts[i], 1.0,
                      dest->data.verts[i]);
     }
+    glm_mat4_mulv3(bone_to_entity, source->data.center_of_mass, 1.0,
+                   dest->data.center_of_mass);
     glm_mat4_mulv3(entity_to_world, source->data.center_of_mass, 1.0,
                    dest->data.center_of_mass);
   } else if (dest->type == SPHERE) {
     dest->data.radius = source->data.radius;
+    glm_mat4_mulv3(bone_to_entity, source->data.center, 1.0,
+                   dest->data.center);
     glm_mat4_mulv3(entity_to_world, source->data.center, 1.0,
                    dest->data.center);
   }
