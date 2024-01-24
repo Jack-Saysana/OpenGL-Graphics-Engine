@@ -219,7 +219,8 @@ int init_scene() {
       printf("Unable to load moveable box: %d\n", i);
       return -1;
     }
-    m_box_pos[2] -= 1.0;
+    m_box_pos[1] = (float) (i % 10);
+    m_box_pos[2] = (float) (i / 10);
     glm_vec3_copy(m_box_pos, boxes[i]->translation);
     glm_vec3_copy(m_box_scale, boxes[i]->scale);
   }
@@ -231,7 +232,8 @@ int init_scene() {
       fprintf(stderr, "Unable to load moveable sphere: %d\n", i);
       return -1;
     }
-    m_sphere_pos[0] += 1.0;
+    m_sphere_pos[1] = (float) (i % 10);
+    m_sphere_pos[2] = (float) (i / 10);
     glm_vec3_copy(m_sphere_pos, spheres[i]->translation);
     glm_vec3_copy(m_sphere_scale, spheres[i]->scale);
   }
@@ -243,7 +245,8 @@ int init_scene() {
       fprintf(stderr, "Unable to load moveable rect prism: %d\n", i);
       return -1;
     }
-    m_rect_pos[2] += 1.0;
+    m_rect_pos[1] = (float) (i % 10);
+    m_rect_pos[2] = (float) (i / 10);
     glm_vec3_copy(m_rect_pos, rects[i]->translation);
     glm_vec3_copy(m_rect_scale, rects[i]->scale);
   }

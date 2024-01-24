@@ -349,6 +349,10 @@ void set_ui_texture(UI_COMP *comp, char *path) {
   }
 }
 
+void set_ui_options(UI_COMP *comp, int options) {
+  comp->numerical_options = options;
+}
+
 void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
                      void *args) {
   comp->on_click = cb;
@@ -667,8 +671,8 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
 
     // Calculate pixel offset from pix_pos to center of the component
     vec2 pivot_compensation = {
-      UI_PIVOT_OFFSETS[child->pivot][X] * child->width * 0.5,
-      UI_PIVOT_OFFSETS[child->pivot][Y] * child->height * 0.5
+      UI_PIVOT_OFFSETS[child->pivot][X] * child->pix_width * 0.5,
+      UI_PIVOT_OFFSETS[child->pivot][Y] * child->pix_height * 0.5
     };
 
     // Update default position for next sibling component

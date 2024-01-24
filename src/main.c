@@ -149,6 +149,7 @@ int main() {
   set_ui_on_hover(c1, test_callback_hover, (void *) tool_tip);
   set_ui_no_hover(c1, test_callback_no_hover, (void *) tool_tip);
   set_manual_layer(c1, 0.2);
+  set_ui_enabled(c1, 0);
 
   /*
   UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
@@ -172,15 +173,16 @@ int main() {
 
   // SIMULATION SET UP
 
-  status = init_simulation();
-  if (status != 0) {
-    cleanup_gl();
+  SIMULATION *sim = init_sim();
+  if (status) {
     return 1;
   }
 
+  sim_add_force(sim, (vec3) { 0.0, -GRAVITY, 0.0 });
+
   player->type |= T_DRIVING;
   player->inv_mass = 1.0;
-  status = insert_entity(player);
+  status = sim_add_entity(sim, player, ALLOW_DEFAULT);
   if (status != 0) {
     cleanup_gl();
     return 1;
@@ -203,30 +205,33 @@ int main() {
   }
   //ragdoll->np_data[0].vel_angles[0] = 1.0;
   /*
-  status = insert_entity(ragdoll);
+  status = sim_insert_entity(sim, ragdoll, ALLOW_HURT_BOXES);
   if (status != 0) {
     glfwTerminate();
   }
   */
 
+  /*
   // Insertion of test entities into the physics simulation
-  obstacle->type |= T_DRIVING;// | T_IMMUTABLE;
-  status = insert_entity(obstacle);
+  obstacle->type |= T_IMMUTABLE;
+  status = sim_add_entity(sim, obstacle, ALLOW_DEFAULT);
   if (status != 0) {
     glfwTerminate();
   }
 
-  sphere_entity->type |= T_DRIVING;// | T_IMMUTABLE;
-  status = insert_entity(sphere_entity);
+  sphere_entity->type |= T_IMMUTABLE;
+  status = sim_add_entity(sim, sphere_entity,
+                          ALLOW_DEFAULT | ALLOW_HURT_BOXES);
   if (status != 0) {
     glfwTerminate();
   }
 
-  box_entity->type |= T_DRIVING;// | T_IMMUTABLE;
-  status = insert_entity(box_entity);
+  box_entity->type |= T_IMMUTABLE;
+  status = sim_add_entity(sim, box_entity, ALLOW_DEFAULT);
   if (status != 0) {
     glfwTerminate();
   }
+  */
 
   for (int i = 0; i < NUM_BOXES; i++) {
     boxes[i]->inv_mass = 1.0;
@@ -243,7 +248,7 @@ int main() {
     boxes[i]->inv_inertia[1][1] = (12.0 * boxes[i]->inv_mass) / 2.0;
     boxes[i]->inv_inertia[2][2] = (12.0 * boxes[i]->inv_mass) / 2.0;
 
-    status = insert_entity(boxes[i]);
+    status = sim_add_entity(sim, boxes[i], ALLOW_HURT_BOXES);
     if (status) {
       cleanup_gl();
       return 1;
@@ -260,7 +265,7 @@ int main() {
     spheres[i]->inv_inertia[1][1] = spheres[i]->inv_mass / 0.1;
     spheres[i]->inv_inertia[2][2] = spheres[i]->inv_mass / 0.1;
 
-    status = insert_entity(spheres[i]);
+    status = sim_add_entity(sim, spheres[i], ALLOW_HURT_BOXES);
     if (status) {
       cleanup_gl();
       return 1;
@@ -269,7 +274,7 @@ int main() {
 
   for (int i = 0; i < NUM_RECTS; i++) {
     rects[i]->inv_mass = 1.0;
-    vec3 init_vel = { 0.0, 0.0, 0.0 };
+    vec3 init_vel = { 0.0, 0.05, 0.0 };
     glm_vec3_copy(init_vel, rects[i]->velocity);
 
     glm_mat4_identity(rects[i]->inv_inertia);
@@ -277,16 +282,16 @@ int main() {
     rects[i]->inv_inertia[1][1] = (12.0 * rects[i]->inv_mass) / 5.0;
     rects[i]->inv_inertia[2][2] = (12.0 * rects[i]->inv_mass) / 4.25;
 
-    status = insert_entity(rects[i]);
+    status = sim_add_entity(sim, rects[i], ALLOW_HURT_BOXES);
     if (status) {
       cleanup_gl();
       return 1;
     }
   }
 
-  floor_entity->type |= T_DRIVING;// | T_IMMUTABLE;
+  floor_entity->type |= T_IMMUTABLE;
   glm_mat4_zero(floor_entity->inv_inertia);
-  status = insert_entity(floor_entity);
+  status = sim_add_entity(sim, floor_entity, ALLOW_DEFAULT);
   if (status != 0) {
     cleanup_gl();
     return 1;
@@ -297,6 +302,14 @@ int main() {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     } else {
       glfwSetInputMode(window, GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+    }
+
+    float current_time = glfwGetTime();
+    DELTA_TIME = current_time - LAST_FRAME;
+    LAST_FRAME = current_time;
+
+    if (DELTA_TIME > 0.25) {
+      DELTA_TIME = 0.01;
     }
 
     keyboard_input(window);
@@ -329,10 +342,13 @@ int main() {
     vec3 displacement = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(player->translation, displacement);
 
-    status = simulate_frame();
-    if (status != 0) {
-      break;
+    integrate_sim(sim);
+    COLLISION *collisions = NULL;
+    size_t num_collisions = get_sim_collisions(sim, &collisions);
+    for (size_t i = 0; i < num_collisions; i++) {
+      impulse_resolution(sim, collisions[i]);
     }
+    free(collisions);
 
     //featherstone_abm(ragdoll);
     //integrate_ragdoll(ragdoll);
@@ -439,6 +455,11 @@ int main() {
       draw_entity(test_shader, rects[i]);
     }
 
+    vec3 pos = { 0.0, 0.0, 0.0 };
+    glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 0.0);
+    draw_oct_tree(cube, sim->oct_tree, pos, sim->oct_tree->max_extent,
+                  test_shader, 0, 1);
+
     /* Misc */
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     render_ui();
@@ -450,7 +471,7 @@ int main() {
     glfwPollEvents();
   }
 
-  end_simulation();
+  free_sim(sim);
   free_entity(player);
   free_entity(ragdoll);
   free_entity(box_entity);
@@ -615,6 +636,12 @@ vec3 quad_translate[8] = {
                       };
 void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
                    unsigned int shader, size_t offset, int depth) {
+  if (tree->node_buffer[offset].head_offset == INVALID_INDEX &&
+      tree->node_buffer[offset].tail_offset == INVALID_INDEX) {
+    glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 1.0, 0.0);
+  } else {
+    glUniform3f(glGetUniformLocation(shader, "test_col"), 0.0, 1.0, 1.0);
+  }
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   glm_translate(model, pos);
   glm_scale_uni(model, scale);
@@ -625,7 +652,6 @@ void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
   vec3 temp = { 0.0, 0.0, 0.0 };
   if (tree->node_buffer[offset].next_offset != -1 && depth < 5) {
     for (int i = 0; i < 8; i++) {
-      glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 1.0, 0.0);
       glm_vec3_scale(quad_translate[i], scale / 2.0, temp);
       glm_vec3_add(pos, temp, temp);
       draw_oct_tree(cube, tree, temp, scale / 2.0, shader,
@@ -635,7 +661,7 @@ void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
 }
 
 void keyboard_input(GLFWwindow *window) {
-  float cam_speed = 4.0 * delta_time;
+  float cam_speed = 4.0 * DELTA_TIME;
   glm_vec3_zero(movement);
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera_model_rot = glm_rad(-yaw + 180.0);

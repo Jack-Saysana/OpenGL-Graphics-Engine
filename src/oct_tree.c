@@ -1,22 +1,28 @@
 #include <oct_tree.h>
 
-OCT_TREE *init_tree() {
+// ======================= INITIALIZATION AND CLEANUP ========================
+
+OCT_TREE *init_tree(float max_extent, unsigned int max_depth) {
+  if (max_extent <= 0.0) {
+    return NULL;
+  }
+
   OCT_TREE *tree = malloc(sizeof(OCT_TREE));
   if (tree == NULL) {
-    printf("Unable to allocate oct-tree\n");
+    fprintf(stderr, "Error: Unable to allocate oct-tree\n");
     return NULL;
   }
 
   tree->node_buffer = malloc(sizeof(OCT_NODE) * OCT_TREE_STARTING_LEN);
   if (tree->node_buffer == NULL) {
-    printf("Unable to allocate oct nodes\n");
+    fprintf(stderr, "Error: Unable to allocate oct nodes\n");
     free(tree);
     return NULL;
   }
 
   tree->data_buffer = malloc(sizeof(PHYS_OBJ) * BUFF_STARTING_LEN);
   if (tree->data_buffer == NULL) {
-    printf("Unable to allocate node data\n");
+    fprintf(stderr, "Error: Unable to allocate node data\n");
     free(tree->node_buffer);
     free(tree);
     return NULL;
@@ -28,56 +34,63 @@ OCT_TREE *init_tree() {
   tree->data_buff_size = BUFF_STARTING_LEN;
 
   tree->node_buffer[0].empty = 1;
-  tree->node_buffer[0].next_offset = -1;
-  tree->type = 0xBAADF00D;
+  tree->node_buffer[0].next_offset = INVALID_INDEX;
+
+  tree->max_extent = max_extent;
+  tree->max_depth = max_depth;
 
   return tree;
 }
 
+void free_oct_tree(OCT_TREE *tree) {
+  free(tree->data_buffer);
+  free(tree->node_buffer);
+  free(tree);
+}
+
+// =========================== OCT TREE OPERATIONS ===========================
+
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
-  if (tree == NULL || entity == NULL || tree->type > EVENT_TREE ||
+  if (tree == NULL || entity == NULL ||
       collider_offset >= entity->model->num_colliders) {
-    printf("Invalid insertion input\n");
+    fprintf(stderr, "Error: Invalid oct-tree insertion input\n");
     return -1;
   }
 
-  vec3 max_extent = { 16.0, 16.0, 16.0 };
-  vec3 min_extent = { -16.0, -16.0, -16.0 };
+  vec3 max_extent = { tree->max_extent, tree->max_extent, tree->max_extent };
+  vec3 min_extent = { -tree->max_extent, -tree->max_extent,
+                      -tree->max_extent };
   float max_extents[6];
 
+  COLLIDER *raw_col = entity->model->colliders + collider_offset;
   COLLIDER obj;
-  obj.data = entity->model->colliders[collider_offset].data;
-  obj.type = entity->model->colliders[collider_offset].type;
   int bone = entity->model->collider_bone_links[collider_offset];
 
-  mat4 model = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(entity, model);
-  if (obj.type == POLY) {
-    for (unsigned int i = 0; i < obj.data.num_used; i++) {
-      if (bone >= 0 && bone < entity->model->num_colliders) {
-        glm_mat4_mulv3(entity->final_b_mats[bone],
-                       entity->model->colliders[collider_offset].data.verts[i],
-                       1.0, obj.data.verts[i]);
-      }
-
-      glm_mat4_mulv3(model, obj.data.verts[i], 1.0, obj.data.verts[i]);
+  mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+  mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(entity, entity_to_world);
+  if (bone != -1) {
+    glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
+                  bone_to_entity);
+    if (raw_col->type == POLY) {
+      glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
+    } else {
+      glm_vec4(raw_col->data.center, 1.0, bone_to_entity[3]);
     }
+    glm_mat4_mul(entity_to_world, entity->final_b_mats[bone], entity_to_world);
+  }
+  global_collider(bone_to_entity, entity_to_world, raw_col, &obj);
 
+  if (obj.type == POLY) {
     vec3 *verts = obj.data.verts;
     unsigned int num_used = obj.data.num_used;
-    max_extents[0] = obj.data.verts[max_dot(verts, num_used, X)][0];
-    max_extents[1] = obj.data.verts[max_dot(verts, num_used, NEG_X)][0];
-    max_extents[2] = obj.data.verts[max_dot(verts, num_used, Y)][1];
-    max_extents[3] = obj.data.verts[max_dot(verts, num_used, NEG_Y)][1];
-    max_extents[4] = obj.data.verts[max_dot(verts, num_used, Z)][2];
-    max_extents[5] = obj.data.verts[max_dot(verts, num_used, NEG_Z)][2];
+    max_extents[0] = obj.data.verts[max_dot(verts, num_used, X_DIR)][0];
+    max_extents[1] = obj.data.verts[max_dot(verts, num_used, NEG_X_DIR)][0];
+    max_extents[2] = obj.data.verts[max_dot(verts, num_used, Y_DIR)][1];
+    max_extents[3] = obj.data.verts[max_dot(verts, num_used, NEG_Y_DIR)][1];
+    max_extents[4] = obj.data.verts[max_dot(verts, num_used, Z_DIR)][2];
+    max_extents[5] = obj.data.verts[max_dot(verts, num_used, NEG_Z_DIR)][2];
   } else {
-    if (bone >= 0 && bone < entity->model->num_colliders) {
-      glm_mat4_mulv3(entity->final_b_mats[bone],
-                     entity->model->colliders[collider_offset].data.center,
-                     1.0, obj.data.center);
-    }
-    glm_mat4_mulv3(model, obj.data.center, 1.0, obj.data.center);
     float radius = obj.data.radius;
 
     max_extents[0] = obj.data.center[0] + radius;
@@ -97,7 +110,7 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   int depth = 1;
   int inserting = 1;
   while (inserting) {
-    if (depth == MAX_DEPTH) {
+    if (depth == tree->max_depth) {
       inserting = 0;
       status = append_buffer(tree, cur_offset, entity, collider_offset);
       if (status != 0) {
@@ -114,7 +127,7 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
           return -1;
         }
       } else {
-        if (tree->node_buffer[cur_offset].next_offset == -1) {
+        if (tree->node_buffer[cur_offset].next_offset == INVALID_INDEX) {
           status = init_node(tree, tree->node_buffer + cur_offset);
           if (status != 0) {
             printf("Unable to allocate node children\n");
@@ -131,48 +144,72 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   return 0;
 }
 
-/* Obj offset is the 1-indexed position of the element to delete, NOT the zero
- * indexed position. This is because 0 is reserved for an invalid position */
-int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
-  if (tree == NULL || obj_offset > tree->data_buff_len+1 || obj_offset < 1 ||
-      tree->type > EVENT_TREE) {
-    printf("Invalid deletion input\n");
+int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
+  if (tree == NULL || entity == NULL ||
+      collider_offset >= entity->model->num_colliders) {
+    fprintf(stderr, "Error: Invalid oct-tree deletion input\n");
     return -1;
   }
-  obj_offset--;
 
-  OCT_NODE *node = tree->node_buffer +
-                   tree->data_buffer[obj_offset].node_offset;
-  if (node->empty) {
-    return 0;
+  COLLIDER *raw_col = entity->model->colliders + collider_offset;
+  COLLIDER obj;
+  int bone = entity->model->collider_bone_links[collider_offset];
+
+  mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+  mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(entity, entity_to_world);
+  if (bone != -1) {
+    glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
+                  bone_to_entity);
+    if (raw_col->type == POLY) {
+      glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
+    } else {
+      glm_vec4(raw_col->data.center, 1.0, bone_to_entity[3]);
+    }
+    glm_mat4_mul(entity_to_world, entity->final_b_mats[bone], entity_to_world);
+  }
+  global_collider(bone_to_entity, entity_to_world, raw_col, &obj);
+
+  COLLISION_RES candidates = oct_tree_search(tree, &obj);
+  if (candidates.list == NULL) {
+    return -1;
   }
 
-  PHYS_OBJ *obj = tree->data_buffer + obj_offset;
+  PHYS_OBJ *cur_cand = NULL;
+  for (size_t i = 0; i < candidates.list_len; i++) {
+    cur_cand = candidates.list[i];
+    if (cur_cand->entity == entity &&
+        cur_cand->collider_offset == collider_offset) {
+      size_t obj_offset = tree->data_buffer[cur_cand->next_offset].prev_offset;
 
-  // Extract from node
-  remove_from_list(tree, obj_offset);
-  obj->entity->tree_offsets[obj->collider_offset][tree->type] = INVALID;
+      // Extract from node
+      remove_from_list(tree, obj_offset);
 
-  // Swap with end of the list
-  size_t end_offset = tree->data_buff_len - 1;
-  if (obj_offset != end_offset) {
-    obj->entity = tree->data_buffer[end_offset].entity;
-    obj->collider_offset = tree->data_buffer[end_offset].collider_offset;
-    obj->node_offset = tree->data_buffer[end_offset].node_offset;
+      // Swap with end of the list
+      size_t end_offset = tree->data_buff_len - 1;
+      if (obj_offset != end_offset) {
+        cur_cand->entity = tree->data_buffer[end_offset].entity;
+        cur_cand->collider_offset = tree->data_buffer[end_offset].
+                                    collider_offset;
+        cur_cand->node_offset = tree->data_buffer[end_offset].node_offset;
 
-    obj->entity->tree_offsets[obj->collider_offset][tree->type] = obj_offset+1;
+        remove_from_list(tree, end_offset);
+        add_to_list(tree, obj_offset, cur_cand->node_offset);
+      }
 
-    remove_from_list(tree, end_offset);
-    add_to_list(tree, obj_offset, obj->node_offset);
+      // Delete node
+      tree->data_buffer[end_offset].entity = NULL;
+      tree->data_buffer[end_offset].collider_offset = INVALID_INDEX;
+      tree->data_buffer[end_offset].node_offset = INVALID_INDEX;
+      tree->data_buffer[end_offset].next_offset = INVALID_INDEX;
+      tree->data_buffer[end_offset].prev_offset = INVALID_INDEX;
+      (tree->data_buff_len)--;
+
+      break;
+    }
   }
 
-  // Delete node
-  tree->data_buffer[end_offset].entity = NULL;
-  tree->data_buffer[end_offset].collider_offset = INVALID_VAL;
-  tree->data_buffer[end_offset].node_offset = INVALID_VAL;
-  tree->data_buffer[end_offset].next_offset = INVALID_VAL;
-  tree->data_buffer[end_offset].prev_offset = INVALID_VAL;
-  (tree->data_buff_len)--;
+  free(candidates.list);
 
   return 0;
 }
@@ -180,30 +217,31 @@ int oct_tree_delete(OCT_TREE *tree, size_t obj_offset) {
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
   COLLISION_RES res = { NULL, 0, 0 };
   if (tree == NULL || col == NULL) {
-    printf("Invalid search input\n");
+    fprintf(stderr, "Error: Invalid oct-tree search input\n");
     return res;
   }
 
   res.list = malloc(sizeof(PHYS_OBJ) * BUFF_STARTING_LEN);
   if (res.list == NULL) {
-    printf("Unable to allocate search list\n");
+    fprintf(stderr, "Error: Unable to allocate oct-tree search list\n");
     return res;
   }
   res.list_buff_size = BUFF_STARTING_LEN;
 
-  vec3 max_extent = { 16.0, 16.0, 16.0 };
-  vec3 min_extent = { -16.0, -16.0, -16.0 };
+  vec3 max_extent = { tree->max_extent, tree->max_extent, tree->max_extent };
+  vec3 min_extent = { -tree->max_extent, -tree->max_extent,
+                      -tree->max_extent };
 
   float max_extents[6];
   if (col->type == POLY) {
     vec3 *verts = col->data.verts;
     unsigned int num_used = col->data.num_used;
-    max_extents[0] = col->data.verts[max_dot(verts, num_used, X)][0];
-    max_extents[1] = col->data.verts[max_dot(verts, num_used, NEG_X)][0];
-    max_extents[2] = col->data.verts[max_dot(verts, num_used, Y)][1];
-    max_extents[3] = col->data.verts[max_dot(verts, num_used, NEG_Y)][1];
-    max_extents[4] = col->data.verts[max_dot(verts, num_used, Z)][2];
-    max_extents[5] = col->data.verts[max_dot(verts, num_used, NEG_Z)][2];
+    max_extents[0] = col->data.verts[max_dot(verts, num_used, X_DIR)][0];
+    max_extents[1] = col->data.verts[max_dot(verts, num_used, NEG_X_DIR)][0];
+    max_extents[2] = col->data.verts[max_dot(verts, num_used, Y_DIR)][1];
+    max_extents[3] = col->data.verts[max_dot(verts, num_used, NEG_Y_DIR)][1];
+    max_extents[4] = col->data.verts[max_dot(verts, num_used, Z_DIR)][2];
+    max_extents[5] = col->data.verts[max_dot(verts, num_used, NEG_Z_DIR)][2];
   } else {
     vec3 center = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(col->data.center, center);
@@ -230,7 +268,7 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
       return res;
     }
 
-    if (depth == MAX_DEPTH ||
+    if (depth == tree->max_depth ||
         tree->node_buffer[cur_offset].next_offset == -1) {
       searching = 0;
     } else {
@@ -251,25 +289,28 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
   return res;
 }
 
-void free_oct_tree(OCT_TREE *tree) {
-  free(tree->data_buffer);
-  free(tree->node_buffer);
-  free(tree);
+// ============================= MISC OPERATIONS ==--=========================
+
+size_t get_all_colliders(OCT_TREE *tree, PHYS_OBJ **dest) {
+  *dest = tree->data_buffer;
+  return tree->data_buff_len;
 }
+
+// ================================= HELPERS =================================
 
 int init_node(OCT_TREE *tree, OCT_NODE *parent) {
   if (tree == NULL || parent == NULL) {
-    printf("Invalid node inputs\n");
+    fprintf(stderr, "Error: Invalid oct-node inputs\n");
     return -1;
   }
 
   parent->next_offset = tree->node_buff_len;
 
   for (size_t i = tree->node_buff_len; i < tree->node_buff_len + 8; i++) {
-    tree->node_buffer[i].head_offset = INVALID_VAL;
-    tree->node_buffer[i].tail_offset = INVALID_VAL;
+    tree->node_buffer[i].head_offset = INVALID_INDEX;
+    tree->node_buffer[i].tail_offset = INVALID_INDEX;
     tree->node_buffer[i].empty = 1;
-    tree->node_buffer[i].next_offset = -1;
+    tree->node_buffer[i].next_offset = INVALID_INDEX;
   }
   tree->node_buff_len += 8;
 
@@ -295,7 +336,8 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
       status = double_buffer((void **) &(res->list), &res->list_buff_size,
                              sizeof(PHYS_OBJ *));
       if (status != 0) {
-        printf("Unable to reallocate collision response list\n");
+        fprintf(stderr,
+                "Error: Unable to reallocate collision response list\n");
         return -1;
       }
     }
@@ -338,7 +380,7 @@ int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
     }
     top--;
 
-    if (cur->next_offset != -1) {
+    if (cur->next_offset != INVALID_INDEX) {
       for (OCTANT i = X_Y_Z; i <= negX_negY_negZ; i++) {
         stack[top] = tree->node_buffer + (cur->next_offset + i);
         top++;
@@ -366,8 +408,6 @@ int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
   tree->data_buffer[buff_len].node_offset = node_offset;
   tree->data_buffer[buff_len].collider_offset = collider_offset;
   tree->data_buffer[buff_len].entity = entity;
-
-  entity->tree_offsets[collider_offset][tree->type] = buff_len+1;
 
   (tree->data_buff_len)++;
   if (tree->data_buff_len == tree->data_buff_size) {
@@ -406,9 +446,9 @@ int remove_from_list(OCT_TREE *tree, size_t obj_offset) {
   OCT_NODE *node = tree->node_buffer + obj->node_offset;
 
   if (node->head_offset == node->tail_offset) {
-    obj->node_offset = INVALID_VAL;
-    node->head_offset = INVALID_VAL;
-    node->tail_offset = INVALID_VAL;
+    obj->node_offset = INVALID_INDEX;
+    node->head_offset = INVALID_INDEX;
+    node->tail_offset = INVALID_INDEX;
     node->empty = 1;
     return 0;
   }

@@ -4,6 +4,7 @@
 #include <cglm/quat.h>
 #include <const.h>
 #include <entity_str.h>
+#include <simulation_str.h>
 
 #define BUFF_STARTING_LEN (10)
 
@@ -17,12 +18,12 @@
 
 #define DAMP_FACTOR (0.999)
 
-vec3 U_DIR = { 0.0, 1.0, 0.0 };
-vec3 D_DIR = { 0.0, -1.0, 0.0 };
-vec3 L_DIR = { 1.0, 0.0, 0.0 };
-vec3 R_DIR = { -1.0, 1.0, 0.0 };
-vec3 F_DIR = { 0.0, 1.0, 1.0 };
-vec3 B_DIR = { 0.0, 1.0, -1.0 };
+static vec3 U_DIR = { 0.0, 1.0, 0.0 };
+static vec3 D_DIR = { 0.0, -1.0, 0.0 };
+static vec3 L_DIR = { 1.0, 0.0, 0.0 };
+static vec3 R_DIR = { -1.0, 1.0, 0.0 };
+static vec3 F_DIR = { 0.0, 1.0, 1.0 };
+static vec3 B_DIR = { 0.0, 1.0, -1.0 };
 
 typedef enum {
   LINE = 2,
@@ -42,34 +43,23 @@ typedef struct face_heap {
   size_t buff_size;
 } F_HEAP;
 
-typedef struct collision_args {
-  ENTITY *entity;
-  vec3 *velocity;
-  vec3 *ang_velocity;
-  mat4 inv_inertia;
-  versor rotation;
-  vec3 center_of_mass;
-  float inv_mass;
-  int type;
-} COL_ARGS;
-
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
+int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir);
+int triangle_check(vec3 A, vec3 B, vec3 C, unsigned int *num_used, vec3 dir);
 void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest);
 void calc_dir_line(vec3 a, vec3 b, vec3 dir);
-int triangle_check(vec3 A, vec3 B, vec3 C, unsigned int *num_used, vec3 dir);
-int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir);
+float calc_face_dist(vec3 a, vec3 b, vec3 c, vec3 dest_norm);
+int add_unique_edges(int (**u_edges)[2], size_t *num_edges, size_t *e_buff_size,
+                     int a, int b);
 F_HEAP *init_face_heap();
 int insert_face(F_HEAP *heap, int a, int b, int c, vec3 norm, float dist);
 void remove_face(F_HEAP *heap, size_t index, ivec3 d_ind, vec3 d_norm);
 void free_faces(F_HEAP *heap);
-int add_unique_edges(int (**u_edges)[2], size_t *num_edges, size_t *e_buff_size,
-                     int a, int b);
-float calc_face_dist(vec3 a, vec3 b, vec3 c, vec3 dest_norm);
 void intersection_point(vec3 a, vec3 b, vec3 c, vec3 d, vec3 norm, vec3 dest);
-int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void vec3_remove_noise(vec3 vec, float threshold);
+int max_dot(vec3 *verts, unsigned int len, vec3 dir);

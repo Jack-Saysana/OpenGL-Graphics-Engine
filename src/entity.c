@@ -11,25 +11,13 @@ ENTITY *init_entity(MODEL *model) {
   }
 
   if (model->num_colliders > 0) {
-    ent->tree_offsets = malloc(sizeof(size_t) * NUM_OCT_TREES *
-                               model->num_colliders);
-    if (ent->tree_offsets == NULL) {
-      free(ent);
-      return NULL;
-    }
-
     ent->np_data = malloc(sizeof(P_DATA) * model->num_colliders);
     if (ent->np_data == NULL) {
-      free(ent->tree_offsets);
       free(ent);
       return NULL;
     }
 
     for (size_t i = 0; i < model->num_colliders; i++) {
-      ent->tree_offsets[i][PHYS_TREE] = INVALID;
-      ent->tree_offsets[i][HIT_TREE] = INVALID;
-      ent->tree_offsets[i][EVENT_TREE] = INVALID;
-
       // TEMP
       glm_vec3_zero(ent->np_data[i].velocity);
       glm_vec3_zero(ent->np_data[i].ang_velocity);
@@ -59,14 +47,12 @@ ENTITY *init_entity(MODEL *model) {
       ent->np_data[i].joint_angle = 0.0;
     }
   } else {
-    ent->tree_offsets = NULL;
     ent->np_data = NULL;
   }
 
   if (model->num_bones > 0) {
     ent->bone_mats = malloc(sizeof(mat4) * 3 * model->num_bones);
     if (ent->bone_mats == NULL) {
-      free(ent->tree_offsets);
       free(ent->np_data);
       free(ent);
       return NULL;
@@ -74,7 +60,6 @@ ENTITY *init_entity(MODEL *model) {
 
     ent->final_b_mats = malloc(sizeof(mat4) * model->num_bones);
     if (ent->final_b_mats == NULL) {
-      free(ent->tree_offsets);
       free(ent->bone_mats);
       free(ent->np_data);
       free(ent);
@@ -99,12 +84,11 @@ ENTITY *init_entity(MODEL *model) {
   glm_vec3_one(ent->scale);
   glm_vec3_zero(ent->translation);
 
-  ent->list_offsets[0] = 0xBAADF00D;
-  ent->list_offsets[1] = 0xBAADF00D;
   glm_vec3_zero(ent->velocity);
   glm_vec3_zero(ent->ang_velocity);
   ent->inv_mass = 0.0;
   ent->type = 0;
+  ent->data = NULL;
 
   return ent;
 }
@@ -252,9 +236,6 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
 }
 
 void free_entity(ENTITY *entity) {
-  if (entity->tree_offsets) {
-    free(entity->tree_offsets);
-  }
   if (entity->bone_mats) {
     free(entity->bone_mats);
     free(entity->final_b_mats);
