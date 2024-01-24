@@ -1,6 +1,7 @@
+
 # OpenGL Rendering Engine
 
-## Overview:
+## Introduction/Overview:
 
 This repository serves as a codebase for my OpenGL based graphics engine, initially built using C++ via a variety of libraries, but now refactored for full development in C. Currently, this project supports a variety of features to speed up graphical development such as:
 
