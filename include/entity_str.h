@@ -166,26 +166,27 @@ typedef struct p_data {
 } P_DATA;
 
 typedef struct entity {
+  // Pointer to miscelaneous data to link entity to other information
+  void *data;
+
   MODEL *model;
-  /* Location, rotation and scale matricies for each bone */
+  // Location, rotation and scale matricies for each bone
   mat4 (*bone_mats)[3];
-  /* "Narrow" physics data for each collider */
+  // "Narrow" physics data for each collider
   P_DATA *np_data;
-  /* Model matrix for each bone, including those inherited by parent bones */
+  // Model matrix for each bone, including those inherited by parent bones
   mat4 *final_b_mats;
   mat4 inv_inertia;
-  /* Broad entity-based transformations */
+  // Broad entity-based transformations
   versor rotation;
   vec3 scale;
   vec3 translation;
-  /* "Broad" physics data. Used when entire entity is a single physics
-     object */
+  // "Broad" physics data. Used when entire entity is a single physics object
   vec3 velocity;
   vec3 ang_velocity;
   float inv_mass;
-  //float mass;
-  /* Physics system status
-     Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC] */
+  // Physics system status
+  // Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC]
   int type;
 } ENTITY;
 

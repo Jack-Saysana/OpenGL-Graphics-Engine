@@ -4,7 +4,7 @@ The engine provides an interface for quickly creating and rendering custom UI me
 
 The UI system is hierarchical in nature, with all custom UI components extending from a single blank "root" UI component. The "root" UI component is an invisible box, taking up the width and height of the viewport.
 
-The hierarchical nature of UI components mean every UI component is rendered in relation to it's parent component. This allows for the easy definition of common menu types like lists, grids, text boxes, etc. More info about the nuances of this hierarchical system can be found [below](#### UI Component Options ).
+The hierarchical nature of UI components mean every UI component is rendered in relation to it's parent component. This allows for the easy definition of common menu types like lists, grids, text boxes, etc. More info about the nuances of this hierarchical system can be found [below](#ui-component-options).
 
 After initializing the UI module, custom UI components can then be created, edited and rendered. Some of the properties held by UI components are:
 
@@ -21,10 +21,6 @@ In order to use the UI component functionality, the `init_ui` function must be c
 ### Functions
 
 ```int init_ui()```
-
-**Arguments:**
-
-N/A
 
 **Returns:**
 
@@ -52,7 +48,7 @@ int main() {
 
 ## Creating UI Components
 
-UI Components are primarily created with the `add_ui_comp()` function. Much of the UI component's functionality is set to default values, with the ability to further customize the component with the [editing functions](#Editing UI Components).
+UI Components are primarily created with the `add_ui_comp()` function. Much of the UI component's functionality is set to default values, with the ability to further customize the component with the [editing functions](#editing-ui-components).
 
 ### UI Component options
 
@@ -149,7 +145,7 @@ The options are as follows:
 
 - `float height`: The height of the new UI component. Interpretation by renderer is defined by `options`.
 
-- `int options`: Bitmap defining interpretation of pos, width, height, and other UI attributes. Format and nuances described [above](# UI Component Options).
+- `int options`: Bitmap defining interpretation of pos, width, height, and other UI attributes. Format and nuances described [above](#ui-component-options).
 
 **Returns**
 
