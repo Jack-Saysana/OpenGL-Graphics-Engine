@@ -4,6 +4,10 @@ With an entity system defined for storing state data of model instances, an addi
 
 These simulations are represented by the `SIMULATION` struct. These seperate simulations track their own `COLLIDERS`, with helper functions created to facilitate integration, collision detection, and collision response. These simulations can also be used for different purposes, with one for physics simulation, another for combat simulation, and another for event triggers, for example.
 
+## Global Variables
+
+The simulation system makes usage of the `DELTA_TIME` global variable for integrating colliders. The onus is on the developer to continually update `DELTA_TIME` each frame so that integration may be supported.
+
 ## Initialization and Clean-Up
 
 ### Functions

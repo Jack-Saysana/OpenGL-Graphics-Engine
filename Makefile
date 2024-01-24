@@ -5,8 +5,10 @@ SRC_DIR = ./src
 FILES = $(wildcard ./src/*.c)
 SRC_FILES = $(filter-out ./src/test.c, $(FILES))
 TEST_FILES = $(filter-out ./src/main.c, $(FILES))
+LIB_FILES = $(filter-out ./src/main.c ./src/test.c ./src/test_init.c, $(FILES))
 SRC_OBJS = $(SRC_FILES:%=$(BUILD_DIR)/%.o)
 TEST_OBJS = $(TEST_FILES:%=$(BUILD_DIR)/%.o)
+LIB_OBJS = $(LIB_FILES:%=$(BUILD_DIR)/%.l)
 DEPS = $(OBJS:.o=.d)
 DFLAGS = -g -O0 -Wall -Werror -MMD -MP
 
@@ -25,23 +27,35 @@ else
 	endif
 endif
 
-.PHONY: clean run debug test
+.PHONY: clean run debug test main
 
-all: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)
+all: ./bin/src ./bin/include $(BUILD_DIR)/$(PROJ_NAME)
 
 test: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_TEST
 
-$(BUILD_DIR)/$(PROJ_NAME): $(SRC_OBJS)
-	$(CC) $(LIBS) $(SRC_OBJS) -o $@ $(LINK)
+main: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_MAIN
+
+$(BUILD_DIR)/$(PROJ_NAME): $(LIB_OBJS)
+	$(CC) -shared -o $(BUILD_DIR)/libengine.so $(LIB_OBJS)
+	cp ./include/interface/* $(BUILD_DIR)/include
 
 $(BUILD_DIR)/$(PROJ_NAME)_TEST: $(TEST_OBJS)
 	$(CC) $(LIBS) $(TEST_OBJS) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
 
+$(BUILD_DIR)/$(PROJ_NAME)_MAIN: $(SRC_OBJS)
+	$(CC) $(LIBS) $(SRC_OBJS) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
+
 $(BUILD_DIR)/%.c.o: %.c
 	$(CC) $(DFLAGS) $(INCLUDE) -c $< -o $@
 
+$(BUILD_DIR)/%.c.l: %.c
+	$(CC) $(DFLAGS) $(INCLUDE) -c -fPIC -o $@ $<
+
 ./bin/src:
 	mkdir -p ./bin/src
+
+./bin/include:
+	mkdir ./bin/include
 
 clean:
 	rm -rf $(BUILD_DIR)

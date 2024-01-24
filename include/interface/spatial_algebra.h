@@ -1,5 +1,5 @@
-#ifndef __SPATIAL_ALGEBRA_H__
-#define __SPATIAL_ALGEBRA_H__
+#ifndef __ENGINE_SPATIAL_ALGEBRA_H__
+#define __ENGINE_SPATIAL_ALGEBRA_H__
 
 #include <cglm/vec3.h>
 #include <cglm/mat3.h>
