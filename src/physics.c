@@ -11,6 +11,12 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
     return 0;
   }
 
+  // Test simple sphere-sphere case
+  if (a->type == SPHERE && b->type == SPHERE) {
+    float dist = glm_vec3_distance(a->data.center, b->data.center);
+    return dist <= a->data.radius + b->data.radius;
+  }
+
   vec3 dir = { 1.0, 0.0, 0.0 };
   //vec3 simplex[4];
   support_func(a, b, dir, simplex[0]);
@@ -56,6 +62,15 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
  */
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth) {
+  // Simple sphere-sphere case
+  if (a->type == SPHERE && b->type == SPHERE) {
+    float dist = glm_vec3_distance(a->data.center, b->data.center);
+    glm_vec3_sub(b->data.center, a->data.center, p_dir);
+    glm_vec3_normalize(p_dir);
+    *p_depth = (a->data.radius + b->data.radius) - dist;
+    return 0;
+  }
+
   vec3 *polytope = malloc(sizeof(vec3) * BUFF_STARTING_LEN);
   if (polytope == NULL) {
     return -1;
@@ -250,12 +265,26 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   vec3 a_face[4];
   vec3 a_norm = GLM_VEC3_ZERO_INIT;
   glm_vec3_copy(a->data.verts[starting_index], a_face[0]);
+
+  // TODO In the event of an infinite, uncomment this stuff to check if the
+  // face test threshold needs adjusting
+  //fprintf(stderr, "a[0]: %f, %f, %f\n", a_face[0][X], a_face[0][Y], a_face[0][Z]);
+
   unsigned int a_face_len = 1;
   for (unsigned int i = 1; i < num_used; i++) {
     cur_index = (starting_index + i) % num_used;
     glm_vec3_sub(a->data.verts[cur_index], a_face[0], cur_vert);
+    glm_vec3_normalize(cur_vert);
     face_test = glm_vec3_dot(ap_vec, cur_vert);
-    if ((face_test >= -0.0001 && face_test <= 0.0001) &&
+
+    // TODO In the event of an infinite, uncomment this stuff to check if the
+    // face test threshold needs adjusting
+    //fprintf(stderr, "cur_index: %d, %f, %f, %f => %f, %f, %f => %f\n",
+    //        cur_index, a->data.verts[cur_index][X],
+    //        a->data.verts[cur_index][Y], a->data.verts[cur_index][Z],
+    //        cur_vert[X], cur_vert[Y], cur_vert[Z], face_test);
+
+    if ((face_test >= -0.0005 && face_test <= 0.0005) &&
         (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
       glm_vec3_copy(a->data.verts[cur_index], a_face[a_face_len]);
       a_face_len++;
@@ -291,12 +320,27 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   vec3 b_face[8];
   vec3 b_norm = GLM_VEC3_ZERO_INIT;
   glm_vec3_copy(b->data.verts[starting_index], b_face[0]);
+
+  // TODO In the event of an infinite, uncomment this stuff to check if the
+  // face test threshold needs adjusting
+  //fprintf(stderr, "b[0]: %f, %f, %f\n", b_face[0][X], b_face[0][Y],
+  //        b_face[0][Z]);
+
   unsigned int b_face_len = 1;
   for (unsigned int i = 1; i < num_used; i++) {
     cur_index = (starting_index + i) % num_used;
     glm_vec3_sub(b->data.verts[cur_index], b_face[0], cur_vert);
+    glm_vec3_normalize(cur_vert);
     face_test = glm_vec3_dot(bp_vec, cur_vert);
-    if ((face_test >= -0.0001 && face_test <= 0.0001) &&
+
+    // TODO In the event of an infinite, uncomment this stuff to check if the
+    // face test threshold needs adjusting
+    //fprintf(stderr, "cur_index: %d, %f, %f, %f => %f, %f, %f => %f\n",
+    //        cur_index, b->data.verts[cur_index][X],
+    //        b->data.verts[cur_index][Y], b->data.verts[cur_index][Z],
+    //        cur_vert[X], cur_vert[Y], cur_vert[Z], face_test);
+
+    if ((face_test >= -0.0005 && face_test <= 0.0005) &&
         (cur_vert[0] != 0.0 || cur_vert[1] != 0.0 || cur_vert[2] != 0.0)) {
       glm_vec3_copy(b->data.verts[cur_index], b_face[b_face_len]);
       b_face_len++;
@@ -315,7 +359,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
 
   // Surface of collision is just a point
   if (b_face_len == POINT_COL) {
-    glm_vec3_copy(a_face[0], dest);
+    glm_vec3_copy(b_face[0], dest);
     return;
   }
 
@@ -373,6 +417,15 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     }
 
     glm_vec3_center(col_edge[0], col_edge[1], dest);
+
+    if (isnan(dest[X]) || isnan(dest[Y]) || isnan(dest[Y]) ||
+        isinf(dest[X]) || isinf(dest[Y]) || isinf(dest[Z])) {
+      // FAILSAFE: Due to floating point inaccuracy, one of the collision faces
+      // is not correct, so the collision point is turning out to be NaN.
+      // Prevent a crash/inf. loop by simply returning an approximation, which
+      // is just one of the points on the collision face.
+      glm_vec3_copy(a_face[0], dest);
+    }
     return;
   }
 
@@ -433,6 +486,15 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   dest[0] /= b_face_len;
   dest[1] /= b_face_len;
   dest[2] /= b_face_len;
+
+  if (isnan(dest[X]) || isnan(dest[Y]) || isnan(dest[Y]) ||
+      isinf(dest[X]) || isinf(dest[Y]) || isinf(dest[Z])) {
+    // FAILSAFE: Due to floating point inaccuracy, one of the collision faces
+    // is not correct, so the collision point is turning out to be NaN.
+    // Prevent a crash/inf. loop by simply returning an approximation, which is
+    // just one of the points on the collision face.
+    glm_vec3_copy(a_face[0], dest);
+  }
 
   return;
 }
@@ -786,6 +848,15 @@ void free_faces(F_HEAP *heap) {
 // Perform actual physical calculations upon collision
 void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
                      vec3 p_loc) {
+  if (a_args->inv_mass == 0.0 && b_args->inv_mass == 0.0) {
+    // Halt all movement if both colliders are of infinite mass
+    glm_vec3_zero((*a_args->velocity));
+    glm_vec3_zero((*b_args->velocity));
+    glm_vec3_zero((*a_args->ang_velocity));
+    glm_vec3_zero((*b_args->ang_velocity));
+    return;
+  }
+
   vec3 a_vel = GLM_VEC3_ZERO_INIT;
   vec3 a_ang_vel = GLM_VEC3_ZERO_INIT;
   glm_vec3_copy(*(a_args->velocity), a_vel);
@@ -864,16 +935,13 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   // (m1^-1 + m2^-1 + (I1^-1 * (r1 x n) x r1 + I2^-1 * (r2 x n) x r2) * n
   float impulse_den = a_args->inv_mass + b_args->inv_mass +
                       glm_vec3_dot(angular_comp, col_normal);
+
   // Total impulse
   float impulse = impulse_nume / impulse_den;
 
   // CHANGE IN VELOCITY: (impulse / m) * n
   vec3 delta_va = GLM_VEC3_ZERO_INIT;
   glm_vec3_scale(col_normal, impulse * a_args->inv_mass, delta_va);
-
-  if (isnan(delta_va[0])) {
-    printf("\n");
-  }
 
   // CHANGE IN ANG VELOCITY: impulse * I^-1(r x n)
   vec3 delta_ang_va = GLM_VEC3_ZERO_INIT;
@@ -984,6 +1052,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
     glm_vec3_sub(delta_ang_vb, delta_ang_vb_f, delta_ang_vb);
   }
 #endif
+
   // Dampen and update ang velocity
   glm_vec3_scale(b_ang_vel, DAMP_FACTOR, b_ang_vel);
   glm_vec3_sub(b_ang_vel, delta_ang_vb, b_ang_vel);

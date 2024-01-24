@@ -353,10 +353,6 @@ void set_ui_options(UI_COMP *comp, int options) {
   comp->numerical_options = options;
 }
 
-void set_ui_enabled(UI_COMP *comp, int enabled) {
-  comp->enabled = enabled;
-}
-
 void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
                      void *args) {
   comp->on_click = cb;
