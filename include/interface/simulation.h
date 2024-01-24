@@ -1,6 +1,9 @@
 #ifndef __ENGINE_SIMULATION_H__
 #define __ENGINE_SIMULATION_H__
 
+#include "./simulation_str.h"
+#include "./entity_str.h"
+
 SIMULATION *init_sim();
 void free_sim(SIMULATION *sim);
 

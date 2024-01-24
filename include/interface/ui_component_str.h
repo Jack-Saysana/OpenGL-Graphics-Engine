@@ -2,6 +2,8 @@
 #define __ENGINE_UI_COMPONENT_STR_H__
 
 #include <cglm/vec2.h>
+#include <cglm/vec3.h>
+#include "./font_str.h"
 
 /*
                                UI_COMPONENT_STR.h

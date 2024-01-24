@@ -327,11 +327,13 @@ void set_ui_display(UI_COMP *comp, int display) {
   comp->display = display;
 }
 
-void set_ui_text(UI_COMP *comp, char *str, float line_height, vec3 col) {
+void set_ui_text(UI_COMP *comp, char *str, float line_height, F_GLYPH *font,
+                 vec3 col) {
   comp->text = str;
   comp->text_len = strlen(str);
   comp->line_height = line_height;
   glm_vec3_copy(col, comp->text_col);
+  comp->font = font;
 }
 
 void set_ui_text_col(UI_COMP *comp, vec3 col) {
@@ -420,7 +422,7 @@ void render_comp(UI_COMP *comp) {
                        screen_pos[Y] * ui_root.pix_height,
                        comp->pix_pos[Z] }, ui_root.pix_width,
               ui_root.pix_height, comp->pix_width, comp->pix_line_height,
-              text_shader);
+              comp->font, text_shader);
   }
 }
 

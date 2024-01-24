@@ -1,5 +1,5 @@
-#ifndef __FONT_STR_H__
-#define __FONT_STR_H__
+#ifndef __ENGINE_FONT_STR_H__
+#define __ENGINE_FONT_STR_H__
 
 typedef struct font_glyph {
   // Vertex info for rendering
