@@ -1,4 +1,5 @@
-#include <init.h>
+#include <test_init.h>
+#include <string.h>
 
 unsigned int shader;
 unsigned int u_shader;
@@ -14,6 +15,7 @@ MODEL *floor_model;
 MODEL *platform;
 MODEL *sphere;
 MODEL *vector;
+MODEL *quad;
 
 ENTITY *player;
 ENTITY *obstacle;
@@ -23,10 +25,13 @@ ENTITY *sphere_entity;
 ENTITY **boxes;
 ENTITY **spheres;
 ENTITY **rects;
-const int NUM_BOXES = 1;
-const int NUM_SPHERES = 1;
-const int NUM_RECTS = 1;
+const int NUM_BOXES = 0;
+const int NUM_SPHERES = 0;
+const int NUM_RECTS = 0;
 ENTITY *ragdoll;
+
+F_GLYPH *font;
+int font_len;
 
 extern vec3 m_box_pos;
 extern vec3 m_box_scale;
@@ -115,7 +120,11 @@ int init_scene() {
   }
 
   test = load_model(
-      DIR"/resources/test/test.obj"
+      //DIR"/resources/three_link/three_link_2.obj"
+      //DIR"/resources/three_link/three_link.obj"
+      //DIR"/resources/two_link/two_link.obj"
+      //DIR"/resources/dual_link/dual_link.obj"
+      DIR"/resources/three_link/three_link_4.obj"
       );
   if (test == NULL) {
     printf("Unable to load test model\n");
@@ -151,6 +160,21 @@ int init_scene() {
       );
   if (vector == NULL) {
     printf("Unable to load vector model\n");
+    return -1;
+  }
+
+  quad = load_model(
+      DIR"/resources/quad/quad.obj"
+      );
+  if (quad == NULL) {
+    printf("Unable to load quad model\n");
+    return -1;
+  }
+
+  font_len = import_font(DIR"/resources/font/fixed_sys.bin",
+                         DIR"/resources/font/fixed_sys.png", &font);
+  if (font_len == -1) {
+    fprintf(stderr, "Unable to load font\n");
     return -1;
   }
 
@@ -195,7 +219,8 @@ int init_scene() {
       printf("Unable to load moveable box: %d\n", i);
       return -1;
     }
-    m_box_pos[2] -= 1.0;
+    m_box_pos[1] = (float) (i % 10);
+    m_box_pos[2] = (float) (i / 10);
     glm_vec3_copy(m_box_pos, boxes[i]->translation);
     glm_vec3_copy(m_box_scale, boxes[i]->scale);
   }
@@ -207,7 +232,8 @@ int init_scene() {
       fprintf(stderr, "Unable to load moveable sphere: %d\n", i);
       return -1;
     }
-    m_sphere_pos[0] += 1.0;
+    m_sphere_pos[1] = (float) (i % 10);
+    m_sphere_pos[2] = (float) (i / 10);
     glm_vec3_copy(m_sphere_pos, spheres[i]->translation);
     glm_vec3_copy(m_sphere_scale, spheres[i]->scale);
   }
@@ -219,12 +245,14 @@ int init_scene() {
       fprintf(stderr, "Unable to load moveable rect prism: %d\n", i);
       return -1;
     }
-    m_rect_pos[2] += 1.0;
+    m_rect_pos[1] = (float) (i % 10);
+    m_rect_pos[2] = (float) (i / 10);
     glm_vec3_copy(m_rect_pos, rects[i]->translation);
     glm_vec3_copy(m_rect_scale, rects[i]->scale);
   }
 
-  ragdoll = init_entity(dude);
+  ragdoll = init_entity(test);
+  //ragdoll = init_entity(dude);
   glm_vec3_copy(ragdoll_pos, ragdoll->translation);
   if (ragdoll == NULL) {
     printf("Unable to load ragdoll\n");

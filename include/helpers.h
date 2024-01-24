@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <cglm/vec3.h>
+#include <glad/glad.h>
+#include <cglm/cglm.h>
 
 #define LINE_BUFF_STARTING_LEN (50)
 #define FILE_CONTENTS_STARTING_LEN (500)

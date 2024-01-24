@@ -4,7 +4,6 @@
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-#include <cglm/mat4.h>
 #include <entity_str.h>
 
 #define VERTEX_BUFF_STARTING_LEN (10)
@@ -42,7 +41,7 @@ typedef struct vbo {
 } VBO;
 
 MODEL *load_model(char *);
-unsigned int genTextureId(char *tex_path);
+int gen_texture_id(char *tex_path, unsigned int *);
 LINE_BUFFER *get_lines(char *);
 int preprocess_lines(LINE_BUFFER *);
 void free_line_buffer(LINE_BUFFER *);

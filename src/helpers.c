@@ -261,3 +261,68 @@ void vec3_remove_noise(vec3 vec, float threshold) {
     vec[2] = 0.0;
   }
 }
+
+/*
+ * ================== REMOVE_NOISE =======================
+ *
+ * Zeros out a float given a specific threshold
+ *
+ * =======================================================
+ */
+float remove_noise(float val, float threshold) {
+  if (val < threshold && val > -threshold) {
+    return 0;
+  } else {
+    return val;
+  }
+}
+
+/*
+  The following functions are helpers to consicely set up uniform variables in
+  shaders
+*/
+void set_mat4(char *name, mat4 matrix, unsigned int shader) {
+  glUniformMatrix4fv(glGetUniformLocation(shader, name), 1, GL_FALSE,
+                     (float *) matrix);
+}
+
+void set_mat3(char *name, mat3 matrix, unsigned int shader) {
+  glUniformMatrix3fv(glGetUniformLocation(shader, name), 1, GL_FALSE,
+                     (float *) matrix);
+}
+
+void set_vec4(char *name, vec4 matrix, unsigned int shader) {
+  glUniform4fv(glGetUniformLocation(shader, name), 1, (float *) matrix);
+}
+
+void set_vec3(char *name, vec3 v, unsigned int shader) {
+  glUniform3fv(glGetUniformLocation(shader, name), 1, (float *) v);
+}
+
+void set_vec2(char *name, vec2 v, unsigned int shader) {
+  glUniform2fv(glGetUniformLocation(shader, name), 1, (float *) v);
+}
+
+void set_float(char *name, float val, unsigned int shader) {
+  glUniform1f(glGetUniformLocation(shader, name), val);
+}
+
+void set_int(char *name, int val, unsigned int shader) {
+  glUniform1i(glGetUniformLocation(shader, name), val);
+}
+
+void set_uint(char *name, unsigned int val, unsigned int shader) {
+  glUniform1ui(glGetUniformLocation(shader, name), val);
+}
+
+void set_iarr(char *name, int *arr, size_t count, unsigned int shader) {
+  glUniform1iv(glGetUniformLocation(shader, name), count, arr);
+}
+
+void set_texture(char *name, unsigned int tex, unsigned int shader, int unit) {
+  glUseProgram(shader);
+  glActiveTexture(GL_TEXTURE0 + unit);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glUniform1i(glGetUniformLocation(shader, name), unit);
+}
+

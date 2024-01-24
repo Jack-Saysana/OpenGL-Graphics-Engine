@@ -60,8 +60,8 @@ int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame) {
   mat4 from_bone = GLM_MAT4_IDENTITY_INIT;
   for (size_t i = 0; i < entity->model->num_bones; i++) {
     parent = entity->model->bones[i].parent;
-    glm_vec3_negate_to(entity->model->bones[i].coords, temp);
-    glm_translate(to_bone, entity->model->bones[i].coords);
+    glm_vec3_negate_to(entity->model->bones[i].base, temp);
+    glm_translate(to_bone, entity->model->bones[i].base);
     glm_translate(from_bone, temp);
 
     glm_mat4_mul(from_bone, bone_mats[i][SCALE], final_mats[i]);

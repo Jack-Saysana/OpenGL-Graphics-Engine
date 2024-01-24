@@ -21,14 +21,14 @@ MODEL *load_model(char *path) {
     }
   }
 
-  size_t b_len;
-  size_t col_len;
-  size_t v_len;
-  size_t i_len;
-  size_t a_len;
-  size_t total_chains;
-  size_t total_keyframes;
-  size_t total_frames;
+  size_t b_len = 0;
+  size_t col_len = 0;
+  size_t v_len = 0;
+  size_t i_len = 0;
+  size_t a_len = 0;
+  size_t total_chains = 0;
+  size_t total_keyframes = 0;
+  size_t total_frames = 0;
   fread(&b_len, sizeof(size_t), 1, file);
   fread(&col_len, sizeof(size_t), 1, file);
   fread(&v_len, sizeof(size_t), 1, file);
@@ -38,8 +38,8 @@ MODEL *load_model(char *path) {
   fread(&total_keyframes, sizeof(size_t), 1, file);
   fread(&total_frames, sizeof(size_t), 1, file);
 
-  int material_flag;
-  int path_len;
+  int material_flag = 0;
+  int path_len = 0;
   MATERIAL *obj_mat = NULL;
   fread(&material_flag, sizeof(int), 1, file);
   if (material_flag) {
@@ -56,11 +56,19 @@ MODEL *load_model(char *path) {
   }
 
   BONE *bones = NULL;
+  int *collider_links = NULL;
   if (b_len) {
     bones = malloc(sizeof(BONE) * b_len);
     if (bones == NULL) {
       fclose(file);
       printf("Unable to allocate bone buffer\n");
+      return NULL;
+    }
+    collider_links = malloc(sizeof(int) * b_len);
+    if (collider_links == NULL) {
+      fclose(file);
+      free(bones);
+      printf("Unable to allocate collider_links\n");
       return NULL;
     }
   }
@@ -71,6 +79,7 @@ MODEL *load_model(char *path) {
     if (vertices == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       printf("Unable to allocate vertex buffer\n");
       return NULL;
     }
@@ -82,6 +91,7 @@ MODEL *load_model(char *path) {
     if (indicies == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       printf("Unable to allocate indicies buffer\n");
       return NULL;
@@ -94,6 +104,7 @@ MODEL *load_model(char *path) {
     if (animations == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       printf("Unable to allocate animation buffer\n");
@@ -105,6 +116,7 @@ MODEL *load_model(char *path) {
   if (model == NULL) {
     fclose(file);
     free(bones);
+    free(collider_links);
     free(vertices);
     free(indicies);
     free(animations);
@@ -119,6 +131,7 @@ MODEL *load_model(char *path) {
     if (k_chain_block == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -135,6 +148,7 @@ MODEL *load_model(char *path) {
     if (keyframe_block == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -152,6 +166,7 @@ MODEL *load_model(char *path) {
     if (sled_block == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -170,6 +185,7 @@ MODEL *load_model(char *path) {
     if (colliders == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -184,6 +200,7 @@ MODEL *load_model(char *path) {
     if (bone_links == NULL) {
       fclose(file);
       free(bones);
+      free(collider_links);
       free(vertices);
       free(indicies);
       free(animations);
@@ -199,6 +216,9 @@ MODEL *load_model(char *path) {
 
   if (bones) {
     fread(bones, sizeof(BONE), b_len, file);
+  }
+  if (collider_links) {
+    fread(collider_links, sizeof(int), b_len, file);
   }
   if (colliders) {
     fread(colliders, sizeof(COLLIDER), col_len, file);
@@ -293,6 +313,7 @@ MODEL *load_model(char *path) {
   model->keyframe_block = keyframe_block;
   model->sled_block = sled_block;
   model->bones = bones;
+  model->bone_collider_links = collider_links;
   model->colliders = colliders;
   model->collider_bone_links = bone_links;
   model->num_animations = a_len;
@@ -303,7 +324,7 @@ MODEL *load_model(char *path) {
   if (obj_mat != NULL) {
     for (int i = 0; i < NUM_PROPS; i++) {
       if (obj_mat->mat_paths[i] != NULL) {
-        model->textures[i] = genTextureId(obj_mat->mat_paths[i]);
+        gen_texture_id(obj_mat->mat_paths[i], model->textures + i);
       } else {
         model->textures[i] = 0xBAADF00D;
       }
@@ -323,28 +344,40 @@ MODEL *load_model(char *path) {
   return model;
 }
 
-unsigned int genTextureId(char *tex_path) {
+int gen_texture_id(char *tex_path, unsigned int *dest) {
   unsigned int texture;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   int width;
   int height;
   int nrChannels;
+  stbi_set_flip_vertically_on_load(1);
   unsigned char *data = stbi_load(tex_path, &width, &height, &nrChannels, 0);
   if (data) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+    int format = GL_RGBA;
+    if (nrChannels == 1) {
+      format = GL_RED;
+    } else if (nrChannels == 2) {
+      format = GL_RG;
+    } else if (nrChannels == 3) {
+      format = GL_RGB;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
                  GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
   } else {
-    printf("Failed to load texture at: %s\n", tex_path);
+    fprintf(stderr, "Failed to load texture at: %s\n", tex_path);
+    return -1;
   }
   stbi_image_free(data);
 
-  return texture;
+  *dest = texture;
+  return 0;
 }
