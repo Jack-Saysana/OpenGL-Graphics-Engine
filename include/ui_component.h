@@ -6,6 +6,7 @@
 #include <const.h>
 #include <entity_str.h>
 #include <ui_component_str.h>
+#include <font_str.h>
 
 #define STK_SIZE_INIT (10)
 
@@ -57,7 +58,7 @@ int gen_texture_id(char *, unsigned int *);
 unsigned int init_shader_prog(char *, char *, char *);
 
 int draw_text(char *, size_t, vec3, TEXT_ANCHOR, vec3, float, float, float,
-              float, unsigned int);
+              float, F_GLYPH *, unsigned int);
 
 void set_mat4(char *, mat4, unsigned int);
 void set_int(char *, int, unsigned int);

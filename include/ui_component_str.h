@@ -2,6 +2,7 @@
 #define __UI_COMPONENT_STR_H__
 
 #include <cglm/vec2.h>
+#include <font_str.h>
 
 /*
                                UI_COMPONENT_STR.h
@@ -85,6 +86,7 @@ typedef struct ui_component {
   size_t num_children;
   size_t child_buf_size;
 
+  F_GLYPH *font;
   char *text;
   size_t text_len;
 
@@ -157,7 +159,7 @@ typedef struct ui_component {
                             NULL, NULL,           \
                             NULL,                 \
                             0, 0,                 \
-                            NULL, 0,              \
+                            NULL, NULL, 0,        \
                             { 0.0, 0.0, 0.0 },    \
                             { 0.0, 0.0, 0.0 },    \
                             0.0, 0.0, 0.0, 0,     \

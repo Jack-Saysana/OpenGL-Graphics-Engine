@@ -212,6 +212,8 @@ Manipulates an entity's bone matricies such that they display a given frame of a
 
 Both the ENTITY and MODEL type can be rendered to the screen via their respective draw functions. Furthermore, debugging draw functions are also provided to render entity data such as colliders and bones.
 
+To learn about quickly importing the shaders to use during render, refer to [this page](./shaders.md).
+
 ### Functions
 
 ```void draw_model(unsigned int shader, MODEL *model)```

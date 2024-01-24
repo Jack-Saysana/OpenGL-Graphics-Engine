@@ -2,8 +2,8 @@
 #define __ENGINE_ENTITY_STR_H__
 
 #include <cglm/mat4.h>
-#include <engine/spatial_algebra.h>
-#include <engine/const.h>
+#include "./spatial_algebra.h"
+#include "./const.h"
 
 typedef enum chain_type {
   LOCATION = 0,

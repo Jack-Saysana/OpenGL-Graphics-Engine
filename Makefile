@@ -37,7 +37,7 @@ main: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_MAIN
 
 $(BUILD_DIR)/$(PROJ_NAME): $(LIB_OBJS)
 	$(CC) -shared -o $(BUILD_DIR)/libengine.so $(LIB_OBJS)
-	cp ./include/interface/* $(BUILD_DIR)/include
+	cp ./include/interface/* $(BUILD_DIR)/include/engine
 
 $(BUILD_DIR)/$(PROJ_NAME)_TEST: $(TEST_OBJS)
 	$(CC) $(LIBS) $(TEST_OBJS) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
@@ -56,6 +56,7 @@ $(BUILD_DIR)/%.c.l: %.c
 
 ./bin/include:
 	mkdir ./bin/include
+	mkdir ./bin/include/engine
 
 clean:
 	rm -rf $(BUILD_DIR)

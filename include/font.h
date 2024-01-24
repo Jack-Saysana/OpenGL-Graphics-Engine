@@ -6,8 +6,6 @@
 #include <ui_component_str.h>
 #include <cglm/cglm.h>
 
-extern F_GLYPH *font;
-
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
 void draw_glyph(F_GLYPH *, unsigned int);

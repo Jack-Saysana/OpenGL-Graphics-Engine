@@ -268,7 +268,7 @@ remain active. To disable these features, instead use `set_ui_enabled`
 
 - `int display`: 0 if component shouldn't be displayed, non-zero if should be displayed
 
-```void set_ui_text(UI_COMP *comp, char *str, float line_height, vec3 col)```
+```void set_ui_text(UI_COMP *comp, char *str, float line_height, F_GLYPH *font, vec3 col)```
 
 Renders text within a UI component.
 
@@ -279,6 +279,8 @@ Renders text within a UI component.
 - `char *str`: Text to render to UI component
 
 - `float line_height`: Line height, which is responsible for scaling the text, interpreted by `options`
+
+- `F_GLYPH *font`: Pointer to font to be used during rendering. For more details about fonts, see [here](./font.md).
 
 - `vec3 col`: RGB color of rendered text
 

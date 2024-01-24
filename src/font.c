@@ -123,7 +123,7 @@ void free_font(F_GLYPH *glyphs, int num_glyphs) {
 
 int draw_text(char *str, size_t str_len, vec3 col, TEXT_ANCHOR txt_anc,
               vec3 pos, float screen_width, float screen_height, float width,
-              float line_height, unsigned int shader) {
+              float line_height, F_GLYPH* font, unsigned int shader) {
   // Calculate the number of lines in the text and the length of each line
   float *line_widths = malloc(sizeof(float) * BUFF_START_LEN);
   if (line_widths == NULL) {
