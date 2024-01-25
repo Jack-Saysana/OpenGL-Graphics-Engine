@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <glad/glad.h>
 #include <float.h>
 #include <cglm/affine.h>
 #include <const.h>
@@ -32,3 +33,4 @@ void get_model_mat(ENTITY *entity, mat4 model);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
                      COLLIDER *source, COLLIDER *dest);
+void draw_model(unsigned int, MODEL *);

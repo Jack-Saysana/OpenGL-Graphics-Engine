@@ -441,7 +441,7 @@ int main() {
 
     glUseProgram(test_shader);
     set_mat4("view", view, test_shader);
-    set_vec3("test_col", (vec3) { 1.0, 1.0, 1.0 }, test_shader);
+    set_vec3("col", (vec3) { 1.0, 1.0, 1.0 }, test_shader);
     draw_entity(test_shader, box_entity);
     draw_entity(test_shader, obstacle);
     draw_entity(test_shader, floor_entity);
@@ -456,7 +456,7 @@ int main() {
     }
 
     vec3 pos = { 0.0, 0.0, 0.0 };
-    glUniform3f(glGetUniformLocation(test_shader, "test_col"), 1.0, 1.0, 0.0);
+    glUniform3f(glGetUniformLocation(test_shader, "col"), 1.0, 1.0, 0.0);
     draw_oct_tree(cube, sim->oct_tree, pos, sim->oct_tree->max_extent,
                   test_shader, 0, 1);
 
@@ -620,42 +620,6 @@ void integrate_ragdoll(ENTITY *subject) {
     } else {
       glm_mat4_copy(subject->final_b_mats[collider_root_bone],
                     subject->final_b_mats[cur_bone]);
-    }
-  }
-}
-
-vec3 quad_translate[8] = {
-                       { 1.0, 1.0, 1.0 }, //  X, Y, Z
-                       { 1.0, 1.0, -1.0 }, //  X, Y,-Z
-                       { 1.0, -1.0, 1.0 }, //  X,-Y, Z
-                       { 1.0, -1.0, -1.0 }, //  X,-Y,-Z
-                       { -1.0, 1.0, 1.0 }, // -X, Y, Z
-                       { -1.0, 1.0, -1.0 }, // -X, Y,-Z
-                       { -1.0, -1.0, 1.0 }, // -X,-Y, Z
-                       { -1.0, -1.0, -1.0 }  // -X,-Y,-Z
-                      };
-void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
-                   unsigned int shader, size_t offset, int depth) {
-  if (tree->node_buffer[offset].head_offset == INVALID_INDEX &&
-      tree->node_buffer[offset].tail_offset == INVALID_INDEX) {
-    glUniform3f(glGetUniformLocation(shader, "test_col"), 1.0, 1.0, 0.0);
-  } else {
-    glUniform3f(glGetUniformLocation(shader, "test_col"), 0.0, 1.0, 1.0);
-  }
-  mat4 model = GLM_MAT4_IDENTITY_INIT;
-  glm_translate(model, pos);
-  glm_scale_uni(model, scale);
-  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                     GL_FALSE, (float *) model);
-  draw_model(shader, cube);
-
-  vec3 temp = { 0.0, 0.0, 0.0 };
-  if (tree->node_buffer[offset].next_offset != -1 && depth < 5) {
-    for (int i = 0; i < 8; i++) {
-      glm_vec3_scale(quad_translate[i], scale / 2.0, temp);
-      glm_vec3_add(pos, temp, temp);
-      draw_oct_tree(cube, tree, temp, scale / 2.0, shader,
-                    tree->node_buffer[offset].next_offset + i, depth + 1);
     }
   }
 }

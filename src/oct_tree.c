@@ -542,3 +542,40 @@ OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
 
   return MULTIPLE;
 }
+
+vec3 quad_translate[8] = {
+                       { 1.0, 1.0, 1.0 }, //  X, Y, Z
+                       { 1.0, 1.0, -1.0 }, //  X, Y,-Z
+                       { 1.0, -1.0, 1.0 }, //  X,-Y, Z
+                       { 1.0, -1.0, -1.0 }, //  X,-Y,-Z
+                       { -1.0, 1.0, 1.0 }, // -X, Y, Z
+                       { -1.0, 1.0, -1.0 }, // -X, Y,-Z
+                       { -1.0, -1.0, 1.0 }, // -X,-Y, Z
+                       { -1.0, -1.0, -1.0 }  // -X,-Y,-Z
+                      };
+void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
+                   unsigned int shader, size_t offset, int depth) {
+  if (tree->node_buffer[offset].head_offset == INVALID_INDEX &&
+      tree->node_buffer[offset].tail_offset == INVALID_INDEX) {
+    glUniform3f(glGetUniformLocation(shader, "col"), 1.0, 1.0, 0.0);
+  } else {
+    glUniform3f(glGetUniformLocation(shader, "col"), 0.0, 1.0, 1.0);
+  }
+  mat4 model = GLM_MAT4_IDENTITY_INIT;
+  glm_translate(model, pos);
+  glm_scale_uni(model, scale);
+  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
+                     GL_FALSE, (float *) model);
+  draw_model(shader, cube);
+
+  vec3 temp = { 0.0, 0.0, 0.0 };
+  if (tree->node_buffer[offset].next_offset != -1 && depth < 5) {
+    for (int i = 0; i < 8; i++) {
+      glm_vec3_scale(quad_translate[i], scale / 2.0, temp);
+      glm_vec3_add(pos, temp, temp);
+      draw_oct_tree(cube, tree, temp, scale / 2.0, shader,
+                    tree->node_buffer[offset].next_offset + i, depth + 1);
+    }
+  }
+}
+
