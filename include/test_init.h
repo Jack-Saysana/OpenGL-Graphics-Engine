@@ -5,10 +5,8 @@
 
 #if WINDOWS
 #define DIR "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine"
-#elif
-#define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
 #else
-#define DIR ""
+#define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
 #endif
 
 int init_scene();

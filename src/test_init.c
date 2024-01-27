@@ -16,6 +16,10 @@ MODEL *platform;
 MODEL *sphere;
 MODEL *vector;
 MODEL *quad;
+MODEL *four_mod;
+MODEL *rs_mod;
+
+#define ARENA_WIDTH (100)
 
 ENTITY *player;
 ENTITY *obstacle;
@@ -29,6 +33,8 @@ const int NUM_BOXES = 0;
 const int NUM_SPHERES = 0;
 const int NUM_RECTS = 0;
 ENTITY *ragdoll;
+ENTITY *four_ent[ARENA_WIDTH * ARENA_WIDTH];
+ENTITY *render_sphere;
 
 F_GLYPH *font;
 int font_len;
@@ -171,6 +177,16 @@ int init_scene() {
     return -1;
   }
 
+  four_mod = load_model(DIR"/resources/vs_test/4_way.obj");
+  if (four_mod == NULL) {
+    fprintf(stderr, "Unable to load 4-way model\n");
+  }
+
+  rs_mod = load_model(DIR"/resources/render_sphere/render_sphere.obj");
+  if (render_sphere == NULL) {
+    fprintf(stderr, "Unable to load render sphere model\n");
+  }
+
   font_len = import_font(DIR"/resources/font/fixed_sys.bin",
                          DIR"/resources/font/fixed_sys.png", &font);
   if (font_len == -1) {
@@ -256,6 +272,24 @@ int init_scene() {
   glm_vec3_copy(ragdoll_pos, ragdoll->translation);
   if (ragdoll == NULL) {
     printf("Unable to load ragdoll\n");
+    return -1;
+  }
+
+  vec3 start = { -ARENA_WIDTH * 2.5, 2.0, -ARENA_WIDTH * 2.5 };
+  for (int i = 0; i < ARENA_WIDTH * ARENA_WIDTH; i++) {
+    four_ent[i] = init_entity(four_mod);
+    if (four_ent == NULL) {
+      fprintf(stderr, "Unable to init 4-way\n");
+      return -1;
+    }
+    glm_vec3_add(start,
+                 (vec3) { (i / ARENA_WIDTH) * 5.0, 0.0, (i % ARENA_WIDTH) * 5.0 },
+                 four_ent[i]->translation);
+  }
+
+  render_sphere = init_entity(rs_mod);
+  if (render_sphere == NULL) {
+    fprintf(stderr, "Unable to init render sphere\n");
     return -1;
   }
 

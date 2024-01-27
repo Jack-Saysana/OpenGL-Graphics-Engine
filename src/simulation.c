@@ -2,14 +2,14 @@
 
 // ========================== CREATION AND DELETION ==========================
 
-SIMULATION *init_sim() {
+SIMULATION *init_sim(float max_extent, unsigned int max_depth) {
   SIMULATION *sim = malloc(sizeof(SIMULATION));
   if (sim == NULL) {
     fprintf(stderr, "Error: Unable to allocate simulation\n");
     return NULL;
   }
 
-  sim->oct_tree = init_tree(16.0, 4);
+  sim->oct_tree = init_tree(max_extent, max_depth);
   if (sim->oct_tree == NULL) {
     free(sim);
     fprintf(stderr, "Error: Unable to initailize simulation oct-tree\n");

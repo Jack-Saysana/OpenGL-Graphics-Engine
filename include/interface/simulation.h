@@ -4,7 +4,7 @@
 #include "./simulation_str.h"
 #include "./entity_str.h"
 
-SIMULATION *init_sim();
+SIMULATION *init_sim(float max_extent, unsigned int max_depth);
 void free_sim(SIMULATION *sim);
 
 int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter);

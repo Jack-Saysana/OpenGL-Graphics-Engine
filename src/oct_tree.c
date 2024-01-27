@@ -101,7 +101,7 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     max_extents[5] = obj.data.center[2] - radius;
   }
 
-  float oct_len = 16.0;
+  float oct_len = tree->max_extent;
 
   OCTANT cur_oct = MULTIPLE;
   size_t cur_offset = 0;
@@ -254,7 +254,7 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
     max_extents[4] = center[2] + radius;
     max_extents[5] = center[2] - radius;
   }
-  float oct_len = 16.0;
+  float oct_len = tree->max_extent;
 
   OCTANT cur_oct = MULTIPLE;
   size_t cur_offset = 0;

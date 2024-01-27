@@ -1,5 +1,8 @@
 #include <main.h>
 
+#define ARENA_WIDTH (100)
+#define RENDER_DISTANCE (10)
+
 // SCENE ELEMENTS
 extern unsigned int shader;
 extern unsigned int u_shader;
@@ -16,6 +19,7 @@ extern MODEL *platform;
 extern MODEL *sphere;
 extern MODEL *vector;
 extern MODEL *quad;
+extern MODEL *four_mod;
 
 extern ENTITY *player;
 extern ENTITY *obstacle;
@@ -29,6 +33,8 @@ extern const int NUM_BOXES;
 extern const int NUM_SPHERES;
 extern const int NUM_RECTS;
 extern ENTITY *ragdoll;
+extern ENTITY *four_ent[ARENA_WIDTH * ARENA_WIDTH];
+extern ENTITY *render_sphere;
 
 extern F_GLYPH *font;
 extern int font_len;
@@ -85,6 +91,10 @@ int main() {
     cleanup_gl();
     return 1;
   }
+  glm_vec3_copy((vec3) {RENDER_DISTANCE, RENDER_DISTANCE, RENDER_DISTANCE },
+                render_sphere->scale);
+  // Ensure collision always checked on render sphere
+  render_sphere->velocity[X] = 0.01;
 
   vec3 cube_col = GLM_VEC3_ONE_INIT;
   vec3 s_col = GLM_VEC3_ONE_INIT;
@@ -172,8 +182,10 @@ int main() {
   */
 
   // SIMULATION SET UP
-
-  SIMULATION *sim = init_sim();
+  float max_extents = 1024.0;
+  unsigned int max_depth = 9;
+  SIMULATION *render_sim = init_sim(max_extents, max_depth);
+  SIMULATION *sim = init_sim(max_extents, max_depth);
   if (status) {
     return 1;
   }
@@ -183,6 +195,13 @@ int main() {
   player->type |= T_DRIVING;
   player->inv_mass = 1.0;
   status = sim_add_entity(sim, player, ALLOW_DEFAULT);
+  if (status != 0) {
+    cleanup_gl();
+    return 1;
+  }
+
+  render_sphere->type |= T_DRIVING;
+  status = sim_add_entity(render_sim, render_sphere, ALLOW_DEFAULT);
   if (status != 0) {
     cleanup_gl();
     return 1;
@@ -232,6 +251,18 @@ int main() {
     glfwTerminate();
   }
   */
+
+  for (int i = 0; i < ARENA_WIDTH * ARENA_WIDTH; i++) {
+    four_ent[i]->type |= T_IMMUTABLE;
+    status = sim_add_entity(sim, four_ent[i], ALLOW_HURT_BOXES);
+    if (status != 0) {
+      glfwTerminate();
+    }
+    status = sim_add_entity(render_sim, four_ent[i], ALLOW_DEFAULT);
+    if (status != 0) {
+      glfwTerminate();
+    }
+  }
 
   for (int i = 0; i < NUM_BOXES; i++) {
     boxes[i]->inv_mass = 1.0;
@@ -289,6 +320,7 @@ int main() {
     }
   }
 
+  /*
   floor_entity->type |= T_IMMUTABLE;
   glm_mat4_zero(floor_entity->inv_inertia);
   status = sim_add_entity(sim, floor_entity, ALLOW_DEFAULT);
@@ -296,6 +328,7 @@ int main() {
     cleanup_gl();
     return 1;
   }
+  */
 
   while (!glfwWindowShouldClose(window)) {
     if (CURSOR_ENABLED) {
@@ -341,6 +374,7 @@ int main() {
     glm_vec3_add(movement, player->velocity, player->velocity);
     vec3 displacement = { 0.0, 0.0, 0.0 };
     glm_vec3_copy(player->translation, displacement);
+    glm_vec3_copy(player->translation, render_sphere->translation);
 
     integrate_sim(sim);
     COLLISION *collisions = NULL;
@@ -416,16 +450,32 @@ int main() {
     draw_colliders(basic_shader, player, sphere);
     //draw_colliders(basic_shader, ragdoll, sphere);
     //draw_colliders(basic_shader, obstacle, sphere);
-    draw_colliders(basic_shader, floor_entity, sphere);
+    //draw_colliders(basic_shader, floor_entity, sphere);
     for (int i = 0; i < NUM_BOXES; i++) {
       draw_colliders(basic_shader, boxes[i], sphere);
     }
 
+    // Only render within render distance
+    num_collisions = get_sim_collisions(render_sim, &collisions);
+    for (size_t i = 0; i < num_collisions; i++) {
+      if (collisions[i].a_ent == render_sphere ||
+          collisions[i].b_ent == render_sphere) {
+        if (collisions[i].a_ent != render_sphere) {
+          draw_colliders(basic_shader, collisions[i].a_ent, sphere);
+        } else if (collisions[i].b_ent != render_sphere) {
+          draw_colliders(basic_shader, collisions[i].b_ent, sphere);
+        }
+      }
+    }
+    free(collisions);
+
     set_vec3("test_col", cube_col, basic_shader);
-    draw_colliders(basic_shader, box_entity, sphere);
+    //draw_colliders(basic_shader, box_entity, sphere);
 
     set_vec3("test_col", s_col, basic_shader);
-    draw_colliders(basic_shader, sphere_entity, sphere);
+    //draw_colliders(basic_shader, sphere_entity, sphere);
+
+    draw_colliders(basic_shader, render_sphere, sphere);
 
     /* Player */
 
@@ -442,9 +492,9 @@ int main() {
     glUseProgram(test_shader);
     set_mat4("view", view, test_shader);
     set_vec3("col", (vec3) { 1.0, 1.0, 1.0 }, test_shader);
-    draw_entity(test_shader, box_entity);
-    draw_entity(test_shader, obstacle);
-    draw_entity(test_shader, floor_entity);
+    //draw_entity(test_shader, box_entity);
+    //draw_entity(test_shader, obstacle);
+    //draw_entity(test_shader, floor_entity);
     for (int i = 0; i < NUM_BOXES; i++) {
       draw_entity(test_shader, boxes[i]);
     }
@@ -454,11 +504,16 @@ int main() {
     for (int i = 0; i < NUM_RECTS; i++) {
       draw_entity(test_shader, rects[i]);
     }
+    /*
+    for (int i = 0; i < ARENA_WIDTH * ARENA_WIDTH; i++) {
+      draw_entity(test_shader, four_ent[i]);
+    }
+    */
 
-    vec3 pos = { 0.0, 0.0, 0.0 };
-    glUniform3f(glGetUniformLocation(test_shader, "col"), 1.0, 1.0, 0.0);
-    draw_oct_tree(cube, sim->oct_tree, pos, sim->oct_tree->max_extent,
-                  test_shader, 0, 1);
+    //vec3 pos = { 0.0, 0.0, 0.0 };
+    //glUniform3f(glGetUniformLocation(test_shader, "col"), 1.0, 1.0, 0.0);
+    //draw_oct_tree(cube, sim->oct_tree, pos, sim->oct_tree->max_extent,
+    //              test_shader, 0, 1);
 
     /* Misc */
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

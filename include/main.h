@@ -55,7 +55,7 @@ void free_model(MODEL *model);
 void free_entity(ENTITY *entity);
 
 int simulate_frame(SIMULATION *sim);
-SIMULATION *init_sim();
+SIMULATION *init_sim(float, unsigned int);
 void free_sim(SIMULATION *sim);
 int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter);
 int sim_remove_entity(SIMULATION *sim, ENTITY *entity);
