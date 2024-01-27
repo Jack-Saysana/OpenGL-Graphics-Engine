@@ -428,7 +428,11 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'a') {
       cur_anim = animations + a_len;
       memset(cur_anim, 0, sizeof(ANIMATION));
+#ifdef __linux__
       sscanf(cur_line, "a %ld", &(cur_anim->duration));
+#else
+      sscanf(cur_line, "a %lld", &(cur_anim->duration));
+#endif
       cur_anim->keyframe_chains = malloc(sizeof(K_CHAIN) * BUFF_STARTING_LEN);
       cur_anim->num_chains = 0;
       cur_anim_buff_len = BUFF_STARTING_LEN;

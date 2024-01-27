@@ -3,16 +3,10 @@
 #include <entity_str.h>
 #include <font_str.h>
 
-#define LINUX (1)
-#define LAPTOP (0)
-#define PC (0)
-
-#if LINUX == 1
-#define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
-#elif LAPTOP == 1
-#define DIR "C:/Users/jackm/Documents/C/OpenGL-Graphics-Engine"
-#elif PC == 1
+#if WINDOWS
 #define DIR "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine"
+#elif
+#define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
 #else
 #define DIR ""
 #endif

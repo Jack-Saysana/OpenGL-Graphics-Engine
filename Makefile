@@ -13,9 +13,10 @@ DEPS = $(OBJS:.o=.d)
 DFLAGS = -g -O0 -Wall -Werror -MMD -MP
 
 ifeq ($(OS),Windows_NT)
+	DEVICE += -DWINDOWS
 	LIBS += -L ./lib
 	INCLUDE += -I ./include
-	LINK += -l:glfw3.dll -l:libcglm.a
+	LINK += -l:glfw3.dll -l:libcglm.a -lopengl32
 else
 	detected_OS = $(shell uname)
 	ifeq ($(detected_OS),Linux)
@@ -36,17 +37,18 @@ test: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_TEST
 main: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_MAIN
 
 $(BUILD_DIR)/$(PROJ_NAME): $(LIB_OBJS)
-	$(CC) -shared -o $(BUILD_DIR)/libengine.so $(LIB_OBJS)
+#	$(CC) $(LIBS) -shared -o $(BUILD_DIR)/libengine.so $(LIB_OBJS) $(LINK)
+	ar rcs $(BUILD_DIR)/libengine.a $(LIB_OBJS)
 	cp ./include/interface/* $(BUILD_DIR)/include/engine
 
 $(BUILD_DIR)/$(PROJ_NAME)_TEST: $(TEST_OBJS)
-	$(CC) $(LIBS) $(TEST_OBJS) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
+	$(CC) $(LIBS) $(TEST_OBJS) $(DEVICE) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
 
 $(BUILD_DIR)/$(PROJ_NAME)_MAIN: $(SRC_OBJS)
 	$(CC) $(LIBS) $(SRC_OBJS) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
 
 $(BUILD_DIR)/%.c.o: %.c
-	$(CC) $(DFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(DFLAGS) $(DEVICE) $(INCLUDE) -c $< -o $@
 
 $(BUILD_DIR)/%.c.l: %.c
 	$(CC) $(DFLAGS) $(INCLUDE) -c -fPIC -o $@ $<
