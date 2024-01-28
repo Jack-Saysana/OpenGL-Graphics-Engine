@@ -4,7 +4,8 @@
 #include "./ui_component_str.h"
 #include "./font_str.h"
 
-int init_ui();
+int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs,
+            char *text_fs);
 int free_ui();
 
 int import_font(char *, char *, F_GLYPH);

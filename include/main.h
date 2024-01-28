@@ -73,7 +73,8 @@ void free_oct_tree(OCT_TREE *tree);
 void get_model_mat(ENTITY *entity, mat4 model);
 void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
 
-int init_ui();
+int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs,
+            char *text_fs);
 int free_ui();
 UI_COMP *add_ui_comp(UI_COMP *, vec2, float, float, int);
 int render_ui();

@@ -129,11 +129,12 @@ int main() {
   glBindVertexArray(0);
 
   // UI SET UP
-  init_ui();
+  init_ui("resources/quad/quad.obj", "src/shaders/ui/shader.vs",
+          "src/shaders/ui/shader.fs", "src/shaders/font/shader.vs",
+          "src/shaders/font/shader.fs");
   UI_COMP *c1 = add_ui_comp(UI_ROOT_COMP, (vec2) { 0.5, -0.5 }, 0.75, 0.5,
                             ABSOLUTE_POS | POS_UNIT_RATIO |
                             WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y);
-  set_ui_enabled(c1, 0);
   set_ui_pivot(c1, PIVOT_CENTER);
   set_ui_texture(c1, "resources/ui/ui_bg.png");
   //set_ui_on_click(c1, test_callback_click, NULL);
@@ -159,7 +160,7 @@ int main() {
   set_ui_on_hover(c1, test_callback_hover, (void *) tool_tip);
   set_ui_no_hover(c1, test_callback_no_hover, (void *) tool_tip);
   set_manual_layer(c1, 0.2);
-  set_ui_enabled(c1, 0);
+  //set_ui_enabled(c1, 0);
 
   /*
   UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,

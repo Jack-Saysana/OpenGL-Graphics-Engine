@@ -7,14 +7,18 @@
   further creation/usage of UI components.
 
   Parameters:
-  float res_x: Screen width in pixels
-  float res_y: Screen height in pixels
+  char *quad_path: Path to base quad model
+  char *ui_vs: Path to ui vertex shader
+  char *ui_fs: Path to ui fragment shader
+  char *text_vs: Path to text vertex shader
+  char *text_fs: Path to text fragment shader
 
   Returns:
   0 if successful
   -1 if error has occured
 */
-int init_ui() {
+int init_ui(char *quad_path, char *ui_vs, char *ui_fs,
+            char *text_vs, char *text_fs) {
   // Initialize root ui component
   int status = init_ui_comp(&ui_root, "", GLM_VEC3_ZERO, GLM_VEC3_ZERO, 0.0,
                             0.0, 0.0, 0, PIVOT_CENTER, T_CENTER,
@@ -29,7 +33,7 @@ int init_ui() {
   glm_vec3_copy((vec3) { 0.0, 0.0, 0.1 }, ui_root.pix_pos);
 
   // Initialized base quad model used for rendering ui components
-  ui_quad = load_model("resources/quad/quad.obj");
+  ui_quad = load_model(quad_path);
   if (ui_quad == NULL) {
     free_ui_comp(&ui_root);
     fprintf(stderr, "Error loading ui quad models\n");
@@ -37,11 +41,7 @@ int init_ui() {
   }
 
   // Initialize shaders used for rendering ui components
-  ui_shader = init_shader_prog(
-      "src/shaders/ui/shader.vs",
-      NULL,
-      "src/shaders/ui/shader.fs"
-      );
+  ui_shader = init_shader_prog(ui_vs, NULL, ui_fs);
   if (ui_shader == -1) {
     free_ui_comp(&ui_root);
     free_model(ui_quad);
@@ -49,11 +49,7 @@ int init_ui() {
     return -1;
   }
 
-  text_shader = init_shader_prog(
-      "src/shaders/font/shader.vs",
-      NULL,
-      "src/shaders/font/shader.fs"
-      );
+  text_shader = init_shader_prog(text_vs, NULL, text_fs);
   if (text_shader == -1) {
     free_ui_comp(&ui_root);
     free_model(ui_quad);

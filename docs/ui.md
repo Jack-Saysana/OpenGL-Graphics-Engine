@@ -20,7 +20,19 @@ In order to use the UI component functionality, the `init_ui` function must be c
 
 ### Functions
 
-```int init_ui()```
+```int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs, char *text_fs)```
+
+**Arguments:**
+
+- `char *quad_path`: Path to quad model which will be used as the base object for rendering ui components.
+
+- `char *ui_vs`: Path to the vertex shader which will be used for rendering ui components.
+
+- `char *ui_fs`: Path to the fragment shader which will be used for rendering ui components.
+
+- `char *text_vs`: Path to the vertex shader which will be used for rendering ui text.
+
+- `char *text_fs`: Path to the fragment shader which will be used for rendering ui text.
 
 **Returns:**
 
@@ -32,7 +44,8 @@ In order to use the UI component functionality, the `init_ui` function must be c
 int main() {
   // Rest of your init code
   ...
-  int status = init_ui();
+  int status = init_ui("path/to/quad.obj", "path/to/ui.vs", "path/to/ui.fs",
+                       "path/to/text.vs", "path/to/text.fs");
   if (status == -1) {
     exit(1);
   }
