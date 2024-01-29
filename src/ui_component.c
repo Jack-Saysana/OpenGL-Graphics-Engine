@@ -323,11 +323,12 @@ void set_ui_display(UI_COMP *comp, int display) {
   comp->display = display;
 }
 
-void set_ui_text(UI_COMP *comp, char *str, float line_height, F_GLYPH *font,
-                 vec3 col) {
+void set_ui_text(UI_COMP *comp, char *str, float line_height,
+                 TEXT_ANCHOR txt_anc, F_GLYPH *font, vec3 col) {
   comp->text = str;
   comp->text_len = strlen(str);
   comp->line_height = line_height;
+  comp->txt_anc = txt_anc;
   glm_vec3_copy(col, comp->text_col);
   comp->font = font;
 }

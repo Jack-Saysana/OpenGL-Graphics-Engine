@@ -143,7 +143,8 @@ int main() {
   UI_COMP *c2 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 128.0, 64.0,
                             RELATIVE_POS | POS_UNIT_PIXEL | SIZE_UNIT_PIXEL);
   set_ui_pivot(c2, PIVOT_TOP_LEFT);
-  set_ui_text(c2, "Hello!\nmy name is\nJack!!!", 16.0, font, GLM_VEC3_ZERO);
+  set_ui_text(c2, "Hello!\nmy name is\nJack!!!", 16.0, T_RIGHT, font,
+              GLM_VEC3_ZERO);
   set_ui_texture(c2, "resources/ui/ui_bg.png");
   //set_ui_on_click(c2, test_callback_click, NULL);
 
