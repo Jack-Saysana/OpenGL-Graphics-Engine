@@ -8,7 +8,7 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs,
             char *text_fs);
 int free_ui();
 
-int import_font(char *, char *, F_GLYPH);
+int import_font(char *, char *, F_GLYPH **);
 
 UI_COMP *add_ui_comp(UI_COMP *, vec3, float, float, int);
 int render_ui();
