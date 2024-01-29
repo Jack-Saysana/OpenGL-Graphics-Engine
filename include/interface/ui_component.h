@@ -16,7 +16,7 @@ int render_ui();
 void set_ui_pos(UI_COMP *, vec2);
 void set_manual_layer(UI_COMP *, float);
 void disable_manual_layer(UI_COMP *);
-void set_ui_pivot(UI_COMP *, int);
+void set_ui_pivot(UI_COMP *, PIVOT);
 void set_ui_display(UI_COMP *, int);
 void set_ui_text(UI_COMP *, char *, float, F_GLYPH *, vec3);
 void set_ui_text_col(UI_COMP *, vec3);
