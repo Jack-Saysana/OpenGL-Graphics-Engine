@@ -12,9 +12,15 @@ The simulation system makes usage of the `DELTA_TIME` global variable for integr
 
 ### Functions
 
-```SIMULATION *init_sim()```
+```SIMULATION *init_sim(float max_extent, unsigned int max_depth)```
 
 Initializes a new simulation for usage.
+
+**Arguments**
+
+- `float max_extent`: Half-width of the cuboid oct tree which contains all objects in the simulation
+
+- `unsigned int max_depth`: Maximum depth of the oct tree which contains all objects in the simulation
 
 **Returns**
 
