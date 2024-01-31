@@ -459,8 +459,7 @@ int render_ui() {
                         };
 
     // Get pixel coordinate of top left of parent
-    glm_vec2_sub(cur_comp->pix_pos, pivot_offset,
-                 top_left);
+    glm_vec2_add(cur_comp->pix_pos, pivot_offset, top_left);
     glm_vec2_add(top_left, (vec2) { -cur_comp->pix_width * 0.5,
                  cur_comp->pix_height * 0.5 }, top_left);
     glm_vec2_copy(top_left, next_rel_pos);
@@ -506,7 +505,7 @@ int render_ui() {
 
 void check_hover_event(UI_COMP *comp) {
   vec2 mouse_pos = { MOUSE_POS[X] - (RES_X * 0.5),
-                     MOUSE_POS[Y] - (RES_Y * 0.5) };
+                     (RES_Y - MOUSE_POS[Y]) - (RES_Y * 0.5) };
   vec2 pivot_offset = {
     UI_PIVOT_OFFSETS[comp->pivot][X] * 0.5 * comp->pix_width,
     UI_PIVOT_OFFSETS[comp->pivot][Y] * 0.5 * comp->pix_height
