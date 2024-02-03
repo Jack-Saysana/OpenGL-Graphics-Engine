@@ -18,6 +18,8 @@
 
 #define DAMP_FACTOR (0.999)
 
+#define MAX_EPA_ITERATIONS (1000)
+
 static vec3 U_DIR = { 0.0, 1.0, 0.0 };
 static vec3 D_DIR = { 0.0, -1.0, 0.0 };
 static vec3 L_DIR = { 1.0, 0.0, 0.0 };
@@ -57,6 +59,7 @@ int insert_face(F_HEAP *heap, int a, int b, int c, vec3 norm, float dist);
 void remove_face(F_HEAP *heap, size_t index, ivec3 d_ind, vec3 d_norm);
 void free_faces(F_HEAP *heap);
 void intersection_point(vec3 a, vec3 b, vec3 c, vec3 d, vec3 norm, vec3 dest);
+float get_width(COLLIDER *, vec3);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 

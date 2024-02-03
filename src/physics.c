@@ -146,6 +146,25 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   float min_dist = -1.0;
   ivec3 cur_face = { 0, 0, 0 };
   while (true) {
+    if (faces->buff_len > MAX_EPA_ITERATIONS) {
+      // Safeguard to engine does not infinite loop due to degenerate cases
+      // Analysis so far:
+      // - This occurs when two similarly sized objects are extremely well
+      //   aligned with one another
+      float a_width = get_width(a, (vec3) {1.0, 0.0, 0.0 });
+      float b_width = get_width(b, (vec3) {1.0, 0.0, 0.0 });
+
+      // Simply push push the two objects apart in the x direction with a
+      // distance equal to the maximum width of the objects
+      glm_vec3_copy((vec3) { 1.0, 0.0, 0.0 }, min_norm);
+      if (a_width > b_width) {
+        min_dist = a_width;
+      } else {
+        min_dist = b_width;
+      }
+      break;
+    }
+
     // Get closest face (PULL FROM TOP OF HEAP)
     min_dist = faces->buffer[0].dist;
 
@@ -190,6 +209,8 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
 
       glm_vec3_sub(polytope[num_verts - 1],
                    polytope[faces->buffer[i].indicies[0]], s_dir);
+      glm_vec3_normalize(s_dir);
+      glm_vec3_normalize(cur_norm);
       if (glm_vec3_dot(cur_norm, /*polytope[num_verts - 1]*/s_dir) > 0) {
         remove_face(faces, i, cur_face, cur_norm);
 
@@ -694,8 +715,14 @@ float calc_face_dist(vec3 a, vec3 b, vec3 c, vec3 dest_norm) {
   glm_vec3_cross(c_min_a, b_min_a, dest_norm);
   glm_vec3_normalize(dest_norm);
 
+  float dist = glm_vec3_dot(dest_norm, a);
+  if (dist < 0.0) {
+    dist *= -1.0;
+    glm_vec3_negate(dest_norm);
+  }
+
   // project one of the points onto normal
-  return glm_vec3_dot(dest_norm, a);
+  return dist;
 }
 
 int add_unique_edges(int (**u_edges)[2], size_t *num_edges, size_t *e_buff_size,
@@ -1086,4 +1113,19 @@ void calc_inertia_tensor(ENTITY *ent, size_t raw_col_offset,
     glm_mat4_scale(dest, i_val);
   }
   dest[3][3] = 1.0;
+}
+
+// Get the max width of a collider in a direction
+float get_width(COLLIDER *col, vec3 dir) {
+  if (col->type == POLY) {
+    vec3 neg_dir = GLM_VEC3_ZERO_INIT;
+    glm_vec3_negate_to(dir, neg_dir);
+
+    vec3 *verts = col->data.verts;
+    vec3 *a = verts + max_dot(verts, col->data.num_used, dir);
+    vec3 *b = verts + max_dot(verts, col->data.num_used, neg_dir);
+    return glm_vec3_distance(*a, *b);
+  } else {
+    return col->data.radius * 2.0;
+  }
 }
