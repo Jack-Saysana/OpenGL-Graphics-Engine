@@ -321,20 +321,17 @@ MODEL *load_model(char *path) {
   model->num_colliders = col_len;
   model->num_indicies = i_len * 3;
 
+  for (int i = 0; i < NUM_PROPS; i++) {
+    model->textures[i] = 0xBAADF00D;
+  }
   if (obj_mat != NULL) {
     for (int i = 0; i < NUM_PROPS; i++) {
       if (obj_mat->mat_paths[i] != NULL) {
         gen_texture_id(obj_mat->mat_paths[i], model->textures + i);
-      } else {
-        model->textures[i] = 0xBAADF00D;
       }
     }
 
     free_materials(obj_mat, 1);
-  } else {
-    for (int i = 0; i < NUM_PROPS; i++) {
-      model->textures[i] = 0xBAADF00D;
-    }
   }
 
   free(bin_path);

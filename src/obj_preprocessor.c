@@ -747,6 +747,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fclose(file);
 
   // =============== EXPORTS .OBJ INFO ONLY ===================
+  /*
   char *simple_bin_path = malloc(strlen(lb->dir) + strlen(lb->filename) + 7);
   sprintf(simple_bin_path, "%s/%s.bin2", lb->dir, lb->filename);
   FILE *simple_file = fopen(simple_bin_path, "wb");
@@ -771,6 +772,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   }
   fwrite(faces, sizeof(int) * 3, f_len, simple_file);
   fclose(simple_file);
+  */
   // ==========================================================
 
   free_line_buffer(lb);
@@ -893,6 +895,9 @@ int sort_colliders() {
       }
     }
   }
+
+  free(bone_stack);
+  free(collider_queue);
 
   return 0;
 }

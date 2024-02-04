@@ -718,9 +718,10 @@ int add_unique_edges(int (**u_edges)[2], size_t *num_edges, size_t *e_buff_size,
     cur_edge = buff[i];
     if((cur_edge[0] == a && cur_edge[1] == b) ||
        (cur_edge[1] == a && cur_edge[0] == b)) {
-      cur_edge[0] = buff[e_len - 1][0];
-      cur_edge[1] = buff[e_len - 1][1];
       (*num_edges)--;
+      e_len--;
+      cur_edge[0] = buff[e_len][0];
+      cur_edge[1] = buff[e_len][1];
       return 0;
     }
   }
@@ -728,7 +729,7 @@ int add_unique_edges(int (**u_edges)[2], size_t *num_edges, size_t *e_buff_size,
   buff[e_len][0] = a;
   buff[e_len][1] = b;
   (*num_edges)++;
-  if (*e_buff_size == e_len) {
+  if (*e_buff_size == *num_edges) {
     int status = double_buffer((void **) u_edges, e_buff_size,
                                sizeof(int) * 2);
     if (status != 0) {
