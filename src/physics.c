@@ -23,7 +23,7 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
   glm_vec3_negate_to(simplex[0], dir);
   unsigned int num_used = 1;
 
-  while (true) {
+  for (size_t cur_iter = 0; cur_iter < MAX_GJK_ITERATIONS; cur_iter++) {
     support_func(a, b, dir, simplex[num_used]);
     if (glm_vec3_dot(dir, simplex[num_used]) <= 0.0) {
       return 0;
@@ -53,6 +53,8 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
       return 0;
     }
   }
+  // Should never occur
+  return 0;
 }
 
 /*
@@ -145,26 +147,7 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
   vec3 s_dir = { 0.0, 0.0, 0.0 };
   float min_dist = -1.0;
   ivec3 cur_face = { 0, 0, 0 };
-  while (true) {
-    if (faces->buff_len > MAX_EPA_ITERATIONS) {
-      // Safeguard to engine does not infinite loop due to degenerate cases
-      // Analysis so far:
-      // - This occurs when two similarly sized objects are extremely well
-      //   aligned with one another
-      float a_width = get_width(a, (vec3) {1.0, 0.0, 0.0 });
-      float b_width = get_width(b, (vec3) {1.0, 0.0, 0.0 });
-
-      // Simply push push the two objects apart in the x direction with a
-      // distance equal to the maximum width of the objects
-      glm_vec3_copy((vec3) { 1.0, 0.0, 0.0 }, min_norm);
-      if (a_width > b_width) {
-        min_dist = a_width;
-      } else {
-        min_dist = b_width;
-      }
-      break;
-    }
-
+  for (size_t cur_iter = 0; cur_iter < MAX_EPA_ITERATIONS; cur_iter++) {
     // Get closest face (PULL FROM TOP OF HEAP)
     min_dist = faces->buffer[0].dist;
 

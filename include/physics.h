@@ -18,6 +18,7 @@
 
 #define DAMP_FACTOR (0.999)
 
+#define MAX_GJK_ITERATIONS (1000)
 #define MAX_EPA_ITERATIONS (1000)
 
 static vec3 U_DIR = { 0.0, 1.0, 0.0 };
