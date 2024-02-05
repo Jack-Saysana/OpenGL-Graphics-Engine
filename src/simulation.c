@@ -493,7 +493,8 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
     }
 
     if (candidate_ent != subject ||
-        p_obj->collider_offset != collider_offset) {
+        ((subject->type & T_DRIVING) == 0 &&
+         p_obj->collider_offset != collider_offset)) {
       collision = collision_check(&s_world_col, &c_world_col, simplex);
       if (collision) {
         status = epa_response(&s_world_col, &c_world_col, simplex,
