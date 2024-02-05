@@ -694,11 +694,12 @@ float calc_face_dist(vec3 a, vec3 b, vec3 c, vec3 dest_norm) {
 
   glm_vec3_sub(b, a, b_min_a);
   glm_vec3_sub(c, a, c_min_a);
-  // MIGHT HAVE TO CHANGE
   glm_vec3_cross(c_min_a, b_min_a, dest_norm);
   glm_vec3_normalize(dest_norm);
 
-  float dist = glm_vec3_dot(dest_norm, a);
+  // Ensure normal is always point of triangle
+  // (Utilizes properties of triangles which contain the origin)
+  float dist = remove_noise(glm_vec3_dot(dest_norm, a), 0.00001);
   if (dist < 0.0) {
     dist *= -1.0;
     glm_vec3_negate(dest_norm);

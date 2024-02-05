@@ -66,4 +66,5 @@ float get_width(COLLIDER *, vec3);
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void vec3_remove_noise(vec3 vec, float threshold);
+float remove_noise(float, float);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
