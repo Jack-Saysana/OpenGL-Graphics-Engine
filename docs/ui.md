@@ -226,6 +226,26 @@ Updates the position of a UI component.
 
 - `vec2 pos`: Updated position vector. Still interpreted by component options.
 
+```void set_ui_width(UI_COMP *comp, float width)```
+
+Updates the width of a UI component.
+
+**Arguments**
+
+- `UI_COMP *comp`: Pointer to the UI Component being edited
+
+- `float width`: Updated width. Still interpreted by component options.
+
+```void set_ui_pos(UI_COMP *comp, float height)```
+
+Updates the height of a UI component.
+
+**Arguments**
+
+- `UI_COMP *comp`: Pointer to the UI Component being edited
+
+- `float height`: Updated height. Still interpreted by component options.
+
 ```void set_manual_layer(UI_COMP *comp, float layer)```
 
 Overrides the automatic layer calculation of the UI component to a fixed value. For reference, the root layer is rendered at 0.0 and each successive "generation" is rendered at layer +0.1
@@ -304,6 +324,16 @@ Renders text within a UI component.
 - `F_GLYPH *font`: Pointer to font to be used during rendering. For more details about fonts, see [here](./font.md).
 
 - `vec3 col`: RGB color of rendered text
+
+```void update_ui_text(UI_COMP *comp, char *str)```
+
+Updates the text in a text-based ui-component without needing to pass a font, and other initializing info.
+
+**Arguments**
+
+- `UI_COMP *comp`: Pointer to the UI Component being edited
+
+- `char *str`: Updated text
 
 ```void set_ui_text_col(UI_COMP *comp, vec3 col)```
 

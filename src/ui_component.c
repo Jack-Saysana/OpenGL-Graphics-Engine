@@ -100,7 +100,7 @@ int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec3 pos,
                  void (*on_no_hover)(UI_COMP *, void *),
                  void *click_args, void *release_args, void *hover_args,
                  void *no_hover_args) {
-  comp->children = malloc(sizeof(UI_COMP) * CHILD_BUF_SIZE_INIT);
+  comp->children = malloc(sizeof(UI_COMP *) * CHILD_BUF_SIZE_INIT);
   if (comp->children == NULL) {
     return -1;
   }
@@ -151,7 +151,7 @@ int free_ui() {
     cur_comp = render_stack[render_stk_top - 1];
     if (cur_comp->num_children) {
       for (size_t i = 0; i < cur_comp->num_children; i++) {
-        render_stack[render_stk_top] = cur_comp->children + i;
+        render_stack[render_stk_top] = cur_comp->children[i];
         render_stk_top++;
         if (render_stk_top == render_stk_size) {
           int status = double_buffer((void **) &render_stack, &render_stk_size,
@@ -165,7 +165,9 @@ int free_ui() {
 
       cur_comp->num_children = 0;
     } else {
-      free_ui_comp(cur_comp);
+      if (cur_comp != &ui_root) {
+        free_ui_comp(cur_comp);
+      }
       render_stk_top--;
     }
   }
@@ -183,6 +185,7 @@ int free_ui() {
 
 void free_ui_comp(UI_COMP *comp) {
   free(comp->children);
+  free(comp);
 }
 
 // ============================ ADDING COMPONENTS ============================
@@ -270,7 +273,12 @@ void free_ui_comp(UI_COMP *comp) {
 */
 UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
                      int options) {
-  UI_COMP *comp = parent->children + parent->num_children;
+  UI_COMP *comp = malloc(sizeof(UI_COMP));
+  if (comp == NULL) {
+    fprintf(stderr, "Unable to allocate ui component\n");
+    return NULL;
+  }
+
   int status = init_ui_comp(comp, "", GLM_VEC3_ZERO,
                             (vec3) { pos[X], pos[Y], 0.0 }, width, height, 0.0,
                             0, PIVOT_TOP_LEFT, T_CENTER, options, UI_TRUE,
@@ -281,13 +289,14 @@ UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
     return NULL;
   }
 
+  parent->children[parent->num_children] = comp;
   parent->num_children++;
   if (parent->num_children == parent->child_buf_size) {
     status = double_buffer((void **) &parent->children,
-                           &parent->child_buf_size, sizeof(UI_COMP));
+                           &parent->child_buf_size, sizeof(UI_COMP *));
     if (status) {
       parent->num_children--;
-      free_ui_comp(parent->children + parent->num_children);
+      free_ui_comp(parent->children[parent->num_children]);
       fprintf(stderr, "Unable to allocate ui component\n");
       return NULL;
     }
@@ -300,6 +309,14 @@ UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
 
 void set_ui_pos(UI_COMP *comp, vec2 pos) {
   glm_vec2_copy(pos, comp->pos);
+}
+
+void set_ui_width(UI_COMP *comp, float width) {
+  comp->width = width;
+}
+
+void set_ui_height(UI_COMP *comp, float height) {
+  comp->height = height;
 }
 
 void set_manual_layer(UI_COMP *comp, float layer) {
@@ -331,6 +348,11 @@ void set_ui_text(UI_COMP *comp, char *str, float line_height,
   comp->txt_anc = txt_anc;
   glm_vec3_copy(col, comp->text_col);
   comp->font = font;
+}
+
+void update_ui_text(UI_COMP *comp, char *str) {
+  comp->text = str;
+  comp->text_len = strlen(str);
 }
 
 void set_ui_text_col(UI_COMP *comp, vec3 col) {
@@ -466,7 +488,7 @@ int render_ui() {
     next_line_y = top_left[Y];
 
     for (size_t i = 0; i < cur_comp->num_children; i++) {
-      cur_child = cur_comp->children + i;
+      cur_child = cur_comp->children[i];
       if (!cur_child->enabled) {
         continue;
       }
@@ -544,7 +566,7 @@ void on_click_callback(GLFWwindow *window, int button, int action, int mods) {
     cur_comp = render_stack[render_stk_top - 1];
     render_stk_top--;
     for (size_t i = 0; i < cur_comp->num_children; i++) {
-      cur_child = cur_comp->children + i;
+      cur_child = cur_comp->children[i];
       if (!cur_child->enabled) {
         continue;
       }

@@ -118,11 +118,9 @@ For each collision detected in a simulation, a `COLLISION` is created and stored
 
 The number of collisions stored in the buffer created at `dest`
 
-## Collider Integration
+## Collider Integration / Updating
 
 With colliders present in a simulation, each with their own physics data such as velocity and acceleration, an easy integration interface is provided to automatically move colliders throughout the simulation.
-
-### Structs
 
 ### Functions
 
@@ -133,6 +131,18 @@ For each `COLLIDER` in `sim`, its velocity and acceleration are integrated to ul
 **Arguements**
 
 - `SIMULATION *sim`: Simulation to integrate
+
+```void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset)```
+
+For the given collider, it's status in the simulation is refreshed. This call is necesarry in the case where an object exists within multiple different simulations, a and b. In the event simulation a causes the object to begin moving, `refresh_collider()` must be called on the collider with simulation b to ensure simulation b is synced with the current status of the collider.
+
+**Arguments**
+
+- `SIMULATION *sim`: Simulation in which to refresh the collider
+
+- `ENTITY *entity`: Entity to whom the collider belongs to
+
+- `size_t collider_offset`: Index of the collider within the entity
 
 ## Physics
 
