@@ -133,7 +133,7 @@ int sim_remove_entity(SIMULATION *sim, ENTITY *entity) {
   }
 
   // TODO perhaps filter colliders better
-  for (int i = 0; i < entity->model->num_colliders; i++) {
+  for (size_t i = 0; i < entity->model->num_colliders; i++) {
     oct_tree_delete(sim->oct_tree, entity, i);
   }
 
@@ -297,6 +297,35 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
     col.b_ent->type |= T_DYNAMIC;
     elist_add(&sim->moving_colliders, &sim->moving_buf_len,
               &sim->moving_buf_size, col.b_ent, col.b_offset);
+  }
+}
+
+// Manually refresh the status of the collider in the simulation
+void refresh_collider(SIMULATION *sim, ENTITY *ent, size_t offset) {
+  vec3 vel = GLM_VEC3_ZERO_INIT;
+  vec3 ang_vel = GLM_VEC3_ZERO_INIT;
+
+  size_t moving_buff_index = INVALID_INDEX;
+  for (size_t i = 0; i < sim->moving_buf_len; i++) {
+    if (sim->moving_colliders[i].entity == ent &&
+        sim->moving_colliders[i].collider_offset == offset) {
+      moving_buff_index = i;
+    }
+  }
+
+  get_collider_velocity(ent, offset, vel, ang_vel);
+  if (is_moving(vel, ang_vel)) {
+    ent->type |= T_DYNAMIC;
+    if (moving_buff_index == INVALID_INDEX) {
+      elist_add(&sim->moving_colliders, &sim->moving_buf_len,
+                &sim->moving_buf_size, ent, offset);
+    }
+  } else {
+    ent->type &= ~T_DYNAMIC;
+    if (moving_buff_index != INVALID_INDEX) {
+      elist_delete(sim->moving_colliders, moving_buff_index,
+                   &sim->moving_buf_len);
+    }
   }
 }
 
