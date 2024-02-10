@@ -124,6 +124,22 @@ With colliders present in a simulation, each with their own physics data such as
 
 ### Functions
 
+```void prep_sim_movement(SIMULATION *sim)```
+
+A prepratory function which should be called before any colliders in a simulation are moved. This and the `update_sim_movement()` function are used to ensure the oct-tree of each simulation is properly synced with the positions of the simulated colliders.
+
+**Arguments**
+
+- `SIMUATION *sim`: Simulation to prepare
+
+```void update_sim_movement(SIMULATION *sim)```
+
+A finalizing function to update the state of a simulation's oct-tree with the position info of all the simulated colliders. Should be called after a call to `prep_sim_movement()` and subsequent collider movement functionality.
+
+**Arguments**
+
+- `SIMULATION *sim`: Simulation to update
+
 ```void integrate_sim(SIMULATION *sim)```
 
 For each `COLLIDER` in `sim`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
