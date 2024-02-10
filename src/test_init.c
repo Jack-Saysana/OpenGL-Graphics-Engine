@@ -29,7 +29,7 @@ ENTITY *sphere_entity;
 ENTITY **boxes;
 ENTITY **spheres;
 ENTITY **rects;
-const int NUM_BOXES = 0;
+const int NUM_BOXES = 10;
 const int NUM_SPHERES = 0;
 const int NUM_RECTS = 0;
 ENTITY *ragdoll;
@@ -235,8 +235,8 @@ int init_scene() {
       printf("Unable to load moveable box: %d\n", i);
       return -1;
     }
-    m_box_pos[1] = (float) (i % 10);
-    m_box_pos[2] = (float) (i / 10);
+    m_box_pos[1] = (float) (i % 10) + 1.0;
+    m_box_pos[2] = (float) (i / 10) - 1.0;
     glm_vec3_copy(m_box_pos, boxes[i]->translation);
     glm_vec3_copy(m_box_scale, boxes[i]->scale);
   }

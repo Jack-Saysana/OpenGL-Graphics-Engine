@@ -148,6 +148,20 @@ void sim_clear_forces(SIMULATION *sim) {
   glm_vec3_zero(sim->forces);
 }
 
+void prep_sim_movement(SIMULATION *sim) {
+  for (size_t i = 0; i < sim->moving_buf_len; i++) {
+    oct_tree_delete(sim->oct_tree, sim->moving_colliders[i].entity,
+                    sim->moving_colliders[i].collider_offset);
+  }
+}
+
+void update_sim_movement(SIMULATION *sim) {
+  for (size_t i = 0; i < sim->moving_buf_len; i++) {
+    oct_tree_insert(sim->oct_tree, sim->moving_colliders[i].entity,
+                    sim->moving_colliders[i].collider_offset);
+  }
+}
+
 void integrate_sim(SIMULATION *sim) {
   for (size_t i = 0; i < sim->moving_buf_len; i++) {
     integrate_collider(sim->moving_colliders[i].entity,
@@ -191,19 +205,6 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest) {
 
     get_collider_velocity(cur_ent, collider_offset, vel, ang_vel);
     if (is_moving(vel, ang_vel)) {
-      // Update position in oct tree
-      status = oct_tree_delete(sim->oct_tree, cur_ent, collider_offset);
-      if (status) {
-        *dest = NULL;
-        return 0;
-      }
-
-      status = oct_tree_insert(sim->oct_tree, cur_ent, collider_offset);
-      if (status) {
-        *dest = NULL;
-        return 0;
-      }
-
       // Check collisions
       status = get_collider_collisions(sim, cur_ent, collider_offset,
                                        &collisions, &buf_len, &buf_size);
