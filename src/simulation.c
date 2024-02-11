@@ -119,6 +119,7 @@ int sim_remove_entity(SIMULATION *sim, ENTITY *entity) {
     for (size_t i = 0; i < sim->moving_buf_len; i++) {
       if (sim->moving_colliders[i].entity == entity) {
         elist_delete(sim->moving_colliders, i, &sim->moving_buf_len);
+        i--;
       }
     }
   }
@@ -128,6 +129,7 @@ int sim_remove_entity(SIMULATION *sim, ENTITY *entity) {
     for (size_t i = 0; i < sim->driving_buf_len; i++) {
       if (sim->driving_colliders[i].entity == entity) {
         elist_delete(sim->driving_colliders, i, &sim->driving_buf_len);
+        i--;
       }
     }
   }
