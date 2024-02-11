@@ -292,6 +292,7 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
   solve_collision(&a_args, &b_args, col.col_dir, col.col_point);
 
   // Update placement of recieving object if it becomes dynamic
+  /*
   vec3 *b_vel = b_args.velocity;
   vec3 *b_ang_vel = b_args.ang_velocity;
   if (!(col.b_ent->type & T_DYNAMIC) && is_moving(*b_vel, *b_ang_vel)) {
@@ -299,6 +300,7 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
     elist_add(&sim->moving_colliders, &sim->moving_buf_len,
               &sim->moving_buf_size, col.b_ent, col.b_offset);
   }
+  */
 }
 
 // Manually refresh the status of the collider in the simulation

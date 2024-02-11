@@ -80,6 +80,9 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     glm_mat4_mul(entity_to_world, entity->final_b_mats[bone], entity_to_world);
   }
   global_collider(bone_to_entity, entity_to_world, raw_col, &obj);
+  if (entity->model->colliders[collider_offset].type == SPHERE) {
+    obj.data.radius *= entity->scale[0];
+  }
 
   if (obj.type == POLY) {
     vec3 *verts = obj.data.verts;
@@ -169,6 +172,9 @@ int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     glm_mat4_mul(entity_to_world, entity->final_b_mats[bone], entity_to_world);
   }
   global_collider(bone_to_entity, entity_to_world, raw_col, &obj);
+  if (entity->model->colliders[collider_offset].type == SPHERE) {
+    obj.data.radius *= entity->scale[0];
+  }
 
   COLLISION_RES candidates = oct_tree_search(tree, &obj);
   if (candidates.list == NULL) {
