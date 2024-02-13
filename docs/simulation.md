@@ -148,6 +148,18 @@ For each `COLLIDER` in `sim`, its velocity and acceleration are integrated to ul
 
 - `SIMULATION *sim`: Simulation to integrate
 
+```void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col)```
+
+Integrate a single collider inside of a simulation. A more fine-grained version of `integrate_sim()`.
+
+**Arguments**
+
+- `SIMULATION *sim`: Simulation to which the entity belongs
+
+- `ENTITY *ent`: Entity to integrate
+
+- `size_t col`: Index of collider of entity to integrate
+
 ```void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset)```
 
 For the given collider, it's status in the simulation is refreshed. This call is necesarry in the case where an object exists within multiple different simulations, a and b. In the event simulation a causes the object to begin moving, `refresh_collider()` must be called on the collider with simulation b to ensure simulation b is synced with the current status of the collider.

@@ -14,6 +14,7 @@ void sim_clear_force(SIMULATION* sim);
 void prep_sim_movement(SIMULATION *);
 void update_sim_movement(SIMULATION *);
 void integrate_sim(SIMULATION *sim);
+void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col);
 size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest);
 void impulse_resolution(SIMULATION *sim, COLLISION col);
 void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset);

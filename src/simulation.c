@@ -172,6 +172,11 @@ void integrate_sim(SIMULATION *sim) {
   }
 }
 
+void integrate_sim_collider(SIMULATION *sim, ENTITY *ent,
+                            size_t collider_offset) {
+  integrate_collider(ent, collider_offset, sim->forces);
+}
+
 size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest) {
   COLLISION *collisions = malloc(sizeof(COLLISION) * BUFF_STARTING_LEN);
   size_t buf_len = 0;
