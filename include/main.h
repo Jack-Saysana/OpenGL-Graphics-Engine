@@ -61,10 +61,11 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter);
 int sim_remove_entity(SIMULATION *sim, ENTITY *entity);
 void sim_add_force(SIMULATION *sim, vec3 force);
 void sim_clear_force(SIMULATION *sim);
-void prep_movement(SIMULATION *sim);
-void update_movement(SIMULATION *sim);
-void integrate_sim(SIMULATION *sim);
-size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest);
+void prep_sim_movement(SIMULATION *);
+void update_sim_movement(SIMULATION *);
+void integrate_sim(SIMULATION *sim, vec3 origin, float range);
+size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest,
+                          vec3 origin, float range);
 void impulse_resolution(SIMULATION *sim, COLLISION col);
 
 OCT_TREE *init_tree(float max_extent, unsigned int max_depth);
@@ -73,7 +74,6 @@ int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
 void get_model_mat(ENTITY *entity, mat4 model);
-void global_collider(mat4 model_mat, COLLIDER *source, COLLIDER *dest);
 
 int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs,
             char *text_fs);

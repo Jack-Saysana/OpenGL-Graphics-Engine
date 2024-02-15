@@ -378,12 +378,13 @@ int main() {
     glm_vec3_copy(player->translation, displacement);
     glm_vec3_copy(player->translation, render_sphere->translation);
 
-    prep_movement(sim);
-    integrate_sim(sim);
-    update_movement(sim);
+    prep_sim_movement(sim);
+    integrate_sim(sim, GLM_VEC3_ZERO, SIM_RANGE_INF);
+    update_sim_movement(sim);
 
     COLLISION *collisions = NULL;
-    size_t num_collisions = get_sim_collisions(sim, &collisions);
+    size_t num_collisions = get_sim_collisions(sim, &collisions, GLM_VEC3_ZERO,
+                                               SIM_RANGE_INF);
     for (size_t i = 0; i < num_collisions; i++) {
       impulse_resolution(sim, collisions[i]);
     }
@@ -461,7 +462,8 @@ int main() {
     }
 
     // Only render within render distance
-    num_collisions = get_sim_collisions(render_sim, &collisions);
+    num_collisions = get_sim_collisions(render_sim, &collisions,
+                                        GLM_VEC3_ZERO, SIM_RANGE_INF);
     for (size_t i = 0; i < num_collisions; i++) {
       if (collisions[i].a_ent == render_sphere ||
           collisions[i].b_ent == render_sphere) {
