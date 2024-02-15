@@ -104,9 +104,9 @@ A `COLLISION` struct is defined to act as an easy to use object for reading and 
 
 ### Functions
 
-```size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest)```
+```size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin, float range)```
 
-For each collision detected in a simulation, a `COLLISION` is created and stored in a buffer allocated at `dest`.
+All objects within `range` of `origin` are considered for collision detection. For each collision detected in the simulation, a `COLLISION` is created and stored in a buffer allocated at `dest`.
 
 **Arguements**
 
@@ -114,9 +114,31 @@ For each collision detected in a simulation, a `COLLISION` is created and stored
 
 - `COLLISION **dest`: Pointer to where to allocate destination buffer for storing each collision pair.
 
+- `vec3 origin`: Point whose distance from any given object in the simulation is compared to range to determine if the object should be considered for collision detection
+
+- `float range`: Max distance an object can be from `origin` for it to be considered for collision detection. Can be set to `SIM_RANGE_INF` to consider all objects in the simulation.
+
 **Returns**
 
 The number of collisions stored in the buffer created at `dest`
+
+```size_t get_sim_collider_collisions(SIMULATION *sim, ENTITY *ent, size_t col, COLLISION **dest, size_t *dest_len, size_t *dest_size)```
+
+For a single collider inside a given simulation, all collisions are detected with that collider, and a `COLLISION` is created and appended to the end of a buffer allocated at `dest`. `dest` is expected to be freed and allocated by the caller. This function is a more fine-grained version of `get_sim_collisions()`.
+
+**Arguments**
+
+- `SIMULATION *sim`: Simulation to detect collisions in
+
+- `ENTITY *ent`: Entity to whom the desired collider of search belongs
+
+- `size_t col`: Index of collider of search inside ent
+
+- `COLLISION **dest`: Pointer to where to allocate the destination buffer for storing each collision pair.
+
+- `size_t *col_buf_len`: Pointer to value where the number of collisions currently stored in dest is stored
+
+- `size_t *col_buf_size`: Pointer to value where the size of dest is stored
 
 ## Collider Integration / Updating
 
@@ -140,13 +162,17 @@ A finalizing function to update the state of a simulation's oct-tree with the po
 
 - `SIMULATION *sim`: Simulation to update
 
-```void integrate_sim(SIMULATION *sim)```
+```void integrate_sim(SIMULATION *sim, vec3 origin, float range)```
 
-For each `COLLIDER` in `sim`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
+For each `COLLIDER` in `sim` which is withing `range` from `origin`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
 
 **Arguements**
 
 - `SIMULATION *sim`: Simulation to integrate
+
+- `vec3 origin`: Point whose distance from any given object in the simulation is compared to range to determine if the object should be integrated
+
+- `float range`: Max distance an object can be from `origin` for it to be integrated. Can be set to `SIM_RANGE_INF` to consider all objects in the simulation.
 
 ```void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col)```
 

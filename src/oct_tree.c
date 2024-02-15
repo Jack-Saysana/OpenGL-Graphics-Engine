@@ -62,27 +62,9 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
                       -tree->max_extent };
   float max_extents[6];
 
-  COLLIDER *raw_col = entity->model->colliders + collider_offset;
   COLLIDER obj;
-  int bone = entity->model->collider_bone_links[collider_offset];
-
-  mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
-  mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(entity, entity_to_world);
-  if (bone != -1) {
-    glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
-                  bone_to_entity);
-    if (raw_col->type == POLY) {
-      glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
-    } else {
-      glm_vec4(raw_col->data.center, 1.0, bone_to_entity[3]);
-    }
-    glm_mat4_mul(entity_to_world, entity->final_b_mats[bone], entity_to_world);
-  }
-  global_collider(bone_to_entity, entity_to_world, raw_col, &obj);
-  if (entity->model->colliders[collider_offset].type == SPHERE) {
-    obj.data.radius *= entity->scale[0];
-  }
+  memset(&obj, 0, sizeof(COLLIDER));
+  global_collider(entity, collider_offset, &obj);
 
   if (obj.type == POLY) {
     vec3 *verts = obj.data.verts;
@@ -154,27 +136,9 @@ int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     return -1;
   }
 
-  COLLIDER *raw_col = entity->model->colliders + collider_offset;
   COLLIDER obj;
-  int bone = entity->model->collider_bone_links[collider_offset];
-
-  mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
-  mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(entity, entity_to_world);
-  if (bone != -1) {
-    glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
-                  bone_to_entity);
-    if (raw_col->type == POLY) {
-      glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
-    } else {
-      glm_vec4(raw_col->data.center, 1.0, bone_to_entity[3]);
-    }
-    glm_mat4_mul(entity_to_world, entity->final_b_mats[bone], entity_to_world);
-  }
-  global_collider(bone_to_entity, entity_to_world, raw_col, &obj);
-  if (entity->model->colliders[collider_offset].type == SPHERE) {
-    obj.data.radius *= entity->scale[0];
-  }
+  memset(&obj, 0, sizeof(COLLIDER));
+  global_collider(entity, collider_offset, &obj);
 
   COLLISION_RES candidates = oct_tree_search(tree, &obj);
   if (candidates.list == NULL) {

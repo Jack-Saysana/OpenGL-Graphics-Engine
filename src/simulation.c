@@ -164,20 +164,39 @@ void update_sim_movement(SIMULATION *sim) {
   }
 }
 
-void integrate_sim(SIMULATION *sim) {
+void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
+  ENTITY *cur_ent = NULL;
+  size_t collider_offset = 0;
+
+  COLLIDER cur_col;
+  memset(&cur_col, 0, sizeof(COLLIDER));
+
   for (size_t i = 0; i < sim->moving_buf_len; i++) {
-    integrate_collider(sim->moving_colliders[i].entity,
-                       sim->moving_colliders[i].collider_offset,
-                       sim->forces);
+    cur_ent = sim->moving_colliders[i].entity;
+    collider_offset = sim->moving_colliders[i].collider_offset;
+
+    // Only consider collider if it is within range
+    global_collider(cur_ent, collider_offset, &cur_col);
+    if ((range != SIM_RANGE_INF && cur_col.type == POLY &&
+        glm_vec3_distance(origin, cur_col.data.center_of_mass) > range) ||
+        (range != SIM_RANGE_INF && cur_col.type == SPHERE &&
+        glm_vec3_distance(origin, cur_col.data.center) > range)) {
+      continue;
+    }
+
+    integrate_collider(cur_ent, collider_offset, sim->forces);
   }
 }
 
 void integrate_sim_collider(SIMULATION *sim, ENTITY *ent,
                             size_t collider_offset) {
-  integrate_collider(ent, collider_offset, sim->forces);
+  if (!(ent->type & T_IMMUTABLE)) {
+    integrate_collider(ent, collider_offset, sim->forces);
+  }
 }
 
-size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest) {
+size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
+                          float range) {
   COLLISION *collisions = malloc(sizeof(COLLISION) * BUFF_STARTING_LEN);
   size_t buf_len = 0;
   size_t buf_size = BUFF_STARTING_LEN;
@@ -185,6 +204,9 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest) {
   int status = 0;
   ENTITY *cur_ent = NULL;
   size_t collider_offset = 0;
+  COLLIDER cur_col;
+  memset(&cur_col, 0, sizeof(COLLIDER));
+
   vec3 vel = GLM_VEC3_ZERO_INIT;
   vec3 ang_vel = GLM_VEC3_ZERO_INIT;
 
@@ -209,6 +231,15 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest) {
   for (size_t i = 0; i < sim->moving_buf_len; i++) {
     cur_ent = sim->moving_colliders[i].entity;
     collider_offset = sim->moving_colliders[i].collider_offset;
+
+    // Only consider collider if it is within range
+    global_collider(cur_ent, collider_offset, &cur_col);
+    if ((range != SIM_RANGE_INF && cur_col.type == POLY &&
+        glm_vec3_distance(origin, cur_col.data.center_of_mass) > range) ||
+        (range != SIM_RANGE_INF && cur_col.type == SPHERE &&
+        glm_vec3_distance(origin, cur_col.data.center) > range)) {
+      continue;
+    }
 
     get_collider_velocity(cur_ent, collider_offset, vel, ang_vel);
     if (is_moving(vel, ang_vel)) {
@@ -341,26 +372,43 @@ void refresh_collider(SIMULATION *sim, ENTITY *ent, size_t offset) {
 
 // ============================== MISC HELPERS ===============================
 
-void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
-                     COLLIDER *source, COLLIDER *dest) {
-  dest->type = source->type;
-  dest->category = source->category;
+void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
+  COLLIDER *raw_col = ent->model->colliders + collider_offset;
+  mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+  mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
+  get_model_mat(ent, entity_to_world);
+  int bone = ent->model->collider_bone_links[collider_offset];
+  if (bone != -1) {
+    glm_mat4_ins3(ent->model->bones[bone].coordinate_matrix, bone_to_entity);
+    if (raw_col->type == POLY) {
+      glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
+    } else {
+      glm_vec4(raw_col->data.center, 1.0, bone_to_entity[3]);
+    }
+    glm_mat4_mul(entity_to_world, ent->final_b_mats[bone], entity_to_world);
+  }
+
+  dest->type = raw_col->type;
+  dest->category = raw_col->category;
   dest->children_offset = 0;
   dest->num_children = 0;
   if (dest->type == POLY) {
-    dest->data.num_used = source->data.num_used;
-    for (int i = 0; i < source->data.num_used; i++) {
-      glm_mat4_mulv3(bone_to_entity, source->data.verts[i], 1.0,
+    dest->data.num_used = raw_col->data.num_used;
+    for (int i = 0; i < raw_col->data.num_used; i++) {
+      glm_mat4_mulv3(bone_to_entity, raw_col->data.verts[i], 1.0,
                      dest->data.verts[i]);
       glm_mat4_mulv3(entity_to_world, dest->data.verts[i], 1.0,
                      dest->data.verts[i]);
     }
-    glm_mat4_mulv3(entity_to_world, source->data.center_of_mass, 1.0,
+    glm_mat4_mulv3(entity_to_world, raw_col->data.center_of_mass, 1.0,
                    dest->data.center_of_mass);
   } else if (dest->type == SPHERE) {
-    dest->data.radius = source->data.radius;
-    glm_mat4_mulv3(entity_to_world, source->data.center, 1.0,
+    dest->data.radius = raw_col->data.radius;
+    glm_mat4_mulv3(entity_to_world, raw_col->data.center, 1.0,
                    dest->data.center);
+  }
+  if (ent->model->colliders[collider_offset].type == SPHERE) {
+    dest->data.radius *= ent->scale[0];
   }
 }
 
@@ -460,30 +508,9 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
                             size_t *col_buf_len, size_t *col_buf_size) {
   // Calculate world space collider of subject
-  mat4 s_bone_to_entity = GLM_MAT4_IDENTITY_INIT;
-  mat4 s_entity_to_world = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(subject, s_entity_to_world);
-  int bone = subject->model->collider_bone_links[collider_offset];
-  if (bone != -1) {
-    COLLIDER *raw_col = subject->model->colliders + collider_offset;
-    glm_mat4_ins3(subject->model->bones[bone].coordinate_matrix,
-                  s_bone_to_entity);
-    if (raw_col->type == POLY) {
-      glm_vec4(raw_col->data.center_of_mass, 1.0, s_bone_to_entity[3]);
-    } else {
-      glm_vec4(raw_col->data.center, 1.0, s_bone_to_entity[3]);
-    }
-    glm_mat4_mul(s_entity_to_world, subject->final_b_mats[bone],
-                 s_entity_to_world);
-  }
-
   COLLIDER s_world_col;
   memset(&s_world_col, 0, sizeof(COLLIDER));
-  global_collider(s_bone_to_entity, s_entity_to_world,
-                  subject->model->colliders + collider_offset, &s_world_col);
-  if (subject->model->colliders[collider_offset].type == SPHERE) {
-    s_world_col.data.radius *= subject->scale[0];
-  }
+  global_collider(subject, collider_offset, &s_world_col);
 
   COLLISION_RES col_res = oct_tree_search(sim->oct_tree, &s_world_col);
 
@@ -499,37 +526,13 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
 
   int collision = 0;
   int status = 0;
-  mat4 c_bone_to_entity = GLM_MAT4_IDENTITY_INIT;
-  mat4 c_entity_to_world = GLM_MAT4_IDENTITY_INIT;
 
   for (size_t i = 0; i < col_res.list_len; i++) {
     p_obj = col_res.list[i];
     candidate_ent = p_obj->entity;
 
     // Calculate world space collider of candidate
-    glm_mat4_identity(c_bone_to_entity);
-    get_model_mat(candidate_ent, c_entity_to_world);
-    bone = candidate_ent->model->collider_bone_links[p_obj->collider_offset];
-    if (bone != -1) {
-      COLLIDER *raw_col = candidate_ent->model->colliders +
-                          p_obj->collider_offset;
-      glm_mat4_ins3(candidate_ent->model->bones[bone].coordinate_matrix,
-                    c_bone_to_entity);
-      if (raw_col->type == POLY) {
-        glm_vec4(raw_col->data.center_of_mass, 1.0, c_bone_to_entity[3]);
-      } else {
-        glm_vec4(raw_col->data.center, 1.0, c_bone_to_entity[3]);
-      }
-      glm_mat4_mul(c_entity_to_world, candidate_ent->final_b_mats[bone],
-                   c_entity_to_world);
-    }
-    global_collider(c_bone_to_entity, c_entity_to_world,
-                    candidate_ent->model->colliders + p_obj->collider_offset,
-                    &c_world_col);
-    if (candidate_ent->model->colliders[p_obj->collider_offset].type ==
-        SPHERE) {
-      c_world_col.data.radius *= candidate_ent->scale[0];
-    }
+    global_collider(candidate_ent, p_obj->collider_offset, &c_world_col);
 
     if (candidate_ent != subject ||
         ((subject->type & T_DRIVING) == 0 &&

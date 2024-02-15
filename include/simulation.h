@@ -18,8 +18,7 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
 void get_collider_velocity(ENTITY *entity, size_t collider_offset, vec3 vel,
                            vec3 ang_vel);
 int is_moving(vec3 vel, vec3 ang_vel);
-void global_collider(mat4 bone_to_entity, mat4 entity_to_world,
-                     COLLIDER *source, COLLIDER *dest);
+void global_collider(ENTITY *, size_t, COLLIDER *dest);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
