@@ -182,7 +182,7 @@ void integrate_sim_collider(SIMULATION *sim, ENTITY *ent,
 }
 
 size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
-                          float range) {
+                          float range, int get_col_info) {
   COLLISION *collisions = malloc(sizeof(COLLISION) * BUFF_STARTING_LEN);
   size_t buf_len = 0;
   size_t buf_size = BUFF_STARTING_LEN;
@@ -231,7 +231,8 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
     if (is_moving(vel, ang_vel)) {
       // Check collisions
       status = get_collider_collisions(sim, cur_ent, collider_offset,
-                                       &collisions, &buf_len, &buf_size);
+                                       &collisions, &buf_len, &buf_size,
+                                       get_col_info);
       if (status) {
         *dest = NULL;
         return 0;
@@ -449,7 +450,8 @@ void integrate_collider(ENTITY *entity, size_t offset, vec3 force) {
 
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
-                            size_t *col_buf_len, size_t *col_buf_size) {
+                            size_t *col_buf_len, size_t *col_buf_size,
+                            int get_col_info) {
   // Calculate world space collider of subject
   COLLIDER s_world_col;
   memset(&s_world_col, 0, sizeof(COLLIDER));
@@ -465,6 +467,7 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
   vec3 simplex[4] = { GLM_VEC3_ZERO_INIT, GLM_VEC3_ZERO_INIT,
                       GLM_VEC3_ZERO_INIT, GLM_VEC3_ZERO_INIT };
   vec3 collision_dir = GLM_VEC3_ZERO_INIT;
+  vec3 col_point = GLM_VEC3_ZERO_INIT;
   float collision_depth = 0.0;
 
   int collision = 0;
@@ -482,14 +485,22 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
          p_obj->collider_offset != collider_offset)) {
       collision = collision_check(&s_world_col, &c_world_col, simplex);
       if (collision) {
-        status = epa_response(&s_world_col, &c_world_col, simplex,
-                              collision_dir, &collision_depth);
-        if (status) {
-          free(col_res.list);
-          return -1;
+        if (get_col_info) {
+          status = epa_response(&s_world_col, &c_world_col, simplex,
+                                collision_dir, &collision_depth);
+          if (status) {
+            free(col_res.list);
+            return -1;
+          }
+          vec3_remove_noise(collision_dir, 0.000001);
+          glm_vec3_scale_as(collision_dir, collision_depth, collision_dir);
+          collision_point(&s_world_col, &c_world_col, collision_dir,
+                          col_point);
+        } else {
+          glm_vec3_zero(collision_dir);
+          glm_vec3_zero(col_point);
+          collision_depth = 0.0;
         }
-        vec3_remove_noise(collision_dir, 0.000001);
-        glm_vec3_scale_as(collision_dir, collision_depth, collision_dir);
 
         COLLISION *new_col = (*col) + (*col_buf_len);
         new_col->a_ent = subject;
@@ -499,8 +510,7 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
         new_col->a_world_col = s_world_col;
         new_col->b_world_col = c_world_col;
         glm_vec3_copy(collision_dir, new_col->col_dir);
-        collision_point(&s_world_col, &c_world_col, collision_dir,
-                        new_col->col_point);
+        glm_vec3_copy(col_point, new_col->col_point);
 
         (*col_buf_len)++;
         if (*col_buf_len == *col_buf_size) {

@@ -384,7 +384,7 @@ int main() {
 
     COLLISION *collisions = NULL;
     size_t num_collisions = get_sim_collisions(sim, &collisions, GLM_VEC3_ZERO,
-                                               SIM_RANGE_INF);
+                                               SIM_RANGE_INF, 1);
     for (size_t i = 0; i < num_collisions; i++) {
       impulse_resolution(sim, collisions[i]);
     }
@@ -463,7 +463,7 @@ int main() {
 
     // Only render within render distance
     num_collisions = get_sim_collisions(render_sim, &collisions,
-                                        GLM_VEC3_ZERO, SIM_RANGE_INF);
+                                        GLM_VEC3_ZERO, SIM_RANGE_INF, 0);
     for (size_t i = 0; i < num_collisions; i++) {
       if (collisions[i].a_ent == render_sphere ||
           collisions[i].b_ent == render_sphere) {

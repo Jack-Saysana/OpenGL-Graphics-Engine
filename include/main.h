@@ -65,7 +65,7 @@ void prep_sim_movement(SIMULATION *);
 void update_sim_movement(SIMULATION *);
 void integrate_sim(SIMULATION *sim, vec3 origin, float range);
 size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest,
-                          vec3 origin, float range);
+                          vec3 origin, float range, int get_col_info);
 void impulse_resolution(SIMULATION *sim, COLLISION col);
 
 OCT_TREE *init_tree(float max_extent, unsigned int max_depth);

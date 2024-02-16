@@ -104,7 +104,7 @@ A `COLLISION` struct is defined to act as an easy to use object for reading and 
 
 ### Functions
 
-```size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin, float range)```
+```size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin, float range, int get_col_info)```
 
 All objects within `range` of `origin` are considered for collision detection. For each collision detected in the simulation, a `COLLISION` is created and stored in a buffer allocated at `dest`.
 
@@ -117,6 +117,8 @@ All objects within `range` of `origin` are considered for collision detection. F
 - `vec3 origin`: Point whose distance from any given object in the simulation is compared to range to determine if the object should be considered for collision detection
 
 - `float range`: Max distance an object can be from `origin` for it to be considered for collision detection. Can be set to `SIM_RANGE_INF` to consider all objects in the simulation.
+
+- `int get_col_info`: If nonzero, the collision depth and direction will be included for each collision. If zero, the collision depth and direction are set to zero.
 
 **Returns**
 

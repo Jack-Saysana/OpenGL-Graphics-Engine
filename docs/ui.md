@@ -106,7 +106,7 @@ The options are as follows:
   - (equivalent to `POS_X_UNIT_PIXEL | POS_Y_UNIT_PIXEL`)
 
 - **POS_UNIT_RATIO**: The x-coordinate of `position` is a ratio of the parent component's width. The y-coordinate is a ratio of the parent component's height.
-  - (equivalent to `POS_X_UNIT_RATIO_X | POS_Y_UNIT_RATIO_Y)
+  - (equivalent to `POS_X_UNIT_RATIO_X | POS_Y_UNIT_RATIO_Y`)
 
 **3. Size units**
 

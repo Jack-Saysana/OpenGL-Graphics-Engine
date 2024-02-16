@@ -14,7 +14,8 @@ void elist_delete(SIM_COLLIDER *list, size_t index, size_t *len);
 void integrate_collider(ENTITY *entity, size_t offset, vec3 force);
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
-                            size_t *col_buf_len, size_t *col_buf_size);
+                            size_t *col_buf_len, size_t *col_buf_size,
+                            int get_col_info);
 void get_collider_velocity(ENTITY *entity, size_t collider_offset, vec3 vel,
                            vec3 ang_vel);
 int is_moving(vec3 vel, vec3 ang_vel);
