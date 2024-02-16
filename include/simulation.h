@@ -20,6 +20,15 @@ void get_collider_velocity(ENTITY *entity, size_t collider_offset, vec3 vel,
 int is_moving(vec3 vel, vec3 ang_vel);
 void global_collider(ENTITY *, size_t, COLLIDER *dest);
 
+int ledger_init(SIM_COLLIDER **, size_t **, size_t *, size_t *, size_t *);
+int ledger_add(SIM_COLLIDER **, size_t **, size_t *, size_t *, size_t *,
+               ENTITY *, size_t);
+size_t ledger_search(SIM_COLLIDER *, size_t, ENTITY *, size_t);
+void ledger_delete(SIM_COLLIDER *, size_t *, size_t, size_t *, ENTITY *,
+                   size_t);
+void ledger_delete_direct(SIM_COLLIDER *, size_t *, size_t *, size_t);
+int resize_ledger(SIM_COLLIDER **, size_t *, size_t *, size_t);
+
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 OCT_TREE *init_tree(float max_extent, unsigned int max_depth);

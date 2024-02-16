@@ -10,6 +10,7 @@
 
 #define BUFF_START_LEN (5)
 
+#define HASH_MAP_STARTING_LEN (50)
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
 
@@ -34,5 +35,13 @@
 #define INVALID_INDEX (0xFFFFFFFFFFFFFFFF)
 
 #define GRAVITY (10.0)
+
+// Simulation hash-map constants
+#define HASH_MAGIC_NUM (0.618033988749894)
+#define HASH_CONST_1 (11)
+#define HASH_CONST_2 (29)
+#define LEDGER_FREE (0)
+#define LEDGER_OCCUPIED (1)
+#define LEDGER_DELETED (2)
 
 #endif

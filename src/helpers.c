@@ -29,38 +29,6 @@ int double_buffer(void **buffer, size_t *buff_size, size_t unit_size) {
 }
 
 /*
- * ========== DOUBLE_COMPLEX_BUFFER() ==========
- * DESC
- * Doubles the given buffer
- *
- * ARGS
- * - void** buffer: Pointer to the buffer being doubled
- * - size_t *buff_size: Pointer to the number recording the siZe
- * of the buffer
- * - size_t buff_len: Number of elements inside buffer
- * - void free_buff(void *, size_t): Function to be called when
- * freeing the buffer upon failure. Best used when needing to also
- * free individual elements of the buffer. First argument will take
- * (*buffer) and second will take buff_len
- *
- * RETURNS
- * 0 if successful
- * -1 if an error has occured
- * =====================================
- */
-/*int double_complex_buffer(void **buffer, size_t *buff_size, size_t buff_len,
-                          size_t unit_size, void free_buff(void *, size_t)) {
-  void *new_buff = realloc(*buffer, 2 * (*buff_size) * unit_size);
-  if (new_buff == NULL) {
-    free_buff(*buffer, buff_len);
-    return -1;
-  }
-  (*buffer) = new_buff;
-  *buff_size = 2 * *buff_size;
-  return 0;
-}*/
-
-/*
  * ========== GET_LINES() ==========
  * DESC: Retrieves an array of the lines of a
  * file
