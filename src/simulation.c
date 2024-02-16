@@ -696,13 +696,3 @@ int resize_ledger(SIM_COLLIDER **ledger, size_t *l_list, size_t *ledger_size,
   return 0;
 }
 
-void print_ledger(SIM_COLLIDER *ledger, size_t *l_list, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    fprintf(stderr, "%p, %ld, %ld, %d\n",
-            ledger[l_list[i]].entity,
-            ledger[l_list[i]].collider_offset,
-            ledger[l_list[i]].index,
-            ledger[l_list[i]].status);
-  }
-  fprintf(stderr, "\n");
-}
