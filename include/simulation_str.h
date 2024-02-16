@@ -6,19 +6,29 @@
 typedef struct simulation_collider {
   ENTITY *entity;
   size_t collider_offset;
+  size_t index;
+  int status;
 } SIM_COLLIDER;
 
 typedef struct simulation {
   // Oct tree used for collision detection
   OCT_TREE *oct_tree;
-  // List of moving colliders
-  SIM_COLLIDER *moving_colliders;
-  // List of colliders which "drive" movement
-  SIM_COLLIDER *driving_colliders;
-  size_t moving_buf_len;
-  size_t moving_buf_size;
-  size_t driving_buf_len;
-  size_t driving_buf_size;
+  // Hash-map of moving colliders
+  SIM_COLLIDER *moving_ledger;
+  // Hash-map of colliders which "drive" movement
+  SIM_COLLIDER *driving_ledger;
+  // List corresponding to moving ledger used for linear traversal
+  size_t *m_list;
+  // List corresponding to driving ledger used for linear traversal
+  size_t *d_list;
+
+  size_t num_moving;
+  size_t m_ledger_size;
+  size_t m_list_size;
+  size_t num_driving;
+  size_t d_ledger_size;
+  size_t d_list_size;
+
   // Magnitude of net acceleration caused by external forces
   vec3 forces;
 } SIMULATION;
