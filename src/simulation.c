@@ -533,15 +533,15 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
 
 void get_collider_velocity(ENTITY *entity, size_t collider_offset,
                            vec3 vel, vec3 ang_vel) {
+  glm_vec3_copy(entity->velocity, vel);
+  glm_vec3_copy(entity->ang_velocity, ang_vel);
+
   COLLIDER *collider = entity->model->colliders + collider_offset;
   int bone = entity->model->collider_bone_links[collider_offset];
   P_DATA *phys_data = entity->np_data;
-  if (collider->category == DEFAULT || bone == -1) {
-    glm_vec3_copy(entity->velocity, vel);
-    glm_vec3_copy(entity->ang_velocity, ang_vel);
-  } else {
-    glm_vec3_copy(phys_data[collider_offset].velocity, vel);
-    glm_vec3_copy(phys_data[collider_offset].ang_velocity, ang_vel);
+  if (collider->category != DEFAULT && bone != -1) {
+    glm_vec3_add(phys_data[collider_offset].velocity, vel, vel);
+    glm_vec3_add(phys_data[collider_offset].ang_velocity, ang_vel, ang_vel);
   }
 }
 
@@ -572,9 +572,9 @@ int ledger_init(SIM_COLLIDER **ledger, size_t **l_list, size_t *num_cols,
 }
 
 size_t hash_col(ENTITY *ent, size_t col, size_t i, size_t size) {
-  double key = (size_t) ent + col;
+  double key = ((size_t) ent) + col;
   size_t ret = size * ((key * HASH_MAGIC_NUM) - floor(key * HASH_MAGIC_NUM));
-  return (ret + (HASH_CONST_1 * i) + (HASH_CONST_2 * i * i)) % size;
+  return (ret + i) % size;
 }
 
 int ledger_add(SIM_COLLIDER **ledger, size_t **l_list,
