@@ -448,6 +448,55 @@ void integrate_collider(ENTITY *entity, size_t offset, vec3 force) {
   }
 }
 
+void check_moving_buffer(void *args) {
+  C_ARGS arg_data = *((C_ARGS *) args);
+  SIMULATION *sim = arg_data.sim;
+  COLLISION **collisions = arg_data.collisions;
+  size_t buf_len = arg_data.buf_len;
+  size_t buf_size = arg_data.buf_size;
+  vec3 origin = GLM_VEC3_ZERO_INIT;
+  glm_vec3_copy(arg_data.origin, origin);
+  float range = arg_data.range;
+  int get_col_info = arg_data.get_col_info;
+
+  ENTITY *cur_ent = NULL;
+  size_t collider_offset = 0;
+  for (size_t i = arg_data.start; i < arg_data.end; i++) {
+    cur_ent = sim->moving_ledger[sim->m_list[i]].entity;
+    collider_offset = sim->moving_ledger[sim->m_list[i]].collider_offset;
+
+    // Only consider collider if it is within range
+    global_collider(cur_ent, collider_offset, &cur_col);
+    if ((range != SIM_RANGE_INF && cur_col.type == POLY &&
+        glm_vec3_distance(origin, cur_col.data.center_of_mass) > range) ||
+        (range != SIM_RANGE_INF && cur_col.type == SPHERE &&
+        glm_vec3_distance(origin, cur_col.data.center) > range)) {
+      continue;
+    }
+
+    get_collider_velocity(cur_ent, collider_offset, vel, ang_vel);
+    if (is_moving(vel, ang_vel)) {
+      // Check collisions
+      status = get_collider_collisions(sim, cur_ent, collider_offset,
+                                       &collisions, &buf_len, &buf_size,
+                                       get_col_info);
+      if (status) {
+        *dest = NULL;
+        return 0;
+      }
+    } else {
+      // TODO MUTEX LOCK
+      // ALSO THROWS A WRENCH INTO MULTITHREADING: HAVE TO DELETE NON-MOVING
+      // COLLIDERS AFTER COLLISION IS DECTECTED, SINCE WE CANNOT MANIPULATE
+      // THE MOVING LEDGER IN THIS CODE
+      ledger_delete_direct(sim->moving_ledger, sim->m_list, &sim->num_moving,
+                           i);
+      // END TODO
+      i--;
+    }
+  }
+}
+
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
                             size_t *col_buf_len, size_t *col_buf_size,

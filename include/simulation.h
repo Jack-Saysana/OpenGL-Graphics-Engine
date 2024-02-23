@@ -1,10 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include <GLFW/glfw3.h>
 #include <const.h>
 #include <globals.h>
 #include <simulation_str.h>
+
+typedef struct check_args {
+  size_t start;
+  size_t end;
+  SIMULATION *sim;
+  COLLISION **collisions;
+  size_t buf_len;
+  size_t buf_size;
+  vec3 origin;
+  float range;
+  int get_col_info;
+} C_ARGS;
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
@@ -12,6 +25,7 @@ int elist_add(SIM_COLLIDER **list, size_t *len, size_t *buff_size,
               ENTITY *entity, size_t collider_offset);
 void elist_delete(SIM_COLLIDER *list, size_t index, size_t *len);
 void integrate_collider(ENTITY *entity, size_t offset, vec3 force);
+void check_moving_buffer(void *args);
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
                             size_t *col_buf_len, size_t *col_buf_size,
