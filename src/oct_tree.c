@@ -179,6 +179,15 @@ int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
     }
   }
 
+#ifdef DEBUG
+  for (size_t i = 0; i < tree->data_buff_len; i++) {
+    if (tree->data_buffer[i].entity == entity &&
+        tree->data_buffer[i].collider_offset == collider_offset) {
+      fprintf(stderr, "Error: Oct tree deletion failure\n");
+    }
+  }
+#endif
+
   free(candidates.list);
 
   return 0;
