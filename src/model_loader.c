@@ -412,6 +412,19 @@ int init_tex_tab() {
   return 0;
 }
 
+void free_textures() {
+  for (size_t i = 0; i < tex_tab_size; i++) {
+    if (tex_tab[i].status == LEDGER_OCCUPIED) {
+      free(tex_tab[i].path);
+    }
+  }
+
+  free(tex_tab);
+  tex_tab = NULL;
+  tex_tab_len = 0;
+  tex_tab_size = 0;
+}
+
 size_t tex_tab_add(char *path) {
   if (!tex_tab) {
     init_tex_tab();
