@@ -25,7 +25,7 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
 
     if (op == NEWMTL) {
       cur_mat = materials + *mat_len;
-      cur_mat->name = get_hash(cur_line);
+      cur_mat->name = get_str_hash(cur_line);
       cur_mat->mat_paths[AMB] = NULL;
       cur_mat->mat_paths[DIFF] = NULL;
       cur_mat->mat_paths[SPEC] = NULL;

@@ -156,13 +156,13 @@ void free_line_buffer(LINE_BUFFER *lb) {
 }
 
 /*
- * ========= GET_HASH ==========
+ * ========= GET_STR_HASH ==========
  *
  * Hash string to an integer
  *
  * =============================
  */
-uint64_t get_hash(char *str) {
+size_t get_str_hash(char *str) {
   int weight = 17;
   int str_len = strlen(str);
 
@@ -207,8 +207,35 @@ uint64_t get_hash(char *str) {
 
   hash = hash << n;
   hash = hash | str_len;
+  hash = hash & ~1;
 
   return hash;
+}
+
+char *remove_double_dot(char *path) {
+  char *buffer = malloc(sizeof(char) * strlen(path) + 1);
+  size_t index = 0;
+  char prev[2] = { '\0', '\0' };
+  char cur = '\0';
+  for (size_t i = 0; i < strlen(path); i++) {
+    cur = path[i];
+    if (cur == '/' && prev[0] == '.' && prev[1] == '.') {
+      for (size_t j = index - 4; j >= 0; j--) {
+        if (j == 0 || buffer[j] == '/') {
+          index = j;
+          break;
+        }
+      }
+    }
+    buffer[index] = cur;
+    index++;
+
+    prev[1] = prev[0];
+    prev[0] = cur;
+  }
+  buffer[index] = '\0';
+
+  return buffer;
 }
 
 /*

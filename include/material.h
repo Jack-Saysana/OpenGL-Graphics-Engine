@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
 typedef enum {
   NO_OP = -2,
@@ -23,7 +22,7 @@ typedef struct line_buffer {
 } LINE_BUFFER;
 
 typedef struct material {
-  uint64_t name;
+  size_t name;
   char *mat_paths[NUM_PROPS];
 } MATERIAL;
 
@@ -35,4 +34,4 @@ void free_materials(MATERIAL *buffer, size_t buf_len);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 LINE_BUFFER *get_lines(char *);
 void free_line_buffer(LINE_BUFFER *);
-uint64_t get_hash(char *str);
+size_t get_str_hash(char *str);

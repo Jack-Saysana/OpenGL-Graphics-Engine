@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include <entity_str.h>
 
 typedef enum {
@@ -82,7 +81,7 @@ int triangulate_polygon(FILE *, FACE_VERT *, size_t);
 int is_ear(int *, FACE_VERT *, float *);
 int sort_colliders();
 void swap_colliders(size_t cur, size_t dest);
-uint64_t get_hash(char *str);
+size_t get_str_hash(char *str);
 int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
                  char *dir, char *lib);
 void free_line_buffer(LINE_BUFFER *);
