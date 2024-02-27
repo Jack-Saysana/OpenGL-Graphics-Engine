@@ -248,6 +248,49 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   return buf_len;
 }
 
+size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
+                      float range) {
+  COLLISION *collisions = malloc(sizeof(COLLISION) * BUFF_STARTING_LEN);
+  size_t buf_len = 0;
+  size_t buf_size = BUFF_STARTING_LEN;
+
+  int status = 0;
+
+  // Spoof an entity which will act as our search sphere
+  COLLIDER col;
+  memset(&col, 0, sizeof(COLLIDER));
+  glm_vec3_copy(pos, col.data.center);
+  col.data.radius = range;
+  col.children_offset = -1;
+  col.num_children = 0;
+  col.type = SPHERE;
+  col.category = DEFAULT;
+
+  MODEL model;
+  memset(&model, 0, sizeof(MODEL));
+  model.colliders = &col;
+  model.num_colliders = 1;
+
+  ENTITY ent;
+  memset(&ent, 0, sizeof(ENTITY));
+  ent.model = &model;
+
+  status = get_collider_collisions(sim, &ent, 0, &collisions, &buf_len,
+                                   &buf_size, 0);
+  if (status) {
+    *dest = NULL;
+    return 0;
+  }
+
+  for (size_t i = 0; i < buf_len; i++) {
+    collisions[i].a_ent = NULL;
+    collisions[i].a_offset = INVALID_INDEX;
+  }
+
+  *dest = collisions;
+  return buf_len;
+}
+
 void impulse_resolution(SIMULATION *sim, COLLISION col) {
   COL_ARGS a_args;
   a_args.entity = col.a_ent;

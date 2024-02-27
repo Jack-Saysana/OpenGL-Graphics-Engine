@@ -124,23 +124,23 @@ All objects within `range` of `origin` are considered for collision detection. F
 
 The number of collisions stored in the buffer created at `dest`
 
-```size_t get_sim_collider_collisions(SIMULATION *sim, ENTITY *ent, size_t col, COLLISION **dest, size_t *dest_len, size_t *dest_size)```
+####```size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos, float range)```
 
-For a single collider inside a given simulation, all collisions are detected with that collider, and a `COLLISION` is created and appended to the end of a buffer allocated at `dest`. `dest` is expected to be freed and allocated by the caller. This function is a more fine-grained version of `get_sim_collisions()`.
+Search for all colliders in a simulation which are located within some range of a point in a simulation. Each found collider is stored as a collision, paired with a dummy collider marked by a NULL entity and invalid collider index.
 
 **Arguments**
 
 - `SIMULATION *sim`: Simulation to detect collisions in
 
-- `ENTITY *ent`: Entity to whom the desired collider of search belongs
+- `COLLISION **dest`: Pointer to where to allocate the destination buffer for storing each collision.
 
-- `size_t col`: Index of collider of search inside ent
+- `vec3 pos`: Position in the simulation where the search will be conducted
 
-- `COLLISION **dest`: Pointer to where to allocate the destination buffer for storing each collision pair.
+- `float range`: Search radius of the query
 
-- `size_t *col_buf_len`: Pointer to value where the number of collisions currently stored in dest is stored
+**Returns**
 
-- `size_t *col_buf_size`: Pointer to value where the size of dest is stored
+The number of collisions stored in the buffer created at `dest`
 
 ## Collider Integration / Updating
 
