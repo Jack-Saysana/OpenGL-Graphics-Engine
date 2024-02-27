@@ -12,7 +12,7 @@ The simulation system makes usage of the `DELTA_TIME` global variable for integr
 
 ### Functions
 
-```SIMULATION *init_sim(float max_extent, unsigned int max_depth)```
+####```SIMULATION *init_sim(float max_extent, unsigned int max_depth)```
 
 Initializes a new simulation for usage.
 
@@ -26,7 +26,7 @@ Initializes a new simulation for usage.
 
 A pointer to the new `SIMULATION` struct
 
-```void free_sim(SIMULATION *sim)```
+####```void free_sim(SIMULATION *sim)```
 
 Deallocates a `SIMULATION` struct
 
@@ -40,7 +40,7 @@ Once a simulation is initialized, the first step is to add colliders to the simu
 
 ### Functions
 
-```int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter)```
+####```int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter)```
 
 Adds an entities colliders to a simulation, given some filter settings for the collider
 
@@ -60,7 +60,7 @@ Adds an entities colliders to a simulation, given some filter settings for the c
 
 0 if successful, non-zero if an error occured
 
-```int sim_remove_entity(SIMULATION *sim, ENTITY *entity)```
+####```int sim_remove_entity(SIMULATION *sim, ENTITY *entity)```
 
 Removes all colliders in `sim` which belong to `entity`
 
@@ -104,7 +104,7 @@ A `COLLISION` struct is defined to act as an easy to use object for reading and 
 
 ### Functions
 
-```size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin, float range, int get_col_info)```
+####```size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin, float range, int get_col_info)```
 
 All objects within `range` of `origin` are considered for collision detection. For each collision detected in the simulation, a `COLLISION` is created and stored in a buffer allocated at `dest`.
 
@@ -148,7 +148,7 @@ With colliders present in a simulation, each with their own physics data such as
 
 ### Functions
 
-```void prep_sim_movement(SIMULATION *sim)```
+####```void prep_sim_movement(SIMULATION *sim)```
 
 A prepratory function which should be called before any colliders in a simulation are moved. This and the `update_sim_movement()` function are used to ensure the oct-tree of each simulation is properly synced with the positions of the simulated colliders.
 
@@ -156,7 +156,7 @@ A prepratory function which should be called before any colliders in a simulatio
 
 - `SIMUATION *sim`: Simulation to prepare
 
-```void update_sim_movement(SIMULATION *sim)```
+####```void update_sim_movement(SIMULATION *sim)```
 
 A finalizing function to update the state of a simulation's oct-tree with the position info of all the simulated colliders. Should be called after a call to `prep_sim_movement()` and subsequent collider movement functionality.
 
@@ -164,7 +164,7 @@ A finalizing function to update the state of a simulation's oct-tree with the po
 
 - `SIMULATION *sim`: Simulation to update
 
-```void integrate_sim(SIMULATION *sim, vec3 origin, float range)```
+####```void integrate_sim(SIMULATION *sim, vec3 origin, float range)```
 
 For each `COLLIDER` in `sim` which is withing `range` from `origin`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
 
@@ -176,7 +176,7 @@ For each `COLLIDER` in `sim` which is withing `range` from `origin`, its velocit
 
 - `float range`: Max distance an object can be from `origin` for it to be integrated. Can be set to `SIM_RANGE_INF` to consider all objects in the simulation.
 
-```void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col)```
+####```void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col)```
 
 Integrate a single collider inside of a simulation. A more fine-grained version of `integrate_sim()`.
 
@@ -188,7 +188,7 @@ Integrate a single collider inside of a simulation. A more fine-grained version 
 
 - `size_t col`: Index of collider of entity to integrate
 
-```void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset)```
+####```void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset)```
 
 For the given collider, it's status in the simulation is refreshed. This call is necesarry in the case where an object exists within multiple different simulations, a and b. In the event simulation a causes the object to begin moving, `refresh_collider()` must be called on the collider with simulation b to ensure simulation b is synced with the current status of the collider.
 
@@ -206,7 +206,7 @@ Although optional, additional simulation helpers are provided in the way of simp
 
 ### Functions
 
-```void impulse_resolution(SIMULATION *sim, COLLISION col)```
+####```void impulse_resolution(SIMULATION *sim, COLLISION col)```
 
 An optional collision resolution function which resolves a single collision in accordance to impulse-based collision resolution. The calculations used by this function is specified [here](https://en.wikipedia.org/wiki/Collision_response#Impulse-based_reaction_model).
 
@@ -218,7 +218,7 @@ An optional collision resolution function which resolves a single collision in a
 
 **Returns**
 
-```void sim_add_force(SIMULATION *sim, vec3 force)```
+####```void sim_add_force(SIMULATION *sim, vec3 force)```
 
 By default, `SIMULATION`s do not enforce gravity or any sort of universal force, so when creating a physics simulation in a default `SIMULATION`, colliders float through space. This function allows for the specification of an acceleration vector, which will then impact every object in the simulation. **Note** This function is additive, meaning repeated calls simply add onto the current acceleration enforced by `sim`. See `sim_clear_force()` for clearing the already existing force of a `sim`.
 
@@ -228,7 +228,7 @@ By default, `SIMULATION`s do not enforce gravity or any sort of universal force,
 
 - `vec3 force`: The "force" vector to add to the simulation. This vector acts as a uniform acceleration across all colliders in the simulation. For example, the vector `{ 0.0, -9.81, 0.0 }`, would approximate gravity in the simulation.
 
-```void sim_clear_forces(SIMULATION *sim)```
+####```void sim_clear_forces(SIMULATION *sim)```
 
 Clears the force vector in a simulation to zero.
 
