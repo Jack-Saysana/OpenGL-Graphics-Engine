@@ -162,8 +162,8 @@ int main() {
   set_ui_display(tool_tip, 0);
   set_ui_on_hover(c1, test_callback_hover, (void *) tool_tip);
   set_ui_no_hover(c1, test_callback_no_hover, (void *) tool_tip);
-  set_manual_layer(c1, 0.2);
-  set_ui_enabled(c1, 0);
+  set_manual_layer(tool_tip, -0.01);
+  //set_ui_enabled(c1, 0);
 
   /*
   UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
@@ -523,9 +523,9 @@ int main() {
                   test_shader, 0, 1);
 
     /* Misc */
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     render_ui();
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Swap Buffers and Poll Events
     glfwSwapBuffers(window);

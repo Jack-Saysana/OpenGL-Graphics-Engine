@@ -30,7 +30,7 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs,
     return -1;
   }
 
-  glm_vec3_copy((vec3) { 0.0, 0.0, 0.1 }, ui_root.pix_pos);
+  glm_vec3_copy((vec3) { 0.0, 0.0, -10.0 }, ui_root.pix_pos);
 
   // Initialized base quad model used for rendering ui components
   ui_quad = load_model(quad_path);
@@ -423,7 +423,7 @@ void render_comp(UI_COMP *comp) {
   // Scale quad to component width
   glm_translate(comp_model_mat, (vec3) { screen_pos[X] * 2.0,
                                          screen_pos[Y] * 2.0,
-                                         -comp->pix_pos[Z]});
+                                         comp->pix_pos[Z]});
   glm_scale(comp_model_mat, (vec3) { screen_width * 2.0, screen_height * 2.0,
                                      1.0 });
 
@@ -703,6 +703,6 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
   if (child->manual_layer) {
     child->pix_pos[Z] = child->pos[Z];
   } else {
-    child->pix_pos[Z] = parent->pix_pos[Z] - 0.01;
+    child->pix_pos[Z] = parent->pix_pos[Z] + 0.01;
   }
 }
