@@ -266,13 +266,17 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
   col.type = SPHERE;
   col.category = DEFAULT;
 
+  int col_bone_link = -1;
   MODEL model;
   memset(&model, 0, sizeof(MODEL));
   model.colliders = &col;
   model.num_colliders = 1;
+  model.collider_bone_links = &col_bone_link;
 
   ENTITY ent;
   memset(&ent, 0, sizeof(ENTITY));
+  glm_quat_identity(ent.rotation);
+  glm_vec3_copy(GLM_VEC3_ONE, ent.scale);
   ent.model = &model;
 
   status = get_collider_collisions(sim, &ent, 0, &collisions, &buf_len,

@@ -30,7 +30,7 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs,
     return -1;
   }
 
-  glm_vec3_copy((vec3) { 0.0, 0.0, -10.0 }, ui_root.pix_pos);
+  glm_vec3_copy((vec3) { 0.0, 0.0, ROOT_UI_DEPTH }, ui_root.pix_pos);
 
   // Initialized base quad model used for rendering ui components
   ui_quad = load_model(quad_path);
@@ -549,7 +549,12 @@ int render_ui() {
   }
 
   // Render UI Components from farest to nearest
+  float prev_depth = ROOT_UI_DEPTH;
   for (size_t i = 0; i < render_list_len; i++) {
+    if (render_list[i]->pix_pos[Z] <= prev_depth) {
+      render_list[i]->pix_pos[Z] = prev_depth + 0.001;
+    }
+    prev_depth = render_list[i]->pix_pos[Z];
     render_comp(render_list[i]);
   }
 
