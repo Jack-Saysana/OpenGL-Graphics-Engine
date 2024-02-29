@@ -248,7 +248,7 @@ Updates the height of a UI component.
 
 ####```void set_manual_layer(UI_COMP *comp, float layer)```
 
-Overrides the automatic layer calculation of the UI component to a fixed value. For reference, the root layer is rendered at 0.0 and each successive "generation" is rendered at layer -0.01
+Overrides the automatic layer calculation of the UI component to a fixed value. For reference, the root layer is rendered at -10.0 and each successive "generation" is rendered at layer +0.001
 
 **Arguments**
 
