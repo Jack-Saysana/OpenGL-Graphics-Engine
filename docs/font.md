@@ -4,7 +4,7 @@ The engine also supports font importing capabilities for usage during text rende
 
 ## Functions
 
-```int import_font(char *bin_path, char *tex_path, F_GLYPH **)```
+### int import_font(char *bin_path, char *tex_path, F_GLYPH **)
 
 **Arguments**
 
