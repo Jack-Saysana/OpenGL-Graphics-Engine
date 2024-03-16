@@ -370,6 +370,15 @@ void set_ui_texture(UI_COMP *comp, char *path) {
   }
 }
 
+void set_ui_texture_unit(UI_COMP *comp, unsigned int tex_id) {
+  if (comp->textured && comp->texture != tex_id) {
+    glDeleteTextures(1, &comp->texture);
+  }
+
+  comp->textured = 1;
+  comp->texture = tex_id;
+}
+
 void set_ui_options(UI_COMP *comp, int options) {
   comp->numerical_options = options;
 }

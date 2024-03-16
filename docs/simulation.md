@@ -126,7 +126,7 @@ The number of collisions stored in the buffer created at `dest`
 
 ### size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos, float range)
 
-Search for all colliders in a simulation which are located within some range of a point in a simulation. Each found collider is stored as a collision, paired with a dummy collider marked by a NULL entity and invalid collider index.
+Search for all colliders in a simulation which are located within some range of a point in a simulation. Each found collider is stored as a collision, paired with a dummy collider marked by a NULL entity and invalid collider index. Each found collider has its info stored in the `b_ent` and `b_offset` fields of each collision.
 
 **Arguments**
 
