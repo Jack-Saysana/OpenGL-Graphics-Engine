@@ -236,7 +236,7 @@ Updates the width of a UI component.
 
 - `float width`: Updated width. Still interpreted by component options.
 
-### void set_ui_pos(UI_COMP *comp, float height)
+### void set_ui_height(UI_COMP *comp, float height)
 
 Updates the height of a UI component.
 
