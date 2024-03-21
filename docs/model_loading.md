@@ -168,6 +168,30 @@ Loads a model from a modified .obj file. If no preprocessed binary of the same n
 
 A pointer to the imported model or NULL if an error has occured.
 
+### MODEL_DATA *load_model_data(char *path)
+
+Performs the same functionality as `load_model()`, minus the initialization of the OpenGL VAO, VBO and EBO. The final `MODEL` struct can then be later initialized using the `gen_model()` function. This function may be used in the instance where the OpenGL object buffers should not be instantly initialized, such as the case where models are loaded in a separate thread from the thread belonging to the current OpenGL context.
+
+**Arguments**
+
+- `char *path`: path to the model's .obj file
+
+**Returns**
+
+A pointer to the imported `MODEL_DATA` struct or NULL if an error has occured.
+
+### MODEL *gen_model(MODEL_DATA *md)
+
+Initializes a model from some given `MODEL_DATA`.
+
+**Arguments**
+
+- `MODEL_DATA *md`: MODEL_DATA used to intialize the MODEL struct
+
+**Returns**
+
+A pointer to the initialized model or NULL if an error has occured.
+
 ## Instancing
 
 Once imported, models can be instanced to create "entities" with their own animation, physics and spatial state. These entities can then be entered into physical simulations for more complex scenes.
