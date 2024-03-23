@@ -16,6 +16,7 @@ UI_COMP ui_root = INVALID_COMP_INIT;
 static MODEL *ui_quad = NULL;
 static unsigned int ui_shader = 0;
 static unsigned int text_shader = 0;
+
 static UI_COMP **render_stack = NULL;
 static size_t render_stk_top = 0;
 static size_t render_stk_size = 0;
@@ -41,6 +42,7 @@ int init_ui_comp(UI_COMP *, char *, vec3, vec3, float, float, float, int,
                  void *, void *, void *, void *);
 void free_ui_comp(UI_COMP *);
 void calc_pix_stats(UI_COMP *, UI_COMP *, vec2, vec2, float *);
+int sort_ui_components(UI_COMP **, size_t);
 
 static void check_hover_event(UI_COMP *);
 static void on_click_callback(GLFWwindow *, int, int, int);

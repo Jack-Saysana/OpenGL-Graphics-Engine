@@ -4,7 +4,7 @@
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-#include <entity_str.h>
+#include <model_data_str.h>
 
 // ============================= LOCAL CONSTANTS =============================
 
@@ -28,25 +28,12 @@ typedef enum {
 
 // ============================== LOCAL STRUCTS ==============================
 
-typedef struct material {
-  uint64_t name;
-  char *mat_paths[NUM_PROPS];
-} MATERIAL;
-
 typedef struct line_buffer {
   char *dir;
   char *filename;
   char **buffer;
   size_t len;
 } LINE_BUFFER;
-
-typedef struct vbo {
-  float vertex[3];
-  float normal[3];
-  float tex_coord[2];
-  int bone_ids[4];
-  float weights[4];
-} VBO;
 
 typedef struct texture_table {
   char *path;
