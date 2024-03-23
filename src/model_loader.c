@@ -363,9 +363,6 @@ MODEL *gen_model(MODEL_DATA *md) {
     free_materials(md->obj_mat, 1);
   }
 
-  free(md->vertices);
-  free(md->indices);
-
   return model;
 }
 
@@ -375,7 +372,10 @@ MODEL *load_model(char *path) {
     return NULL;
   }
   MODEL *model = gen_model(md);
+  free(md->vertices);
+  free(md->indices);
   free(md);
+
   return model;
 }
 
