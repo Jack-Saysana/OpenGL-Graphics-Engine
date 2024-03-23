@@ -42,4 +42,7 @@
 #define LEDGER_OCCUPIED (1)
 #define LEDGER_DELETED (2)
 
+// UI constants
+#define ROOT_UI_DEPTH (-10.0)
+
 #endif

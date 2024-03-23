@@ -269,7 +269,7 @@ int draw_text(char *str, size_t str_len, vec3 col, TEXT_ANCHOR txt_anc,
     glm_translate(glyph_model_mat,
                   (vec3) { 2.0 * (cur_pos[X] / screen_width),
                            2.0 * (cur_pos[Y] / screen_height),
-                           -(pos[Z] - 0.001) });
+                           pos[Z] + 0.001 });
     glm_scale(glyph_model_mat,
               (vec3) { 2.0 * (line_height / screen_width),
                        2.0 * (line_height / screen_height), 1.0 });

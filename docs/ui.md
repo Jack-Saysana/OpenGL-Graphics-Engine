@@ -20,7 +20,7 @@ In order to use the UI component functionality, the `init_ui` function must be c
 
 ### Functions
 
-####```int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs, char *text_fs)```
+### int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs, char *text_fs)
 
 **Arguments:**
 
@@ -146,7 +146,7 @@ The options are as follows:
 
 ### Functions
 
-####```UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height, int options)```
+### UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height, int options)
 
 **Arguments**
 
@@ -216,7 +216,7 @@ UI components have additional options as well. These can be modified via the fol
 
 ### Functions
 
-####```void set_ui_pos(UI_COMP *comp, vec2 pos)```
+### void set_ui_pos(UI_COMP *comp, vec2 pos)
 
 Updates the position of a UI component.
 
@@ -226,7 +226,7 @@ Updates the position of a UI component.
 
 - `vec2 pos`: Updated position vector. Still interpreted by component options.
 
-####```void set_ui_width(UI_COMP *comp, float width)```
+### void set_ui_width(UI_COMP *comp, float width)
 
 Updates the width of a UI component.
 
@@ -236,7 +236,7 @@ Updates the width of a UI component.
 
 - `float width`: Updated width. Still interpreted by component options.
 
-####```void set_ui_pos(UI_COMP *comp, float height)```
+### void set_ui_height(UI_COMP *comp, float height)
 
 Updates the height of a UI component.
 
@@ -246,9 +246,9 @@ Updates the height of a UI component.
 
 - `float height`: Updated height. Still interpreted by component options.
 
-####```void set_manual_layer(UI_COMP *comp, float layer)```
+### void set_manual_layer(UI_COMP *comp, float layer)
 
-Overrides the automatic layer calculation of the UI component to a fixed value. For reference, the root layer is rendered at 0.0 and each successive "generation" is rendered at layer -0.01
+Overrides the automatic layer calculation of the UI component to a fixed value. For reference, the root layer is rendered at -10.0 and each successive "generation" is rendered at layer +0.001
 
 **Arguments**
 
@@ -256,7 +256,7 @@ Overrides the automatic layer calculation of the UI component to a fixed value. 
 
 - `float layer`: Manual layer of ui component.
 
-####```void disable_manual_layer(UI_COMP *comp)```
+### void disable_manual_layer(UI_COMP *comp)
 
 Removes the layer override of the UI component and reverts it back to automatic layering
 
@@ -264,7 +264,7 @@ Removes the layer override of the UI component and reverts it back to automatic 
 
 - `UI_COMP *comp`: Pointer to the UI Component being edited
 
-####```void set_ui_pivot(UI_COMP *comp, PIVOT pivot)```
+### void set_ui_pivot(UI_COMP *comp, PIVOT pivot)
 
 Modifies the "pivot" of the UI component, which is the point on the UI component rendered at the "position" attribute.
 
@@ -288,7 +288,7 @@ Note: Modifying the pivot on a relatively positioned UI component can cause over
     - `PIVOT_BOTTOM_LEFT`: Pivot is the bottom left corner of the component
     - `PIVOT_BOTTOM_RIGHT`: Pivot is the bottom right corner of the component
 
-####```void set_ui_display(UI_COMP *comp, int display)```
+### void set_ui_display(UI_COMP *comp, int display)
 
 Sets the `display` attribute of the component, which determines if the UI component is displayed or not.
 
@@ -301,7 +301,7 @@ remain active. To disable these features, instead use `set_ui_enabled`
 
 - `int display`: 0 if component shouldn't be displayed, non-zero if should be displayed
 
-####```void set_ui_text(UI_COMP *comp, char *str, float line_height, TEXT_ANCHOR txt_anc, F_GLYPH *font, vec3 col)```
+### void set_ui_text(UI_COMP *comp, char *str, float line_height, TEXT_ANCHOR txt_anc, F_GLYPH *font, vec3 col)
 
 Renders text within a UI component.
 
@@ -325,7 +325,7 @@ Renders text within a UI component.
 
 - `vec3 col`: RGB color of rendered text
 
-####```void update_ui_text(UI_COMP *comp, char *str)```
+### void update_ui_text(UI_COMP *comp, char *str)
 
 Updates the text in a text-based ui-component without needing to pass a font, and other initializing info.
 
@@ -335,7 +335,7 @@ Updates the text in a text-based ui-component without needing to pass a font, an
 
 - `char *str`: Updated text
 
-####```void set_ui_text_col(UI_COMP *comp, vec3 col)```
+### void set_ui_text_col(UI_COMP *comp, vec3 col)
 
 Modifies the text color of a ui component without modifying it's text or line height.
 
@@ -345,7 +345,7 @@ Modifies the text color of a ui component without modifying it's text or line he
 
 - `vec3 col`: Updated color of text
 
-####```void set_ui_texture(UI_COMP *comp, char *path)```
+### void set_ui_texture(UI_COMP *comp, char *path)
 
 Sets the background texture of a UI Component
 
@@ -355,7 +355,18 @@ Sets the background texture of a UI Component
 
 - `char *path`: Path to background texture
 
-####```void set_ui_options(UI_COMP *comp, int options)```
+### void set_ui_texture_unit(UI_COMP *comp, unsigned int tex_id)
+
+Sets the background texture of a UI Component using an OpenGL texture id rather
+than a path to a texture on disk.
+
+**Arguments**
+
+- `UI_COMP *comp`: Pointer to the UI Component being edited
+
+- `unsigned int tex_id`: Texture unit to link against
+
+### void set_ui_options(UI_COMP *comp, int options)
 
 Updates the `options` attribute of the UI component
 
@@ -365,7 +376,7 @@ Updates the `options` attribute of the UI component
 
 - `int options`: Updated options bitfield
 
-####```void set_ui_enabled(UI_COMP *comp, int enabled)```
+### void set_ui_enabled(UI_COMP *comp, int enabled)
 
 Will update the `enabled` attribute of a UI component. If a UI component is disabled, it, and its children will not be rendered, and its event listeners will no longer be active.
 
@@ -375,7 +386,7 @@ Will update the `enabled` attribute of a UI component. If a UI component is disa
 
 - `int enabled`: Updated `enabled` attribute. 0 if disabled, non-zero if enabled.
 
-####```void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)```
+### void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)
 
 Register a callback function for when the user clicks on the component.
 
@@ -387,7 +398,7 @@ Register a callback function for when the user clicks on the component.
 
 - `void *args`: Acts as a pointer for additional arguments that might be needed for the callback function.
 
-####```void set_ui_on_release(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)```
+### void set_ui_on_release(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)
 
 Register a callback function for when the user releases the mouse on top of the component.
 
@@ -399,7 +410,7 @@ Register a callback function for when the user releases the mouse on top of the 
 
 - `void *args`: Acts as a pointer for additional arguments that might be needed for the callback function.
 
-####```void set_ui_on_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)```
+### void set_ui_on_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)
 
 Register a callback function which is called every frame the user hovers over the component.
 
@@ -411,7 +422,7 @@ Register a callback function which is called every frame the user hovers over th
 
 - `void *args`: Acts as a pointer for additional arguments that might be needed for the callback function.
 
-####```void set_ui_no_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)```
+### void set_ui_no_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *args)
 
 Register a callback function which is called every frame the user is not hovered over the component.
 
@@ -445,7 +456,7 @@ int main() {
 ```
 ### Functions
 
-####```void render_ui()```
+### void render_ui()
 
 Calculates the appearance and positions of each enabled UI component and renders them to the screen.
 
@@ -472,7 +483,7 @@ int main() {
 
 ### Functions
 
-####```int free_ui()```
+### int free_ui()
 
 Releases the resources allocated by the UI Component system
 

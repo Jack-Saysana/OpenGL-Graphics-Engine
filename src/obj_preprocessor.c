@@ -419,7 +419,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
                && cur_line[3] == 'm' && cur_line[4] == 't' &&
                cur_line[5] == 'l' && cur_line[6] == ' ') {
       cur_mat = NULL;
-      uint64_t hash = get_hash(cur_line + 7);
+      size_t hash = get_str_hash(cur_line + 7);
       for (int i = 0; i < mat_len; i++) {
         if (materials[i].name == hash) {
           cur_mat = materials + i;
