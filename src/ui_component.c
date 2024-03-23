@@ -360,10 +360,6 @@ void set_ui_text_col(UI_COMP *comp, vec3 col) {
 }
 
 void set_ui_texture(UI_COMP *comp, char *path) {
-  if (comp->textured) {
-    glDeleteTextures(1, &comp->texture);
-  }
-
   comp->textured = 1;
   if (gen_texture_id(path, &comp->texture)) {
     comp->textured = 0;
@@ -371,10 +367,6 @@ void set_ui_texture(UI_COMP *comp, char *path) {
 }
 
 void set_ui_texture_unit(UI_COMP *comp, unsigned int tex_id) {
-  if (comp->textured && comp->texture != tex_id) {
-    glDeleteTextures(1, &comp->texture);
-  }
-
   comp->textured = 1;
   comp->texture = tex_id;
 }
