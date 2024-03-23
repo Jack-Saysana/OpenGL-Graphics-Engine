@@ -1,6 +1,6 @@
 #include <model_loader.h>
 
-MODEL *load_model(char *path) {
+MODEL_DATA *load_model_data(char *path) {
   char *bin_path = malloc(strlen(path) + 5);
   sprintf(bin_path, "%s.bin", path);
   FILE *file = fopen(bin_path, "rb");
@@ -112,15 +112,15 @@ MODEL *load_model(char *path) {
     }
   }
 
-  MODEL *model = malloc(sizeof(MODEL));
-  if (model == NULL) {
+  MODEL_DATA *md = malloc(sizeof(MODEL_DATA));
+  if (md == NULL) {
     fclose(file);
     free(bones);
     free(collider_links);
     free(vertices);
     free(indicies);
     free(animations);
-    printf("Unable to allocate model\n");
+    printf("Unable to allocate model data\n");
     return NULL;
   }
 
@@ -135,7 +135,7 @@ MODEL *load_model(char *path) {
       free(vertices);
       free(indicies);
       free(animations);
-      free(model);
+      free(md);
       printf("Unable to allocate keyframe chains\n");
       return NULL;
     }
@@ -152,7 +152,7 @@ MODEL *load_model(char *path) {
       free(vertices);
       free(indicies);
       free(animations);
-      free(model);
+      free(md);
       free(k_chain_block);
       printf("Unable to allocate keyframes\n");
       return NULL;
@@ -170,7 +170,7 @@ MODEL *load_model(char *path) {
       free(vertices);
       free(indicies);
       free(animations);
-      free(model);
+      free(md);
       free(k_chain_block);
       free(keyframe_block);
       printf("Unable to allocate keyframe sled\n");
@@ -189,7 +189,7 @@ MODEL *load_model(char *path) {
       free(vertices);
       free(indicies);
       free(animations);
-      free(model);
+      free(md);
       free(k_chain_block);
       free(keyframe_block);
       free(sled_block);
@@ -204,7 +204,7 @@ MODEL *load_model(char *path) {
       free(vertices);
       free(indicies);
       free(animations);
-      free(model);
+      free(md);
       free(k_chain_block);
       free(keyframe_block);
       free(sled_block);
@@ -271,6 +271,34 @@ MODEL *load_model(char *path) {
     }
   }
   fclose(file);
+  free(bin_path);
+
+  md->animations = animations;
+  md->k_chain_block = k_chain_block;
+  md->keyframe_block = keyframe_block;
+  md->sled_block = sled_block;
+  md->bones = bones;
+  md->bone_collider_links = collider_links;
+  md->colliders = colliders;
+  md->collider_bone_links = bone_links;
+  md->obj_mat = obj_mat;
+  md->vertices = vertices;
+  md->indices = indicies;
+  md->num_animations = a_len;
+  md->num_bones = b_len;
+  md->num_colliders = col_len;
+  md->num_indices = 3 * i_len;
+  md->num_vertices = v_len;
+
+  return md;
+}
+
+MODEL *gen_model(MODEL_DATA *md) {
+  MODEL *model = malloc(sizeof(MODEL));
+  if (model == NULL) {
+    printf("Unable to allocate model\n");
+    return NULL;
+  }
 
   unsigned int VAO_id;
   glGenVertexArrays(1, &VAO_id);
@@ -279,13 +307,14 @@ MODEL *load_model(char *path) {
   unsigned int VBO_id;
   glGenBuffers(1, &VBO_id);
   glBindBuffer(GL_ARRAY_BUFFER, VBO_id);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * v_len, vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * md->num_vertices, md->vertices,
+               GL_STATIC_DRAW);
 
   unsigned int EBO_id;
   glGenBuffers(1, &EBO_id);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_id);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 3 * i_len, indicies,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * md->num_indices,
+               md->indices, GL_STATIC_DRAW);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) 0);
@@ -308,40 +337,57 @@ MODEL *load_model(char *path) {
   model->VAO = VAO_id;
   model->VBO = VBO_id;
   model->EBO = EBO_id;
-  model->animations = animations;
-  model->k_chain_block = k_chain_block;
-  model->keyframe_block = keyframe_block;
-  model->sled_block = sled_block;
-  model->bones = bones;
-  model->bone_collider_links = collider_links;
-  model->colliders = colliders;
-  model->collider_bone_links = bone_links;
-  model->num_animations = a_len;
-  model->num_bones = b_len;
-  model->num_colliders = col_len;
-  model->num_indicies = i_len * 3;
+  model->animations = md->animations;
+  model->k_chain_block = md->k_chain_block;
+  model->keyframe_block = md->keyframe_block;
+  model->sled_block = md->sled_block;
+  model->bones = md->bones;
+  model->bone_collider_links = md->bone_collider_links;
+  model->colliders = md->colliders;
+  model->collider_bone_links = md->collider_bone_links;
+  model->num_animations = md->num_animations;
+  model->num_bones = md->num_bones;
+  model->num_colliders = md->num_colliders;
+  model->num_indicies = md->num_indices;
 
   for (int i = 0; i < NUM_PROPS; i++) {
-    model->textures[i] = 0xBAADF00D;
+    model->textures[i] = INVALID_TEX;
   }
-  if (obj_mat != NULL) {
+  if (md->obj_mat != NULL) {
     for (int i = 0; i < NUM_PROPS; i++) {
-      if (obj_mat->mat_paths[i] != NULL) {
-        gen_texture_id(obj_mat->mat_paths[i], model->textures + i);
+      if (md->obj_mat->mat_paths[i] != NULL) {
+        gen_texture_id(md->obj_mat->mat_paths[i], model->textures + i);
       }
     }
 
-    free_materials(obj_mat, 1);
+    free_materials(md->obj_mat, 1);
   }
 
-  free(bin_path);
-  free(vertices);
-  free(indicies);
+  return model;
+}
+
+MODEL *load_model(char *path) {
+  MODEL_DATA *md = load_model_data(path);
+  if (md == NULL) {
+    return NULL;
+  }
+  MODEL *model = gen_model(md);
+  free(md->vertices);
+  free(md->indices);
+  free(md);
 
   return model;
 }
 
 int gen_texture_id(char *tex_path, unsigned int *dest) {
+  char *hash_path = remove_double_dot(tex_path);
+  size_t tex_index = tex_tab_search(hash_path);
+  if (tex_index != INVALID_INDEX) {
+    *dest = tex_tab[tex_index].texture;
+    free(hash_path);
+    return 0;
+  }
+
   unsigned int texture;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
@@ -371,10 +417,160 @@ int gen_texture_id(char *tex_path, unsigned int *dest) {
     glGenerateMipmap(GL_TEXTURE_2D);
   } else {
     fprintf(stderr, "Failed to load texture at: %s\n", tex_path);
+    *dest = INVALID_TEX;
     return -1;
   }
   stbi_image_free(data);
 
+  tex_index = tex_tab_add(hash_path);
+  tex_tab[tex_index].texture = texture;
   *dest = texture;
+  free(hash_path);
+  return 0;
+}
+
+// ========================== TEXTURE TABLE HELPERS ==========================
+
+size_t hash_tex(char *path, size_t i) {
+  size_t key = get_str_hash(path);
+  double mult = key * HASH_MAGIC_NUM - floor(key * HASH_MAGIC_NUM);
+  size_t ret = tex_tab_size * mult;
+  return (ret + i) % tex_tab_size;
+}
+
+int init_tex_tab() {
+  tex_tab = malloc(sizeof(TEX_TAB) * TEX_TAB_STARTING_LEN);
+  if (tex_tab == NULL) {
+    return -1;
+  }
+  memset(tex_tab, 0, sizeof(TEX_TAB) * TEX_TAB_STARTING_LEN);
+  tex_tab_len = 0;
+  tex_tab_size = TEX_TAB_STARTING_LEN;
+
+  return 0;
+}
+
+void free_textures() {
+  for (size_t i = 0; i < tex_tab_size; i++) {
+    if (tex_tab[i].status == LEDGER_OCCUPIED) {
+      free(tex_tab[i].path);
+    }
+  }
+
+  free(tex_tab);
+  tex_tab = NULL;
+  tex_tab_len = 0;
+  tex_tab_size = 0;
+}
+
+size_t tex_tab_add(char *path) {
+  if (!tex_tab) {
+    init_tex_tab();
+  }
+
+  size_t index = tex_tab_search(path);
+  if (index != INVALID_INDEX) {
+    return index;
+  }
+
+  size_t i = 0;
+  while (1) {
+    index = hash_tex(path, i);
+    if (tex_tab[index].status != LEDGER_OCCUPIED) {
+      tex_tab[index].status = LEDGER_OCCUPIED;
+      tex_tab[index].texture = INVALID_TEX;
+      tex_tab[index].path = malloc(sizeof(char) * strlen(path) + 1);
+      memcpy(tex_tab[index].path, path, strlen(path) + 1);
+      break;
+    }
+    i++;
+  }
+  tex_tab_len++;
+
+  double load_factor = ((double) tex_tab_len) / ((double) tex_tab_size);
+  if (load_factor > 0.5) {
+    int status = resize_tex_tab();
+    if (status) {
+      tex_tab[index].status = LEDGER_FREE;
+      tex_tab_len--;
+      return INVALID_INDEX;
+    }
+  }
+
+  return tex_tab_search(path);
+}
+
+size_t tex_tab_search(char *path) {
+  if (!tex_tab) {
+    init_tex_tab();
+  }
+
+  size_t i = 0;
+  size_t index = 0;
+  while (1) {
+    index = hash_tex(path, i);
+    if (tex_tab[index].status == LEDGER_FREE) {
+      break;
+    } else if (tex_tab[index].status == LEDGER_OCCUPIED &&
+               strncmp(path, tex_tab[index].path, strlen(path)) == 0) {
+      return index;
+    }
+    i++;
+  }
+  return INVALID_INDEX;
+}
+
+void tex_tab_delete(char *path) {
+  if (!tex_tab) {
+    init_tex_tab();
+  }
+
+  size_t index = tex_tab_search(path);
+  if (index != INVALID_INDEX) {
+    tex_tab_len--;
+    tex_tab[index].status = LEDGER_DELETED;
+    glDeleteTextures(1, &tex_tab[index].texture);
+    free(tex_tab[index].path);
+  }
+}
+
+int resize_tex_tab() {
+  if (!tex_tab) {
+    init_tex_tab();
+  }
+
+  TEX_TAB *new_tab = malloc(sizeof(TEX_TAB) * 2 * tex_tab_size);
+  if (new_tab == NULL) {
+    return -1;
+  }
+  memset(new_tab, 0, sizeof(TEX_TAB) * tex_tab_size * 2);
+
+  size_t j = 0;
+  size_t index = 0;
+  char *cur_path = 0;
+  unsigned int cur_tex = 0;
+  for (size_t i = 0; i < tex_tab_size; i++) {
+    if (tex_tab[i].status != LEDGER_OCCUPIED) {
+      continue;
+    }
+
+    cur_path = tex_tab[i].path;
+    cur_tex = tex_tab[i].texture;
+    j = 0;
+    while (1) {
+      index = hash_tex(cur_path, j);
+      if (new_tab[index].status != LEDGER_OCCUPIED) {
+        new_tab[index].status = LEDGER_OCCUPIED;
+        new_tab[index].path = cur_path;
+        new_tab[index].texture = cur_tex;
+        break;
+      }
+      j++;
+    }
+  }
+  tex_tab_size *= 2;
+
+  free(tex_tab);
+  tex_tab = new_tab;
   return 0;
 }

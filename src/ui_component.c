@@ -30,7 +30,7 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs,
     return -1;
   }
 
-  glm_vec3_copy((vec3) { 0.0, 0.0, 0.1 }, ui_root.pix_pos);
+  glm_vec3_copy((vec3) { 0.0, 0.0, ROOT_UI_DEPTH }, ui_root.pix_pos);
 
   // Initialized base quad model used for rendering ui components
   ui_quad = load_model(quad_path);
@@ -360,14 +360,15 @@ void set_ui_text_col(UI_COMP *comp, vec3 col) {
 }
 
 void set_ui_texture(UI_COMP *comp, char *path) {
-  if (comp->textured) {
-    glDeleteTextures(1, &comp->texture);
-  }
-
   comp->textured = 1;
   if (gen_texture_id(path, &comp->texture)) {
     comp->textured = 0;
   }
+}
+
+void set_ui_texture_unit(UI_COMP *comp, unsigned int tex_id) {
+  comp->textured = 1;
+  comp->texture = tex_id;
 }
 
 void set_ui_options(UI_COMP *comp, int options) {
@@ -423,7 +424,7 @@ void render_comp(UI_COMP *comp) {
   // Scale quad to component width
   glm_translate(comp_model_mat, (vec3) { screen_pos[X] * 2.0,
                                          screen_pos[Y] * 2.0,
-                                         -comp->pix_pos[Z]});
+                                         comp->pix_pos[Z]});
   glm_scale(comp_model_mat, (vec3) { screen_width * 2.0, screen_height * 2.0,
                                      1.0 });
 
@@ -454,6 +455,14 @@ int render_ui() {
     return 0;
   }
 
+  UI_COMP **render_list = malloc(sizeof(UI_COMP *) * BUFF_STARTING_LEN);
+  if (render_list == NULL) {
+    fprintf(stderr, "UI Error: Unable to allocate render list\n");
+    return -1;
+  }
+  size_t render_list_len = 0;
+  size_t render_list_size = BUFF_STARTING_LEN;
+
   render_stk_top = 1;
 
   ui_root.pix_width = RES_X;
@@ -468,6 +477,7 @@ int render_ui() {
   vec2 top_left = GLM_VEC2_ZERO_INIT;
   vec2 next_rel_pos = GLM_VEC2_ZERO_INIT;
   float next_line_y = 0.0;
+  int status = 0;
   while (render_stk_top) {
     render_stk_top--;
     cur_comp = render_stack[render_stk_top];
@@ -503,23 +513,53 @@ int render_ui() {
 
       // Render child component
       if (cur_child->display) {
-        render_comp(cur_child);
+        render_list[render_list_len] = cur_child;
+        render_list_len++;
+        if (render_list_len == render_list_size) {
+          status = double_buffer((void **) &render_list, &render_list_size,
+                                 sizeof(UI_COMP *));
+          if (status) {
+            fprintf(stderr, "UI Error: Unable to grow ui render list\n");
+            free(render_list);
+            return -1;
+          }
+        }
       }
 
       // Push child component on stack
       render_stack[render_stk_top] = cur_child;
       render_stk_top++;
       if (render_stk_top == render_stk_size) {
-        int status = double_buffer((void **) &render_stack, &render_stk_size,
-                                   sizeof(UI_COMP *));
+        status = double_buffer((void **) &render_stack, &render_stk_size,
+                               sizeof(UI_COMP *));
         if (status) {
           fprintf(stderr, "UI Error: Unable to grow ui render stack\n");
+          free(render_list);
           return -1;
         }
       }
     }
   }
 
+  // Sort render_list by pix_coords[Z]
+  status = sort_ui_components(render_list, render_list_len);
+  if (status) {
+    fprintf(stderr, "UI Error: UI Sorting allocation error\n");
+    free(render_list);
+    return -1;
+  }
+
+  // Render UI Components from farest to nearest
+  float prev_depth = ROOT_UI_DEPTH;
+  for (size_t i = 0; i < render_list_len; i++) {
+    if (render_list[i]->pix_pos[Z] <= prev_depth) {
+      render_list[i]->pix_pos[Z] = prev_depth + 0.001;
+    }
+    prev_depth = render_list[i]->pix_pos[Z];
+    render_comp(render_list[i]);
+  }
+
+  free(render_list);
   return 0;
 }
 
@@ -703,6 +743,68 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
   if (child->manual_layer) {
     child->pix_pos[Z] = child->pos[Z];
   } else {
-    child->pix_pos[Z] = parent->pix_pos[Z] - 0.01;
+    child->pix_pos[Z] = parent->pix_pos[Z] + 0.001;
   }
+}
+
+int sort_ui_components(UI_COMP **comp, size_t comp_len) {
+  typedef struct sort_args {
+    UI_COMP **buff;
+    size_t len;
+  } SORT_ARGS;
+
+  SORT_ARGS *sort_stk = malloc(sizeof(SORT_ARGS) * BUFF_STARTING_LEN);
+  if (sort_stk == NULL) {
+    return -1;
+  }
+  sort_stk[0].buff = comp;
+  sort_stk[0].len = comp_len;
+  size_t stk_top = 1;
+  size_t stk_size = BUFF_STARTING_LEN;
+
+  UI_COMP **buff = NULL;
+  size_t len = 0;
+  size_t pivot, i = 0;
+  UI_COMP *temp = NULL;
+  while (stk_top) {
+    stk_top--;
+    buff = sort_stk[stk_top].buff;
+    len = sort_stk[stk_top].len;
+
+    if (len <= 1) {
+      continue;
+    }
+
+    pivot = len - 1;
+    i = -1;
+    for (size_t k = 0; k < len - 1; k++) {
+      if (buff[k]->pix_pos[Z] < buff[pivot]->pix_pos[Z]) {
+        i++;
+        temp = buff[k];
+        buff[k] = buff[i];
+        buff[i] = temp;
+      }
+    }
+
+    temp = buff[i + 1];
+    buff[i + 1] = buff[pivot];
+    buff[pivot] = temp;
+
+    stk_top += 2;
+    if (stk_top == stk_size) {
+      int status = double_buffer((void **) &sort_stk, &stk_size,
+                                 sizeof(UI_COMP *));
+      if (status) {
+        free(sort_stk);
+        return -1;
+      }
+    }
+
+    sort_stk[stk_top - 1].buff = buff;
+    sort_stk[stk_top - 1].len = i + 1;
+    sort_stk[stk_top - 2].buff = buff + i + 2;
+    sort_stk[stk_top - 2].len = len - (i + 2);
+  }
+
+  return 0;
 }

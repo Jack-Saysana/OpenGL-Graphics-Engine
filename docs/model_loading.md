@@ -156,7 +156,7 @@ A model can be loaded via the `load_model` function. These models are read from 
 
 ### Functions
 
-```MODEL *load_model(char *path)```
+### MODEL *load_model(char *path)
 
 Loads a model from a modified .obj file. If no preprocessed binary of the same name with a ".bin" extention exists in the directory in which the .obj file resides, the engine will also preprocess the file and create a preprocessed binary for quick reading.
 
@@ -168,13 +168,37 @@ Loads a model from a modified .obj file. If no preprocessed binary of the same n
 
 A pointer to the imported model or NULL if an error has occured.
 
+### MODEL_DATA *load_model_data(char *path)
+
+Performs the same functionality as `load_model()`, minus the initialization of the OpenGL VAO, VBO and EBO. The final `MODEL` struct can then be later initialized using the `gen_model()` function. This function may be used in the instance where the OpenGL object buffers should not be instantly initialized, such as the case where models are loaded in a separate thread from the thread belonging to the current OpenGL context.
+
+**Arguments**
+
+- `char *path`: path to the model's .obj file
+
+**Returns**
+
+A pointer to the imported `MODEL_DATA` struct or NULL if an error has occured.
+
+### MODEL *gen_model(MODEL_DATA *md)
+
+Initializes a model from some given `MODEL_DATA`.
+
+**Arguments**
+
+- `MODEL_DATA *md`: MODEL_DATA used to intialize the MODEL struct
+
+**Returns**
+
+A pointer to the initialized model or NULL if an error has occured.
+
 ## Instancing
 
 Once imported, models can be instanced to create "entities" with their own animation, physics and spatial state. These entities can then be entered into physical simulations for more complex scenes.
 
 ### Functions
 
-```ENTITY *init_entity(MODEL *model)```
+### ENTITY *init_entity(MODEL *model)
 
 Creates an instance of a model with its own animation, physics and spatial state.
 
@@ -192,7 +216,7 @@ Given an entity's model is properly rigged and contains animations, an entity's 
 
 ### Functions
 
-```int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame)```
+### int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame)
 
 Manipulates an entity's bone matricies such that they display a given frame of a given animation.
 
@@ -216,7 +240,7 @@ To learn about quickly importing the shaders to use during render, refer to [thi
 
 ### Functions
 
-```void draw_model(unsigned int shader, MODEL *model)```
+### void draw_model(unsigned int shader, MODEL *model)
 
 Draws a model to the screen. By default, the mesh will be rendered as it appears straight from the binary file, so the matricies used to render the model must be manually set.
 
@@ -233,7 +257,7 @@ Draws a model to the screen. By default, the mesh will be rendered as it appears
 
 - `MODEL *model`: Pointer to the model to be render
 
-```void draw_entity(unsigned int shader, ENTITY *entity)```
+### void draw_entity(unsigned int shader, ENTITY *entity)
 
 Draws an entity to the screen, using the model that was used to initialize the entity. The physics, general position, bone orientation, and transformation data is automatically applied to the model upon rendering the entity, so no model matricies must be manually set.
 
@@ -256,7 +280,7 @@ Upon concluding their usage, both entities and models must be deallocated with t
 
 ### Functions
 
-```void free_model(MODEL *model)```
+### void free_model(MODEL *model)
 
 Deallocates a model
 
@@ -264,6 +288,10 @@ Deallocates a model
 
 `MODEL *model`: Pointer to model to be deallocated
 
-```void free_entity(ENTITY *entity)```
+### void free_entity(ENTITY *entity)
 
 Deallocates an entity. Does **NOT** deallocate the model which the entity is an instance of.
+
+### void free_textures()
+
+Deallocates all currently cached textures in memory. Should be called only when all currently textured objects (UI components, models, etc...) are deallocated. Usage is recommended for memory management in situations where asset variety is high, as the allocated textures in memory can stack up as different models are initialized.

@@ -4,7 +4,7 @@ For ease of development, shader file importing functions are provided for glsl s
 
 ## Functions
 
-```unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path)```
+### unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path)
 
 Creates a shader program given inputs to vertex, geometry and fragment shader files
 
