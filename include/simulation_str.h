@@ -8,11 +8,10 @@ typedef struct simulation_collider {
   size_t collider_offset;
   size_t index;
   int status;
+  int to_delete;
 } SIM_COLLIDER;
 
 typedef struct simulation {
-  pthread_mutex_t m_lock;
-  pthread_mutex_t d_lock;
   // Oct tree used for collision detection
   OCT_TREE *oct_tree;
   // Hash-map of moving colliders

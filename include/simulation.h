@@ -8,12 +8,13 @@
 #include <simulation_str.h>
 
 typedef struct check_args {
+  pthread_mutex_t *col_lock;
   size_t start;
   size_t end;
   SIMULATION *sim;
   COLLISION **collisions;
-  size_t buf_len;
-  size_t buf_size;
+  size_t *buf_len;
+  size_t *buf_size;
   vec3 origin;
   float range;
   int get_col_info;
@@ -25,11 +26,11 @@ int elist_add(SIM_COLLIDER **list, size_t *len, size_t *buff_size,
               ENTITY *entity, size_t collider_offset);
 void elist_delete(SIM_COLLIDER *list, size_t index, size_t *len);
 void integrate_collider(ENTITY *entity, size_t offset, vec3 force);
-void check_moving_buffer(void *args);
+void *check_moving_buffer(void *args);
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
                             size_t *col_buf_len, size_t *col_buf_size,
-                            int get_col_info);
+                            int get_col_info, pthread_mutex_t *col_lock);
 void get_collider_velocity(ENTITY *entity, size_t collider_offset, vec3 vel,
                            vec3 ang_vel);
 int is_moving(vec3 vel, vec3 ang_vel);

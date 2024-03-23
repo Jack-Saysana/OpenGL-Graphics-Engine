@@ -183,6 +183,8 @@ void integrate_sim_collider(SIMULATION *sim, ENTITY *ent,
 
 size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
                           float range, int get_col_info) {
+  pthread_mutex_t col_lock;
+  pthread_mutex_init(&col_lock, NULL);
   COLLISION *collisions = malloc(sizeof(COLLISION) * BUFF_STARTING_LEN);
   size_t buf_len = 0;
   size_t buf_size = BUFF_STARTING_LEN;
@@ -190,8 +192,6 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   int status = 0;
   ENTITY *cur_ent = NULL;
   size_t collider_offset = 0;
-  COLLIDER cur_col;
-  memset(&cur_col, 0, sizeof(COLLIDER));
 
   vec3 vel = GLM_VEC3_ZERO_INIT;
   vec3 ang_vel = GLM_VEC3_ZERO_INIT;
@@ -214,30 +214,49 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   }
 
   // Detect collisions for all moving entities
+  pthread_t t1;
+  C_ARGS t1_args;
+  t1_args.col_lock = &col_lock;
+  t1_args.sim = sim;
+  t1_args.start = 0;
+  t1_args.end = sim->num_moving / 4;
+  t1_args.collisions = &collisions;
+  t1_args.buf_len = &buf_len;
+  t1_args.buf_size = &buf_size;
+  glm_vec3_copy(origin, t1_args.origin);
+  t1_args.range = range;
+  t1_args.get_col_info = get_col_info;
+
+  pthread_t t2;
+  C_ARGS t2_args;
+  memcpy(&t2_args, &t1_args, sizeof(C_ARGS));
+  t2_args.start = t1_args.end;
+  t2_args.end = fmin(t2_args.start + (sim->num_moving / 4), sim->num_moving);
+
+  pthread_t t3;
+  C_ARGS t3_args;
+  memcpy(&t3_args, &t1_args, sizeof(C_ARGS));
+  t3_args.start = t2_args.end;
+  t3_args.end = fmin(t3_args.start + (sim->num_moving / 4), sim->num_moving);
+
+  pthread_t t4;
+  C_ARGS t4_args;
+  memcpy(&t4_args, &t1_args, sizeof(C_ARGS));
+  t4_args.start = t3_args.end;
+  t4_args.end = sim->num_moving;
+
+  pthread_create(&t1, NULL, check_moving_buffer, &t1_args);
+  pthread_create(&t2, NULL, check_moving_buffer, &t2_args);
+  pthread_create(&t3, NULL, check_moving_buffer, &t3_args);
+  pthread_create(&t4, NULL, check_moving_buffer, &t4_args);
+
+  pthread_join(t1, NULL);
+  pthread_join(t2, NULL);
+  pthread_join(t3, NULL);
+  pthread_join(t4, NULL);
+
   for (size_t i = 0; i < sim->num_moving; i++) {
-    cur_ent = sim->moving_ledger[sim->m_list[i]].entity;
-    collider_offset = sim->moving_ledger[sim->m_list[i]].collider_offset;
-
-    // Only consider collider if it is within range
-    global_collider(cur_ent, collider_offset, &cur_col);
-    if ((range != SIM_RANGE_INF && cur_col.type == POLY &&
-        glm_vec3_distance(origin, cur_col.data.center_of_mass) > range) ||
-        (range != SIM_RANGE_INF && cur_col.type == SPHERE &&
-        glm_vec3_distance(origin, cur_col.data.center) > range)) {
-      continue;
-    }
-
-    get_collider_velocity(cur_ent, collider_offset, vel, ang_vel);
-    if (is_moving(vel, ang_vel)) {
-      // Check collisions
-      status = get_collider_collisions(sim, cur_ent, collider_offset,
-                                       &collisions, &buf_len, &buf_size,
-                                       get_col_info);
-      if (status) {
-        *dest = NULL;
-        return 0;
-      }
-    } else {
+    if (sim->moving_ledger[sim->m_list[i]].to_delete) {
       ledger_delete_direct(sim->moving_ledger, sim->m_list, &sim->num_moving,
                            i);
       i--;
@@ -280,7 +299,7 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
   ent.model = &model;
 
   status = get_collider_collisions(sim, &ent, 0, &collisions, &buf_len,
-                                   &buf_size, 0);
+                                   &buf_size, 0, NULL);
   if (status) {
     *dest = NULL;
     return 0;
@@ -495,19 +514,25 @@ void integrate_collider(ENTITY *entity, size_t offset, vec3 force) {
   }
 }
 
-void check_moving_buffer(void *args) {
+void *check_moving_buffer(void *args) {
   C_ARGS arg_data = *((C_ARGS *) args);
   SIMULATION *sim = arg_data.sim;
   COLLISION **collisions = arg_data.collisions;
-  size_t buf_len = arg_data.buf_len;
-  size_t buf_size = arg_data.buf_size;
+  size_t *buf_len = arg_data.buf_len;
+  size_t *buf_size = arg_data.buf_size;
   vec3 origin = GLM_VEC3_ZERO_INIT;
   glm_vec3_copy(arg_data.origin, origin);
   float range = arg_data.range;
   int get_col_info = arg_data.get_col_info;
 
+  int status = 0;
+  COLLIDER cur_col;
+  memset(&cur_col, 0, sizeof(COLLIDER));
   ENTITY *cur_ent = NULL;
   size_t collider_offset = 0;
+  vec3 vel = GLM_VEC3_ZERO_INIT;
+  vec3 ang_vel = GLM_VEC3_ZERO_INIT;
+
   for (size_t i = arg_data.start; i < arg_data.end; i++) {
     cur_ent = sim->moving_ledger[sim->m_list[i]].entity;
     collider_offset = sim->moving_ledger[sim->m_list[i]].collider_offset;
@@ -525,29 +550,23 @@ void check_moving_buffer(void *args) {
     if (is_moving(vel, ang_vel)) {
       // Check collisions
       status = get_collider_collisions(sim, cur_ent, collider_offset,
-                                       &collisions, &buf_len, &buf_size,
-                                       get_col_info);
+                                       collisions, buf_len, buf_size,
+                                       get_col_info, arg_data.col_lock);
       if (status) {
-        *dest = NULL;
-        return 0;
+        return (void *) -1;
       }
     } else {
-      // TODO MUTEX LOCK
-      // ALSO THROWS A WRENCH INTO MULTITHREADING: HAVE TO DELETE NON-MOVING
-      // COLLIDERS AFTER COLLISION IS DECTECTED, SINCE WE CANNOT MANIPULATE
-      // THE MOVING LEDGER IN THIS CODE
-      ledger_delete_direct(sim->moving_ledger, sim->m_list, &sim->num_moving,
-                           i);
-      // END TODO
-      i--;
+      sim->moving_ledger[sim->m_list[i]].to_delete = 1;
     }
   }
+
+  return 0;
 }
 
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
                             size_t *col_buf_len, size_t *col_buf_size,
-                            int get_col_info) {
+                            int get_col_info, pthread_mutex_t *col_lock) {
   // Calculate world space collider of subject
   COLLIDER s_world_col;
   memset(&s_world_col, 0, sizeof(COLLIDER));
@@ -598,6 +617,9 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
           collision_depth = 0.0;
         }
 
+        if (col_lock) {
+          pthread_mutex_lock(col_lock);
+        }
         COLLISION *new_col = (*col) + (*col_buf_len);
         new_col->a_ent = subject;
         new_col->b_ent = candidate_ent;
@@ -617,6 +639,9 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
             free(col_res.list);
             return -1;
           }
+        }
+        if (col_lock) {
+          pthread_mutex_unlock(col_lock);
         }
       }
     }
@@ -689,6 +714,7 @@ int ledger_add(SIM_COLLIDER **ledger, size_t **l_list,
       (*ledger)[index].collider_offset = col;
       (*ledger)[index].index = *num_cols;
       (*ledger)[index].status = LEDGER_OCCUPIED;
+      (*ledger)[index].to_delete = 0;
       break;
     }
     i++;
@@ -769,9 +795,11 @@ int resize_ledger(SIM_COLLIDER **ledger, size_t *l_list, size_t *ledger_size,
   size_t index = 0;
   ENTITY *cur_ent = NULL;
   size_t cur_col = 0;
+  int cur_del = 0;
   for (size_t i = 0; i < num_cols; i++) {
     cur_ent = (*ledger)[l_list[i]].entity;
     cur_col = (*ledger)[l_list[i]].collider_offset;
+    cur_del = (*ledger)[l_list[i]].to_delete;
     j = 0;
     while (1) {
       index = hash_col(cur_ent, cur_col, j, *ledger_size);
@@ -780,6 +808,7 @@ int resize_ledger(SIM_COLLIDER **ledger, size_t *l_list, size_t *ledger_size,
         new_ledger[index].collider_offset = cur_col;
         new_ledger[index].index = i;
         new_ledger[index].status = LEDGER_OCCUPIED;
+        new_ledger[index].to_delete = cur_del;
         break;
       }
       j++;
