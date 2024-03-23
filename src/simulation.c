@@ -219,7 +219,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   t1_args.col_lock = &col_lock;
   t1_args.sim = sim;
   t1_args.start = 0;
-  t1_args.end = sim->num_moving / 4;
+  t1_args.end = sim->num_moving / 2;
   t1_args.collisions = &collisions;
   t1_args.buf_len = &buf_len;
   t1_args.buf_size = &buf_size;
@@ -231,29 +231,13 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   C_ARGS t2_args;
   memcpy(&t2_args, &t1_args, sizeof(C_ARGS));
   t2_args.start = t1_args.end;
-  t2_args.end = fmin(t2_args.start + (sim->num_moving / 4), sim->num_moving);
-
-  pthread_t t3;
-  C_ARGS t3_args;
-  memcpy(&t3_args, &t1_args, sizeof(C_ARGS));
-  t3_args.start = t2_args.end;
-  t3_args.end = fmin(t3_args.start + (sim->num_moving / 4), sim->num_moving);
-
-  pthread_t t4;
-  C_ARGS t4_args;
-  memcpy(&t4_args, &t1_args, sizeof(C_ARGS));
-  t4_args.start = t3_args.end;
-  t4_args.end = sim->num_moving;
+  t2_args.end = sim->num_moving;
 
   pthread_create(&t1, NULL, check_moving_buffer, &t1_args);
   pthread_create(&t2, NULL, check_moving_buffer, &t2_args);
-  pthread_create(&t3, NULL, check_moving_buffer, &t3_args);
-  pthread_create(&t4, NULL, check_moving_buffer, &t4_args);
 
   pthread_join(t1, NULL);
   pthread_join(t2, NULL);
-  pthread_join(t3, NULL);
-  pthread_join(t4, NULL);
 
   for (size_t i = 0; i < sim->num_moving; i++) {
     if (sim->moving_ledger[sim->m_list[i]].to_delete) {
