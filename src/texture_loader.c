@@ -50,6 +50,50 @@ int gen_texture_id(char *tex_path, unsigned int *dest) {
   return 0;
 }
 
+int gen_cubemap(char **paths, unsigned int *dest) {
+  unsigned int texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+
+  int width;
+  int height;
+  int nrChannels;
+  stbi_set_flip_vertically_on_load(1);
+  for (int i = 0; i < 6; i++) {
+    unsigned char *data = stbi_load(paths[i], &width, &height, &nrChannels, 0);
+    if (data) {
+      int format = GL_RGBA;
+      if (nrChannels == 1) {
+        format = GL_RED;
+      } else if (nrChannels == 2) {
+        format = GL_RG;
+      } else if (nrChannels == 3) {
+        format = GL_RGB;
+      }
+
+      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width,
+                   height, 0, format, GL_UNSIGNED_BYTE, data);
+      glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+      fprintf(stderr, "Failed to load texture at: %s\n", paths[i]);
+      *dest = INVALID_TEX;
+      return -1;
+    }
+    stbi_image_free(data);
+    data = NULL;
+  }
+
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+  *dest = texture;
+
+  return 0;
+}
+
 // ========================== TEXTURE TABLE HELPERS ==========================
 
 size_t hash_tex(char *path, size_t i) {
