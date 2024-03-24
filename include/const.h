@@ -33,6 +33,7 @@
 #define ALLOW_HIT_BOXES  (0x4)
 
 #define INVALID_INDEX (0xFFFFFFFFFFFFFFFF)
+#define INVALID_TEX (0xFFFFFFFF)
 
 #define GRAVITY (10.0)
 
