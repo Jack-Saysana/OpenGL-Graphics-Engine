@@ -236,6 +236,10 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
 }
 
 void free_entity(ENTITY *entity) {
+  if (entity == NULL) {
+    return;
+  }
+
   if (entity->bone_mats) {
     free(entity->bone_mats);
     free(entity->final_b_mats);

@@ -67,6 +67,10 @@ void draw_bones(MODEL *model) {
 }
 
 void free_model(MODEL *model) {
+  if (model == NULL) {
+    return;
+  }
+
   glDeleteVertexArrays(1, &(model->VAO));
   glDeleteBuffers(1, &(model->VBO));
   glDeleteBuffers(1, &(model->EBO));
