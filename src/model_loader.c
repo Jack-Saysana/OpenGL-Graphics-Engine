@@ -40,17 +40,17 @@ MODEL_DATA *load_model_data(char *path) {
 
   int material_flag = 0;
   int path_len = 0;
-  MATERIAL *obj_mat = NULL;
   fread(&material_flag, sizeof(int), 1, file);
+  char *mat_paths[NUM_PROPS];
+  memset(mat_paths, 0, sizeof(char *) * NUM_PROPS);
   if (material_flag) {
-    obj_mat = malloc(sizeof(MATERIAL));
     for (int i = 0; i < NUM_PROPS; i++) {
       fread(&path_len, sizeof(int), 1, file);
       if (path_len > 0) {
-        obj_mat->mat_paths[i] = malloc(path_len);
-        fread(obj_mat->mat_paths[i], sizeof(char), path_len, file);
+        mat_paths[i] = malloc(path_len);
+        fread(mat_paths[i], sizeof(char), path_len, file);
       } else {
-        obj_mat->mat_paths[i] = NULL;
+        mat_paths[i] = NULL;
       }
     }
   }
@@ -281,7 +281,6 @@ MODEL_DATA *load_model_data(char *path) {
   md->bone_collider_links = collider_links;
   md->colliders = colliders;
   md->collider_bone_links = bone_links;
-  md->obj_mat = obj_mat;
   md->vertices = vertices;
   md->indices = indicies;
   md->num_animations = a_len;
@@ -289,6 +288,9 @@ MODEL_DATA *load_model_data(char *path) {
   md->num_colliders = col_len;
   md->num_indices = 3 * i_len;
   md->num_vertices = v_len;
+  for (int i = 0; i < NUM_PROPS; i++) {
+    md->mat_paths[i] = mat_paths[i];
+  }
 
   return md;
 }
@@ -353,14 +355,11 @@ MODEL *gen_model(MODEL_DATA *md) {
   for (int i = 0; i < NUM_PROPS; i++) {
     model->textures[i] = INVALID_TEX;
   }
-  if (md->obj_mat != NULL) {
-    for (int i = 0; i < NUM_PROPS; i++) {
-      if (md->obj_mat->mat_paths[i] != NULL) {
-        gen_texture_id(md->obj_mat->mat_paths[i], model->textures + i);
-      }
+  for (int i = 0; i < NUM_PROPS; i++) {
+    if (md->mat_paths[i] != NULL) {
+      gen_texture_id(md->mat_paths[i], model->textures + i);
+      free(md->mat_paths[i]);
     }
-
-    free_materials(md->obj_mat, 1);
   }
 
   return model;

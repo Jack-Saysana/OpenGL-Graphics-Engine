@@ -28,5 +28,4 @@ typedef struct line_buffer {
 int gen_texture_id(char *tex_path, unsigned int *);
 LINE_BUFFER *get_lines(char *);
 int preprocess_lines(LINE_BUFFER *);
-void free_materials(void *buffer, size_t buf_len);
 
