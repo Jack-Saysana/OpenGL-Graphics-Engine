@@ -49,7 +49,12 @@ int resize_ledger(SIM_COLLIDER **, size_t *, size_t *, size_t);
 
 OCT_TREE *init_tree(float max_extent, unsigned int max_depth);
 void free_oct_tree(OCT_TREE *tree);
+#ifdef DEBUG_OCT_TREE
+int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
+                    int birthmark);
+#else
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
+#endif
 int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 size_t get_all_colliders(OCT_TREE *tree, PHYS_OBJ **dest);

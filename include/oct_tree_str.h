@@ -16,6 +16,9 @@ typedef enum {
 } OCTANT;
 
 typedef struct physics_object {
+#ifdef DEBUG_OCT_TREE
+  COLLIDER add_state;
+#endif
   ENTITY *entity;
   size_t collider_offset;
   // Index of
@@ -24,6 +27,11 @@ typedef struct physics_object {
   size_t next_offset;
   // Index of prev PHYS_OBJ residing in the same node in data_buffer
   size_t prev_offset;
+  // Debugging info used to identify how/where the physics object was inseted
+  // into the oct tree
+#ifdef DEBUG_OCT_TREE
+  int birthmark;
+#endif
 } PHYS_OBJ;
 
 typedef struct oct_tree_node {

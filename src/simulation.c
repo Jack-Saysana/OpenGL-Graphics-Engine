@@ -99,7 +99,11 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter) {
       }
 
       // Insert collider into oct-tree
+#ifdef DEBUG_OCT_TREE
+      status = oct_tree_insert(sim->oct_tree, entity, i, 1);
+#else
       status = oct_tree_insert(sim->oct_tree, entity, i);
+#endif
       if (status) {
         fprintf(stderr,
                 "Error: Unable to insert entity into simulation oct-tree\n");
@@ -138,17 +142,63 @@ void sim_clear_forces(SIMULATION *sim) {
 
 void prep_sim_movement(SIMULATION *sim) {
   for (size_t i = 0; i < sim->num_moving; i++) {
+#ifdef DEBUG_OCT_TREE
+    fprintf(stderr, "Prep before:\n");
+    for (size_t j = 0; j < sim->oct_tree->data_buff_len; j++) {
+      if (sim->oct_tree->data_buffer[j].entity == sim->moving_ledger[sim->m_list[i]].entity &&
+          sim->oct_tree->data_buffer[j].collider_offset == sim->moving_ledger[sim->m_list[i]].collider_offset) {
+        fprintf(stderr, "  %p, %ld, %ld, %d, %ld\n", sim->oct_tree->data_buffer[j].entity,
+                sim->oct_tree->data_buffer[j].collider_offset,
+                sim->oct_tree->data_buffer[j].node_offset,
+                sim->oct_tree->data_buffer[j].birthmark,
+                j);
+      }
+    }
+#endif
     oct_tree_delete(sim->oct_tree, sim->moving_ledger[sim->m_list[i]].entity,
                     sim->moving_ledger[sim->m_list[i]].collider_offset);
+#ifdef DEBUG_OCT_TREE
+    int bad = 0;
+    fprintf(stderr, "Prep after:\n");
+    for (size_t j = 0; j < sim->oct_tree->data_buff_len; j++) {
+      if (sim->oct_tree->data_buffer[j].entity == sim->moving_ledger[sim->m_list[i]].entity &&
+          sim->oct_tree->data_buffer[j].collider_offset == sim->moving_ledger[sim->m_list[i]].collider_offset) {
+        ENTITY *ent = sim->oct_tree->data_buffer[j].entity;
+        fprintf(stderr, "  %p, %ld, %ld, %d, %ld\n", ent,
+                sim->oct_tree->data_buffer[j].collider_offset,
+                sim->oct_tree->data_buffer[j].node_offset,
+                sim->oct_tree->data_buffer[j].birthmark,
+                j);
+        bad = 1;
+      }
+    }
+    if (bad) {
+      COLLIDER obj;
+      memset(&obj, 0, sizeof(COLLIDER));
+      global_collider(sim->moving_ledger[sim->m_list[i]].entity,
+                      sim->moving_ledger[sim->m_list[i]].collider_offset, &obj);
+      fprintf(stderr, "BAD\n");
+    }
+#endif
   }
 }
 
+#ifdef DEBUG_OCT_TREE
+void update_sim_movement(SIMULATION *sim, int birthmark) {
+  for (size_t i = 0; i < sim->num_moving; i++) {
+    oct_tree_insert(sim->oct_tree, sim->moving_ledger[sim->m_list[i]].entity,
+                    sim->moving_ledger[sim->m_list[i]].collider_offset,
+                    birthmark);
+  }
+}
+#else
 void update_sim_movement(SIMULATION *sim) {
   for (size_t i = 0; i < sim->num_moving; i++) {
     oct_tree_insert(sim->oct_tree, sim->moving_ledger[sim->m_list[i]].entity,
                     sim->moving_ledger[sim->m_list[i]].collider_offset);
   }
 }
+#endif
 
 void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
   ENTITY *cur_ent = NULL;
