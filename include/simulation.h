@@ -1,10 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include <GLFW/glfw3.h>
 #include <const.h>
 #include <globals.h>
 #include <simulation_str.h>
+
+typedef struct check_args {
+  pthread_mutex_t *col_lock;
+  size_t start;
+  size_t end;
+  SIMULATION *sim;
+  COLLISION **collisions;
+  size_t *buf_len;
+  size_t *buf_size;
+  vec3 origin;
+  float range;
+  int get_col_info;
+} C_ARGS;
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
@@ -12,10 +26,11 @@ int elist_add(SIM_COLLIDER **list, size_t *len, size_t *buff_size,
               ENTITY *entity, size_t collider_offset);
 void elist_delete(SIM_COLLIDER *list, size_t index, size_t *len);
 void integrate_collider(ENTITY *entity, size_t offset, vec3 force);
+void *check_moving_buffer(void *args);
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
                             size_t *col_buf_len, size_t *col_buf_size,
-                            int get_col_info);
+                            int get_col_info, pthread_mutex_t *col_lock);
 void get_collider_velocity(ENTITY *entity, size_t collider_offset, vec3 vel,
                            vec3 ang_vel);
 int is_moving(vec3 vel, vec3 ang_vel);
@@ -34,7 +49,12 @@ int resize_ledger(SIM_COLLIDER **, size_t *, size_t *, size_t);
 
 OCT_TREE *init_tree(float max_extent, unsigned int max_depth);
 void free_oct_tree(OCT_TREE *tree);
+#ifdef DEBUG_OCT_TREE
+int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
+                    int birthmark);
+#else
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
+#endif
 int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 size_t get_all_colliders(OCT_TREE *tree, PHYS_OBJ **dest);

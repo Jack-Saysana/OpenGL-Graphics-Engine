@@ -192,6 +192,20 @@ Initializes a model from some given `MODEL_DATA`.
 
 A pointer to the initialized model or NULL if an error has occured.
 
+### int gen_cubemap(char **paths, unsigned int *dest)
+
+Generates an OpenGL cubemap.
+
+**Arguments**
+
+- `char **paths`: Array of 6 paths representing the cubemap. Order goes right, left, top, bottom, front, back.
+
+- `unsigned int *dest`: Location at which to store the generated texture ID
+
+**Returns**
+
+0 if successful, nonzero if an error had occured.
+
 ## Instancing
 
 Once imported, models can be instanced to create "entities" with their own animation, physics and spatial state. These entities can then be entered into physical simulations for more complex scenes.
