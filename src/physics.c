@@ -474,11 +474,13 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
     for (unsigned int j = 0; j < col_face_len; j++) {
       glm_vec3_copy(col_face[j], b_face[j]);
     }
+    /*
     if (col_face_len == 0) {
       fprintf(stderr,
               "Error: Collision detection mesh with invalid winding order\n");
       exit(1);
     }
+    */
     b_face_len = col_face_len;
     col_face_len = 0;
   }
