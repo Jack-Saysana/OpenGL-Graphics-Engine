@@ -29,8 +29,11 @@ int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
 #endif
 int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset);
 int remove_from_list(OCT_TREE *tree, size_t obj_offset);
-OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *ebj_extents,
-                     float *oct_len);
+//OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *ebj_extents,
+//                     float *oct_len);
+size_t update_extents(int, vec3, vec3, float);
+int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
+                  float oct_len);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
@@ -39,3 +42,4 @@ void get_model_mat(ENTITY *entity, mat4 model);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void global_collider(ENTITY *, size_t, COLLIDER *dest);
 void draw_model(unsigned int, MODEL *);
+int get_lsb(int);

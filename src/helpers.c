@@ -273,6 +273,17 @@ float remove_noise(float val, float threshold) {
 }
 
 /*
+ * ================= GET_LSB ================
+ *
+ * Returns number with all bits but its least significant set bit set to 0
+ *
+ * ==========================================
+ */
+int get_lsb(int x) {
+  return x & -x;
+}
+
+/*
   The following functions are helpers to consicely set up uniform variables in
   shaders
 */

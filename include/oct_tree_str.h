@@ -3,6 +3,7 @@
 
 #include <entity_str.h>
 
+/*
 typedef enum {
   X_Y_Z = 0,
   X_Y_negZ = 1,
@@ -14,6 +15,25 @@ typedef enum {
   negX_negY_negZ = 7,
   MULTIPLE = -1
 } OCTANT;
+*/
+
+#define X_Y_Z          (0)
+#define X_Y_negZ       (1)
+#define X_negY_Z       (2)
+#define X_negY_negZ    (3)
+#define negX_Y_Z       (4)
+#define negX_Y_negZ    (5)
+#define negX_negY_Z    (6)
+#define negX_negY_negZ (7)
+
+#define OCT_X_Y_Z           (0x1)
+#define OCT_X_Y_negZ        (0x2)
+#define OCT_X_negY_Z        (0x4)
+#define OCT_X_negY_negZ     (0x8)
+#define OCT_negX_Y_Z       (0x10)
+#define OCT_negX_Y_negZ    (0x20)
+#define OCT_negX_negY_Z    (0x40)
+#define OCT_negX_negY_negZ (0x80)
 
 typedef struct physics_object {
 #ifdef DEBUG_OCT_TREE
