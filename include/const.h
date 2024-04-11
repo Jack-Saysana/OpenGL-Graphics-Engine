@@ -46,4 +46,7 @@
 // UI constants
 #define ROOT_UI_DEPTH (-10.0)
 
+// Misc constants
+//#define DEBUG_OCT_TREE (1)
+
 #endif

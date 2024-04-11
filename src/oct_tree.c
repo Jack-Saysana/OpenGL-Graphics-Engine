@@ -34,6 +34,8 @@ OCT_TREE *init_tree(float max_extent, unsigned int max_depth) {
   tree->data_buff_size = BUFF_STARTING_LEN;
 
   tree->node_buffer[0].empty = 1;
+  tree->node_buffer[0].head_offset = INVALID_INDEX;
+  tree->node_buffer[0].tail_offset = INVALID_INDEX;
   tree->node_buffer[0].next_offset = INVALID_INDEX;
 
   tree->max_extent = max_extent;
@@ -145,7 +147,12 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   return 0;
 }
 */
+#ifdef DEBUG_OCT_TREE
+int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
+                    int birthmark) {
+#else
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
+#endif
   if (tree == NULL || entity == NULL ||
       collider_offset >= entity->model->num_colliders) {
     fprintf(stderr, "Error: Invalid oct-tree insertion input\n");
@@ -191,9 +198,15 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   int depth = 1;
   int inserting = 1;
   while (inserting) {
+    tree->node_buffer[cur_offset].empty = 0;
     if (depth == tree->max_depth) {
       inserting = 0;
+#ifdef DEBUG_OCT_TREE
+      status = append_buffer(tree, cur_offset, entity, collider_offset,
+                             birthmark, obj);
+#else
       status = append_buffer(tree, cur_offset, entity, collider_offset);
+#endif
       if (status != 0) {
         printf("Unable to allocate tree data\n");
         return -1;
@@ -204,7 +217,12 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
       // If multiple bits are set, object collides with multiple octants
       if (!cur_oct || cur_oct ^ lsb ) {
         inserting = 0;
+#ifdef DEBUG_OCT_TREE
+        status = append_buffer(tree, cur_offset, entity, collider_offset,
+                               birthmark, obj);
+#else
         status = append_buffer(tree, cur_offset, entity, collider_offset);
+#endif
         if (status != 0) {
           printf("Unable to allocate tree data\n");
           return -1;
@@ -350,7 +368,7 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
     }
 
     if (depth == tree->max_depth ||
-        tree->node_buffer[cur_offset].next_offset == -1) {
+        tree->node_buffer[cur_offset].next_offset == INVALID_INDEX) {
       searching = 0;
     } else {
       cur_oct = detect_octant(min_extent, max_extent, max_extents, &oct_len);
@@ -453,8 +471,13 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
       return res;
     }
 
+    // TODO FIX RACE CONDITION HERE. Oct trees cannot be used in multithreaded
+    // algo if this is not fixed 
+    // Lazily update the current node's empty flag
+    update_node_emptiness(tree, cur_offset);
     if (depth != tree->max_depth &&
-        tree->node_buffer[cur_offset].next_offset != -1) {
+        tree->node_buffer[cur_offset].next_offset != INVALID_INDEX &&
+        !tree->node_buffer[cur_offset].empty) {
       octs = detect_octant(min_extent, max_extent, max_extents, oct_len);
       while (octs) {
         glm_vec3_copy(min_extent, child_min);
@@ -521,7 +544,7 @@ int init_node(OCT_TREE *tree, OCT_NODE *parent) {
 }
 
 int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
-  if (node->empty) {
+  if (node->head_offset == INVALID_INDEX) {
     return 0;
   }
 
@@ -630,14 +653,14 @@ int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
 int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset) {
   PHYS_OBJ *obj = tree->data_buffer + obj_offset;
   OCT_NODE *node = tree->node_buffer + node_offset;
-  if (node->empty) {
+  if (node->head_offset == INVALID_INDEX) {
     node->head_offset = obj_offset;
     node->tail_offset = obj_offset;
     obj->prev_offset = obj_offset;
     obj->next_offset = obj_offset;
-    node->empty = 0;
     return 0;
   }
+  node->empty = 0;
 
   PHYS_OBJ *tail = tree->data_buffer + node->tail_offset;
   PHYS_OBJ *head = tree->data_buffer + node->head_offset;
@@ -652,15 +675,18 @@ int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset) {
 
 int remove_from_list(OCT_TREE *tree, size_t obj_offset) {
   PHYS_OBJ *obj = tree->data_buffer + obj_offset;
-  OCT_NODE *node = tree->node_buffer + obj->node_offset;
+  size_t node_offset = obj->node_offset;
+  OCT_NODE *node = tree->node_buffer + node_offset;
 
   if (node->head_offset == node->tail_offset) {
     obj->node_offset = INVALID_INDEX;
     node->head_offset = INVALID_INDEX;
     node->tail_offset = INVALID_INDEX;
-    node->empty = 1;
     return 0;
   }
+  // Lazily update the emptiness flag of the node. Parent nodes will be
+  // updated on subseqent calls to oct_tree_search()
+  update_node_emptiness(tree, node_offset);
 
   if (node->head_offset == obj_offset) {
     node->head_offset = obj->next_offset;
@@ -878,6 +904,29 @@ size_t update_extents(int oct, vec3 min_extent, vec3 max_extent,
   }
 }
 
+void update_node_emptiness(OCT_TREE *tree, size_t node_offset) {
+  OCT_NODE *cur = tree->node_buffer + node_offset;
+  if (cur->head_offset != INVALID_INDEX) {
+    cur->empty = 0;
+    return;
+  }
+
+  cur->empty = 1;
+  if (cur->next_offset == INVALID_INDEX) {
+    return;
+  }
+
+  // Check the empty status of all children. Set empty = 1 if all children
+  // are empty
+  OCT_NODE *children = tree->node_buffer + cur->next_offset;
+  for (int i = 0; i < 8; i++) {
+    if (!children[i].empty) {
+      cur->empty = 0;
+      return;
+    }
+  }
+}
+
 vec3 quad_translate[8] = {
                        { 1.0, 1.0, 1.0 }, //  X, Y, Z
                        { 1.0, 1.0, -1.0 }, //  X, Y,-Z
@@ -904,7 +953,8 @@ void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
   draw_model(shader, cube);
 
   vec3 temp = { 0.0, 0.0, 0.0 };
-  if (tree->node_buffer[offset].next_offset != -1 && depth < 5) {
+  if (!tree->node_buffer[offset].empty &&
+      tree->node_buffer[offset].next_offset != INVALID_INDEX && depth < 5) {
     for (int i = 0; i < 8; i++) {
       glm_vec3_scale(quad_translate[i], scale / 2.0, temp);
       glm_vec3_add(pos, temp, temp);

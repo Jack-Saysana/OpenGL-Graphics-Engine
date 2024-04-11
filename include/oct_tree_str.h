@@ -63,6 +63,7 @@ typedef struct oct_tree_node {
   // immediately after
   //int next_offset;
   size_t next_offset;
+  // Flag denoting if node and its children nodes are absent of physics objects
   int empty;
 } OCT_NODE;
 

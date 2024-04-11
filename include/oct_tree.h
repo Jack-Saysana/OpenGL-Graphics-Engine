@@ -34,6 +34,7 @@ int remove_from_list(OCT_TREE *tree, size_t obj_offset);
 size_t update_extents(int, vec3, vec3, float);
 int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
                   float oct_len);
+void update_node_emptiness(OCT_TREE *tree, size_t node_offset);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 

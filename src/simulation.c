@@ -270,7 +270,8 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   t1_args.sim = sim;
   t1_args.start = 0;
   //t1_args.end = sim->num_moving / 3;
-  t1_args.end = sim->num_moving / 2;
+  //t1_args.end = sim->num_moving / 2;
+  t1_args.end = sim->num_moving;
   t1_args.collisions = &collisions;
   t1_args.buf_len = &buf_len;
   t1_args.buf_size = &buf_size;
@@ -278,12 +279,14 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   t1_args.range = range;
   t1_args.get_col_info = get_col_info;
 
+  /*
   pthread_t t2;
   C_ARGS t2_args;
   memcpy(&t2_args, &t1_args, sizeof(C_ARGS));
   t2_args.start = t1_args.end;
   //t2_args.end = t2_args.start + (sim->num_moving / 3);
   t2_args.end = sim->num_moving;
+  */
 
   /*
   pthread_t t3;
@@ -294,11 +297,11 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   */
 
   pthread_create(&t1, NULL, check_moving_buffer, &t1_args);
-  pthread_create(&t2, NULL, check_moving_buffer, &t2_args);
+  //pthread_create(&t2, NULL, check_moving_buffer, &t2_args);
   //pthread_create(&t3, NULL, check_moving_buffer, &t3_args);
 
   pthread_join(t1, NULL);
-  pthread_join(t2, NULL);
+  //pthread_join(t2, NULL);
   //pthread_join(t3, NULL);
 
   for (size_t i = 0; i < sim->num_moving; i++) {
@@ -635,6 +638,7 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
   int collision = 0;
   int status = 0;
 
+  size_t collisions = 0;
   for (size_t i = 0; i < col_res.list_len; i++) {
     p_obj = col_res.list[i];
     candidate_ent = p_obj->entity;
@@ -647,6 +651,7 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
          p_obj->collider_offset != collider_offset)) {
       collision = collision_check(&s_world_col, &c_world_col, simplex);
       if (collision) {
+        collisions++;
         if (get_col_info) {
           status = epa_response(&s_world_col, &c_world_col, simplex,
                                 collision_dir, &collision_depth);
