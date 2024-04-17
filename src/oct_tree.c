@@ -315,6 +315,7 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
     if (depth != tree->max_depth &&
         tree->node_buffer[cur_offset].next_offset != INVALID_INDEX &&
         !tree->node_buffer[cur_offset].empty) {
+      pthread_mutex_unlock(&tree->search_lock);
       octs = detect_octant(min_extent, max_extent, max_extents, oct_len);
       while (octs) {
         glm_vec3_copy(min_extent, child_min);
@@ -340,8 +341,9 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
         }
         octs ^= cur_oct;
       }
+    } else {
+      pthread_mutex_unlock(&tree->search_lock);
     }
-    pthread_mutex_unlock(&tree->search_lock);
   }
   free(search_stack);
 
