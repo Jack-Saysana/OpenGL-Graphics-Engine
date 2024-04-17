@@ -68,6 +68,8 @@ typedef struct oct_tree_node {
 } OCT_NODE;
 
 typedef struct oct_tree {
+  // Mutex used for ensuring oct_tree_search() is thread_safe
+  pthread_mutex_t search_lock;
   OCT_NODE *node_buffer;
   PHYS_OBJ *data_buffer;
   size_t node_buff_len;

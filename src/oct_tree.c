@@ -13,9 +13,16 @@ OCT_TREE *init_tree(float max_extent, unsigned int max_depth) {
     return NULL;
   }
 
+  if (pthread_mutex_init(&tree->search_lock, NULL)) {
+    fprintf(stderr, "Error: Unable to initailize oct tree mutex\n");
+    free(tree);
+    return NULL;
+  }
+
   tree->node_buffer = malloc(sizeof(OCT_NODE) * OCT_TREE_STARTING_LEN);
   if (tree->node_buffer == NULL) {
     fprintf(stderr, "Error: Unable to allocate oct nodes\n");
+    pthread_mutex_destroy(&tree->search_lock);
     free(tree);
     return NULL;
   }
@@ -24,6 +31,7 @@ OCT_TREE *init_tree(float max_extent, unsigned int max_depth) {
   if (tree->data_buffer == NULL) {
     fprintf(stderr, "Error: Unable to allocate node data\n");
     free(tree->node_buffer);
+    pthread_mutex_destroy(&tree->search_lock);
     free(tree);
     return NULL;
   }
@@ -45,6 +53,7 @@ OCT_TREE *init_tree(float max_extent, unsigned int max_depth) {
 }
 
 void free_oct_tree(OCT_TREE *tree) {
+  pthread_mutex_destroy(&tree->search_lock);
   free(tree->data_buffer);
   free(tree->node_buffer);
   free(tree);
@@ -52,101 +61,6 @@ void free_oct_tree(OCT_TREE *tree) {
 
 // =========================== OCT TREE OPERATIONS ===========================
 
-/*
-#ifdef DEBUG_OCT_TREE
-int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
-                    int birthmark) {
-#else
-int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
-#endif
-  if (tree == NULL || entity == NULL ||
-      collider_offset >= entity->model->num_colliders) {
-    fprintf(stderr, "Error: Invalid oct-tree insertion input\n");
-    return -1;
-  }
-
-  vec3 max_extent = { tree->max_extent, tree->max_extent, tree->max_extent };
-  vec3 min_extent = { -tree->max_extent, -tree->max_extent,
-                      -tree->max_extent };
-  float max_extents[6];
-
-  COLLIDER obj;
-  memset(&obj, 0, sizeof(COLLIDER));
-  global_collider(entity, collider_offset, &obj);
-
-  if (obj.type == POLY) {
-    vec3 *verts = obj.data.verts;
-    unsigned int num_used = obj.data.num_used;
-    max_extents[0] = obj.data.verts[max_dot(verts, num_used, X_DIR)][0];
-    max_extents[1] = obj.data.verts[max_dot(verts, num_used, NEG_X_DIR)][0];
-    max_extents[2] = obj.data.verts[max_dot(verts, num_used, Y_DIR)][1];
-    max_extents[3] = obj.data.verts[max_dot(verts, num_used, NEG_Y_DIR)][1];
-    max_extents[4] = obj.data.verts[max_dot(verts, num_used, Z_DIR)][2];
-    max_extents[5] = obj.data.verts[max_dot(verts, num_used, NEG_Z_DIR)][2];
-  } else {
-    float radius = obj.data.radius;
-
-    max_extents[0] = obj.data.center[0] + radius;
-    max_extents[1] = obj.data.center[0] - radius;
-    max_extents[2] = obj.data.center[1] + radius;
-    max_extents[3] = obj.data.center[1] - radius;
-    max_extents[4] = obj.data.center[2] + radius;
-    max_extents[5] = obj.data.center[2] - radius;
-  }
-
-  float oct_len = tree->max_extent;
-
-  OCTANT cur_oct = MULTIPLE;
-  size_t cur_offset = 0;
-
-  int status = 0;
-  int depth = 1;
-  int inserting = 1;
-  while (inserting) {
-    if (depth == tree->max_depth) {
-      inserting = 0;
-#ifdef DEBUG_OCT_TREE
-        status = append_buffer(tree, cur_offset, entity, collider_offset,
-                               birthmark, obj);
-#else
-        status = append_buffer(tree, cur_offset, entity, collider_offset);
-#endif
-      if (status != 0) {
-        printf("Unable to allocate tree data\n");
-        return -1;
-      }
-    } else {
-      cur_oct = detect_octant(min_extent, max_extent, max_extents, &oct_len);
-      if (cur_oct == MULTIPLE) {
-        inserting = 0;
-#ifdef DEBUG_OCT_TREE
-        status = append_buffer(tree, cur_offset, entity, collider_offset,
-                               birthmark, obj);
-#else
-        status = append_buffer(tree, cur_offset, entity, collider_offset);
-#endif
-        if (status != 0) {
-          printf("Unable to allocate tree data\n");
-          return -1;
-        }
-      } else {
-        if (tree->node_buffer[cur_offset].next_offset == INVALID_INDEX) {
-          status = init_node(tree, tree->node_buffer + cur_offset);
-          if (status != 0) {
-            printf("Unable to allocate node children\n");
-            return -1;
-          }
-        }
-
-        cur_offset = tree->node_buffer[cur_offset].next_offset + cur_oct;
-        depth++;
-      }
-    }
-  }
-
-  return 0;
-}
-*/
 #ifdef DEBUG_OCT_TREE
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
                     int birthmark) {
@@ -312,82 +226,6 @@ int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
   return 0;
 }
 
-/*
-COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
-  COLLISION_RES res = { NULL, 0, 0 };
-  if (tree == NULL || col == NULL) {
-    fprintf(stderr, "Error: Invalid oct-tree search input\n");
-    return res;
-  }
-
-  res.list = malloc(sizeof(PHYS_OBJ) * BUFF_STARTING_LEN);
-  if (res.list == NULL) {
-    fprintf(stderr, "Error: Unable to allocate oct-tree search list\n");
-    return res;
-  }
-  res.list_buff_size = BUFF_STARTING_LEN;
-
-  vec3 max_extent = { tree->max_extent, tree->max_extent, tree->max_extent };
-  vec3 min_extent = { -tree->max_extent, -tree->max_extent,
-                      -tree->max_extent };
-
-  float max_extents[6];
-  if (col->type == POLY) {
-    vec3 *verts = col->data.verts;
-    unsigned int num_used = col->data.num_used;
-    max_extents[0] = col->data.verts[max_dot(verts, num_used, X_DIR)][0];
-    max_extents[1] = col->data.verts[max_dot(verts, num_used, NEG_X_DIR)][0];
-    max_extents[2] = col->data.verts[max_dot(verts, num_used, Y_DIR)][1];
-    max_extents[3] = col->data.verts[max_dot(verts, num_used, NEG_Y_DIR)][1];
-    max_extents[4] = col->data.verts[max_dot(verts, num_used, Z_DIR)][2];
-    max_extents[5] = col->data.verts[max_dot(verts, num_used, NEG_Z_DIR)][2];
-  } else {
-    vec3 center = { 0.0, 0.0, 0.0 };
-    glm_vec3_copy(col->data.center, center);
-    float radius = col->data.radius;
-
-    max_extents[0] = center[0] + radius;
-    max_extents[1] = center[0] - radius;
-    max_extents[2] = center[1] + radius;
-    max_extents[3] = center[1] - radius;
-    max_extents[4] = center[2] + radius;
-    max_extents[5] = center[2] - radius;
-  }
-  float oct_len = tree->max_extent;
-
-  OCTANT cur_oct = MULTIPLE;
-  size_t cur_offset = 0;
-
-  int status = 0;
-  int depth = 1;
-  int searching = 1;
-  while (searching) {
-    status = read_oct(tree, tree->node_buffer + cur_offset, &res);
-    if (status != 0) {
-      return res;
-    }
-
-    if (depth == tree->max_depth ||
-        tree->node_buffer[cur_offset].next_offset == INVALID_INDEX) {
-      searching = 0;
-    } else {
-      cur_oct = detect_octant(min_extent, max_extent, max_extents, &oct_len);
-      if (cur_oct == MULTIPLE) {
-        searching = 0;
-        status = read_all_children(tree, tree->node_buffer + cur_offset, &res);
-        if (status != 0) {
-          return res;
-        }
-      } else {
-        cur_offset = tree->node_buffer[cur_offset].next_offset + cur_oct;
-        depth++;
-      }
-    }
-  }
-
-  return res;
-}
-*/
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
   COLLISION_RES res = { NULL, 0, 0 };
   if (tree == NULL || col == NULL) {
@@ -471,9 +309,8 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
       return res;
     }
 
-    // TODO FIX RACE CONDITION HERE. Oct trees cannot be used in multithreaded
-    // algo if this is not fixed 
     // Lazily update the current node's empty flag
+    pthread_mutex_lock(&tree->search_lock);
     update_node_emptiness(tree, cur_offset);
     if (depth != tree->max_depth &&
         tree->node_buffer[cur_offset].next_offset != INVALID_INDEX &&
@@ -504,6 +341,7 @@ COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col) {
         octs ^= cur_oct;
       }
     }
+    pthread_mutex_unlock(&tree->search_lock);
   }
   free(search_stack);
 
@@ -568,60 +406,6 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
 
   return 0;
 }
-
-/*
-int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
-  OCT_NODE **stack = malloc(sizeof(OCT_NODE *) * BUFF_STARTING_LEN);
-  if (stack == NULL) {
-    return -1;
-  }
-
-  size_t top = 0;
-  size_t stack_size = BUFF_STARTING_LEN;
-  int status = -1;
-  for (OCTANT i = X_Y_Z; i <= negX_negY_negZ; i++) {
-    stack[top] = tree->node_buffer + (node->next_offset + i);
-    top++;
-    if (top == stack_size) {
-      status = double_buffer((void **) &stack, &stack_size,
-                             sizeof(OCT_NODE *));
-      if (status != 0) {
-        free(stack);
-        return -1;
-      }
-    }
-  }
-
-  OCT_NODE *cur = NULL;
-  while (top) {
-    cur = stack[top - 1];
-    status = read_oct(tree, cur, res);
-    if (status != 0) {
-      free(stack);
-      return -1;
-    }
-    top--;
-
-    if (cur->next_offset != INVALID_INDEX) {
-      for (OCTANT i = X_Y_Z; i <= negX_negY_negZ; i++) {
-        stack[top] = tree->node_buffer + (cur->next_offset + i);
-        top++;
-        if (top == stack_size) {
-          status = double_buffer((void **) &stack, &stack_size,
-                                 sizeof(OCT_NODE *));
-          if (status != 0) {
-            free(stack);
-            return -1;
-          }
-        }
-      }
-    }
-  }
-
-  free(stack);
-  return 0;
-}
-*/
 
 #ifdef DEBUG_OCT_TREE
 int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
@@ -703,82 +487,6 @@ int remove_from_list(OCT_TREE *tree, size_t obj_offset) {
   return 0;
 }
 
-/*
-OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
-                     float *oct_len) {
-  float len = *oct_len;
-  *oct_len = len / 2.0;
-  if (obj_extents[0] <= max_extent[0] &&
-      obj_extents[1] >= min_extent[0] + len) {
-    if (obj_extents[2] <= max_extent[1] &&
-        obj_extents[3] >= min_extent[1] + len) {
-      if (obj_extents[4] <= max_extent[2] &&
-          obj_extents[5] >= min_extent[2] + len) {
-        min_extent[0] += len;
-        min_extent[1] += len;
-        min_extent[2] += len;
-        return X_Y_Z;
-      } else if (obj_extents[4] <= min_extent[2] + len &&
-                 obj_extents[5] >= min_extent[2]) {
-        min_extent[0] += len;
-        min_extent[1] += len;
-        max_extent[2] -= len;
-        return X_Y_negZ;
-      }
-    } else if (obj_extents[2] <= min_extent[1] + len &&
-               obj_extents[3] >= min_extent[1]) {
-      if (obj_extents[4] <= max_extent[2] &&
-          obj_extents[5] >= min_extent[2] + len) {
-        min_extent[0] += len;
-        min_extent[2] += len;
-        max_extent[1] -= len;
-        return X_negY_Z;
-      } else if (obj_extents[4] <= min_extent[2] + len &&
-                 obj_extents[5] >= min_extent[2]) {
-        min_extent[0] += len;
-        max_extent[1] -= len;
-        max_extent[2] -= len;
-        return X_negY_negZ;
-      }
-    }
-  } else if(obj_extents[0] <= min_extent[0] + len &&
-            obj_extents[1] >= min_extent[0]) {
-    if (obj_extents[2] <= max_extent[1] &&
-        obj_extents[3] >= min_extent[1] + len) {
-      if (obj_extents[4] <= max_extent[2] &&
-          obj_extents[5] >= min_extent[2] + len) {
-        max_extent[0] -= len;
-        min_extent[1] += len;
-        min_extent[2] += len;
-        return negX_Y_Z;
-      } else if (obj_extents[4] <= min_extent[2] + len &&
-                 obj_extents[5] >= min_extent[2]) {
-        max_extent[0] -= len;
-        min_extent[1] += len;
-        max_extent[2] -= len;
-        return negX_Y_negZ;
-      }
-    } else if (obj_extents[2] <= min_extent[1] + len &&
-               obj_extents[3] >= min_extent[1]) {
-      if (obj_extents[4] <= max_extent[2] &&
-          obj_extents[5] >= min_extent[2] + len) {
-        max_extent[0] -= len;
-        max_extent[1] -= len;
-        min_extent[2] += len;
-        return negX_negY_Z;
-      } else if (obj_extents[4] <= min_extent[2] + len &&
-                 obj_extents[5] >= min_extent[2]) {
-        max_extent[0] -= len;
-        max_extent[1] -= len;
-        max_extent[2] -= len;
-        return negX_negY_negZ;
-      }
-    }
- }
-
-  return MULTIPLE;
-}
-*/
 int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
                    float oct_len) {
   int ret = 0;

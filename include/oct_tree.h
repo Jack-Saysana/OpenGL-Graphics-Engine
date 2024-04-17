@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
 #include <glad/glad.h>
 #include <float.h>
 #include <cglm/affine.h>
