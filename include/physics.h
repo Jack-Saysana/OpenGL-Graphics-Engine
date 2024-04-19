@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <pthread.h>
 #include <math.h>
 #include <cglm/ivec3.h>
 #include <cglm/quat.h>
