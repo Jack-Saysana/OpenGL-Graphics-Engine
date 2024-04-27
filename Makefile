@@ -16,7 +16,7 @@ ifeq ($(OS),Windows_NT)
 	DEVICE += -DWINDOWS
 	LIBS += -L ./lib
 	INCLUDE += -I ./include
-	LINK += -l:glfw3.dll -l:libcglm.a -lopengl32
+	LINK += -l:glfw3.dll -l:libcglm.a -lopengl32 -lpthread
 else
 	detected_OS = $(shell uname)
 	ifeq ($(detected_OS),Linux)

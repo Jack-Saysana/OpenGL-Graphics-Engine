@@ -975,7 +975,6 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   }
 
   // FRICTION: Very similar to impulse model
-//#define FRICTION
 #ifdef FRICTION
   // TANGENT VECTOR: t = norm(v_rel - (r_rel * n)n)
   float v_dot_n = glm_vec3_dot(rel_velocity, col_normal);
@@ -991,11 +990,11 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_cross(a_rel, col_tan, a_cross_t);
   vec3 b_cross_t = GLM_VEC3_ZERO_INIT;
   glm_vec3_cross(b_rel, col_tan, b_cross_t);
-  if (a->inv_mass != 0.0) {
+  if (a_args->inv_mass != 0.0) {
     glm_mat4_mulv3(a_inv_inertia, a_cross_t, 1.0, a_ang_comp);
     glm_vec3_cross(a_ang_comp, a_rel, a_ang_comp);
   }
-  if (b->inv_mass != 0.0) {
+  if (b_args->inv_mass != 0.0) {
     glm_mat4_mulv3(b_inv_inertia, b_cross_t, 1.0, b_ang_comp);
     glm_vec3_cross(b_ang_comp, b_rel, b_ang_comp);
   }
@@ -1009,8 +1008,8 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   float f = f_nume / f_den;
 
   // IMPULSE DUE TO FRICTION
-  float static_f = 0.5;
-  float dynamic_f = 0.2;
+  float static_f = 1.0;
+  float dynamic_f = 0.7;
   float impulse_f = 0.0;
   if (abs(f) < static_f * impulse) {
     impulse_f = f;

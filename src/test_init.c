@@ -29,9 +29,9 @@ ENTITY *sphere_entity;
 ENTITY **boxes;
 ENTITY **spheres;
 ENTITY **rects;
-const int NUM_BOXES = 0;
-const int NUM_SPHERES = 0;
-const int NUM_RECTS = 0;
+const int NUM_BOXES = 5;
+const int NUM_SPHERES = 5;
+const int NUM_RECTS = 5;
 ENTITY *ragdoll;
 ENTITY *four_ent[ARENA_WIDTH * ARENA_WIDTH];
 ENTITY *render_sphere;
@@ -235,8 +235,9 @@ int init_scene() {
       printf("Unable to load moveable box: %d\n", i);
       return -1;
     }
-    m_box_pos[1] = (float) (i % 10) + 1.0;
-    m_box_pos[2] = (float) (i / 10) - 1.0;
+    m_box_pos[0] = (rand() % (ARENA_WIDTH / 2)) - (ARENA_WIDTH / 4);
+    m_box_pos[1] = 2.0;
+    m_box_pos[2] = (rand() % (ARENA_WIDTH / 2)) - (ARENA_WIDTH / 4);
     glm_vec3_copy(m_box_pos, boxes[i]->translation);
     glm_vec3_copy(m_box_scale, boxes[i]->scale);
   }
@@ -248,8 +249,9 @@ int init_scene() {
       fprintf(stderr, "Unable to load moveable sphere: %d\n", i);
       return -1;
     }
-    m_sphere_pos[1] = (float) (i % 10);
-    m_sphere_pos[2] = (float) (i / 10);
+    m_sphere_pos[0] = (rand() % (ARENA_WIDTH / 2)) - (ARENA_WIDTH / 4);
+    m_sphere_pos[1] = 2.0;
+    m_sphere_pos[2] = (rand() % (ARENA_WIDTH / 2)) - (ARENA_WIDTH / 4);
     glm_vec3_copy(m_sphere_pos, spheres[i]->translation);
     glm_vec3_copy(m_sphere_scale, spheres[i]->scale);
   }
@@ -261,8 +263,9 @@ int init_scene() {
       fprintf(stderr, "Unable to load moveable rect prism: %d\n", i);
       return -1;
     }
-    m_rect_pos[1] = (float) (i % 10);
-    m_rect_pos[2] = (float) (i / 10);
+    m_rect_pos[0] = (rand() % (ARENA_WIDTH / 2)) - (ARENA_WIDTH / 4);
+    m_rect_pos[1] = 2.0;
+    m_rect_pos[2] = (rand() % (ARENA_WIDTH / 2)) - (ARENA_WIDTH / 4);
     glm_vec3_copy(m_rect_pos, rects[i]->translation);
     glm_vec3_copy(m_rect_scale, rects[i]->scale);
   }
@@ -275,6 +278,7 @@ int init_scene() {
     return -1;
   }
 
+  /*
   vec3 start = { -ARENA_WIDTH * 2.5, 2.0, -ARENA_WIDTH * 2.5 };
   for (int i = 0; i < ARENA_WIDTH * ARENA_WIDTH; i++) {
     four_ent[i] = init_entity(four_mod);
@@ -286,6 +290,7 @@ int init_scene() {
                  (vec3) { (i / ARENA_WIDTH) * 5.0, 0.0, (i % ARENA_WIDTH) * 5.0 },
                  four_ent[i]->translation);
   }
+  */
 
   render_sphere = init_entity(rs_mod);
   if (render_sphere == NULL) {

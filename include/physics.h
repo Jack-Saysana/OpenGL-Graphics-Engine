@@ -7,6 +7,7 @@
 #include <entity_str.h>
 #include <simulation_str.h>
 
+#define FRICTION
 #define BUFF_STARTING_LEN (10)
 
 #define COLLISION (1)

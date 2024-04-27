@@ -186,7 +186,7 @@ int main() {
   */
 
   // SIMULATION SET UP
-  float max_extents = 32.0;
+  float max_extents = 512.0;
   unsigned int max_depth = 5;
   SIMULATION *render_sim = init_sim(max_extents, max_depth);
   SIMULATION *sim = init_sim(max_extents, max_depth);
@@ -255,6 +255,7 @@ int main() {
     glfwTerminate();
   }
 
+  /*
   for (int i = 0; i < ARENA_WIDTH * ARENA_WIDTH; i++) {
     four_ent[i]->type |= T_IMMUTABLE;
     status = sim_add_entity(sim, four_ent[i], ALLOW_HURT_BOXES);
@@ -266,9 +267,10 @@ int main() {
       glfwTerminate();
     }
   }
+  */
 
   for (int i = 0; i < NUM_BOXES; i++) {
-    boxes[i]->inv_mass = 1.0;
+    boxes[i]->inv_mass = 0.2;
     vec3 init_vel = { 0.0, -0.05, 0.0 };
     glm_vec3_copy(init_vel, boxes[i]->velocity);
     //vec3 init_ang_vel = { -0.168430775, 0.00429611094, 0.00221232418 };
@@ -290,7 +292,7 @@ int main() {
   }
 
   for (int i = 0; i < NUM_SPHERES; i++) {
-    spheres[i]->inv_mass = 1.0;
+    spheres[i]->inv_mass = 0.2;
     vec3 init_vel = { 0.0, -0.05, 0.0 };
     glm_vec3_copy(init_vel, spheres[i]->velocity);
 
@@ -307,7 +309,7 @@ int main() {
   }
 
   for (int i = 0; i < NUM_RECTS; i++) {
-    rects[i]->inv_mass = 1.0;
+    rects[i]->inv_mass = 0.2;
     vec3 init_vel = { 0.0, 0.05, 0.0 };
     glm_vec3_copy(init_vel, rects[i]->velocity);
 
@@ -342,8 +344,8 @@ int main() {
     DELTA_TIME = current_time - LAST_FRAME;
     LAST_FRAME = current_time;
 
-    if (DELTA_TIME > 0.25) {
-      DELTA_TIME = 0.01;
+    if (DELTA_TIME > 0.16) {
+      DELTA_TIME = 0.16;
     }
 
     keyboard_input(window);
@@ -368,7 +370,9 @@ int main() {
 
     /* Animation */
 
+    prep_sim_movement(sim);
     animate(player, 0, cur_frame);
+    update_sim_movement(sim);
 
     /* Physics */
 
@@ -384,9 +388,11 @@ int main() {
     COLLISION *collisions = NULL;
     size_t num_collisions = get_sim_collisions(sim, &collisions, GLM_VEC3_ZERO,
                                                SIM_RANGE_INF, 1);
+    prep_sim_movement(sim);
     for (size_t i = 0; i < num_collisions; i++) {
       impulse_resolution(sim, collisions[i]);
     }
+    update_sim_movement(sim);
     free(collisions);
 
     //featherstone_abm(ragdoll);
