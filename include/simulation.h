@@ -64,9 +64,11 @@ int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
 void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
 void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
-                     vec3 p_loc);
-void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
-                         float inv_mass, mat4 dest);
+                     vec3 p_loc, vec3 gravity);
+//void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
+//                         float inv_mass, mat4 dest);
+void calc_inertia_tensor(ENTITY *ent, size_t col_offset, float inv_mass,
+                         mat4 dest);
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void get_model_mat(ENTITY *entity, mat4 model);

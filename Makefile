@@ -61,6 +61,7 @@ $(BUILD_DIR)/%.c.l: %.c
 	mkdir ./bin/include/engine
 
 clean:
+	rm -rf ./resources/*/*.obj.bin*
 	rm -rf $(BUILD_DIR)
 
 run:

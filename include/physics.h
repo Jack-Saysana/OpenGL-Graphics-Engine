@@ -6,6 +6,7 @@
 #include <const.h>
 #include <entity_str.h>
 #include <simulation_str.h>
+#include <globals.h>
 
 #define FRICTION
 #define BUFF_STARTING_LEN (10)

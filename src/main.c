@@ -74,7 +74,7 @@ int draw = 0;
 // MISC DATA
 mat4 persp_proj = GLM_MAT4_IDENTITY_INIT;
 int cur_frame = 0;
-vec3 col_point = { 0.0, 0.0, 0.0 };
+vec3 test_col_pt = { 0.0, 0.0, 0.0 };
 int enable_gravity = 1;
 
 int featherstone_abm(ENTITY *body);
@@ -96,8 +96,6 @@ int main() {
   // Ensure collision always checked on render sphere
   render_sphere->velocity[X] = 0.01;
 
-  vec3 cube_col = GLM_VEC3_ONE_INIT;
-  vec3 s_col = GLM_VEC3_ONE_INIT;
   glm_quatv(player->rotation, camera_model_rot, up);
 
   mat4 ortho_proj = GLM_MAT4_IDENTITY_INIT;
@@ -200,12 +198,14 @@ int main() {
   player->type |= T_DRIVING;
   player->inv_mass = 1.0;
   status = sim_add_entity(sim, player, ALLOW_DEFAULT);
+  sim_add_entity(render_sim, player, ALLOW_DEFAULT);
   if (status != 0) {
     cleanup_gl();
     return 1;
   }
 
   render_sphere->type |= T_DRIVING;
+  glm_vec3_copy((vec3) { 100.0, 100.0, 100.0 }, render_sphere->scale);
   status = sim_add_entity(render_sim, render_sphere, ALLOW_DEFAULT);
   if (status != 0) {
     cleanup_gl();
@@ -214,9 +214,9 @@ int main() {
 
   //ragdoll->type |= T_DRIVING;
   ragdoll->inv_mass = 1.0;
-  ragdoll->scale[0] = 2.0;
-  ragdoll->scale[1] = 2.0;
-  ragdoll->scale[2] = 2.0;
+  ragdoll->scale[0] = 1.0;
+  ragdoll->scale[1] = 1.0;
+  ragdoll->scale[2] = 1.0;
   for (size_t i = 0; i < ragdoll->model->num_colliders; i++) {
     ragdoll->np_data[i].inv_mass = 1.0;
     if (i == ragdoll->model->num_colliders - 1) {
@@ -228,16 +228,16 @@ int main() {
     glm_vec3_copy(dof, ragdoll->np_data[i].dof);
   }
   //ragdoll->np_data[0].vel_angles[0] = 1.0;
-  /*
-  status = sim_insert_entity(sim, ragdoll, ALLOW_HURT_BOXES);
+  //status = sim_add_entity(sim, ragdoll, ALLOW_HURT_BOXES);
+  //sim_add_entity(render_sim, ragdoll, ALLOW_HURT_BOXES);
   if (status != 0) {
     glfwTerminate();
   }
-  */
 
   // Insertion of test entities into the physics simulation
   obstacle->type |= T_IMMUTABLE;
   status = sim_add_entity(sim, obstacle, ALLOW_DEFAULT);
+  sim_add_entity(render_sim, obstacle, ALLOW_DEFAULT);
   if (status != 0) {
     glfwTerminate();
   }
@@ -245,12 +245,14 @@ int main() {
   sphere_entity->type |= T_IMMUTABLE;
   status = sim_add_entity(sim, sphere_entity,
                           ALLOW_DEFAULT | ALLOW_HURT_BOXES);
+  sim_add_entity(render_sim, sphere_entity, ALLOW_HURT_BOXES | ALLOW_DEFAULT);
   if (status != 0) {
     glfwTerminate();
   }
 
   box_entity->type |= T_IMMUTABLE;
   status = sim_add_entity(sim, box_entity, ALLOW_DEFAULT);
+  sim_add_entity(render_sim, box_entity, ALLOW_DEFAULT);
   if (status != 0) {
     glfwTerminate();
   }
@@ -285,6 +287,7 @@ int main() {
     boxes[i]->inv_inertia[2][2] = (12.0 * boxes[i]->inv_mass) / 2.0;
 
     status = sim_add_entity(sim, boxes[i], ALLOW_HURT_BOXES);
+    sim_add_entity(render_sim, boxes[i], ALLOW_HURT_BOXES);
     if (status) {
       cleanup_gl();
       return 1;
@@ -302,6 +305,7 @@ int main() {
     spheres[i]->inv_inertia[2][2] = spheres[i]->inv_mass / 0.1;
 
     status = sim_add_entity(sim, spheres[i], ALLOW_HURT_BOXES);
+    sim_add_entity(render_sim, spheres[i], ALLOW_HURT_BOXES);
     if (status) {
       cleanup_gl();
       return 1;
@@ -319,6 +323,7 @@ int main() {
     rects[i]->inv_inertia[2][2] = (12.0 * rects[i]->inv_mass) / 4.25;
 
     status = sim_add_entity(sim, rects[i], ALLOW_HURT_BOXES);
+    sim_add_entity(render_sim, rects[i], ALLOW_HURT_BOXES);
     if (status) {
       cleanup_gl();
       return 1;
@@ -328,6 +333,7 @@ int main() {
   floor_entity->type |= T_IMMUTABLE;
   glm_mat4_zero(floor_entity->inv_inertia);
   status = sim_add_entity(sim, floor_entity, ALLOW_DEFAULT);
+  sim_add_entity(render_sim, floor_entity, ALLOW_DEFAULT);
   if (status != 0) {
     cleanup_gl();
     return 1;
@@ -371,8 +377,10 @@ int main() {
     /* Animation */
 
     prep_sim_movement(sim);
+    prep_sim_movement(render_sim);
     animate(player, 0, cur_frame);
     update_sim_movement(sim);
+    update_sim_movement(render_sim);
 
     /* Physics */
 
@@ -382,21 +390,27 @@ int main() {
     glm_vec3_copy(player->translation, render_sphere->translation);
 
     prep_sim_movement(sim);
+    prep_sim_movement(render_sim);
     integrate_sim(sim, GLM_VEC3_ZERO, SIM_RANGE_INF);
     update_sim_movement(sim);
+    update_sim_movement(render_sim);
 
     COLLISION *collisions = NULL;
     size_t num_collisions = get_sim_collisions(sim, &collisions, GLM_VEC3_ZERO,
                                                SIM_RANGE_INF, 1);
     prep_sim_movement(sim);
+    prep_sim_movement(render_sim);
     for (size_t i = 0; i < num_collisions; i++) {
       impulse_resolution(sim, collisions[i]);
     }
+    //player->velocity[X] = 0;
+    //player->velocity[Z] = 0;
     update_sim_movement(sim);
+    update_sim_movement(render_sim);
     free(collisions);
 
-    //featherstone_abm(ragdoll);
-    //integrate_ragdoll(ragdoll);
+    featherstone_abm(ragdoll);
+    integrate_ragdoll(ragdoll);
 
     glm_vec3_sub(player->translation, displacement, displacement);
     glm_vec3_add(displacement, camera_model_pos, camera_model_pos);
@@ -434,7 +448,7 @@ int main() {
 
     /* Test collision point */
 
-    glm_translate(model, col_point);
+    glm_translate(model, test_col_pt);
     set_mat4("model", model, basic_shader);
     set_vec3("test_col", (vec3) { 1.0, 0.0, 0.0 }, basic_shader);
     glDrawArrays(GL_POINTS, 0, 1);
@@ -458,13 +472,15 @@ int main() {
     glUseProgram(basic_shader);
     set_vec3("test_col", (vec3) { 1.0, 0.0, 1.0 }, basic_shader);
     glBindVertexArray(pt_VAO);
+    /*
     draw_colliders(basic_shader, player, sphere);
-    //draw_colliders(basic_shader, ragdoll, sphere);
+    draw_colliders(basic_shader, ragdoll, sphere);
     draw_colliders(basic_shader, obstacle, sphere);
     draw_colliders(basic_shader, floor_entity, sphere);
     for (int i = 0; i < NUM_BOXES; i++) {
       draw_colliders(basic_shader, boxes[i], sphere);
     }
+    */
 
     // Only render within render distance
     num_collisions = get_sim_collisions(render_sim, &collisions,
@@ -481,14 +497,6 @@ int main() {
     }
     free(collisions);
 
-    set_vec3("test_col", cube_col, basic_shader);
-    draw_colliders(basic_shader, box_entity, sphere);
-
-    set_vec3("test_col", s_col, basic_shader);
-    draw_colliders(basic_shader, sphere_entity, sphere);
-
-    draw_colliders(basic_shader, render_sphere, sphere);
-
     /* Player */
 
     glUseProgram(shader);
@@ -496,7 +504,7 @@ int main() {
     set_vec3("camera_pos", camera_pos, shader);
     if (draw) {
       draw_entity(shader, player);
-      //draw_entity(shader, ragdoll);
+      draw_entity(shader, ragdoll);
     }
 
     /* Objects */
@@ -504,6 +512,7 @@ int main() {
     glUseProgram(test_shader);
     set_mat4("view", view, test_shader);
     set_vec3("col", (vec3) { 1.0, 1.0, 1.0 }, test_shader);
+    /*
     draw_entity(test_shader, box_entity);
     draw_entity(test_shader, obstacle);
     draw_entity(test_shader, floor_entity);
@@ -516,7 +525,6 @@ int main() {
     for (int i = 0; i < NUM_RECTS; i++) {
       draw_entity(test_shader, rects[i]);
     }
-    /*
     for (int i = 0; i < ARENA_WIDTH * ARENA_WIDTH; i++) {
       draw_entity(test_shader, four_ent[i]);
     }
@@ -575,7 +583,7 @@ int main() {
 }
 
 void integrate_ragdoll(ENTITY *subject) {
-  float increment = 0.001;
+  float increment = DELTA_TIME;
 
   for (int cur_bone = 0; cur_bone < subject->model->num_bones; cur_bone++) {
     int cur_col = subject->model->bone_collider_links[cur_bone];

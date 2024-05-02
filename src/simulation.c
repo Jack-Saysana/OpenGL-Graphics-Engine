@@ -391,8 +391,10 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
     a_args.inv_mass = col.a_ent->np_data[col.a_offset].inv_mass;
   }
   if (a_args.inv_mass) {
-    calc_inertia_tensor(col.a_ent, col.a_offset, &col.a_world_col,
-                        a_args.inv_mass, a_args.inv_inertia);
+    //calc_inertia_tensor(col.a_ent, col.a_offset, &col.a_world_col,
+    //                    a_args.inv_mass, a_args.inv_inertia);
+    calc_inertia_tensor(col.a_ent, col.a_offset, a_args.inv_mass,
+                        a_args.inv_inertia);
     glm_mat4_inv(a_args.inv_inertia, a_args.inv_inertia);
   } else {
     glm_mat4_zero(a_args.inv_inertia);
@@ -420,14 +422,16 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
     b_args.inv_mass = col.b_ent->np_data[col.b_offset].inv_mass;
   }
   if (b_args.inv_mass) {
-    calc_inertia_tensor(col.b_ent, col.b_offset, &col.b_world_col,
-                        b_args.inv_mass, b_args.inv_inertia);
+    //calc_inertia_tensor(col.b_ent, col.b_offset, &col.b_world_col,
+    //                    b_args.inv_mass, b_args.inv_inertia);
+    calc_inertia_tensor(col.b_ent, col.b_offset, b_args.inv_mass,
+                        b_args.inv_inertia);
     glm_mat4_inv(b_args.inv_inertia, b_args.inv_inertia);
   } else {
     glm_mat4_zero(b_args.inv_inertia);
   }
 
-  solve_collision(&a_args, &b_args, col.col_dir, col.col_point);
+  solve_collision(&a_args, &b_args, col.col_dir, col.col_point, sim->forces);
 }
 
 // Manually refresh the status of the collider in the simulation
@@ -499,11 +503,14 @@ void integrate_collider(ENTITY *entity, size_t offset, vec3 force) {
   // Update "Narrow" physics data if entity is softbody/ragdoll
   if (entity->model->colliders[offset].category == DEFAULT || bone == -1) {
     // Update linear velocity and position of object
+    glm_vec3_scale(entity->velocity, LINEAR_DAMP_FACTOR, entity->velocity);
     glm_vec3_add(entity->velocity, force_vec, entity->velocity);
     glm_vec3_scale(entity->velocity, DELTA_TIME, delta_d);
     glm_vec3_add(delta_d, entity->translation, entity->translation);
 
     // Update angular velocity and rotation of object
+    glm_vec3_scale(entity->ang_velocity, ANGULAR_DAMP_FACTOR,
+                   entity->ang_velocity);
     versor ang_vel = { entity->ang_velocity[0],
                        entity->ang_velocity[1],
                        entity->ang_velocity[2], 0.0 };
@@ -514,11 +521,15 @@ void integrate_collider(ENTITY *entity, size_t offset, vec3 force) {
     glm_quat_add(delta_rot, entity->rotation, entity->rotation);
     glm_quat_normalize(entity->rotation);
   } else {
+    glm_vec3_scale(entity->np_data[bone].velocity, LINEAR_DAMP_FACTOR,
+                   entity->np_data[bone].velocity);
     glm_vec3_add(entity->np_data[bone].velocity, force_vec,
                  entity->np_data[bone].velocity);
     glm_vec3_scale(entity->np_data[offset].velocity, DELTA_TIME, delta_d);
     glm_translate(entity->bone_mats[bone][LOCATION], delta_d);
 
+    glm_vec3_scale(entity->np_data[offset].ang_velocity, ANGULAR_DAMP_FACTOR,
+                   entity->np_data[offset].ang_velocity);
     versor ang_vel = { entity->np_data[offset].ang_velocity[0],
                        entity->np_data[offset].ang_velocity[1],
                        entity->np_data[offset].ang_velocity[2], 0.0 };
@@ -679,6 +690,7 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
         new_col->b_world_col = c_world_col;
         glm_vec3_copy(collision_dir, new_col->col_dir);
         glm_vec3_copy(col_point, new_col->col_point);
+        //glm_vec3_copy(col_point, test_col_pt);
 
         (*col_buf_len)++;
         if (*col_buf_len == *col_buf_size) {
