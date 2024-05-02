@@ -976,69 +976,46 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 
   // FRICTION: Very similar to impulse model
 #ifdef FRICTION
-  // TANGENT VECTOR
-  float v_dot_n = glm_vec3_dot(rel_velocity, col_normal);
-  float g_dot_n = glm_vec3_dot(col_normal, gravity);
-  vec3 tan_vec = GLM_VEC3_ZERO_INIT;
-  if (v_dot_n) {
-    glm_vec3_scale(col_normal, v_dot_n, tan_vec);
-    glm_vec3_sub(rel_velocity, tan_vec, tan_vec);
-  } else if (g_dot_n) {
-    glm_vec3_scale(col_normal, g_dot_n, tan_vec);
-    glm_vec3_sub(gravity, tan_vec, tan_vec);
-  }
-  glm_vec3_normalize(tan_vec);
-
-  float m = (1.0 / a_args->inv_mass) + (1.0 / b_args->inv_mass);
-  vec3 mv = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(rel_velocity, m, mv);
-  float v_dot_t = glm_vec3_dot(rel_velocity, tan_vec);
-  float mv_dot_t = glm_vec3_dot(mv, tan_vec);
-
-  float static_f = 0.6;
-  float dynamic_f = 0.4;
-  float s_impulse = impulse * static_f;
-  float d_impulse = impulse * dynamic_f;
-  vec3 f_impulse = GLM_VEC3_ZERO_INIT;
-  if (mv_dot_t <= s_impulse && v_dot_t == 0.0) {
-    glm_vec3_scale(tan_vec, -mv_dot_t, f_impulse);
+  // Maximum magnitude of friction force
+  float max_friction = abs(impulse / DELTA_TIME);
+  // Velocity component perpendicular to collision normal
+  vec3 perp_a_vel = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(col_normal, glm_vec3_dot(col_normal, a_velocity), perp_a_vel);
+  glm_vec3_sub(a_velocity, perp_a_vel, perp_a_vel);
+  vec3 perp_b_vel = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(col_normal, glm_vec3_dot(col_normal, b_velocity), perp_b_vel);
+  glm_vec3_sub(b_velocity, perp_b_vel, perp_b_vel);
+  // Force of gravity perpendicular to collision normal
+  vec3 perp_grav = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(col_normal, glm_vec3_dot(col_normal, gravity), perp_grav);
+  glm_vec3_sub(gravity, perp_grav, perp_grav);
+  // Calculate ideal force of friction to halt movement perpendicular to
+  // collision normal
+  vec3 a_fric = GLM_VEC3_ZERO_INIT;
+  if (a_args->inv_mass == 0.0) {
+    glm_vec3_scale(perp_a_vel, -1.0 / DELTA_TIME, a_fric);
   } else {
-    glm_vec3_scale(tan_vec, -d_impulse, f_impulse);
+    glm_vec3_scale(perp_a_vel, -1.0 / (a_args->inv_mass * DELTA_TIME), a_fric);
   }
-  /*
-  vec3 grav_force = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(gravity, 1.0 / a_args->inv_mass, grav_force);
-  vec3 impulse_vec = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale_as(rel_velocity, impulse / DELTA_TIME, impulse_vec);
-  float i_dot_n = glm_vec3_dot(impulse_vec, col_normal);
-  float g_dot_n = glm_vec3_dot(col_normal, grav_force);
-  vec3 grav_n_comp = GLM_VEC3_ZERO_INIT;
-  vec3 f_from_grav = GLM_VEC3_ZERO_INIT;
-  vec3 imp_n_comp = GLM_VEC3_ZERO_INIT;
-  vec3 f_from_imp = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(col_normal, g_dot_n, grav_n_comp);
-  glm_vec3_scale(col_normal, i_dot_n, imp_n_comp);
-  glm_vec3_sub(grav_force, grav_n_comp, f_from_grav);
-  glm_vec3_sub(imp_n_comp, impulse_vec, f_from_imp);
-  vec3 friction_vec = GLM_VEC3_ZERO_INIT;
-  glm_vec3_add(f_from_grav, f_from_imp, friction_vec);
-
-  // TODO take into account dynamic vs static coefficients
-  float normal_force = (g_dot_n + i_dot_n) * 0.6;
-
-  float friction = glm_vec3_norm(friction_vec);
-  if (friction > normal_force) {
-    glm_vec3_scale_as(friction_vec, normal_force, friction_vec);
+  glm_vec3_sub(a_fric, perp_grav, a_fric);
+  vec3 b_fric = GLM_VEC3_ZERO_INIT;
+  if (b_args->inv_mass == 0.0) {
+    glm_vec3_scale(perp_b_vel, -1.0 / DELTA_TIME, b_fric);
+  } else {
+    glm_vec3_scale(perp_b_vel, -1.0 / (b_args->inv_mass * DELTA_TIME), b_fric);
+  }
+  glm_vec3_sub(b_fric, perp_grav, b_fric);
+  // Cap force of friction based on its maximum magnitude
+  if (glm_vec3_norm(a_fric) > max_friction) {
+    glm_vec3_scale_as(a_fric, max_friction, a_fric);
+  }
+  if (glm_vec3_norm(b_fric) > max_friction) {
+    glm_vec3_scale_as(b_fric, max_friction, b_fric);
   }
 
-  vec3 f_impulse = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(friction_vec, DELTA_TIME, f_impulse);
-  */
-
-  // CHANGE IN VELOCITY: (impulse / m)t
-  vec3 delta_va_f = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(f_impulse, a_args->inv_mass, delta_va_f);
-  glm_vec3_sub(delta_va, delta_va_f, delta_va);
+  //vec3 delta_va_f = GLM_VEC3_ZERO_INIT;
+  //glm_vec3_scale(a_fric, a_args->inv_mass * DELTA_TIME, delta_va_f);
+  //glm_vec3_add(delta_va, delta_va_f, delta_va);
 #endif
 
   // Dampen and update velocity
@@ -1047,20 +1024,15 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   vec3_remove_noise(a_vel, 0.0001);
   glm_vec3_copy(a_vel, *(a_args->velocity));
 #ifdef FRICTION
-  // CHANGE IN ANGULAR VELOCITY: impulse * I^-1(r x t)
+  /*
   if ((a_args->type & T_DRIVING) == 0) {
     vec3 delta_ang_va_f = GLM_VEC3_ZERO_INIT;
-    glm_vec3_cross(a_rel, f_impulse, delta_ang_va_f);
-    /*
-    fprintf(stderr, "imp: [%f, %f, %f]\n", f_impulse[X], f_impulse[Y],
-            f_impulse[Z]);
-    fprintf(stderr, "a_rel: [%f, %f, %f]\n", a_rel[X], a_rel[Y], a_rel[Z]);
-    fprintf(stderr, "dva: [%f, %f, %f]\n", delta_ang_va_f[X],
-            delta_ang_va_f[Y], delta_ang_va_f[Z]);
-    */
+    glm_vec3_cross(a_rel, a_fric, delta_ang_va_f);
     glm_mat4_mulv3(a_inv_inertia, delta_ang_va_f, 1.0, delta_ang_va_f);
-    glm_vec3_sub(delta_ang_va, delta_ang_va_f, delta_ang_va);
+    glm_vec3_scale(delta_ang_va_f, DELTA_TIME, delta_ang_va_f);
+    glm_vec3_add(delta_ang_va, delta_ang_va_f, delta_ang_va);
   }
+  */
 #endif
 
   // Dampen and update ang velocity
@@ -1070,9 +1042,9 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_copy(a_ang_vel, *(a_args->ang_velocity));
 
 #ifdef FRICTION
-  vec3 delta_vb_f = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(f_impulse, b_args->inv_mass, delta_vb_f);
-  glm_vec3_sub(delta_vb, delta_vb_f, delta_vb);
+  //vec3 delta_vb_f = GLM_VEC3_ZERO_INIT;
+  //glm_vec3_scale(b_fric, b_args->inv_mass * DELTA_TIME, delta_vb_f);
+  //glm_vec3_add(delta_vb, delta_vb_f, delta_vb);
 #endif
 
   // Dampen and update velocity
@@ -1082,12 +1054,15 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_copy(b_vel, *(b_args->velocity));
 
 #ifdef FRICTION
+  /*
   if ((b_args->type & T_DRIVING) == 0) {
     vec3 delta_ang_vb_f = GLM_VEC3_ZERO_INIT;
-    glm_vec3_cross(b_rel, f_impulse, delta_ang_vb_f);
+    glm_vec3_cross(b_rel, b_fric, delta_ang_vb_f);
     glm_mat4_mulv3(b_inv_inertia, delta_ang_vb_f, 1.0, delta_ang_vb_f);
-    glm_vec3_sub(delta_ang_vb, delta_ang_vb_f, delta_ang_vb);
+    glm_vec3_scale(delta_ang_vb_f, DELTA_TIME, delta_ang_vb_f);
+    glm_vec3_add(delta_ang_vb, delta_ang_vb_f, delta_ang_vb);
   }
+  */
 #endif
 
   // Dampen and update ang velocity

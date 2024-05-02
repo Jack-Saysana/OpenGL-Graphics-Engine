@@ -8,7 +8,7 @@
 #include <simulation_str.h>
 #include <globals.h>
 
-#define FRICTION
+//#define FRICTION
 #define BUFF_STARTING_LEN (10)
 
 #define COLLISION (1)

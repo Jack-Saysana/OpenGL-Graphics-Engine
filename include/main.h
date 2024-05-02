@@ -62,6 +62,7 @@ int sim_remove_entity(SIMULATION *sim, ENTITY *entity);
 void sim_add_force(SIMULATION *sim, vec3 force);
 void sim_clear_force(SIMULATION *sim);
 void prep_sim_movement(SIMULATION *);
+//void update_sim_movement(SIMULATION *, int);
 void update_sim_movement(SIMULATION *);
 void integrate_sim(SIMULATION *sim, vec3 origin, float range);
 size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest,

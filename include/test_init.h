@@ -3,11 +3,7 @@
 #include <entity_str.h>
 #include <font_str.h>
 
-#if WINDOWS
-#define DIR "C:/Users/Jack/Documents/C/OpenGL-Graphics-Engine"
-#else
-#define DIR "/home/jbs/Documents/C/OpenGL-Graphics-Engine"
-#endif
+#define DIR "./"
 
 int init_scene();
 

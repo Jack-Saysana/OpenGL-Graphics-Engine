@@ -241,6 +241,8 @@ int init_scene() {
     glm_vec3_copy(m_box_pos, boxes[i]->translation);
     glm_vec3_copy(m_box_scale, boxes[i]->scale);
   }
+  glm_vec3_copy(boxes[0]->translation, boxes[1]->translation);
+  boxes[1]->translation[Y] += 2.0;
 
   spheres = malloc(sizeof(ENTITY *) * NUM_SPHERES);
   for (int i = 0; i < NUM_SPHERES; i++) {
