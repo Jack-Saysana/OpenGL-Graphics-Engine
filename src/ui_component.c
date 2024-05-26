@@ -805,6 +805,7 @@ int sort_ui_components(UI_COMP **comp, size_t comp_len) {
     sort_stk[stk_top - 2].buff = buff + i + 2;
     sort_stk[stk_top - 2].len = len - (i + 2);
   }
+  free(sort_stk);
 
   return 0;
 }

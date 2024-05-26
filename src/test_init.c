@@ -29,7 +29,7 @@ ENTITY *sphere_entity;
 ENTITY **boxes;
 ENTITY **spheres;
 ENTITY **rects;
-const int NUM_BOXES = 10;
+const int NUM_BOXES = 0;
 const int NUM_SPHERES = 0;
 const int NUM_RECTS = 0;
 ENTITY *ragdoll;
@@ -183,7 +183,7 @@ int init_scene() {
   }
 
   rs_mod = load_model(DIR"/resources/render_sphere/render_sphere.obj");
-  if (render_sphere == NULL) {
+  if (rs_mod == NULL) {
     fprintf(stderr, "Unable to load render sphere model\n");
   }
 

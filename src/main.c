@@ -163,7 +163,7 @@ int main() {
   set_ui_on_hover(c1, test_callback_hover, (void *) tool_tip);
   set_ui_no_hover(c1, test_callback_no_hover, (void *) tool_tip);
   set_manual_layer(tool_tip, -0.01);
-  //set_ui_enabled(c1, 0);
+  set_ui_enabled(c1, 0);
 
   /*
   UI_COMP *c4 = add_ui_comp(c1, (vec2) { 0.0, 0.0 }, 32.0, 32.0,
@@ -196,6 +196,7 @@ int main() {
 
   sim_add_force(sim, (vec3) { 0.0, -GRAVITY, 0.0 });
 
+//  glm_vec3_copy((vec3) { 0.0, 0.1, 0.0 }, player->velocity);
   player->type |= T_DRIVING;
   player->inv_mass = 1.0;
   status = sim_add_entity(sim, player, ALLOW_DEFAULT);
@@ -254,7 +255,6 @@ int main() {
     glfwTerminate();
   }
 
-  /*
   for (int i = 0; i < ARENA_WIDTH * ARENA_WIDTH; i++) {
     four_ent[i]->type |= T_IMMUTABLE;
     status = sim_add_entity(sim, four_ent[i], ALLOW_HURT_BOXES);
@@ -266,7 +266,6 @@ int main() {
       glfwTerminate();
     }
   }
-  */
 
   for (int i = 0; i < NUM_BOXES; i++) {
     boxes[i]->inv_mass = 1.0;
@@ -517,10 +516,10 @@ int main() {
     }
     */
 
-    vec3 pos = { 0.0, 0.0, 0.0 };
-    glUniform3f(glGetUniformLocation(test_shader, "col"), 1.0, 1.0, 0.0);
-    draw_oct_tree(cube, sim->oct_tree, pos, sim->oct_tree->max_extent,
-                  test_shader, 0, 1);
+    //vec3 pos = { 0.0, 0.0, 0.0 };
+    //glUniform3f(glGetUniformLocation(test_shader, "col"), 1.0, 1.0, 0.0);
+    //draw_oct_tree(cube, sim->oct_tree, pos, sim->oct_tree->max_extent,
+    //              test_shader, 0, 1);
 
     /* Misc */
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
