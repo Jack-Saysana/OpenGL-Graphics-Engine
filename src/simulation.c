@@ -147,11 +147,19 @@ void prep_sim_movement(SIMULATION *sim) {
     for (size_t j = 0; j < sim->oct_tree->data_buff_len; j++) {
       if (sim->oct_tree->data_buffer[j].entity == sim->moving_ledger[sim->m_list[i]].entity &&
           sim->oct_tree->data_buffer[j].collider_offset == sim->moving_ledger[sim->m_list[i]].collider_offset) {
+#ifdef __linux__
         fprintf(stderr, "  %p, %ld, %ld, %d, %ld\n", sim->oct_tree->data_buffer[j].entity,
                 sim->oct_tree->data_buffer[j].collider_offset,
                 sim->oct_tree->data_buffer[j].node_offset,
                 sim->oct_tree->data_buffer[j].birthmark,
                 j);
+#else
+        fprintf(stderr, "  %p, %lld, %lld, %d, %lld\n", sim->oct_tree->data_buffer[j].entity,
+                sim->oct_tree->data_buffer[j].collider_offset,
+                sim->oct_tree->data_buffer[j].node_offset,
+                sim->oct_tree->data_buffer[j].birthmark,
+                j);
+#endif
       }
     }
 #endif
@@ -164,11 +172,19 @@ void prep_sim_movement(SIMULATION *sim) {
       if (sim->oct_tree->data_buffer[j].entity == sim->moving_ledger[sim->m_list[i]].entity &&
           sim->oct_tree->data_buffer[j].collider_offset == sim->moving_ledger[sim->m_list[i]].collider_offset) {
         ENTITY *ent = sim->oct_tree->data_buffer[j].entity;
+#ifdef __linux__
         fprintf(stderr, "  %p, %ld, %ld, %d, %ld\n", ent,
                 sim->oct_tree->data_buffer[j].collider_offset,
                 sim->oct_tree->data_buffer[j].node_offset,
                 sim->oct_tree->data_buffer[j].birthmark,
                 j);
+#else
+        fprintf(stderr, "  %p, %lld, %lld, %d, %lld\n", ent,
+                sim->oct_tree->data_buffer[j].collider_offset,
+                sim->oct_tree->data_buffer[j].node_offset,
+                sim->oct_tree->data_buffer[j].birthmark,
+                j);
+#endif
         bad = 1;
       }
     }
