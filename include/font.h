@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <glad/glad.h>
 #include <const.h>
-#include <font_str.h>
-#include <ui_component_str.h>
+#include <structs/font_str.h>
+#include <structs/ui_component_str.h>
 #include <cglm/cglm.h>
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================

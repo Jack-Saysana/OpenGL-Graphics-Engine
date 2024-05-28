@@ -1,7 +1,7 @@
 #include <glad/glad.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <entity_str.h>
+#include <structs/entity_str.h>
 
 typedef enum {
   AMB = 0,

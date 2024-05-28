@@ -4,12 +4,13 @@
 #include <cglm/cam.h>
 #include <math.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <globals.h>
 #include <const.h>
-#include <ui_component_str.h>
-#include <entity_str.h>
-#include <simulation_str.h>
-#include <font_str.h>
+#include <structs/ui_component_str.h>
+#include <structs/entity_str.h>
+#include <structs/simulation_str.h>
+#include <structs/font_str.h>
 
 extern vec3 U_DIR;
 extern vec3 D_DIR;

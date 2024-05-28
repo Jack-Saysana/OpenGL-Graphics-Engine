@@ -2,15 +2,18 @@ PROJ_NAME = Jack
 CC = gcc
 BUILD_DIR = ./bin
 SRC_DIR = ./src
-FILES = $(wildcard ./src/*.c)
+FILES = $(wildcard ./src/*.c ./src/*/*.c)
 SRC_FILES = $(filter-out ./src/test.c, $(FILES))
 TEST_FILES = $(filter-out ./src/main.c, $(FILES))
 LIB_FILES = $(filter-out ./src/main.c ./src/test.c ./src/test_init.c, $(FILES))
-SRC_OBJS = $(SRC_FILES:%=$(BUILD_DIR)/%.o)
-TEST_OBJS = $(TEST_FILES:%=$(BUILD_DIR)/%.o)
-LIB_OBJS = $(LIB_FILES:%=$(BUILD_DIR)/%.l)
+#SRC_OBJS = $(SRC_FILES:%=$(BUILD_DIR)/$(notdir %).o)
+SRC_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
+#TEST_OBJS = $(TEST_FILES:%=$(BUILD_DIR)/$(notdir %).o)
+TEST_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(TEST_FILES))
+#LIB_OBJS = $(LIB_FILES:%=$(BUILD_DIR)/$(notdir %).l)
+LIB_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.l,$(LIB_FILES))
 DEPS = $(OBJS:.o=.d)
-DFLAGS = -g -O0 -Wall -Werror -MMD -MP
+DFLAGS = -g -O3 -Wall -MMD -MP
 
 ifeq ($(OS),Windows_NT)
 	DEVICE += -DWINDOWS
@@ -39,7 +42,7 @@ main: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_MAIN
 $(BUILD_DIR)/$(PROJ_NAME): $(LIB_OBJS)
 #	$(CC) $(LIBS) -shared -o $(BUILD_DIR)/libengine.so $(LIB_OBJS) $(LINK)
 	ar rcs $(BUILD_DIR)/libengine.a $(LIB_OBJS)
-	cp ./include/interface/* $(BUILD_DIR)/include/engine
+	cp -r ./include/interface/* $(BUILD_DIR)/include/engine
 
 $(BUILD_DIR)/$(PROJ_NAME)_TEST: $(TEST_OBJS)
 	$(CC) $(LIBS) $(TEST_OBJS) $(DEVICE) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
@@ -47,14 +50,15 @@ $(BUILD_DIR)/$(PROJ_NAME)_TEST: $(TEST_OBJS)
 $(BUILD_DIR)/$(PROJ_NAME)_MAIN: $(SRC_OBJS)
 	$(CC) $(LIBS) $(SRC_OBJS) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
 
-$(BUILD_DIR)/%.c.o: %.c
+$(BUILD_DIR)/%.o: %.c
 	$(CC) $(DFLAGS) $(DEVICE) $(INCLUDE) -c $< -o $@
 
-$(BUILD_DIR)/%.c.l: %.c
+$(BUILD_DIR)/%.l: %.c
 	$(CC) $(DFLAGS) $(INCLUDE) -c -fPIC -o $@ $<
 
 ./bin/src:
 	mkdir -p ./bin/src
+	mkdir -p ./bin/src/math
 
 ./bin/include:
 	mkdir ./bin/include

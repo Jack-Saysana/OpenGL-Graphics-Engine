@@ -4,8 +4,8 @@
 #include <cglm/ivec3.h>
 #include <cglm/quat.h>
 #include <const.h>
-#include <entity_str.h>
-#include <simulation_str.h>
+#include <structs/entity_str.h>
+#include <structs/simulation_str.h>
 #include <globals.h>
 
 //#define FRICTION

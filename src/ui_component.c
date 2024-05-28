@@ -35,7 +35,6 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs,
   // Initialized base quad model used for rendering ui components
   ui_quad = load_model(quad_path);
   if (ui_quad == NULL) {
-    free_ui_comp(&ui_root);
     fprintf(stderr, "Error loading ui quad models\n");
     return -1;
   }
@@ -43,7 +42,6 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs,
   // Initialize shaders used for rendering ui components
   ui_shader = init_shader_prog(ui_vs, NULL, ui_fs);
   if (ui_shader == -1) {
-    free_ui_comp(&ui_root);
     free_model(ui_quad);
     fprintf(stderr, "Error loading ui shaders\n");
     return -1;
@@ -51,7 +49,6 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs,
 
   text_shader = init_shader_prog(text_vs, NULL, text_fs);
   if (text_shader == -1) {
-    free_ui_comp(&ui_root);
     free_model(ui_quad);
     glDeleteProgram(text_shader);
     fprintf(stderr, "Error loading ui text shaders\n");

@@ -1,3 +1,3 @@
 #include <stdio.h>
 #include <glad/glad.h>
-#include <framebuffer_str.h>
+#include <structs/framebuffer_str.h>

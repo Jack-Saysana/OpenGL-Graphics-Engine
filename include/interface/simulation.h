@@ -1,8 +1,8 @@
 #ifndef __ENGINE_SIMULATION_H__
 #define __ENGINE_SIMULATION_H__
 
-#include "./simulation_str.h"
-#include "./entity_str.h"
+#include "./structs/simulation_str.h"
+#include "./structs/entity_str.h"
 
 SIMULATION *init_sim(float max_extent, unsigned int max_depth);
 void free_sim(SIMULATION *sim);

@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <const.h>
 #include <globals.h>
-#include <simulation_str.h>
+#include <structs/simulation_str.h>
 
 typedef struct check_args {
   pthread_mutex_t *col_lock;

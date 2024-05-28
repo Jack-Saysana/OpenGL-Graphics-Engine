@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <cglm/quat.h>
 #include <cglm/affine.h>
-#include <entity_str.h>
+#include <structs/entity_str.h>
 
 int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame);
 void calc_bone_mats(mat4 (*bone_mats)[3], unsigned int bone_id, C_TYPE type,

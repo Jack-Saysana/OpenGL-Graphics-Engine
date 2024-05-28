@@ -1,4 +1,4 @@
-#include <entity_str.h>
+#include <structs/entity_str.h>
 #include <stdio.h>
 
 //#define DEBUG_FS

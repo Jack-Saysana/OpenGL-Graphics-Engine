@@ -1,4 +1,4 @@
-#include <spatial_algebra.h>
+#include <math/spatial_algebra.h>
 
 void mat6_zero(mat6 m) {
   m[0][0] = 0.0;

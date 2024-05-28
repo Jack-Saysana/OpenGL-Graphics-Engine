@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <entity_str.h>
-#include <font_str.h>
+#include <structs/entity_str.h>
+#include <structs/font_str.h>
 
 #define DIR "./"
 
