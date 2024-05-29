@@ -13,6 +13,6 @@
 #include "./ui_component.h"
 #include "./structs/ui_component_str.h"
 #include "./framebuffer.h"
-#include "./amat.h"
+#include "./math/amat.h"
 
 #endif

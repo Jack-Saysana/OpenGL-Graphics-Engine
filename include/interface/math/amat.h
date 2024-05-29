@@ -1,7 +1,7 @@
 #ifndef __AMAT_H__
 #define __AMAT_H__
 
-#include "./structs/math/amat_str.h"
+#include "../structs/math/amat_str.h"
 
 // ================================ FUNCTIONS ================================
 
@@ -22,6 +22,6 @@ int amat_outer(amat a, amat b, amat dest);
 
 // ================================== MACROS =================================
 
-#define AMAT_GET(a, i, j) (a.data[(i*a.n)+j])
+#define AMAT_GET(a, i, j) (a.data[(i*a.m)+j])
 
 #endif

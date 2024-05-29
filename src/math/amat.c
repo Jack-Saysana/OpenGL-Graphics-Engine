@@ -111,13 +111,14 @@ int amat_mul(amat a, amat b, amat dest) {
     return -1;
   }
 
-  amat col = { NULL, dest.n, 1 };
-  amat row = { NULL, dest.n, 1 };
+  float val = 0.0;
   for (int i = 0; i < dest.n; i++) {
     for (int j = 0; j < dest.m; j++) {
-      col.data = &AMAT_GET(b, i, 0);
-      row.data = &AMAT_GET(a, 0, j);
-      amat_dot(col, row, &AMAT_GET(c, i, j));
+      val = 0.0;
+      for (int k = 0; k < a.n; k++) {
+        val += AMAT_GET(a, k, j) * AMAT_GET(b, i, k);
+      }
+      AMAT_GET(c, i, j) = val;
     }
   }
 
@@ -148,7 +149,7 @@ int amat_transpose(amat a, amat dest) {
 
   for (int i = 0; i < dest.n; i++) {
     for (int j = 0; j < dest.m; j++) {
-      AMAT_GET(dest, i, j) = AMAT_GET(a, j, i);
+      AMAT_GET(c, i, j) = AMAT_GET(a, j, i);
     }
   }
 
@@ -195,11 +196,18 @@ int amat_outer(amat a, amat b, amat dest) {
     return -1;
   }
 
+  amat c = init_amat(NULL, dest.m, dest.n);
+  if (!c.data) {
+    return -1;
+  }
+
   for (int i = 0; i < dest.n; i++) {
     for (int j = 0; j < dest.m; j++) {
-      AMAT_GET(dest, i, j) = AMAT_GET(a, 0, j) * AMAT_GET(b, 0, i);
+      AMAT_GET(c, i, j) = AMAT_GET(a, 0, j) * AMAT_GET(b, 0, i);
     }
   }
 
+  memcpy(dest.data, c.data, sizeof(float) * dest.m * dest.n);
+  free_amat(c);
   return 0;
 }

@@ -13,7 +13,7 @@ TEST_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(TEST_FILES))
 #LIB_OBJS = $(LIB_FILES:%=$(BUILD_DIR)/$(notdir %).l)
 LIB_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.l,$(LIB_FILES))
 DEPS = $(OBJS:.o=.d)
-DFLAGS = -g -O3 -Wall -MMD -MP
+DFLAGS = -g -O0 -Wall -MMD -MP
 
 ifeq ($(OS),Windows_NT)
 	DEVICE += -DWINDOWS
