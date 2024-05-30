@@ -14,6 +14,8 @@ typedef struct arbitrary_matrix {
 
 amat init_amat(float *data, int m, int n);
 void free_amat(amat a);
+// Matrix copy
+int amat_copy(amat a, amat dest);
 // Matrix addition
 int amat_add(amat a, amat b, amat dest);
 // Matrix subtraction
@@ -26,9 +28,17 @@ int amat_transpose(amat a, amat dest);
 int amat_dot(amat a, amat b, float *dest);
 // Vector outer product: https://en.wikipedia.org/wiki/Outer_product
 int amat_outer(amat a, amat b, amat dest);
+// Swaps rows of matrix
+int amat_swap_row(amat a, amat dest, int u, int v);
+// Swaps columns of matrix
+int amat_swap_col(amat a, amat dest, int v, int u);
+// Copy sub matrix
+int amat_pick(amat a, amat dest, int m, int n);
+// Paste sub matrix
+int amat_ins(amat a, amat dest, int m, int n);
 
 // ================================== MACROS =================================
 
-#define AMAT_GET(a, i, j) (a.data[(i*a.m)+j])
+#define AMAT_GET(a, i, j) ((a).data[((i)*(a).m)+(j)])
 
 #endif

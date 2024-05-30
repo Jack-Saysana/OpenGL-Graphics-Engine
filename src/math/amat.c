@@ -41,6 +41,28 @@ void free_amat(amat a) {
 }
 
 /*
+  Copy a matrix
+  Arguments:
+  - amat src: Source matrix of size m x n
+  - amat dest: Destination matrix. Must be preallocated of size m x n
+  Returns:
+  -1 if input is invalid, 0 if successful
+*/
+int amat_copy(amat src, amat dest) {
+  if (!dest.data || src.m != dest.m || src.n != dest.n) {
+    return -1;
+  }
+
+  for (int i = 0; i < dest.n; i++) {
+    for (int j = 0; j < dest.m; j++) {
+      AMAT_GET(dest, i, j) = AMAT_GET(src, i, j);
+    }
+  }
+
+  return 0;
+}
+
+/*
   Computes the sum of two m x n matrices: a + b
   Arguments:
   - amat a: Matrix a of size m x n (row x col)
@@ -208,6 +230,142 @@ int amat_outer(amat a, amat b, amat dest) {
   }
 
   memcpy(dest.data, c.data, sizeof(float) * dest.m * dest.n);
+  free_amat(c);
+  return 0;
+}
+
+/*
+  Swaps two rows in an m x n matrix
+  Arguments:
+  - amat a: Matrix a of size m x n
+  - amat dest: Place to store the computed swap. It is safe for a to be dest.
+  - int u: Zero indexed row to swap with row v
+  - int v: Zero indexed row to swap with row u
+  Returns:
+  -1 if input is invalid, 0 if successful
+*/
+int amat_swap_row(amat a, amat dest, int u, int v) {
+  if (!dest.data || a.m != dest.m || a.n != dest.n || u < 0 || u >= a.m ||
+      v < 0 || v >= a.m) {
+    return -1;
+  }
+
+  amat c = init_amat(NULL, dest.m, dest.n);
+  if (!c.data) {
+    return -1;
+  }
+  amat_copy(a, c);
+
+  float temp = 0.0;
+  for (int i = 0; i < dest.n; i++) {
+    temp = AMAT_GET(c, i, u);
+    AMAT_GET(c, i, u) = AMAT_GET(c, i, v);
+    AMAT_GET(c, i, v) = temp;
+  }
+
+  memcpy(dest.data, c.data, sizeof(float) * dest.m * dest.n);
+  free_amat(c);
+  return 0;
+}
+
+/*
+  Swaps two columns in an m x n matrix
+  Arguments:
+  - amat a: Matrix a of size m x n
+  - int u: Zero indexed column to swap with column v
+  - int v: Zero indexed column to swap with column u
+  Returns:
+  -1 if input is invalid, 0 if successful
+*/
+int amat_swap_col(amat a, amat dest, int u, int v) {
+  if (!dest.data || a.m != dest.m || a.n != dest.n || u < 0 || u >= a.n ||
+      v < 0 || v >= a.n) {
+    return -1;
+  }
+
+  amat c = init_amat(NULL, dest.m, dest.n);
+  if (!c.data) {
+    return -1;
+  }
+  amat_copy(a, c);
+
+  float temp = 0.0;
+  for (int i = 0; i < dest.m; i++) {
+    temp = AMAT_GET(c, u, i);
+    AMAT_GET(c, u, i) = AMAT_GET(c, v, i);
+    AMAT_GET(c, v, i) = temp;
+  }
+
+  memcpy(dest.data, c.data, sizeof(float) * dest.m * dest.n);
+  free_amat(c);
+  return 0;
+}
+
+/*
+  Copys an m x n sub matrix of a, where the sub matrix's (0, 0) element is
+  (u, v) in a
+  Arguments:
+  - amat a: Matrix to copy from
+  - amat dest: Matrix to paste sub matrix. Can be a if a and dest are same
+               size.
+  - int u: Row in a corresponding to the value of a which will occupy the
+           (0, 0) spot in dest
+  - int v: Column in a corresponding to the value of a which will occupy the
+           (0, 0) spot in dest
+  Returns:
+  -1 if input invalid, 0 if successful
+*/
+int amat_pick(amat a, amat dest, int u, int v) {
+  if (!dest.data || u + dest.m > a.m || v + dest.n > a.n) {
+    return -1;
+  }
+
+  amat c = init_amat(NULL, dest.m, dest.n);
+  if (!c.data) {
+    return -1;
+  }
+
+  for (int i = 0; i < c.n; i++) {
+    for (int j = 0; j < c.m; j++) {
+      AMAT_GET(c, i, j) = AMAT_GET(a, i + v, j + u);
+    }
+  }
+
+  memcpy(dest.data, c.data, sizeof(float) * dest.m * dest.n);
+  free_amat(c);
+  return 0;
+}
+
+/*
+  Pastes an m x n matrix into dest, beginning at (u, v) in dest
+  Arguments:
+  - amat a: Matrix to paste
+  - amat dest: Matrix to paste sub matrix. Can be a if a and dest are same
+               size.
+  - int u: Row in dest corresponding to where the (0, 0) element of a will be
+           pasted
+  - int v: Column in dest corresponding to the (0, 0) element of a will be
+           pasted
+  Returns:
+  -1 if input is invalid, 0 if successful
+*/
+int amat_ins(amat a, amat dest, int u, int v) {
+  if (!dest.data || u + a.m > dest.m || v + a.n > dest.n) {
+    return -1;
+  }
+
+  amat c = init_amat(NULL, a.m, a.n);
+  if (!c.data) {
+    return -1;
+  }
+  amat_copy(a, c);
+
+  for (int i = 0; i < c.n; i++) {
+    for (int j = 0; j < c.m; j++) {
+      AMAT_GET(dest, i + v, j + u) = AMAT_GET(c, i, j);
+    }
+  }
+
   free_amat(c);
   return 0;
 }
