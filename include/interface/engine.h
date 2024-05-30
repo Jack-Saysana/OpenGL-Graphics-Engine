@@ -14,5 +14,6 @@
 #include "./structs/ui_component_str.h"
 #include "./framebuffer.h"
 #include "./math/amat.h"
+#include "./math/solver.h"
 
 #endif
