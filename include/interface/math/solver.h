@@ -5,5 +5,6 @@
 
 int solve_upper(amat a, amat b, amat x);
 int solve_lower(amat a, amat b, amat x);
+int lu_solve(amat a, amat b, amat x);
 
 #endif

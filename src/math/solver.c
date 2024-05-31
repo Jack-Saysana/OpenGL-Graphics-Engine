@@ -15,9 +15,13 @@ int solve_system(amat a, amat b, amat x) {
   Solves a linear system of equations of the form AX=B, where A is an
   upper-triangular matrix
   Arguments:
-  TODO Populate
+  - amat a: Upper triangular, non-singular matrix A of size m x m of system
+            AX=B
+  - amat b: Vector B of size m x 1 of system AX=B
+  - amat x: Vector X of size m x 1 of system AX=B, will be populated
   Returns:
-  TODO Populate
+  -1 if input is invalid, 0 if successful
+
 */
 int solve_upper(amat a, amat b, amat x) {
   if (a.n != a.m || a.n != b.m || a.m != x.m) {
@@ -46,9 +50,12 @@ int solve_upper(amat a, amat b, amat x) {
   Solves a linear system of equations of the form AX=B, where A is a
   lower-triangular matrix
   Arguments:
-  TODO Populate
+  - amat a: Lower triangular, non-singular matrix A of size m x m of system
+            AX=B
+  - amat b: Vector B of size m x 1 of system AX=B
+  - amat x: Vector X of size m x 1 of system AX=B, will be populated
   Returns:
-  TODO Populate
+  -1 if input is invalid, 0 if successful
 */
 int solve_lower(amat a, amat b, amat x) {
   if (a.n != a.m || a.n != b.m || a.m != x.m) {

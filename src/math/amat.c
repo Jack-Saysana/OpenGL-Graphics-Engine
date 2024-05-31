@@ -11,8 +11,8 @@
 /*
   Initilizes an m x n matrix
   Arguments:
-  - float *data: Initial content of new matrix. NULL if no initialization
-    should be done.
+  - float *data: Initial content of new matrix. NULL if matrix should be zeroed
+                 out.
   - int m: Number of rows
   - int n: Number of columns
   Returns:
@@ -27,6 +27,8 @@ amat init_amat(float *data, int m, int n) {
   };
   if (data) {
     memcpy(ret.data, data, sizeof(float) * m * n);
+  } else {
+    memset(ret.data, 0, sizeof(float) * m * n);
   }
   return ret;
 }
