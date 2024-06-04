@@ -8,11 +8,10 @@
   - amat b: Vector B in the system AX=B
   - amat x: Solution vector to populate in the event a can be solved using LU-
             decomposition. Must be preallocated of size mx1.
-  Returns:
   -1 if a is singular or the inputs are invalid, 0 if successful
 */
 int lu_solve(amat a, amat b, amat x) {
-  if (!x.data || a.m != a.n || x.m != a.n) {
+  if (a.m != a.n) {
     return -1;
   }
 
@@ -86,7 +85,7 @@ void partial_pivot(amat a, amat b) {
   for (int i = 0; i < a.m; i++) {
     implicit_scales[i] = 0.0;
     for (int j = 0; j < a.n; j++) {
-      cur = abs(AMAT_GET(a, j, i));
+      cur = fabs(AMAT_GET(a, j, i));
       if (cur > implicit_scales[i]) {
         implicit_scales[i] = cur;
       }
@@ -105,7 +104,7 @@ void partial_pivot(amat a, amat b) {
     max = 0.0;
     swap = -1;
     for (int j = i; j < a.m; j++) {
-      cur = implicit_scales[j] * abs(AMAT_GET(a, i, j));
+      cur = implicit_scales[j] * fabs(AMAT_GET(a, i, j));
       if (cur > max) {
         swap = j;
         max = cur;

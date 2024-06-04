@@ -65,6 +65,50 @@ int amat_copy(amat src, amat dest) {
 }
 
 /*
+  Zeros out the contents of a matrix
+  Arguments:
+  - amat a: Matrix to zero
+*/
+void amat_zero(amat a) {
+  for (int i = 0; i < a.m * a.n; i++) {
+    a.data[i] = 0.0;
+  }
+}
+
+/*
+  Zeros a matrix and puts 1.0 across the main diagonal
+  Arguments:
+  - amat a: Matrix to manipulate
+*/
+void amat_identity(amat a) {
+  amat_zero(a);
+  for (int i = 0; i < a.m && i < a.n; i++) {
+    AMAT_GET(a, i, i) = 1.0;
+  }
+}
+
+/*
+  Scales all elements in a matrix by a scalar
+  Arguments:
+  - amat a: Matrix to mulitiply by scalar
+  - amat dest: Destination matrix, can be a
+  - float s: Scalar to multiply each element of a by
+  Returns:
+  -1 if input is invalid, 0 if successful
+*/
+int amat_scale(amat a, amat dest, float s) {
+  if (!dest.data || a.m != dest.m || a.n != dest.m) {
+    return -1;
+  }
+
+  for (int i = 0; i < a.m * a.n; i++) {
+    dest.data[i] = a.data[i] * s;
+  }
+
+  return 0;
+}
+
+/*
   Computes the sum of two m x n matrices: a + b
   Arguments:
   - amat a: Matrix a of size m x n (row x col)
@@ -370,4 +414,14 @@ int amat_ins(amat a, amat dest, int u, int v) {
 
   free_amat(c);
   return 0;
+}
+
+// Print an amat
+void print_amat(amat a) {
+  for (int i = 0; i < a.m; i++) {
+    for (int j = 0; j < a.n; j++) {
+      fprintf(stderr, "%.4f ", AMAT_GET(a, j, i));
+    }
+    fprintf(stderr, "\n");
+  }
 }

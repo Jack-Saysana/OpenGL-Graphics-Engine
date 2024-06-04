@@ -16,6 +16,12 @@ amat init_amat(float *data, int m, int n);
 void free_amat(amat a);
 // Matrix copy
 int amat_copy(amat a, amat dest);
+// Make zero matrix
+void amat_zero(amat a);
+// Make identity matrix
+void amat_identity(amat a);
+// Scale matrix by scalar
+int amat_scale(amat a, amat dest, float s);
 // Matrix addition
 int amat_add(amat a, amat b, amat dest);
 // Matrix subtraction
@@ -36,6 +42,8 @@ int amat_swap_col(amat a, amat dest, int v, int u);
 int amat_pick(amat a, amat dest, int m, int n);
 // Paste sub matrix
 int amat_ins(amat a, amat dest, int m, int n);
+// Print matrix
+void print_amat(amat a);
 
 // ================================== MACROS =================================
 
