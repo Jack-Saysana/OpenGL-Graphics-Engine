@@ -67,4 +67,8 @@ void vec6_remove_noise(vec6 vec, float threshold);
 // MISC CUSTOM OPERATIONS
 void vec3_singular_cross(vec3 a, mat3 dest);
 
+// PRINT OPERATIONS
+void print_vec6(vec6 v);
+void print_mat6(mat6 m);
+
 #endif

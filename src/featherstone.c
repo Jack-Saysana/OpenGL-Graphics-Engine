@@ -1,33 +1,5 @@
 #include <featherstone.h>
 
-void print_vec6(vec6 v) {
-  printf("%f %f %f %f %f %f\n", v[0], v[1], v[2], v[3], v[4], v[5]);
-}
-void print_vec3(vec3 v) {
-  printf("%f %f %f\n", v[0], v[1], v[2]);
-}
-void print_mat6(mat6 m) {
-  for (int i = 0; i < 6; i++) {
-    printf("|%f %f %f %f %f %f|\n",
-           m[0][i],
-           m[1][i],
-           m[2][i],
-           m[3][i],
-           m[4][i],
-           m[5][i]);
-  }
-}
-void print_mat3(mat3 m) {
-  for (int i = 0; i < 3; i++) {
-    printf("|%f %f %f|\n", m[0][i], m[1][i], m[2][i]);
-  }
-}
-void print_mat4(mat4 m) {
-  for (int i = 0; i < 4; i++) {
-    printf("|%f %f %f %f|\n", m[0][i], m[1][i], m[2][i], m[3][i]);
-  }
-}
-
 int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
 
