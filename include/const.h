@@ -49,4 +49,12 @@
 // Misc constants
 //#define DEBUG_OCT_TREE (1)
 
+// Physics Constants
+#define LINEAR_DAMP_FACTOR (0.99)
+#define ANGULAR_DAMP_FACTOR (0.97)
+
+// Math Constants
+#define MAX_SVD_ITERATIONS (30)
+#define SVD_SUPER_DIAG_THRESHOLD (0.01)
+
 #endif

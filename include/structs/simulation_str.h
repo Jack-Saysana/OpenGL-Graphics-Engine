@@ -1,7 +1,7 @@
 #ifndef __SIMULATION_STR_H__
 #define __SIMULATION_STR_H__
 
-#include <oct_tree_str.h>
+#include <structs/oct_tree_str.h>
 
 typedef struct simulation_collider {
   ENTITY *entity;

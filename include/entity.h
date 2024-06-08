@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <cglm/quat.h>
 #include <cglm/affine.h>
-#include <entity_str.h>
+#include <structs/entity_str.h>
 
 ENTITY *init_entity(MODEL *model);
 void draw_entity(unsigned int shader, ENTITY *entity);

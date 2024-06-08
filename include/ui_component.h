@@ -4,9 +4,9 @@
 #include <cglm/cglm.h>
 #include <globals.h>
 #include <const.h>
-#include <entity_str.h>
-#include <ui_component_str.h>
-#include <font_str.h>
+#include <structs/entity_str.h>
+#include <structs/ui_component_str.h>
+#include <structs/font_str.h>
 
 #define STK_SIZE_INIT (10)
 

@@ -5,8 +5,8 @@
 #include <float.h>
 #include <cglm/affine.h>
 #include <const.h>
-#include <entity_str.h>
-#include <oct_tree_str.h>
+#include <structs/entity_str.h>
+#include <structs/oct_tree_str.h>
 
 static vec3 X_DIR = { 1.0, 0.0, 0.0 };
 static vec3 NEG_X_DIR = { -1.0, 0.0, 0.0 };

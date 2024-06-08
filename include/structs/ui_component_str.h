@@ -2,7 +2,7 @@
 #define __UI_COMPONENT_STR_H__
 
 #include <cglm/vec2.h>
-#include <font_str.h>
+#include <structs/font_str.h>
 
 /*
                                UI_COMPONENT_STR.h

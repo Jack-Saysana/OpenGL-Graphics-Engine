@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <entity_str.h>
+#include <structs/entity_str.h>
 
 typedef enum {
   NO_OP = -2,

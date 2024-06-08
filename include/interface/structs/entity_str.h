@@ -1,9 +1,9 @@
-#ifndef __ENTITY_STR_H__
-#define __ENTITY_STR_H__
+#ifndef __ENGINE_ENTITY_STR_H__
+#define __ENGINE_ENTITY_STR_H__
 
-#include <spatial_algebra.h>
 #include <cglm/mat4.h>
-#include <const.h>
+#include "../math/spatial_algebra.h"
+#include "../const.h"
 
 typedef enum chain_type {
   LOCATION = 0,
@@ -70,22 +70,22 @@ typedef struct bone {
 
 typedef struct model {
   ANIMATION *animations;
-  /* Buffer containing each keyframe "chain" that corresponds to a bone and
-     type of animation (Scale, rotation, translation) */
+  // Buffer containing each keyframe "chain" that corresponds to a bone and
+  // type of animation (Scale, rotation, translation)
   K_CHAIN *k_chain_block;
-  /* Buffer containing the keyframes that make-up keyframe chains */
+  // Buffer containing the keyframes that make-up keyframe chains
   KEYFRAME *keyframe_block;
-  /* Buffer containing "sleds" which define, for each frame of animation, the
-     index of the keyframe that corresponds to the previous keyframe. Basically
-     a resource for easy keyframe interpolation */
+  // Buffer containing "sleds" which define, for each frame of animation, the
+  // index of the keyframe that corresponds to the previous keyframe. Basically
+  // a resource for easy keyframe interpolation
   int *sled_block;
   BONE *bones;
   COLLIDER *colliders;
-  /* Each element's index corresponds to the collider of the same index.
-     Element value corresponds to root bone represneted by collider */
+  // Each element's index corresponds to the collider of the same index.
+  // Element value corresponds to root bone represneted by collider
   int *collider_bone_links;
-  /* Each element's index corresponds to the bone of the same index.
-     Element value corresponds to collider represneted by bone */
+  // Each element's index corresponds to the bone of the same index.
+  // Element value corresponds to collider represneted by bone
   int *bone_collider_links;
   size_t num_animations;
   size_t num_bones;

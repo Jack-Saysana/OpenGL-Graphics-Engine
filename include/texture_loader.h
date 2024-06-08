@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-#include <model_data_str.h>
+#include <structs/model_data_str.h>
 
 // ============================= LOCAL CONSTANTS =============================
 

@@ -1,8 +1,8 @@
 #ifndef __ENGINE_UI_COMPONENT_H__
 #define __ENGINE_UI_COMPONENT_H__
 
-#include "./ui_component_str.h"
-#include "./font_str.h"
+#include "./structs/ui_component_str.h"
+#include "./structs/font_str.h"
 
 int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs,
             char *text_fs);
