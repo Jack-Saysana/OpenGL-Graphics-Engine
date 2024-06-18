@@ -47,30 +47,6 @@ void giv_clean_row(amat a, amat dest, int i) {
   - amat dest: Preallocated 2x2 matrix to store calculated givens matrix
 */
 void calc_givens(float f, float g, amat dest) {
-  /*
-  float t, r, c, s;
-  if (g == 0.0) {
-    if (f == 0.0) {
-      c = 1.0;
-    } else {
-      c = f/fabs(f);
-    }
-    s = 0.0;
-  } else if (f == 0.0) {
-    c = 0.0;
-    s = -g/fabs(g);
-  } else if (fabs(f) > fabs(g)) {
-    t = g / f;
-    r = (f/fabs(f)) * sqrt(1.0 + (t*t));
-    c = 1.0 / r;
-    s = -c * t;
-  } else {
-    t = f / g;
-    r = (g/fabs(g)) * sqrt(1.0 + (t*t));
-    s = -1.0 / r;
-    c = t / r;
-  }
-  */
   float c, s, t;
   if (g == 0.0) {
     c = 1.0;

@@ -55,6 +55,6 @@
 
 // Math Constants
 #define MAX_SVD_ITERATIONS (30)
-#define SVD_SUPER_DIAG_THRESHOLD (0.00001)
+#define ZERO_THRESHOLD (0.00001)
 
 #endif

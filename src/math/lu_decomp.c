@@ -90,7 +90,7 @@ void partial_pivot(amat a, amat b) {
         implicit_scales[i] = cur;
       }
     }
-    if (implicit_scales[i] == 0.0) {
+    if (fabs(implicit_scales[i]) <= ZERO_THRESHOLD) {
       free(implicit_scales);
       return;
     }

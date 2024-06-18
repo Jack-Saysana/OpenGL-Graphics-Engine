@@ -35,14 +35,14 @@ void svd(amat a, amat U, amat S, amat V) {
   amat giv = init_amat(NULL, 2, 2);
   for (int k = 0; g > 0 && k < MAX_SVD_ITERATIONS * S.n; k++) {
     // Only decompose sub-matrices with non-zero super-diagonal values
-    if (fabs(AMAT_GET(S, g, g-1)) <= SVD_SUPER_DIAG_THRESHOLD) {
+    if (fabs(AMAT_GET(S, g, g-1)) <= ZERO_THRESHOLD) {
       g--;
       continue;
     }
 
     f = g - 1;
     while (f > 0) {
-      if (fabs(AMAT_GET(S, f, f-1)) <= SVD_SUPER_DIAG_THRESHOLD) {
+      if (fabs(AMAT_GET(S, f, f-1)) <= ZERO_THRESHOLD) {
         break;
       }
       f--;
@@ -73,7 +73,7 @@ void svd(amat a, amat U, amat S, amat V) {
 
     // Chase zeros out of diagonal
     for (int j = f; j < g; j++) {
-      if (fabs(AMAT_GET(S, j, j)) > SVD_SUPER_DIAG_THRESHOLD) {
+      if (fabs(AMAT_GET(S, j, j)) > ZERO_THRESHOLD) {
         continue;
       }
       for (int i = j; i < g; i++) {

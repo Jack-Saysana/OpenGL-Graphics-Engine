@@ -30,7 +30,7 @@ void hh_clean_col(amat a, amat dest, int i) {
   for (int j = 0; j < u.m; j++) {
     mag += (u.data[j] * u.data[j]);
   }
-  if (mag == 0.0) {
+  if (fabs(mag) <= ZERO_THRESHOLD) {
     free_amat(u);
     amat_identity(dest);
     return;
@@ -81,7 +81,7 @@ void hh_clean_row(amat a, amat dest, int i) {
   for (int j = 0; j < v.m; j++) {
     mag += (v.data[j] * v.data[j]);
   }
-  if (mag == 0.0) {
+  if (fabs(mag) <= ZERO_THRESHOLD) {
     free_amat(v);
     amat_identity(dest);
     return;
