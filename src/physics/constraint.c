@@ -11,6 +11,9 @@ void apply_constraints(ENTITY *entity, J_CONS *constraints,
   size_t col_idx = 0;
 
   // Get default acceleration and desired net effect for each point of interest
+  for (size_t i = 0; i < entity->model->num_colliders; i++) {
+    glm_vec3_zero(entity->np_data[i].e_force);
+  }
   featherstone_abm(entity);
   for (size_t i = 0; i < num_constr; i++) {
     calc_world_accel(entity, constraints[i].pt, constraints[i].col_idx,
