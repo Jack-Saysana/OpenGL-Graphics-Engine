@@ -15,5 +15,6 @@
 #include "./framebuffer.h"
 #include "./math/amat.h"
 #include "./math/solver.h"
+#include "./structs/physics/constraint_str.h"
 
 #endif

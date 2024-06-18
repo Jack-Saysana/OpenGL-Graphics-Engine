@@ -59,6 +59,7 @@ $(BUILD_DIR)/%.l: %.c
 ./bin/src:
 	mkdir -p ./bin/src
 	mkdir -p ./bin/src/math
+	mkdir -p ./bin/src/physics
 
 ./bin/include:
 	mkdir ./bin/include

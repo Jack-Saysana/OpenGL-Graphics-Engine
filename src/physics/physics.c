@@ -1,4 +1,4 @@
-#include <physics.h>
+#include <physics/physics.h>
 
 /*
  * Implementation of the Gilbert-Johnson-Keerthi (GJK) algorithm for

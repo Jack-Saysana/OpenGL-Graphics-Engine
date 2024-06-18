@@ -6,7 +6,7 @@
   Arguments:
   - amat a: Matrix to "clean"
   - amat dest: Matrix to store the householder matrix
-  - amat i: Index of column in a that dest will "clean"
+  - int i: Index of column in a that dest will "clean"
 */
 void hh_clean_col(amat a, amat dest, int i) {
   amat u = init_amat(NULL, a.m, 1);
@@ -30,6 +30,11 @@ void hh_clean_col(amat a, amat dest, int i) {
   for (int j = 0; j < u.m; j++) {
     mag += (u.data[j] * u.data[j]);
   }
+  if (mag == 0.0) {
+    free_amat(u);
+    amat_identity(dest);
+    return;
+  }
   mag = 2.0 / mag;
 
   // (2/|u|^2) * u*u^T
@@ -52,7 +57,7 @@ void hh_clean_col(amat a, amat dest, int i) {
   Arguments:
   - amat a: Matrix to "clean"
   - amat dest: Matrix to store the householder matrix
-  - amat i: Index of row in a that dest will "clean"
+  - int i: Index of row in a that dest will "clean"
 */
 void hh_clean_row(amat a, amat dest, int i) {
   amat v = init_amat(NULL, a.n, 1);
@@ -76,6 +81,11 @@ void hh_clean_row(amat a, amat dest, int i) {
   for (int j = 0; j < v.m; j++) {
     mag += (v.data[j] * v.data[j]);
   }
+  if (mag == 0.0) {
+    free_amat(v);
+    amat_identity(dest);
+    return;
+  }
   mag = 2.0 / mag;
 
   // (2/|v|^2) * v*v^T
@@ -83,7 +93,7 @@ void hh_clean_row(amat a, amat dest, int i) {
   amat_scale(dest, dest, mag);
 
   // I - ((2/|v|^2) * v*v^T)
-  amat identity = init_amat(NULL, a.m, a.m);
+  amat identity = init_amat(NULL, a.n, a.n);
   amat_identity(identity);
   amat_sub(identity, dest, dest);
 

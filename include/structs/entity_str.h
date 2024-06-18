@@ -130,11 +130,14 @@ typedef struct p_data {
   vec3 from_parent_lin;
   // Vector pointing from link's joint to link's COM in bone space
   vec3 joint_to_com;
-  // TEMP
+// TODO DELETE
   vec3 velocity;
   vec3 ang_velocity;
-  // END TEMP
+// END DELETE
+  // External forces exerted on the joint
+  vec3 e_force;
   float inv_mass;
+  // TODO Figure out what this actually does
   // Magnitude of the spatial force acting on the links joint
   float Q;
   // Shortcut for dot(s'I_hat_A, s_hat)
@@ -160,6 +163,7 @@ typedef struct entity {
   P_DATA *np_data;
   // Model matrix for each bone, including those inherited by parent bones
   mat4 *final_b_mats;
+// TODO DELETE
   mat4 inv_inertia;
   // Broad entity-based transformations
   versor rotation;
@@ -169,6 +173,7 @@ typedef struct entity {
   vec3 velocity;
   vec3 ang_velocity;
   float inv_mass;
+// END DELETE
   // Physics system status
   // Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC]
   int type;

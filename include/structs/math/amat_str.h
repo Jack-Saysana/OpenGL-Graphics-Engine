@@ -44,6 +44,7 @@ int amat_pick(amat a, amat dest, int m, int n);
 int amat_ins(amat a, amat dest, int m, int n);
 // Print matrix
 void print_amat(amat a);
+void print_amat2(amat a);
 
 // ================================== MACROS =================================
 

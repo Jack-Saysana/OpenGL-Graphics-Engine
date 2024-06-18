@@ -425,3 +425,23 @@ void print_amat(amat a) {
     fprintf(stderr, "\n");
   }
 }
+
+// Print a formatted amat that can be easily copy-pasted into wolfram-alpha
+void print_amat2(amat a) {
+  fprintf(stderr,"{");
+  for (int i = 0; i < a.m; i++) {
+    fprintf(stderr,"{");
+    for (int j = 0; j < a.n; j++) {
+      fprintf(stderr, "%.4f", AMAT_GET(a, j, i));
+      if (j < a.n-1) {
+        fprintf(stderr,",");
+      }
+    }
+    if (i < a.m-1) {
+      fprintf(stderr, "},\n");
+    } else {
+      fprintf(stderr, "}");
+    }
+  }
+  fprintf(stderr,"}\n");
+}

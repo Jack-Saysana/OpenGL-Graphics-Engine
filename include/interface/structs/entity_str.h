@@ -147,6 +147,9 @@ typedef struct p_data {
   vec3 ang_velocity;
   // END TEMP
 
+  // External forces exerted on the joint
+  vec3 e_force;
+
   float inv_mass;
 
   // Magnitude of the spatial force acting on the links joint

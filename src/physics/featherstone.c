@@ -1,4 +1,4 @@
-#include <featherstone.h>
+#include <physics/featherstone.h>
 
 int featherstone_abm(ENTITY *body) {
   size_t num_links = body->model->num_colliders;
@@ -158,12 +158,18 @@ int featherstone_abm(ENTITY *body) {
     mat6_compose(MAT3_ZERO, mass_mat, inertia_tensor, MAT3_ZERO,
                  p_data[cur_col].I_hat);
 
+    // TODO Gravity should be affected by simulation forces, not hardcoded
     // Convert gravity to bone space
     vec3 gravity = GLM_VEC3_ZERO_INIT;
     glm_mat3_mulv(world_to_bone, G_VEC, gravity);
 
+    // Convert external force to bone space
+    vec3 e_force = GLM_VEC3_ZERO_INIT;
+    glm_mat3_mulv(world_to_bone, p_data[cur_col].e_force, e_force);
+
     vec3 za_linear = GLM_VEC3_ZERO_INIT;
     glm_vec3_scale(gravity, -mass, za_linear);
+    glm_vec3_sub(za_linear, e_force, za_linear);
 
     float *ang_vel = (float *) p_data[cur_col].v_hat;
     vec3 za_ang = GLM_VEC3_ZERO_INIT;

@@ -38,6 +38,7 @@ ENTITY *init_entity(MODEL *model) {
       glm_vec3_zero(ent->np_data[i].dof);
       glm_vec3_zero(ent->np_data[i].from_parent_lin);
       glm_vec3_zero(ent->np_data[i].joint_to_com);
+      glm_vec3_zero(ent->np_data[i].e_force);
       ent->np_data[i].inv_mass = 0.0;
       ent->np_data[i].Q = 0.0;
       ent->np_data[i].s_inner_I_dot_s = 0.0;

@@ -12,12 +12,26 @@ void solve_system(amat a, amat b, amat x) {
   if (!singular) {
     return;
   }
+  amat A;
+  amat B;
+  amat X;
+  if (a.m < a.n) {
+    A = init_amat(NULL, a.n, a.n);
+    B = init_amat(NULL, a.n, 1);
+    X = init_amat(NULL, a.n, 1);
+  } else {
+    A = init_amat(NULL, a.m, a.n);
+    B = init_amat(NULL, b.m, b.n);
+    X = init_amat(NULL, x.m, x.n);
+  }
+  amat_ins(a, A, 0, 0);
+  amat_ins(b, B, 0, 0);
 
-  amat U = init_amat(NULL, a.m, a.m);
-  amat S = init_amat(NULL, a.m, a.n);
-  amat S_T = init_amat(NULL, a.n, a.m);
-  amat V = init_amat(NULL, a.n, a.n);
-  svd(a, U, S, V);
+  amat U = init_amat(NULL, A.m, A.m);
+  amat S = init_amat(NULL, A.m, A.n);
+  amat S_T = init_amat(NULL, A.n, A.m);
+  amat V = init_amat(NULL, A.n, A.n);
+  svd(A, U, S, V);
   amat_transpose(S, S_T);
   amat_transpose(U, U);
 
@@ -26,12 +40,20 @@ void solve_system(amat a, amat b, amat x) {
     cur = AMAT_GET(S_T, i, i);
     if (cur) {
       AMAT_GET(S_T, i, i) = 1.0 / cur;
+    } else {
+      cur = 0.0;
     }
   }
 
   amat_mul(V, S_T, S_T);
   amat_mul(S_T, U, S_T);
-  amat_mul(S_T, b, x);
+  amat_mul(S_T, B, X);
+  amat_pick(X, x, 0, 0);
+
+  free_amat(U);
+  free_amat(S);
+  free_amat(S_T);
+  free_amat(V);
 }
 
 /*
