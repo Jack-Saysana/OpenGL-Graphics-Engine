@@ -862,6 +862,8 @@ void free_faces(F_HEAP *heap) {
 // Perform actual physical calculations upon collision
 void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
                      vec3 p_loc, vec3 gravity) {
+  // TODO Solve impulse collision then apply constraint
+  /*
   if (a_args->inv_mass == 0.0 && b_args->inv_mass == 0.0) {
     // Halt all movement if both colliders are of infinite mass
     glm_vec3_zero((*a_args->velocity));
@@ -1024,7 +1026,6 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   vec3_remove_noise(a_vel, 0.0001);
   glm_vec3_copy(a_vel, *(a_args->velocity));
 #ifdef FRICTION
-  /*
   if ((a_args->type & T_DRIVING) == 0) {
     vec3 delta_ang_va_f = GLM_VEC3_ZERO_INIT;
     glm_vec3_cross(a_rel, a_fric, delta_ang_va_f);
@@ -1032,7 +1033,6 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
     glm_vec3_scale(delta_ang_va_f, DELTA_TIME, delta_ang_va_f);
     glm_vec3_add(delta_ang_va, delta_ang_va_f, delta_ang_va);
   }
-  */
 #endif
 
   // Dampen and update ang velocity
@@ -1054,7 +1054,6 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_copy(b_vel, *(b_args->velocity));
 
 #ifdef FRICTION
-  /*
   if ((b_args->type & T_DRIVING) == 0) {
     vec3 delta_ang_vb_f = GLM_VEC3_ZERO_INIT;
     glm_vec3_cross(b_rel, b_fric, delta_ang_vb_f);
@@ -1062,7 +1061,6 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
     glm_vec3_scale(delta_ang_vb_f, DELTA_TIME, delta_ang_vb_f);
     glm_vec3_add(delta_ang_vb, delta_ang_vb_f, delta_ang_vb);
   }
-  */
 #endif
 
   // Dampen and update ang velocity
@@ -1070,6 +1068,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   glm_vec3_sub(b_ang_vel, delta_ang_vb, b_ang_vel);
   vec3_remove_noise(b_ang_vel, 0.0001);
   glm_vec3_copy(b_ang_vel, *(b_args->ang_velocity));
+  */
 }
 
 //void calc_inertia_tensor(ENTITY *ent, size_t col_offset,

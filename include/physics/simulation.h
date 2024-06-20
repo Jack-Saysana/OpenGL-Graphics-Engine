@@ -31,9 +31,6 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COLLISION **col,
                             size_t *col_buf_len, size_t *col_buf_size,
                             int get_col_info, pthread_mutex_t *col_lock);
-void get_collider_velocity(ENTITY *entity, size_t collider_offset, vec3 vel,
-                           vec3 ang_vel);
-int is_moving(vec3 vel, vec3 ang_vel);
 void global_collider(ENTITY *, size_t, COLLIDER *dest);
 
 int ledger_init(SIM_COLLIDER **, size_t **, size_t *, size_t *, size_t *);
@@ -74,3 +71,8 @@ int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 void get_model_mat(ENTITY *entity, mat4 model);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 vec, float threshold);
+float remove_noise(float val, float threshold);
+
+// ================================= MACROS ==================================
+
+#define is_moving(e,c) (fabs((e)->np_data[(c)].vel_angle) > ZERO_THRESHOLD)

@@ -18,11 +18,6 @@ ENTITY *init_entity(MODEL *model) {
     }
 
     for (size_t i = 0; i < model->num_colliders; i++) {
-      // TEMP
-      glm_vec3_zero(ent->np_data[i].velocity);
-      glm_vec3_zero(ent->np_data[i].ang_velocity);
-      // END TEMP
-
       mat6_zero(ent->np_data[i].I_hat);
       mat6_zero(ent->np_data[i].I_hat_A);
       mat6_zero(ent->np_data[i].ST_to_parent);
@@ -35,12 +30,15 @@ ENTITY *init_entity(MODEL *model) {
       vec6_zero(ent->np_data[i].a_hat);
       vec6_zero(ent->np_data[i].v_hat);
       vec6_zero(ent->np_data[i].s_inner_I);
+      glm_vec3_zero(ent->np_data[i].a);
+      glm_vec3_zero(ent->np_data[i].ang_a);
+      glm_vec3_zero(ent->np_data[i].v);
+      glm_vec3_zero(ent->np_data[i].ang_v);
       glm_vec3_zero(ent->np_data[i].dof);
       glm_vec3_zero(ent->np_data[i].from_parent_lin);
       glm_vec3_zero(ent->np_data[i].joint_to_com);
       glm_vec3_zero(ent->np_data[i].e_force);
       ent->np_data[i].inv_mass = 0.0;
-      ent->np_data[i].Q = 0.0;
       ent->np_data[i].s_inner_I_dot_s = 0.0;
       ent->np_data[i].SZI = 0.0;
       ent->np_data[i].accel_angle = 0.0;
@@ -252,6 +250,7 @@ void free_entity(ENTITY *entity) {
   free(entity);
 }
 
+// TODO Deprecate
 void get_model_mat(ENTITY *entity, mat4 model) {
   glm_mat4_identity(model);
   glm_translate(model, entity->translation);

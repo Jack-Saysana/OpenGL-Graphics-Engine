@@ -85,10 +85,7 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter) {
       }
 
       // Check if collider is currently moving
-      vec3 vel = GLM_VEC3_ZERO_INIT;
-      vec3 ang_vel = GLM_VEC3_ZERO_INIT;
-      get_collider_velocity(entity, i, vel, ang_vel);
-      if (is_moving(vel, ang_vel)) {
+      if (is_moving(entity, i)) {
         status = ledger_add(&sim->moving_ledger, &sim->m_list,
                             &sim->num_moving, &sim->m_ledger_size,
                             &sim->m_list_size, entity, i);
@@ -243,16 +240,12 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   ENTITY *cur_ent = NULL;
   size_t collider_offset = 0;
 
-  vec3 vel = GLM_VEC3_ZERO_INIT;
-  vec3 ang_vel = GLM_VEC3_ZERO_INIT;
-
   // Update placement of neccesarry driving entities
   for (size_t i = 0; i < sim->num_driving; i++) {
     cur_ent = sim->driving_ledger[sim->d_list[i]].entity;
     collider_offset = sim->driving_ledger[sim->d_list[i]].collider_offset;
 
-    get_collider_velocity(cur_ent, collider_offset, vel, ang_vel);
-    if (is_moving(vel, ang_vel)) {
+    if (is_moving(cur_ent, collider_offset)) {
       status = ledger_add(&sim->moving_ledger, &sim->m_list,
                           &sim->num_moving, &sim->m_ledger_size,
                           &sim->m_list_size, cur_ent, collider_offset);
@@ -370,29 +363,12 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
     glm_vec3_copy(col.a_world_col.data.center, a_args.center_of_mass);
   }
   a_args.type = col.a_ent->type;
-
-  // Determine appropriate collision args based on if entity is a ragdoll
   int bone = col.a_ent->model->collider_bone_links[col.a_offset];
-  if (col.a_world_col.category == DEFAULT || bone == -1) {
-    glm_vec3_sub(col.a_ent->translation, col.col_dir, col.a_ent->translation);
-
-    a_args.velocity = &(col.a_ent->velocity);
-    a_args.ang_velocity = &(col.a_ent->ang_velocity);
-    glm_quat_copy(col.a_ent->rotation, a_args.rotation);
-    a_args.inv_mass = col.a_ent->inv_mass;
-  } else {
-    vec3 correction = GLM_VEC3_ZERO_INIT;
-    glm_vec3_negate_to(col.col_dir, correction);
-    glm_translate(col.a_ent->bone_mats[bone][LOCATION], correction);
-
-    a_args.velocity = &(col.a_ent->np_data[col.a_offset].velocity);
-    a_args.ang_velocity = &(col.a_ent->np_data[col.a_offset].ang_velocity);
-    glm_mat4_quat(col.a_ent->bone_mats[bone][ROTATION], a_args.rotation);
-    a_args.inv_mass = col.a_ent->np_data[col.a_offset].inv_mass;
-  }
+  a_args.velocity = &(col.a_ent->np_data[col.a_offset].v);
+  a_args.ang_velocity = &(col.a_ent->np_data[col.a_offset].ang_v);
+  glm_mat4_quat(col.a_ent->bone_mats[bone][ROTATION], a_args.rotation);
+  a_args.inv_mass = col.a_ent->np_data[col.a_offset].inv_mass;
   if (a_args.inv_mass) {
-    //calc_inertia_tensor(col.a_ent, col.a_offset, &col.a_world_col,
-    //                    a_args.inv_mass, a_args.inv_inertia);
     calc_inertia_tensor(col.a_ent, col.a_offset, a_args.inv_mass,
                         a_args.inv_inertia);
     glm_mat4_inv(a_args.inv_inertia, a_args.inv_inertia);
@@ -408,22 +384,12 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
     glm_vec3_copy(col.b_world_col.data.center, b_args.center_of_mass);
   }
   b_args.type = col.b_ent->type;
-  // Determine appropriate collision args based on if entity is a ragdoll
   bone = col.b_ent->model->collider_bone_links[col.b_offset];
-  if (col.b_world_col.category == DEFAULT || bone == -1) {
-    b_args.velocity = &(col.b_ent->velocity);
-    b_args.ang_velocity = &(col.b_ent->ang_velocity);
-    glm_quat_copy(col.b_ent->rotation, b_args.rotation);
-    b_args.inv_mass = col.b_ent->inv_mass;
-  } else {
-    b_args.velocity = &(col.b_ent->np_data[col.b_offset].velocity);
-    b_args.ang_velocity = &(col.b_ent->np_data[col.b_offset].ang_velocity);
-    glm_mat4_quat(col.b_ent->bone_mats[bone][ROTATION], b_args.rotation);
-    b_args.inv_mass = col.b_ent->np_data[col.b_offset].inv_mass;
-  }
+  b_args.velocity = &(col.b_ent->np_data[col.b_offset].v);
+  b_args.ang_velocity = &(col.b_ent->np_data[col.b_offset].ang_v);
+  glm_mat4_quat(col.b_ent->bone_mats[bone][ROTATION], b_args.rotation);
+  b_args.inv_mass = col.b_ent->np_data[col.b_offset].inv_mass;
   if (b_args.inv_mass) {
-    //calc_inertia_tensor(col.b_ent, col.b_offset, &col.b_world_col,
-    //                    b_args.inv_mass, b_args.inv_inertia);
     calc_inertia_tensor(col.b_ent, col.b_offset, b_args.inv_mass,
                         b_args.inv_inertia);
     glm_mat4_inv(b_args.inv_inertia, b_args.inv_inertia);
@@ -436,11 +402,7 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
 
 // Manually refresh the status of the collider in the simulation
 void refresh_collider(SIMULATION *sim, ENTITY *ent, size_t offset) {
-  vec3 vel = GLM_VEC3_ZERO_INIT;
-  vec3 ang_vel = GLM_VEC3_ZERO_INIT;
-
-  get_collider_velocity(ent, offset, vel, ang_vel);
-  if (is_moving(vel, ang_vel)) {
+  if (is_moving(ent, offset)) {
     ledger_add(&sim->moving_ledger, &sim->m_list, &sim->num_moving,
                &sim->m_ledger_size, &sim->m_list_size, ent, offset);
   } else {
@@ -455,16 +417,13 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
   COLLIDER *raw_col = ent->model->colliders + collider_offset;
   mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
   mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(ent, entity_to_world);
   int bone = ent->model->collider_bone_links[collider_offset];
-  if (bone != -1) {
-    glm_mat4_ins3(ent->model->bones[bone].coordinate_matrix, bone_to_entity);
-    if (raw_col->type == POLY) {
-      glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
-    } else {
-      glm_vec4(raw_col->data.center, 1.0, bone_to_entity[3]);
-    }
-    glm_mat4_mul(entity_to_world, ent->final_b_mats[bone], entity_to_world);
+  glm_mat4_copy(ent->final_b_mats[bone], entity_to_world);
+  glm_mat4_ins3(ent->model->bones[bone].coordinate_matrix, bone_to_entity);
+  if (raw_col->type == POLY) {
+    glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
+  } else {
+    glm_vec4(raw_col->data.center, 1.0, bone_to_entity[3]);
   }
 
   dest->type = raw_col->type;
@@ -493,82 +452,90 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
 
 void integrate_collider(ENTITY *entity, size_t offset, vec3 force) {
   int bone = entity->model->collider_bone_links[offset];
-  vec3 delta_d = GLM_VEC3_ZERO_INIT;
-  versor delta_rot = GLM_QUAT_IDENTITY_INIT;
 
-  vec3 force_vec = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(force, DELTA_TIME, force_vec);
+  // Integrate acceleration
+  float delta = entity->np_data[offset].accel_angle * DELTA_TIME;
+  entity->np_data[offset].vel_angle *= LINEAR_DAMP_FACTOR;
+  entity->np_data[offset].vel_angle += delta;
+  remove_noise(entity->np_data[offset].vel_angle, ZERO_THRESHOLD);
 
-  // Update "Broad" physics data if entity is driving or rigid body
-  // Update "Narrow" physics data if entity is softbody/ragdoll
-  if (entity->model->colliders[offset].category == DEFAULT || bone == -1) {
-    // Update linear velocity and position of object
-    glm_vec3_scale(entity->velocity, LINEAR_DAMP_FACTOR, entity->velocity);
-    glm_vec3_add(entity->velocity, force_vec, entity->velocity);
-    glm_vec3_scale(entity->velocity, DELTA_TIME, delta_d);
-    glm_vec3_add(delta_d, entity->translation, entity->translation);
+  vec3 delta_vec3 = GLM_VEC3_ZERO_INIT;
+  vec3 vel = GLM_VEC3_ZERO_INIT;
+  vec3 ang_vel = GLM_VEC3_ZERO_INIT;
+  glm_vec3_scale(entity->np_data[offset].a, DELTA_TIME, delta_vec3);
+  glm_vec3_scale(entity->np_data[offset].v, LINEAR_DAMP_FACTOR, vel);
+  glm_vec3_add(vel, delta_vec3, vel);
+  vec3_remove_noise(vel, ZERO_THRESHOLD);
+  glm_vec3_scale(entity->np_data[offset].ang_a, DELTA_TIME, delta_vec3);
+  glm_vec3_scale(entity->np_data[offset].ang_v, ANGULAR_DAMP_FACTOR, ang_vel);
+  glm_vec3_add(ang_vel, delta_vec3, ang_vel);
 
-    // Update angular velocity and rotation of object
-    glm_vec3_scale(entity->ang_velocity, ANGULAR_DAMP_FACTOR,
-                   entity->ang_velocity);
-    versor ang_vel = { entity->ang_velocity[0],
-                       entity->ang_velocity[1],
-                       entity->ang_velocity[2], 0.0 };
-    // Applying ang velocity to quaternion:
-    // q_new = q_old + 0.5 * ang_vel * q_old
-    glm_quat_mul(ang_vel, entity->rotation, delta_rot);
-    glm_vec4_scale(delta_rot, DELTA_TIME * 0.5, delta_rot);
-    glm_quat_add(delta_rot, entity->rotation, entity->rotation);
-    glm_quat_normalize(entity->rotation);
+  // Integrate velocity
+  delta = entity->np_data[offset].vel_angle * DELTA_TIME;
+  entity->np_data[offset].joint_angle += delta;
+
+  glm_vec3_scale(vel, DELTA_TIME, delta_vec3);
+  glm_translate(entity->bone_mats[bone][LOCATION], delta_vec3);
+
+  glm_vec3_scale(ang_vel, DELTA_TIME, delta_vec3);
+  versor rot_quat = GLM_QUAT_IDENTITY_INIT;
+  glm_quatv(rot_quat, glm_vec3_norm(delta_vec3), delta_vec3);
+  glm_quat_normalize(rot_quat);
+  versor temp_quat = GLM_QUAT_IDENTITY_INIT;
+  glm_mat4_quat(entity->bone_mats[bone][ROTATION], temp_quat);
+  glm_quat_normalize(temp_quat);
+  glm_quat_mul(rot_quat, temp_quat, temp_quat);
+  glm_quat_normalize(temp_quat);
+  glm_quat_mat4(temp_quat, entity->bone_mats[bone][ROTATION]);
+
+  // Combine rotation, location and scale into final bone matrix
+  vec3 temp = GLM_VEC3_ZERO_INIT;
+  mat4 from_center = GLM_MAT4_IDENTITY_INIT;
+  mat4 to_center = GLM_MAT4_IDENTITY_INIT;
+  if (entity->model->colliders[offset].type == SPHERE) {
+    glm_vec3_copy(entity->model->colliders[offset].data.center, temp);
   } else {
-    glm_vec3_scale(entity->np_data[bone].velocity, LINEAR_DAMP_FACTOR,
-                   entity->np_data[bone].velocity);
-    glm_vec3_add(entity->np_data[bone].velocity, force_vec,
-                 entity->np_data[bone].velocity);
-    glm_vec3_scale(entity->np_data[offset].velocity, DELTA_TIME, delta_d);
-    glm_translate(entity->bone_mats[bone][LOCATION], delta_d);
+    glm_vec3_copy(entity->model->colliders[offset].data.center_of_mass,
+                  temp);
+  }
+  glm_translate(to_center, temp);
+  glm_vec3_negate(temp);
+  glm_translate(from_center, temp);
 
-    glm_vec3_scale(entity->np_data[offset].ang_velocity, ANGULAR_DAMP_FACTOR,
-                   entity->np_data[offset].ang_velocity);
-    versor ang_vel = { entity->np_data[offset].ang_velocity[0],
-                       entity->np_data[offset].ang_velocity[1],
-                       entity->np_data[offset].ang_velocity[2], 0.0 };
-    versor temp_quat = GLM_QUAT_IDENTITY_INIT;
-    glm_mat4_quat(entity->bone_mats[bone][ROTATION], temp_quat);
-    glm_quat_mul(ang_vel, temp_quat, delta_rot);
-    glm_vec4_scale(delta_rot, DELTA_TIME * 0.5, delta_rot);
-    glm_quat_add(delta_rot, temp_quat, temp_quat);
-    glm_quat_normalize(temp_quat);
-    glm_quat_mat4(temp_quat, entity->bone_mats[bone][ROTATION]);
+  glm_mat4_identity(entity->final_b_mats[bone]);
+  glm_mat4_mul(from_center, entity->final_b_mats[bone],
+               entity->final_b_mats[bone]);
+  glm_mat4_mul(entity->bone_mats[bone][SCALE],
+               entity->final_b_mats[bone],
+               entity->final_b_mats[bone]);
+  glm_mat4_mul(entity->bone_mats[bone][ROTATION],
+               entity->final_b_mats[bone],
+               entity->final_b_mats[bone]);
+  glm_mat4_mul(to_center, entity->final_b_mats[bone],
+               entity->final_b_mats[bone]);
+  glm_mat4_mul(entity->bone_mats[bone][LOCATION],
+               entity->final_b_mats[bone],
+               entity->final_b_mats[bone]);
 
-    // Combine rotation, location and scale into final bone matrix
-    mat4 model_mat = GLM_MAT4_IDENTITY_INIT;
-    get_model_mat(entity, model_mat);
+  int parent_bone = entity->model->bones[bone].parent;
+  if (parent_bone != -1) {
+    vec3 base_loc = GLM_VEC3_ZERO_INIT;
+    glm_mat4_mulv3(entity->final_b_mats[bone],
+                   entity->model->bones[bone].base, 1.0, base_loc);
 
-    vec3 temp = GLM_VEC3_ZERO_INIT;
-    mat4 from_center = GLM_MAT4_IDENTITY_INIT;
-    mat4 to_center = GLM_MAT4_IDENTITY_INIT;
-    if (entity->model->colliders[offset].type == SPHERE) {
-      glm_vec3_copy(entity->model->colliders[offset].data.center, temp);
-    } else {
-      glm_vec3_copy(entity->model->colliders[offset].data.center_of_mass,
-                    temp);
-    }
-    glm_translate(to_center, temp);
-    glm_vec3_negate(temp);
-    glm_translate(from_center, temp);
+    vec3 p_head_loc = GLM_VEC3_ZERO_INIT;
+    glm_mat4_mulv3(entity->final_b_mats[parent_bone],
+                   entity->model->bones[parent_bone].head, 1.0,
+                   p_head_loc);
 
-    glm_mat4_identity(entity->final_b_mats[bone]);
-    glm_mat4_mul(from_center, entity->final_b_mats[bone],
+    vec3 anchor = GLM_VEC3_ZERO_INIT;
+    glm_vec3_sub(p_head_loc, base_loc, anchor);
+    mat4 anchor_mat = GLM_MAT4_IDENTITY_INIT;
+    glm_translate(anchor_mat, anchor);
+    glm_mat4_mul(anchor_mat, entity->final_b_mats[bone],
                  entity->final_b_mats[bone]);
-    glm_mat4_mul(entity->bone_mats[bone][SCALE],
-                 entity->final_b_mats[bone], entity->final_b_mats[bone]);
-    glm_mat4_mul(entity->bone_mats[bone][ROTATION],
-                 entity->final_b_mats[bone], entity->final_b_mats[bone]);
-    glm_mat4_mul(to_center, entity->final_b_mats[bone],
-                 entity->final_b_mats[bone]);
-    glm_mat4_mul(entity->bone_mats[bone][LOCATION],
-                 entity->final_b_mats[bone], entity->final_b_mats[bone]);
+    glm_mat4_mul(anchor_mat, entity->bone_mats[bone][LOCATION],
+                 entity->bone_mats[bone][LOCATION]);
   }
 }
 
@@ -588,8 +555,6 @@ void *check_moving_buffer(void *args) {
   memset(&cur_col, 0, sizeof(COLLIDER));
   ENTITY *cur_ent = NULL;
   size_t collider_offset = 0;
-  vec3 vel = GLM_VEC3_ZERO_INIT;
-  vec3 ang_vel = GLM_VEC3_ZERO_INIT;
 
   for (size_t i = arg_data.start; i < arg_data.end; i++) {
     cur_ent = sim->moving_ledger[sim->m_list[i]].entity;
@@ -604,8 +569,7 @@ void *check_moving_buffer(void *args) {
       continue;
     }
 
-    get_collider_velocity(cur_ent, collider_offset, vel, ang_vel);
-    if (is_moving(vel, ang_vel)) {
+    if (is_moving(cur_ent, collider_offset)) {
       // Check collisions
       status = get_collider_collisions(sim, cur_ent, collider_offset,
                                        collisions, buf_len, buf_size,
@@ -712,24 +676,6 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
   free(col_res.list);
 
   return 0;
-}
-
-void get_collider_velocity(ENTITY *entity, size_t collider_offset,
-                           vec3 vel, vec3 ang_vel) {
-  glm_vec3_copy(entity->velocity, vel);
-  glm_vec3_copy(entity->ang_velocity, ang_vel);
-
-  COLLIDER *collider = entity->model->colliders + collider_offset;
-  int bone = entity->model->collider_bone_links[collider_offset];
-  P_DATA *phys_data = entity->np_data;
-  if (collider->category != DEFAULT && bone != -1) {
-    glm_vec3_add(phys_data[collider_offset].velocity, vel, vel);
-    glm_vec3_add(phys_data[collider_offset].ang_velocity, ang_vel, ang_vel);
-  }
-}
-
-int is_moving(vec3 vel, vec3 ang_vel) {
-  return vel[X] || vel[Y] || vel[Z] || ang_vel[X] || ang_vel[Y] || ang_vel[Z];
 }
 
 // =========================== BOOK KEEPING HELPERS ==========================

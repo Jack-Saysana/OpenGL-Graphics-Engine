@@ -13,9 +13,6 @@ int featherstone_abm(ENTITY *body) {
   int parent_bone = -1;
   int parent_col = -1;
 
-  mat4 global_ent_to_world = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(body, global_ent_to_world);
-
   // Calculate spatial velocities from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
     if (colliders[cur_col].category != HURT_BOX) {
@@ -25,72 +22,66 @@ int featherstone_abm(ENTITY *body) {
     root_bone = bone_from_col[cur_col];
 
     // Transforms entity space vectors of current link to world space
-    mat4 cur_ent_to_world = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_mul(body->final_b_mats[root_bone], global_ent_to_world,
-                 cur_ent_to_world);
+    mat4 ent_to_world = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_copy(body->final_b_mats[root_bone], ent_to_world);
 
     // Transforms bone space vectors of current link to world space
-    mat4 cur_bone_to_world = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_ins3(bones[root_bone].coordinate_matrix, cur_bone_to_world);
-    glm_mat4_mul(cur_ent_to_world, cur_bone_to_world, cur_bone_to_world);
+    mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_ins3(bones[root_bone].coordinate_matrix, bone_to_world);
+    glm_mat4_mul(ent_to_world, bone_to_world, bone_to_world);
 
     // Transforms entity space vectors of current link to bone space of current
     // link
-    mat4 cur_ent_to_bone = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_ins3(bones[root_bone].coordinate_matrix, cur_ent_to_bone);
-    glm_mat4_inv(cur_ent_to_bone, cur_ent_to_bone);
+    mat4 ent_to_bone = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_ins3(bones[root_bone].coordinate_matrix, ent_to_bone);
+    glm_mat4_transpose(ent_to_bone);
 
-    vec3 cur_coords = GLM_VEC3_ZERO_INIT;
     // Uses entity space to world space because center/center_of_mass is given
     // in entity space
     // TODO joint_to_com can be precomputed
+    vec3 cur_coords = GLM_VEC3_ZERO_INIT;
     if (colliders[cur_col].type == POLY) {
       glm_vec3_sub(colliders[cur_col].data.center_of_mass,
                    bones[root_bone].base, p_data[cur_col].joint_to_com);
-      glm_mat4_mulv3(cur_ent_to_world, colliders[cur_col].data.center_of_mass,
+      glm_mat4_mulv3(ent_to_world, colliders[cur_col].data.center_of_mass,
                      1.0, cur_coords);
     } else {
       glm_vec3_sub(colliders[cur_col].data.center, bones[root_bone].base,
                    p_data[cur_col].joint_to_com);
-      glm_mat4_mulv3(cur_ent_to_world, colliders[cur_col].data.center, 1.0,
+      glm_mat4_mulv3(ent_to_world, colliders[cur_col].data.center, 1.0,
                      cur_coords);
     }
 
-    glm_mat4_mulv3(cur_ent_to_bone, p_data[cur_col].joint_to_com, 1.0,
+    glm_mat4_mulv3(ent_to_bone, p_data[cur_col].joint_to_com, 1.0,
                    p_data[cur_col].joint_to_com);
 
     parent_bone = bones[root_bone].parent;
     parent_col = -1;
     if (parent_bone != -1) {
       // Transforms entity space vectors of parent link to world space
-      mat4 parent_ent_to_world = GLM_MAT4_IDENTITY_INIT;
-      glm_mat4_mul(body->final_b_mats[parent_bone], global_ent_to_world,
-                   parent_ent_to_world);
+      mat4 p_ent_to_world = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_copy(body->final_b_mats[parent_bone], p_ent_to_world);
 
       // Transforms bone space vectors of parent link to world space
-      mat4 parent_bone_to_world = GLM_MAT4_IDENTITY_INIT;
-      glm_mat4_ins3(bones[parent_bone].coordinate_matrix,
-                    parent_bone_to_world);
-      glm_mat4_mul(parent_ent_to_world, parent_bone_to_world,
-                   parent_bone_to_world);
+      mat4 p_bone_to_world = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_ins3(bones[parent_bone].coordinate_matrix, p_bone_to_world);
+      glm_mat4_mul(p_ent_to_world, p_bone_to_world, p_bone_to_world);
 
       parent_col = col_from_bone[parent_bone];
-      vec3 parent_coords = GLM_VEC3_ZERO_INIT;
       // Uses entity space to world space because center/center_of_mass is
       // given in entity space
+      vec3 parent_coords = GLM_VEC3_ZERO_INIT;
       if (colliders[parent_col].type == POLY) {
-        glm_mat4_mulv3(parent_ent_to_world,
+        glm_mat4_mulv3(p_ent_to_world,
                        colliders[parent_col].data.center_of_mass, 1.0,
                        parent_coords);
       } else {
-        glm_mat4_mulv3(parent_ent_to_world, colliders[parent_col].data.center,
+        glm_mat4_mulv3(p_ent_to_world, colliders[parent_col].data.center,
                        1.0, parent_coords);
       }
 
-      compute_spatial_transformations(parent_bone_to_world,
-                                      parent_coords,
-                                      cur_bone_to_world,
-                                      cur_coords,
+      compute_spatial_transformations(p_bone_to_world, parent_coords,
+                                      bone_to_world, cur_coords,
                                       p_data[cur_col].from_parent_lin,
                                       p_data[cur_col].ST_from_parent,
                                       p_data[cur_col].ST_to_parent);
@@ -106,7 +97,8 @@ int featherstone_abm(ENTITY *body) {
 #endif
     }
 
-    compute_spatial_velocity(cur_col, parent_col, colliders, p_data);
+    compute_spatial_velocity(cur_col, parent_col, bone_to_world, colliders,
+                             p_data);
 
 #ifdef DEBUG_FS
     // TESTING
@@ -245,8 +237,7 @@ int featherstone_abm(ENTITY *body) {
                                              temp_vec6);
 
       // q**
-      p_data[cur_col].accel_angle = (p_data[cur_col].Q -
-                                     p_data[cur_col].accel_angle -
+      p_data[cur_col].accel_angle = (-p_data[cur_col].accel_angle -
                                      p_data[cur_col].SZI) /
                                     p_data[cur_col].s_inner_I_dot_s;
 
@@ -273,6 +264,16 @@ int featherstone_abm(ENTITY *body) {
       // a_hat
       vec6_add(p_data[cur_col].a_hat, temp_vec6, p_data[cur_col].a_hat);
       vec6_remove_noise(p_data[cur_col].a_hat, 0.001);
+
+      // Calculate world-space acceleration
+      mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
+      glm_mat4_ins3(bones[root_bone].coordinate_matrix, bone_to_world);
+      glm_mat4_mul(body->final_b_mats[root_bone], bone_to_world,
+                   bone_to_world);
+      glm_mat4_mulv3(bone_to_world, p_data[cur_col].a_hat, 1.0,
+                     p_data[cur_col].ang_a);
+      glm_mat4_mulv3(bone_to_world, ((float *)p_data[cur_col].a_hat)+3, 1.0,
+                     p_data[cur_col].a);
 
 #ifdef DEBUG_FS
       printf("q[%d]:\n%f\n", cur_col, p_data[cur_col].accel_angles);
@@ -344,8 +345,8 @@ void compute_spatial_transformations(mat4 p_bone_to_world,
   mat6_spatial_transform(p_to_c_rot, c_to_p_mat, p_to_c_dest);
 }
 
-void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
-                              P_DATA *p_data) {
+void compute_spatial_velocity(int cur_col, int parent_col, mat4 bone_to_world,
+                              COLLIDER *colliders, P_DATA *p_data) {
   // NOTATION NOTES
   // "v" denotes velocity
   // "va" denotes angular velocity
@@ -418,6 +419,10 @@ void compute_spatial_velocity(int cur_col, int parent_col, COLLIDER *colliders,
   glm_vec3_add(temp, v, v);
 
   vec6_compose(va, v, p_data[cur_col].v_hat);
+
+  // Calculate world-space velocity
+  glm_mat4_mulv3(bone_to_world, v, 1.0, p_data[cur_col].v);
+  glm_mat4_mulv3(bone_to_world, va, 1.0, p_data[cur_col].ang_v);
 }
 
 void compute_articulated_data(int col, P_DATA *p_data, mat6 i_dest,
@@ -461,11 +466,7 @@ void compute_articulated_data(int col, P_DATA *p_data, mat6 i_dest,
   // s'(Z_hat_A + I_hat_coriolis))
   p_data[col].SZI = vec6_inner_product(p_data[col].s_hat, temp_vec6);
 
-  // TODO calculate Q_i, which will take into account external forces
-  // applied to the joint
-  p_data[col].Q = 0.0;
-  float scalar = (p_data[col].Q - p_data[col].SZI) /
-                  p_data[col].s_inner_I_dot_s;
+  float scalar = -p_data[col].SZI / p_data[col].s_inner_I_dot_s;
 
   vec6_scale(I_hat_s_hat, scalar, temp_vec6);
   vec6_add(temp_vec6, I_hat_coriolis, temp_vec6);
