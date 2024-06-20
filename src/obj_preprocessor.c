@@ -28,7 +28,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
     return -1;
   }
   b_buff_len = BUFF_STARTING_LEN;
-  b_len = 0;
+  // Account for default "root bone" which all entities have
+  b_len = 1;
+  glm_mat3_identity(bones[0].coordinate_matrix);
+  glm_vec3_copy((vec3) {0.0, 1.0, 0.0}, bones[0].head);
+  glm_vec3_zero(bones[0].base);
+  bones[0].parent = -1;
+  bones[0].num_children = 0;
 
   bone_ids = malloc(sizeof(int) * 4 * BUFF_STARTING_LEN);
   if (bone_ids == NULL) {
@@ -312,6 +318,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                     colliders[col_len].data.verts[7],
                                     colliders[col_len].data.verts[7]+1,
                                     colliders[col_len].data.verts[7]+2);
+      // Account for root bone at beginning of bone list
+      bone_links[col_len]++;
 
       vec3 *verts = colliders[col_len].data.verts;
       vec3 center_of_mass = GLM_VEC3_ZERO_INIT;
@@ -347,6 +355,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
              colliders[col_len].data.center + 1,
              colliders[col_len].data.center + 2,
              &(colliders[col_len].data.radius));
+      // Account for root bone at beginning of bone list
+      bone_links[col_len]++;
 
       col_len++;
       if (col_len == col_buff_len) {
@@ -555,7 +565,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   // Compute collider links for each bone since bones and colliders aren't
   // neccessariy 1:1
-  for (int i = 0; i < b_len; i++) {
+  for (int i = 1; i < b_len; i++) {
     collider_links[i] = -1;
     for (int j = 0; j < col_len; j++) {
       if (bone_links[j] == i) {
@@ -564,11 +574,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     }
   }
-  for (int i = 0; i < b_len; i++) {
+  // Iterate over all mapped bones, then map all un-mapped children bones
+  // to the same collider
+  for (int i = 1; i < b_len; i++) {
     if (collider_links[i] == -1) {
       continue;
     }
-    for (int j = 0; j < b_len; j++) {
+    for (int j = 1; j < b_len; j++) {
       if (bones[j].parent == i && collider_links[j] == -1) {
         collider_links[j] = collider_links[i];
       }
