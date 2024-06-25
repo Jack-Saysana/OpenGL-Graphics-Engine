@@ -11,24 +11,51 @@ typedef struct simulation_collider {
   int to_delete;
 } SIM_COLLIDER;
 
+typedef struct simulation_entity {
+  ENTITY *entity;
+  size_t index;
+  int status;
+  int to_delete;
+} SIM_ENTITY;
+
+typedef union simulation_item {
+  SIM_COLLIDER col;
+  SIM_ENTITY ent;
+} SIM_ITEM;
+
+typedef union ledger_input {
+  struct c_data{
+    ENTITY *ent;
+    size_t col;
+  } collider;
+  ENTITY *ent;
+} LEDGER_INPUT;
+
 typedef struct simulation {
   // Oct tree used for collision detection
   OCT_TREE *oct_tree;
+  // Hash-map of moving entities
+  SIM_ITEM *ment_ledger;
   // Hash-map of moving colliders
-  SIM_COLLIDER *moving_ledger;
+  SIM_ITEM *mcol_ledger;
   // Hash-map of colliders which "drive" movement
-  SIM_COLLIDER *driving_ledger;
-  // List corresponding to moving ledger used for linear traversal
-  size_t *m_list;
+  SIM_ITEM *dcol_ledger;
+  // List corresponding to moving entity ledger used for linear traversal
+  size_t *ment_list;
+  // List corresponding to moving collider ledger used for linear traversal
+  size_t *mcol_list;
   // List corresponding to driving ledger used for linear traversal
-  size_t *d_list;
+  size_t *dcol_list;
 
-  size_t num_moving;
-  size_t m_ledger_size;
-  size_t m_list_size;
-  size_t num_driving;
-  size_t d_ledger_size;
-  size_t d_list_size;
+  size_t num_ent_moving;
+  size_t ment_ledger_size;
+  size_t ment_list_size;
+  size_t num_col_moving;
+  size_t mcol_ledger_size;
+  size_t mcol_list_size;
+  size_t num_col_driving;
+  size_t dcol_ledger_size;
+  size_t dcol_list_size;
 
   // Magnitude of net acceleration caused by external forces
   vec3 forces;

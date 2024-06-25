@@ -14,6 +14,7 @@
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
 
+// Simulation constants
 #define NUM_PROPS (5)
 #define DEFAULT (0)
 #define HIT_BOX (1)
@@ -22,10 +23,6 @@
 #define T_DYNAMIC (0x1)
 #define T_DRIVING (0x2)
 #define T_IMMUTABLE (0x4)
-
-#define PHYS_TREE (0)
-#define HIT_TREE (1)
-#define EVENT_TREE (2)
 
 #define SIM_RANGE_INF (0xFFFFFFFF)
 #define ALLOW_DEFAULT    (0x1)
@@ -36,6 +33,9 @@
 #define INVALID_TEX (0xFFFFFFFF)
 
 #define GRAVITY (10.0)
+
+#define L_TYPE_ENTITY (0)
+#define L_TYPE_COLLIDER (1)
 
 // Simulation hash-map constants
 #define HASH_MAGIC_NUM (0.618033988749894)

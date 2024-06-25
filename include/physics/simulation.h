@@ -33,14 +33,13 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             int get_col_info, pthread_mutex_t *col_lock);
 void global_collider(ENTITY *, size_t, COLLIDER *dest);
 
-int ledger_init(SIM_COLLIDER **, size_t **, size_t *, size_t *, size_t *);
-int ledger_add(SIM_COLLIDER **, size_t **, size_t *, size_t *, size_t *,
-               ENTITY *, size_t);
-size_t ledger_search(SIM_COLLIDER *, size_t, ENTITY *, size_t);
-void ledger_delete(SIM_COLLIDER *, size_t *, size_t, size_t *, ENTITY *,
-                   size_t);
-void ledger_delete_direct(SIM_COLLIDER *, size_t *, size_t *, size_t);
-int resize_ledger(SIM_COLLIDER **, size_t *, size_t *, size_t);
+int ledger_init(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *);
+int ledger_add(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *,
+               LEDGER_INPUT, int);
+size_t ledger_search(SIM_ITEM *, size_t, LEDGER_INPUT, int);
+void ledger_delete(SIM_ITEM *, size_t *, size_t, size_t *, LEDGER_INPUT, int);
+void ledger_delete_direct(SIM_ITEM *, size_t *, size_t *, size_t, int);
+int resize_ledger(SIM_ITEM **, size_t *, size_t *, size_t, int);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
