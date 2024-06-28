@@ -89,15 +89,6 @@ ENTITY *init_entity(MODEL *model) {
   }
 
   ent->model = model;
-
-  glm_quat_identity(ent->rotation);
-  glm_vec3_one(ent->scale);
-  glm_vec3_zero(ent->translation);
-
-  glm_vec3_zero(ent->velocity);
-  glm_vec3_zero(ent->ang_velocity);
-  ent->inv_mass = 0.0;
-  ent->type = 0;
   ent->data = NULL;
 
   return ent;
@@ -116,11 +107,6 @@ void draw_entity(unsigned int shader, ENTITY *entity) {
                        (float *) entity->final_b_mats[i]);
   }
 
-  mat4 model = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(entity, model);
-  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                     GL_FALSE, (float *) model);
-
   draw_model(shader, entity->model);
 }
 
@@ -137,11 +123,6 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
                        (float *) entity->final_b_mats[i]);
   }
 
-  mat4 model = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(entity, model);
-  glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1,
-                     GL_FALSE, (float *) model);
-
   draw_bones(entity->model);
 }
 
@@ -151,7 +132,6 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
   }
 
   glUseProgram(shader);
-  mat4 used = GLM_MAT4_IDENTITY_INIT;
   int bone = 0;
   COL_TYPE type = POLY;
 
@@ -183,30 +163,23 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies,
                GL_STATIC_DRAW);
 
-  mat4 model = GLM_MAT4_IDENTITY_INIT;
-  get_model_mat(entity, model);
   for (int i = 0; i < entity->model->num_colliders; i++) {
     bone = entity->model->collider_bone_links[i];
     type = entity->model->colliders[i].type;
 
-    if (bone != -1) {
-      mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
-      glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
-                    bone_to_entity);
-      if (type == POLY) {
-        glm_vec3_copy(entity->model->colliders[i].data.center_of_mass,
-                      bone_to_entity[3]);
-      } else {
-        glm_vec3_copy(entity->model->colliders[i].data.center,
-                      bone_to_entity[3]);
-      }
-
-      mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
-      glm_mat4_mul(entity->final_b_mats[bone], bone_to_entity, bone_to_world);
-      glm_mat4_mul(model, bone_to_world, used);
+    mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
+                  bone_to_entity);
+    if (type == POLY) {
+      glm_vec3_copy(entity->model->colliders[i].data.center_of_mass,
+                    bone_to_entity[3]);
     } else {
-      glm_mat4_copy(model, used);
+      glm_vec3_copy(entity->model->colliders[i].data.center,
+                    bone_to_entity[3]);
     }
+
+    mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_mul(entity->final_b_mats[bone], bone_to_entity, bone_to_world);
 
     if (type == POLY) {
       glGenVertexArrays(1, &VAO);
@@ -221,7 +194,7 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
       glEnableVertexAttribArray(0);
 
       glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
-                       (float *) used);
+                         (float *) bone_to_world);
 
       if (entity->model->colliders[i].data.num_used == 8) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -235,10 +208,10 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
       glDeleteVertexArrays(1, &VAO);
       glDeleteBuffers(1, &VBO);
     } else if (type == SPHERE) {
-      glm_translate(used, entity->model->colliders[i].data.center);
-      glm_scale_uni(used, entity->model->colliders[i].data.radius);
+      glm_translate(bone_to_world, entity->model->colliders[i].data.center);
+      glm_scale_uni(bone_to_world, entity->model->colliders[i].data.radius);
       glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
-                       (float *) used);
+                       (float *) bone_to_world);
       draw_model(shader, sphere);
     }
   }
@@ -263,10 +236,3 @@ void free_entity(ENTITY *entity) {
   free(entity);
 }
 
-// TODO Deprecate
-void get_model_mat(ENTITY *entity, mat4 model) {
-  glm_mat4_identity(model);
-  glm_translate(model, entity->translation);
-  glm_quat_rotate(model, entity->rotation, model);
-  glm_scale(model, entity->scale);
-}

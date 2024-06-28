@@ -482,8 +482,6 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
 
   ENTITY ent;
   memset(&ent, 0, sizeof(ENTITY));
-  glm_quat_identity(ent.rotation);
-  glm_vec3_copy(GLM_VEC3_ONE, ent.scale);
   ent.model = &model;
 
   status = get_collider_collisions(sim, &ent, 0, &collisions, &buf_len,
@@ -617,7 +615,7 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
                    dest->data.center);
   }
   if (ent->model->colliders[collider_offset].type == SPHERE) {
-    dest->data.radius *= ent->scale[0];
+    dest->data.radius *= ent->bone_mats[bone][SCALE][0][0];
   }
 }
 

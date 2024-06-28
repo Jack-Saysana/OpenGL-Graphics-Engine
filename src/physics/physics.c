@@ -1104,10 +1104,7 @@ void calc_inertia_tensor(ENTITY *ent, size_t col_offset, float inv_mass,
                          mat4 dest) {
   mat4 scale = GLM_MAT4_IDENTITY_INIT;
   int bone = ent->model->collider_bone_links[col_offset];
-  if (bone != -1) {
-    glm_mat4_copy(ent->bone_mats[bone][SCALE], scale);
-  }
-  glm_scale(scale, ent->scale);
+  glm_mat4_copy(ent->bone_mats[bone][SCALE], scale);
 
   COLLIDER *raw_col = ent->model->colliders + col_offset;
   glm_mat4_identity(dest);
@@ -1122,13 +1119,13 @@ void calc_inertia_tensor(ENTITY *ent, size_t col_offset, float inv_mass,
     vec3 *verts = raw_col->data.verts;
     unsigned int num_raw = raw_col->data.num_used;
 
-    float height = ent->scale[1] *
+    float height = ent->bone_mats[bone][SCALE][1][1] *
                    (verts[max_dot(verts, num_raw, U_DIR)][1] -
                     verts[max_dot(verts, num_raw, D_DIR)][1]);
-    float width = ent->scale[0] *
+    float width = ent->bone_mats[bone][SCALE][0][0] *
                   (verts[max_dot(verts, num_raw, L_DIR)][0] -
                    verts[max_dot(verts, num_raw, R_DIR)][0]);
-    float depth = ent->scale[2] *
+    float depth = ent->bone_mats[bone][SCALE][2][2] *
                   (verts[max_dot(verts, num_raw, F_DIR)][2] -
                    verts[max_dot(verts, num_raw, B_DIR)][2]);
     float denominator = 12.0 * inv_mass;

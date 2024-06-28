@@ -165,17 +165,6 @@ typedef struct entity {
   P_DATA *np_data;
   // Model matrix for each bone, including those inherited by parent bones
   mat4 *final_b_mats;
-// TODO DELETE
-  mat4 inv_inertia;
-  // Broad entity-based transformations
-  versor rotation;
-  vec3 scale;
-  vec3 translation;
-  // "Broad" physics data. Used when entire entity is a single physics object
-  vec3 velocity;
-  vec3 ang_velocity;
-  float inv_mass;
-// END DELETE
   // Physics system status
   // Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC]
   int type;

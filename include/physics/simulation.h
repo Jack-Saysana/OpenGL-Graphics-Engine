@@ -69,7 +69,6 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 void calc_inertia_tensor(ENTITY *ent, size_t col_offset, float inv_mass,
                          mat4 dest);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
-void get_model_mat(ENTITY *entity, mat4 model);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 vec, float threshold);
 float remove_noise(float val, float threshold);
