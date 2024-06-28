@@ -1,7 +1,7 @@
 #include <physics/constraint.h>
 
 void apply_constraints(ENTITY *entity, J_CONS *constraints,
-                       size_t num_constr) {
+                       size_t num_constr, vec3 gravity) {
   amat A = init_amat(NULL, num_constr * 3, num_constr * 3);
   amat B = init_amat(NULL, num_constr * 3, 1);
   amat C = init_amat(NULL, num_constr * 3, 1);
@@ -14,7 +14,7 @@ void apply_constraints(ENTITY *entity, J_CONS *constraints,
   for (size_t i = 0; i < entity->model->num_colliders; i++) {
     glm_vec3_zero(entity->np_data[i].e_force);
   }
-  featherstone_abm(entity);
+  featherstone_abm(entity, gravity);
   for (size_t i = 0; i < num_constr; i++) {
     calc_world_accel(entity, constraints[i].pt, constraints[i].col_idx,
                      def_accel);
@@ -30,7 +30,7 @@ void apply_constraints(ENTITY *entity, J_CONS *constraints,
   for (size_t i = 0; i < num_constr; i++) {
     for (size_t j = 0; j < 3; j++) {
       entity->np_data[constraints[i].col_idx].e_force[j] = 1.0;
-      featherstone_abm(entity);
+      featherstone_abm(entity, gravity);
       entity->np_data[constraints[i].col_idx].e_force[j] = 0.0;
       for (size_t k = 0; k < num_constr; k++) {
         glm_vec3_copy(def_accels.data + (k*3), def_accel);

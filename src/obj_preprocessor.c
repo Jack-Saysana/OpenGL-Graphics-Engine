@@ -268,6 +268,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
                           bones[b_len].coordinate_matrix[2] + 2,
                           &(bones[b_len].parent),
                           &(bones[b_len].num_children));
+      if (bones[b_len].parent != -1) {
+        bones[b_len].parent++;
+      }
       b_len++;
       if (b_len == b_buff_len) {
         size_t old_buff_len = b_buff_len;
@@ -565,6 +568,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   // Compute collider links for each bone since bones and colliders aren't
   // neccessariy 1:1
+  collider_links[0] = -1;
   for (int i = 1; i < b_len; i++) {
     collider_links[i] = -1;
     for (int j = 0; j < col_len; j++) {
@@ -846,7 +850,7 @@ int sort_colliders() {
   // Write sorted collider trees of each parent collider in the armature
   for (size_t cur_bone = 0; cur_bone < b_len; cur_bone++) {
     // Find root bone of root collider
-    if (bones[cur_bone].parent == -1) {
+    if (bones[cur_bone].parent == -1 && collider_links[cur_bone] != -1) {
       // Add root collider to sorted list
       int cur_col = collider_links[cur_bone];
       swap_colliders(cur_col, cur_pos);

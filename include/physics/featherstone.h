@@ -1,22 +1,9 @@
-#include <structs/entity_str.h>
 #include <stdio.h>
-
-//#define DEBUG_FS
-
-/*
-static vec3 BASIS_VECTORS[3] = {
-  {1.0, 0.0, 0.0},
-  {0.0, 1.0, 0.0},
-  {0.0, 0.0, 1.0},
-};
-*/
+#include <const.h>
+#include <structs/entity_str.h>
 
 static mat3 MAT3_ZERO = GLM_MAT3_ZERO_INIT;
 
-#define GRAVITY (10.0)
-static vec3 G_VEC = { 0.0, -GRAVITY, 0.0 };
-
-int featherstone_abm(ENTITY *body);
 void compute_spatial_transformations(mat4 p_bone_to_world,
                                      vec3 p_coords,
                                      mat4 c_bone_to_world,

@@ -74,9 +74,12 @@ typedef struct collision_list {
 } COLLISION;
 
 typedef struct collision_args {
-  ENTITY *entity;
-  vec3 *velocity;
-  vec3 *ang_velocity;
+  J_CONS *c_buff;
+  size_t *c_len;
+  size_t *c_size;
+  float *velocity;
+  float *ang_velocity;
+  size_t collider;
   mat4 inv_inertia;
   versor rotation;
   vec3 center_of_mass;

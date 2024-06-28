@@ -4,6 +4,7 @@
 #include <cglm/mat4.h>
 #include "../math/spatial_algebra.h"
 #include "../const.h"
+#include "./physics/constraint_str.h"
 
 typedef enum chain_type {
   LOCATION = 0,
@@ -153,8 +154,11 @@ typedef struct p_data {
 typedef struct entity {
   // Pointer to miscelaneous data to link entity to other information
   void *data;
-
   MODEL *model;
+  // Physics constraint buffer to be applied for the current frame
+  J_CONS *p_cons;
+  size_t num_cons;
+  size_t cons_size;
   // Location, rotation and scale matricies for each bone
   mat4 (*bone_mats)[3];
   // "Narrow" physics data for each collider

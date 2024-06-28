@@ -10,9 +10,18 @@ ENTITY *init_entity(MODEL *model) {
     return NULL;
   }
 
+  ent->p_cons = malloc(sizeof(J_CONS) * BUFF_STARTING_LEN);
+  if (ent->p_cons == NULL) {
+    free(ent);
+    return NULL;
+  }
+  ent->num_cons = 0;
+  ent->cons_size = BUFF_STARTING_LEN;
+
   if (model->num_colliders > 0) {
     ent->np_data = malloc(sizeof(P_DATA) * model->num_colliders);
     if (ent->np_data == NULL) {
+      free(ent->p_cons);
       free(ent);
       return NULL;
     }
@@ -53,6 +62,7 @@ ENTITY *init_entity(MODEL *model) {
     ent->bone_mats = malloc(sizeof(mat4) * 3 * model->num_bones);
     if (ent->bone_mats == NULL) {
       free(ent->np_data);
+      free(ent->p_cons);
       free(ent);
       return NULL;
     }
@@ -61,6 +71,7 @@ ENTITY *init_entity(MODEL *model) {
     if (ent->final_b_mats == NULL) {
       free(ent->bone_mats);
       free(ent->np_data);
+      free(ent->p_cons);
       free(ent);
       return NULL;
     }
@@ -238,6 +249,8 @@ void free_entity(ENTITY *entity) {
   if (entity == NULL) {
     return;
   }
+
+  free(entity->p_cons);
 
   if (entity->bone_mats) {
     free(entity->bone_mats);

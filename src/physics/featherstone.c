@@ -1,6 +1,6 @@
 #include <physics/featherstone.h>
 
-int featherstone_abm(ENTITY *body) {
+int featherstone_abm(ENTITY *body, vec3 grav) {
   size_t num_links = body->model->num_colliders;
 
   BONE *bones = body->model->bones;
@@ -150,10 +150,9 @@ int featherstone_abm(ENTITY *body) {
     mat6_compose(MAT3_ZERO, mass_mat, inertia_tensor, MAT3_ZERO,
                  p_data[cur_col].I_hat);
 
-    // TODO Gravity should be affected by simulation forces, not hardcoded
     // Convert gravity to bone space
     vec3 gravity = GLM_VEC3_ZERO_INIT;
-    glm_mat3_mulv(world_to_bone, G_VEC, gravity);
+    glm_mat3_mulv(world_to_bone, grav, gravity);
 
     // Convert external force to bone space
     vec3 e_force = GLM_VEC3_ZERO_INIT;
@@ -266,14 +265,14 @@ int featherstone_abm(ENTITY *body) {
       vec6_remove_noise(p_data[cur_col].a_hat, 0.001);
 
       // Calculate world-space acceleration
-      mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
-      glm_mat4_ins3(bones[root_bone].coordinate_matrix, bone_to_world);
-      glm_mat4_mul(body->final_b_mats[root_bone], bone_to_world,
+      mat3 bone_to_world = GLM_MAT3_IDENTITY_INIT;
+      glm_mat4_pick3(body->final_b_mats[root_bone], bone_to_world);
+      glm_mat3_mul(bone_to_world, bones[root_bone].coordinate_matrix,
                    bone_to_world);
-      glm_mat4_mulv3(bone_to_world, p_data[cur_col].a_hat, 1.0,
-                     p_data[cur_col].ang_a);
-      glm_mat4_mulv3(bone_to_world, ((float *)p_data[cur_col].a_hat)+3, 1.0,
-                     p_data[cur_col].a);
+      glm_mat3_mulv(bone_to_world, p_data[cur_col].a_hat,
+                    p_data[cur_col].ang_a);
+      glm_mat3_mulv(bone_to_world, ((float *)p_data[cur_col].a_hat)+3,
+                    p_data[cur_col].a);
 
 #ifdef DEBUG_FS
       printf("q[%d]:\n%f\n", cur_col, p_data[cur_col].accel_angles);
@@ -421,8 +420,10 @@ void compute_spatial_velocity(int cur_col, int parent_col, mat4 bone_to_world,
   vec6_compose(va, v, p_data[cur_col].v_hat);
 
   // Calculate world-space velocity
-  glm_mat4_mulv3(bone_to_world, v, 1.0, p_data[cur_col].v);
-  glm_mat4_mulv3(bone_to_world, va, 1.0, p_data[cur_col].ang_v);
+  mat3 b_to_w = GLM_MAT3_IDENTITY_INIT;
+  glm_mat4_pick3(bone_to_world, b_to_w);
+  glm_mat3_mulv(b_to_w, v, p_data[cur_col].v);
+  glm_mat3_mulv(b_to_w, va, p_data[cur_col].ang_v);
 }
 
 void compute_articulated_data(int col, P_DATA *p_data, mat6 i_dest,

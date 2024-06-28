@@ -166,7 +166,7 @@ A finalizing function to update the state of a simulation's oct-tree with the po
 
 ### void integrate_sim(SIMULATION *sim, vec3 origin, float range)
 
-For each `COLLIDER` in `sim` which is withing `range` from `origin`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
+For each `ENTITY` in `sim` which is withing `range` from `origin`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
 
 **Arguements**
 
@@ -175,18 +175,6 @@ For each `COLLIDER` in `sim` which is withing `range` from `origin`, its velocit
 - `vec3 origin`: Point whose distance from any given object in the simulation is compared to range to determine if the object should be integrated
 
 - `float range`: Max distance an object can be from `origin` for it to be integrated. Can be set to `SIM_RANGE_INF` to consider all objects in the simulation.
-
-### void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col)
-
-Integrate a single collider inside of a simulation. A more fine-grained version of `integrate_sim()`.
-
-**Arguments**
-
-- `SIMULATION *sim`: Simulation to which the entity belongs
-
-- `ENTITY *ent`: Entity to integrate
-
-- `size_t col`: Index of collider of entity to integrate
 
 ### void prep_refresh(SIMULATION *sim, ENTITY *)
 
