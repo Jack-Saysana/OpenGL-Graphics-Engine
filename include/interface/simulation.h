@@ -21,6 +21,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
 size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
                       float range);
 void impulse_resolution(SIMULATION *sim, COLLISION col);
+void prep_refresh(SIMULATION *sim, ENTITY *ent);
 void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset);
 
 void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,

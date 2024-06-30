@@ -40,7 +40,6 @@ void update_node_emptiness(OCT_TREE *tree, size_t node_offset);
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
-void get_model_mat(ENTITY *entity, mat4 model);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void global_collider(ENTITY *, size_t, COLLIDER *dest);
 void draw_model(unsigned int, MODEL *);

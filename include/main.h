@@ -76,7 +76,6 @@ OCT_TREE *init_tree(float max_extent, unsigned int max_depth);
 //int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 //COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 void free_oct_tree(OCT_TREE *tree);
-void get_model_mat(ENTITY *entity, mat4 model);
 
 int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs,
             char *text_fs);

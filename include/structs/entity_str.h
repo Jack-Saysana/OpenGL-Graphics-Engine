@@ -4,6 +4,7 @@
 #include <math/spatial_algebra.h>
 #include <cglm/mat4.h>
 #include <const.h>
+#include <structs/physics/constraint_str.h>
 
 typedef enum chain_type {
   LOCATION = 0,
@@ -124,22 +125,20 @@ typedef struct p_data {
   vec6 v_hat;
   // Shortcut of s'I_hat_A
   vec6 s_inner_I;
+  // Read-only world-space linear/angular accleration/velocity
+  vec3 a;
+  vec3 ang_a;
+  vec3 v;
+  vec3 ang_v;
   // Buffer specifiying the degree of freedom for link
   vec3 dof;
   // Vector pointing from link parent's COM to current link's COM in bone space
   vec3 from_parent_lin;
   // Vector pointing from link's joint to link's COM in bone space
   vec3 joint_to_com;
-// TODO DELETE
-  vec3 velocity;
-  vec3 ang_velocity;
-// END DELETE
   // External forces exerted on the joint
   vec3 e_force;
   float inv_mass;
-  // TODO Figure out what this actually does
-  // Magnitude of the spatial force acting on the links joint
-  float Q;
   // Shortcut for dot(s'I_hat_A, s_hat)
   float s_inner_I_dot_s;
   // Shortcut for s'(Z_hat_A + I_hat(coriolis))
@@ -155,25 +154,17 @@ typedef struct p_data {
 typedef struct entity {
   // Pointer to miscelaneous data to link entity to other information
   void *data;
-
   MODEL *model;
+  // Physics constraint buffer to be applied for the current frame
+  J_CONS *p_cons;
+  size_t num_cons;
+  size_t cons_size;
   // Location, rotation and scale matricies for each bone
   mat4 (*bone_mats)[3];
   // "Narrow" physics data for each collider
   P_DATA *np_data;
   // Model matrix for each bone, including those inherited by parent bones
   mat4 *final_b_mats;
-// TODO DELETE
-  mat4 inv_inertia;
-  // Broad entity-based transformations
-  versor rotation;
-  vec3 scale;
-  vec3 translation;
-  // "Broad" physics data. Used when entire entity is a single physics object
-  vec3 velocity;
-  vec3 ang_velocity;
-  float inv_mass;
-// END DELETE
   // Physics system status
   // Bit layout: 0...0[MUTABLE/IMMUTABLE][DRIVEN/DRIVING][STATIC/DYNAMIC]
   int type;

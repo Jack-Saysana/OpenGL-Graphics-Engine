@@ -16,7 +16,6 @@ struct BONE {
 //uniform mat4 bone_mats[26][3];
 uniform mat4 bone_mats[50];
 
-uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
@@ -42,7 +41,7 @@ void main() {
 
   test_col = vec3(0.0, 0.0, 1.0);
 
-  gl_Position = projection * view * model * bone_mats[bone_id] * vec4(in_pos, 1.0);
+  gl_Position = projection * view * bone_mats[bone_id] * vec4(in_pos, 1.0);
 }
 
 /*int equiv_mats(mat4 a, mat4 b) {
