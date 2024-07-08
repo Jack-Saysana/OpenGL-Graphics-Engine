@@ -90,6 +90,7 @@ ENTITY *init_entity(MODEL *model) {
 
   ent->model = model;
   ent->data = NULL;
+  ent->type = 0;
 
   return ent;
 }

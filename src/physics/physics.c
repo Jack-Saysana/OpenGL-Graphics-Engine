@@ -865,7 +865,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   size_t a_con = *a_args->c_len;
   (*a_args->c_len)++;
   if (a_con + 1 == *a_args->c_size) {
-    int status = double_buffer((void **) &a_args->c_buff, a_args->c_size,
+    int status = double_buffer((void **) a_args->c_buff, a_args->c_size,
                                sizeof(J_CONS));
     if (status) {
       (*a_args->c_len)--;
@@ -875,7 +875,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
   size_t b_con = *b_args->c_len;
   (*b_args->c_len)++;
   if (b_con + 1 == *b_args->c_size) {
-    int status = double_buffer((void **) &b_args->c_buff, b_args->c_size,
+    int status = double_buffer((void **) b_args->c_buff, b_args->c_size,
                                sizeof(J_CONS));
     if (status) {
       (*a_args->c_len)--;
@@ -883,16 +883,18 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
       return;
     }
   }
+  J_CONS *a_buff = *(a_args->c_buff);
+  J_CONS *b_buff = *(b_args->c_buff);
 
-  a_args->c_buff[a_con].col_idx = a_args->collider;
-  b_args->c_buff[b_con].col_idx = b_args->collider;
-  glm_vec3_copy(p_loc, a_args->c_buff[a_con].pt);
-  glm_vec3_copy(p_loc, b_args->c_buff[b_con].pt);
+  a_buff[a_con].col_idx = a_args->collider;
+  b_buff[b_con].col_idx = b_args->collider;
+  glm_vec3_copy(p_loc, a_buff[a_con].pt);
+  glm_vec3_copy(p_loc, b_buff[b_con].pt);
 
   if (a_args->inv_mass == 0.0 && b_args->inv_mass == 0.0) {
     // Halt all movement if both colliders are of infinite mass
-    glm_vec3_negate_to(a_args->velocity, a_args->c_buff[a_con].d_accel);
-    glm_vec3_negate_to(b_args->velocity, b_args->c_buff[b_con].d_accel);
+    glm_vec3_negate_to(a_args->velocity, a_buff[a_con].d_accel);
+    glm_vec3_negate_to(b_args->velocity, b_buff[b_con].d_accel);
     return;
   }
 
@@ -1065,7 +1067,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 
   glm_vec3_cross(a_ang_vel, a_rel, a_velocity);
   glm_vec3_add(a_vel, a_velocity, a_velocity);
-  glm_vec3_copy(a_velocity, a_args->c_buff[a_con].d_accel);
+  glm_vec3_copy(a_velocity, a_buff[a_con].d_accel);
 
 #ifdef FRICTION
   //vec3 delta_vb_f = GLM_VEC3_ZERO_INIT;
@@ -1095,7 +1097,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 
   glm_vec3_cross(b_ang_vel, b_rel, b_velocity);
   glm_vec3_add(b_vel, b_velocity, b_velocity);
-  glm_vec3_copy(b_velocity, b_args->c_buff[b_con].d_accel);
+  glm_vec3_copy(b_velocity, b_buff[b_con].d_accel);
 }
 
 //void calc_inertia_tensor(ENTITY *ent, size_t col_offset,

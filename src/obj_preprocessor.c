@@ -568,8 +568,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   // Compute collider links for each bone since bones and colliders aren't
   // neccessariy 1:1
-  collider_links[0] = -1;
-  for (int i = 1; i < b_len; i++) {
+  for (int i = 0; i < b_len; i++) {
     collider_links[i] = -1;
     for (int j = 0; j < col_len; j++) {
       if (bone_links[j] == i) {

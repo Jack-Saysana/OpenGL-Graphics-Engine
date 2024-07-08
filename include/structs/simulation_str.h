@@ -73,7 +73,7 @@ typedef struct collision_list {
 } COLLISION;
 
 typedef struct collision_args {
-  J_CONS *c_buff;
+  J_CONS **c_buff;
   size_t *c_len;
   size_t *c_size;
   float *velocity;

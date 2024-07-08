@@ -80,16 +80,8 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter) {
   }
 
   int status = 0;
-
   LEDGER_INPUT input;
   input.ent = entity;
-  status = ledger_add(&sim->ment_ledger, &sim->ment_list, &sim->num_ent_moving,
-                      &sim->ment_ledger_size, &sim->ment_list_size, input,
-                      L_TYPE_ENTITY);
-  if (status) {
-    fprintf(stderr, "Error: Unable to reallocate simulation ledger\n");
-    return -1;
-  }
 
   // Add desired colliders to the simulation
   COLLIDER *cur_col = NULL;
@@ -119,6 +111,14 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter) {
         status = ledger_add(&sim->mcol_ledger, &sim->mcol_list,
                             &sim->num_col_moving, &sim->mcol_ledger_size,
                             &sim->mcol_list_size, input, L_TYPE_COLLIDER);
+        if (status) {
+          fprintf(stderr, "Error: Unable to reallocate simulation ledger\n");
+          return -1;
+        }
+
+        status = ledger_add(&sim->ment_ledger, &sim->ment_list,
+                            &sim->num_ent_moving, &sim->ment_ledger_size,
+                            &sim->ment_list_size, input, L_TYPE_ENTITY);
         if (status) {
           fprintf(stderr, "Error: Unable to reallocate simulation ledger\n");
           return -1;
@@ -259,8 +259,11 @@ void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
 void integrate_ent(ENTITY *ent) {
   for (int cur_bone = 0; cur_bone < ent->model->num_bones; cur_bone++) {
     int cur_col = ent->model->bone_collider_links[cur_bone];
-    int collider_root_bone = ent->model->collider_bone_links[cur_col];
+    if (cur_col == -1) {
+      continue;
+    }
 
+    int collider_root_bone = ent->model->collider_bone_links[cur_col];
     if (collider_root_bone == cur_bone) {
       // Integrate acceleration
       float delta = ent->np_data[cur_col].accel_angle * DELTA_TIME;
@@ -395,6 +398,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
     sim->ment_ledger[sim->ment_list[i]].ent.to_delete = 1;
   }
 
+  /*
   // Detect collisions for all moving entities
   pthread_t t1;
   C_ARGS t1_args;
@@ -417,6 +421,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   t2_args.start = t1_args.end;
   //t2_args.end = t2_args.start + (sim->num_col_moving / 3);
   t2_args.end = sim->num_col_moving;
+  */
 
   /*
   pthread_t t3;
@@ -426,6 +431,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   t3_args.end = sim->num_col_moving;
   */
 
+  /*
   pthread_create(&t1, NULL, check_moving_buffer, &t1_args);
   pthread_create(&t2, NULL, check_moving_buffer, &t2_args);
   //pthread_create(&t3, NULL, check_moving_buffer, &t3_args);
@@ -433,6 +439,19 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   pthread_join(t1, NULL);
   pthread_join(t2, NULL);
   //pthread_join(t3, NULL);
+  */
+  C_ARGS args;
+  args.col_lock = &col_lock;
+  args.sim = sim;
+  args.start = 0;
+  args.end = sim->num_col_moving;
+  args.collisions = &collisions;
+  args.buf_len = &buf_len;
+  args.buf_size = &buf_size;
+  glm_vec3_copy(origin, args.origin);
+  args.range = range;
+  args.get_col_info = get_col_info;
+  check_moving_buffer(&args);
 
   // Clean up moving collider buffer
   for (size_t i = 0; i < sim->num_col_moving; i++) {
@@ -502,7 +521,7 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
 
 void impulse_resolution(SIMULATION *sim, COLLISION col) {
   COL_ARGS a_args;
-  a_args.c_buff = col.a_ent->p_cons;
+  a_args.c_buff = &col.a_ent->p_cons;
   a_args.c_len = &col.a_ent->num_cons;
   a_args.c_size = &col.a_ent->cons_size;
   a_args.velocity = col.a_ent->np_data[col.a_offset].v;
@@ -526,7 +545,7 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
   }
 
   COL_ARGS b_args;
-  b_args.c_buff = col.b_ent->p_cons;
+  b_args.c_buff = &col.b_ent->p_cons;
   b_args.c_len = &col.b_ent->num_cons;
   b_args.c_size = &col.b_ent->cons_size;
   b_args.velocity = col.b_ent->np_data[col.b_offset].v;
