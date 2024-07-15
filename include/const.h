@@ -55,6 +55,11 @@
 
 // Math Constants
 #define MAX_SVD_ITERATIONS (30)
+#define MAX_LCP_ITERATIONS (100)
 #define ZERO_THRESHOLD (0.00001)
+#define LCP_C (0)
+#define LCP_NC (1)
+#define LCP_EQ (0)
+#define LCP_GEQ (1)
 
 #endif

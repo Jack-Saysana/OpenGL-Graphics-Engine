@@ -97,7 +97,7 @@ void amat_identity(amat a) {
   -1 if input is invalid, 0 if successful
 */
 int amat_scale(amat a, amat dest, float s) {
-  if (!dest.data || a.m != dest.m || a.n != dest.m) {
+  if (!dest.data || a.m != dest.m || a.n != dest.n) {
     return -1;
   }
 
