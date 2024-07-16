@@ -251,6 +251,9 @@ void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
       }
       featherstone_abm(cur_ent, sim->forces);
       integrate_ent(cur_ent);
+      for (size_t j = 0; j < cur_ent->model->num_colliders; j++) {
+        glm_vec3_zero(cur_ent->np_data[j].e_force);
+      }
     }
     cur_ent->num_cons = 0;
   }
