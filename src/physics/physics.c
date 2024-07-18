@@ -1046,9 +1046,10 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 #endif
 
   // Dampen and update velocity
-  glm_vec3_scale(a_vel, LINEAR_DAMP_FACTOR, a_vel);
-  glm_vec3_add(a_vel, delta_va, a_vel);
-  vec3_remove_noise(a_vel, 0.0001);
+  //glm_vec3_scale(a_vel, LINEAR_DAMP_FACTOR, a_vel);
+  //glm_vec3_add(a_vel, delta_va, a_vel);
+  //vec3_remove_noise(a_vel, 0.0001);
+  glm_vec3_copy(delta_va, a_vel);
 
 #ifdef FRICTION
   if ((a_args->type & T_DRIVING) == 0) {
@@ -1061,9 +1062,10 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 #endif
 
   // Dampen and update ang velocity
-  glm_vec3_scale(a_ang_vel, LINEAR_DAMP_FACTOR, a_ang_vel);
-  glm_vec3_add(a_ang_vel, delta_ang_va, a_ang_vel);
-  vec3_remove_noise(a_ang_vel, 0.0001);
+  //glm_vec3_scale(a_ang_vel, LINEAR_DAMP_FACTOR, a_ang_vel);
+  //glm_vec3_add(a_ang_vel, delta_ang_va, a_ang_vel);
+  //vec3_remove_noise(a_ang_vel, 0.0001);
+  glm_vec3_copy(delta_ang_va, a_ang_vel);
 
   glm_vec3_cross(a_ang_vel, a_rel, a_velocity);
   glm_vec3_add(a_vel, a_velocity, a_velocity);
@@ -1076,9 +1078,10 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 #endif
 
   // Dampen and update velocity
-  glm_vec3_scale(b_vel, LINEAR_DAMP_FACTOR, b_vel);
-  glm_vec3_sub(b_vel, delta_vb, b_vel);
-  vec3_remove_noise(b_vel, 0.0001);
+  //glm_vec3_scale(b_vel, LINEAR_DAMP_FACTOR, b_vel);
+  //glm_vec3_sub(b_vel, delta_vb, b_vel);
+  //vec3_remove_noise(b_vel, 0.0001);
+  glm_vec3_negate_to(delta_vb, b_vel);
 
 #ifdef FRICTION
   if ((b_args->type & T_DRIVING) == 0) {
@@ -1091,9 +1094,10 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 #endif
 
   // Dampen and update ang velocity
-  glm_vec3_scale(b_ang_vel, LINEAR_DAMP_FACTOR, b_ang_vel);
-  glm_vec3_sub(b_ang_vel, delta_ang_vb, b_ang_vel);
-  vec3_remove_noise(b_ang_vel, 0.0001);
+  //glm_vec3_scale(b_ang_vel, LINEAR_DAMP_FACTOR, b_ang_vel);
+  //glm_vec3_sub(b_ang_vel, delta_ang_vb, b_ang_vel);
+  //vec3_remove_noise(b_ang_vel, 0.0001);
+  glm_vec3_negate_to(delta_ang_vb, b_ang_vel);
 
   glm_vec3_cross(b_ang_vel, b_rel, b_velocity);
   glm_vec3_add(b_vel, b_velocity, b_velocity);
