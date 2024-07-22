@@ -61,6 +61,14 @@ typedef struct simulation {
   vec3 forces;
 } SIMULATION;
 
+typedef struct sim_state {
+  mat4 (*bone_mats)[3];
+  struct collider_state {
+    float joint_angle;
+    float vel_angle;
+  } *col_state;
+} SIM_STATE;
+
 typedef struct collision_list {
   ENTITY *a_ent;
   ENTITY *b_ent;

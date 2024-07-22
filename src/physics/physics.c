@@ -1069,6 +1069,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 
   glm_vec3_cross(a_ang_vel, a_rel, a_velocity);
   glm_vec3_add(a_vel, a_velocity, a_velocity);
+  glm_vec3_scale(a_velocity, 1.0 / DELTA_TIME, a_velocity);
   glm_vec3_copy(a_velocity, a_buff[a_con].d_accel);
 
 #ifdef FRICTION
@@ -1101,6 +1102,7 @@ void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 
   glm_vec3_cross(b_ang_vel, b_rel, b_velocity);
   glm_vec3_add(b_vel, b_velocity, b_velocity);
+  glm_vec3_scale(b_velocity, 1.0 / DELTA_TIME, b_velocity);
   glm_vec3_copy(b_velocity, b_buff[b_con].d_accel);
 }
 

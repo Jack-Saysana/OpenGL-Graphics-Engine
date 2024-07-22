@@ -8,7 +8,7 @@
   - amat z:
   - int *ops:
 */
-void lcp(amat M, amat q, amat z, int *ops) {
+void lcp(amat M, amat q, amat z) {
   for (int i = 0; i < z.m; i++) {
     AMAT_GET(z, 0, i) = 1.0;
   }
@@ -19,35 +19,17 @@ void lcp(amat M, amat q, amat z, int *ops) {
   for (int k = 0; k < MAX_LCP_ITERATIONS && cont; k++) {
     for (int i = 0; i < z.m; i++) {
       temp = AMAT_GET(q, 0, i);
-      if (ops[i] == LCP_EQ) {
-        // Bilateral constraint
-        // TODO fix convergance issue
-        for (int j = 0; j < i; j++) {
-          temp += (AMAT_GET(M, j, i) * AMAT_GET(z, 0, j));
-        }
-        for (int j = i+1; j < z.m; j++) {
-          temp += (AMAT_GET(M, j, i) * AMAT_GET(z, 0, j));
-        }
-        if (fabs(AMAT_GET(M, i, i)) <= ZERO_THRESHOLD) {
-          temp = 0.0;
-        } else {
-          temp = (0.5 * AMAT_GET(z, 0, i)) -
-                 ((0.5 * temp) / AMAT_GET(M, i, i));
-        }
-        AMAT_GET(z, 0, i) = temp;
-      } else if (ops[i] == LCP_GEQ) {
-        // Unitlateral constraint
-        for (int j = 0; j < z.m; j++) {
-          temp += (AMAT_GET(M, j, i) * AMAT_GET(z, 0, j));
-        }
-        if (fabs(AMAT_GET(M, i, i)) <= ZERO_THRESHOLD) {
-          temp = 0.0;
-        } else {
-          temp = AMAT_GET(z, 0, i) - (temp / AMAT_GET(M, i, i));
-        }
-
-        AMAT_GET(z, 0, i) = fmax(0.0, temp);
+      // Unitlateral constraint
+      for (int j = 0; j < z.m; j++) {
+        temp += (AMAT_GET(M, j, i) * AMAT_GET(z, 0, j));
       }
+      if (fabs(AMAT_GET(M, i, i)) <= ZERO_THRESHOLD) {
+        temp = 0.0;
+      } else {
+        temp = AMAT_GET(z, 0, i) - (temp / AMAT_GET(M, i, i));
+      }
+
+      AMAT_GET(z, 0, i) = fmax(0.0, temp);
     }
 
     cont = 0;

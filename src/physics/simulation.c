@@ -239,7 +239,68 @@ void update_sim_movement(SIMULATION *sim) {
 }
 #endif
 
-void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
+size_t save_sim_state(SIMULATION *sim, SIM_STATE **state) {
+  SIM_STATE *sim_state = malloc(sizeof(SIM_STATE) * sim->num_ent_moving);
+  if (state == NULL) {
+    return 0;
+  }
+
+  ENTITY *cur_ent = NULL;
+  for (size_t i = 0; i < sim->num_ent_moving; i++) {
+    cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
+    sim_state[i].bone_mats = malloc(sizeof(mat4) * 3 *
+                                    cur_ent->model->num_bones);
+    if (sim_state[i].bone_mats == NULL) {
+      free_sim_state(sim_state, i);
+      return INVALID_INDEX;
+    }
+    sim_state[i].col_state = malloc(sizeof(struct collider_state) *
+                                    cur_ent->model->num_colliders);
+    if (sim_state[i].col_state == NULL) {
+      free(sim_state[i].bone_mats);
+      free_sim_state(sim_state, i);
+      return INVALID_INDEX;
+    }
+
+    memcpy(sim_state[i].bone_mats, cur_ent->bone_mats, sizeof(mat4) * 3 *
+           cur_ent->model->num_bones);
+    for (size_t j = 0; j < cur_ent->model->num_colliders; j++) {
+      sim_state[i].col_state[j].joint_angle = cur_ent->np_data[j].joint_angle;
+      sim_state[i].col_state[j].vel_angle = cur_ent->np_data[j].vel_angle;
+    }
+  }
+
+  *state = sim_state;
+  return sim->num_ent_moving;
+}
+
+void restore_sim_state(SIMULATION *sim, SIM_STATE *state) {
+  ENTITY *cur_ent = NULL;
+  for (size_t i = 0; i < sim->num_ent_moving; i++) {
+    cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
+    memcpy(cur_ent->bone_mats, state[i].bone_mats, sizeof(mat4) * 3 *
+           cur_ent->model->num_bones);
+    for (size_t j = 0; j < cur_ent->model->num_colliders; j++) {
+      cur_ent->np_data[j].joint_angle = state[i].col_state[j].joint_angle;
+      cur_ent->np_data[j].vel_angle = state[i].col_state[j].vel_angle;
+    }
+  }
+
+  free_sim_state(state, sim->num_ent_moving);
+}
+
+void free_sim_state(SIM_STATE *state, size_t num_ents) {
+  for (size_t i = 0; i < num_ents; i++) {
+    free(state[i].bone_mats);
+    free(state[i].col_state);
+  }
+  free(state);
+}
+
+size_t peek_integration(SIMULATION *sim, SIM_STATE **state, vec3 origin,
+                        float range) {
+  size_t ret = save_sim_state(sim, state);
+
   ENTITY *cur_ent = NULL;
   for (size_t i = 0; i < sim->num_ent_moving; i++) {
     cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
@@ -255,7 +316,28 @@ void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
         glm_vec3_zero(cur_ent->np_data[j].e_force);
       }
     }
-    cur_ent->num_cons = 0;
+  }
+
+  return ret;
+}
+
+void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
+  ENTITY *cur_ent = NULL;
+  for (size_t i = 0; i < sim->num_ent_moving; i++) {
+    cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
+    if (range == SIM_RANGE_INF ||
+        entity_in_range(sim, cur_ent, origin, range)) {
+      if (cur_ent->num_cons) {
+        apply_constraints(cur_ent, cur_ent->p_cons, cur_ent->num_cons,
+                          sim->forces);
+      }
+      featherstone_abm(cur_ent, sim->forces);
+      integrate_ent(cur_ent);
+      for (size_t j = 0; j < cur_ent->model->num_colliders; j++) {
+        glm_vec3_zero(cur_ent->np_data[j].e_force);
+      }
+      cur_ent->num_cons = 0;
+    }
   }
 }
 

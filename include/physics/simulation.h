@@ -40,6 +40,7 @@ void ledger_delete(SIM_ITEM *, size_t *, size_t, size_t *, LEDGER_INPUT, int);
 void ledger_delete_direct(SIM_ITEM *, size_t *, size_t *, size_t, int);
 int resize_ledger(SIM_ITEM **, size_t *, size_t *, size_t, int);
 int entity_in_range(SIMULATION *, ENTITY *, vec3, float);
+void free_sim_state(SIM_STATE *, size_t);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
