@@ -73,7 +73,4 @@ int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 vec, float threshold);
 float remove_noise(float val, float threshold);
-
-// ================================= MACROS ==================================
-
-#define is_moving(e,c) (fabs((e)->np_data[(c)].vel_angle) > ZERO_THRESHOLD)
+int is_moving(ENTITY *ent, size_t col);

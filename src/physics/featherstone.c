@@ -370,52 +370,64 @@ void compute_spatial_velocity(int cur_col, int parent_col, mat4 bone_to_world,
   }
 
   // Spatial Joint Axis
-  glm_vec3_cross(p_data[cur_col].dof, p_data[cur_col].joint_to_com,
-                 temp);
-  vec6_compose(p_data[cur_col].dof, temp, p_data[cur_col].s_hat);
+  if (p_data[cur_col].joint_type == JOINT_REVOLUTE) {
+    glm_vec3_cross(p_data[cur_col].dof, p_data[cur_col].joint_to_com,
+                   temp);
+    vec6_compose(p_data[cur_col].dof, temp, p_data[cur_col].s_hat);
+  } else {
+    vec6_compose(GLM_VEC3_ZERO, p_data[cur_col].dof, p_data[cur_col].s_hat);
+  }
 
   // Coriolis vector
-  vec3 d = GLM_VEC3_ZERO_INIT;
-  glm_vec3_copy(p_data[cur_col].joint_to_com, d);
+  vec6_zero(p_data[cur_col].coriolis_vector);
+  vec3 coriolis_first = GLM_VEC3_ZERO_INIT;
+  vec3 coriolis_last = GLM_VEC3_ZERO_INIT;
 
   vec3 r = GLM_VEC3_ZERO_INIT;
   glm_vec3_copy(p_data[cur_col].from_parent_lin, r);
 
-  vec6_zero(p_data[cur_col].coriolis_vector);
   vec3 u_scaled = GLM_VEC3_ZERO_INIT;
   glm_vec3_scale(p_data[cur_col].dof, p_data[cur_col].vel_angle, u_scaled);
 
-  vec3 coriolis_first = GLM_VEC3_ZERO_INIT;
-  glm_vec3_cross(va, u_scaled, coriolis_first);
-
-  vec3 u_scaled_cross_d = GLM_VEC3_ZERO_INIT;
-  glm_vec3_cross(u_scaled, d, u_scaled_cross_d);
-
   vec3 va_cross_r = GLM_VEC3_ZERO_INIT;
   glm_vec3_cross(va, r, va_cross_r);
+  if (p_data[cur_col].joint_type == JOINT_REVOLUTE) {
+    vec3 d = GLM_VEC3_ZERO_INIT;
+    glm_vec3_copy(p_data[cur_col].joint_to_com, d);
+    glm_vec3_cross(va, u_scaled, coriolis_first);
 
-  vec3 coriolis_last = GLM_VEC3_ZERO_INIT;
-  glm_vec3_scale(va, 2.0, coriolis_last);
-  glm_vec3_cross(coriolis_last, u_scaled_cross_d, coriolis_last);
-
-  glm_vec3_cross(va, va_cross_r, temp);
-  glm_vec3_add(coriolis_last, temp, coriolis_last);
-
-  glm_vec3_cross(u_scaled, u_scaled_cross_d, temp);
-  glm_vec3_add(coriolis_last, temp, coriolis_last);
-
+    vec3 u_scaled_cross_d = GLM_VEC3_ZERO_INIT;
+    glm_vec3_cross(u_scaled, d, u_scaled_cross_d);
+    glm_vec3_scale(va, 2.0, coriolis_last);
+    glm_vec3_cross(coriolis_last, u_scaled_cross_d, coriolis_last);
+    glm_vec3_cross(va, va_cross_r, temp);
+    glm_vec3_add(coriolis_last, temp, coriolis_last);
+    glm_vec3_cross(u_scaled, u_scaled_cross_d, temp);
+    glm_vec3_add(coriolis_last, temp, coriolis_last);
+  } else {
+    glm_vec3_scale(va, 2.0, coriolis_last);
+    glm_vec3_cross(coriolis_last, u_scaled, coriolis_last);
+    glm_vec3_cross(va, va_cross_r, temp);
+    glm_vec3_add(coriolis_last, temp, coriolis_last);
+  }
   vec6_compose(coriolis_first, coriolis_last,
                p_data[cur_col].coriolis_vector);
 
   // Accumulate velocity
-  glm_vec3_scale(p_data[cur_col].dof, p_data[cur_col].vel_angle,
-                 temp);
-  glm_vec3_add(temp, va, va);
+  if (p_data[cur_col].joint_type == JOINT_REVOLUTE) {
+    glm_vec3_scale(p_data[cur_col].dof, p_data[cur_col].vel_angle,
+                   temp);
+    glm_vec3_add(temp, va, va);
 
-  glm_vec3_cross(p_data[cur_col].dof, p_data[cur_col].joint_to_com,
-                 temp);
-  glm_vec3_scale(temp, p_data[cur_col].vel_angle, temp);
-  glm_vec3_add(temp, v, v);
+    glm_vec3_cross(p_data[cur_col].dof, p_data[cur_col].joint_to_com,
+                   temp);
+    glm_vec3_scale(temp, p_data[cur_col].vel_angle, temp);
+    glm_vec3_add(temp, v, v);
+  } else {
+    glm_vec3_scale(p_data[cur_col].dof, p_data[cur_col].vel_angle,
+                   temp);
+    glm_vec3_add(temp, v, v);
+  }
 
   vec6_compose(va, v, p_data[cur_col].v_hat);
 

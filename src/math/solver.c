@@ -25,7 +25,7 @@ void solve_system(amat a, amat b, amat x) {
     return;
   }
   amat D, E, F;
-  if (a.m < a.n) {
+  if (A.m < A.n) {
     D = init_amat(NULL, A.n, A.n);
     E = init_amat(NULL, A.n, 1);
     F = init_amat(NULL, A.n, 1);

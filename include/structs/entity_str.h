@@ -98,6 +98,26 @@ typedef struct model {
   unsigned int num_indicies;
 } MODEL;
 
+typedef struct zero_joint_data {
+  mat6 I_hat_A;
+  mat6 ST_to_parent;
+  mat6 ST_from_parent;
+  vec6 s_hat;
+  vec6 Z_hat_A;
+  vec6 coriolis_vector;
+  vec3 dof;
+  vec6 a_hat;
+  vec6 v_hat;
+  vec6 s_inner_I;
+  size_t next_offset;
+  int joint_type;
+  float s_inner_I_dot_s;
+  float SZI;
+  float accel_angle;
+  float vel_angle;
+  float joint_angle;
+} ZERO_JOINT;
+
 typedef struct p_data {
   // Spatial inertia
   mat6 I_hat;
@@ -138,6 +158,10 @@ typedef struct p_data {
   vec3 joint_to_com;
   // External forces exerted on the joint
   vec3 e_force;
+  // Offset in entity zero-joint buffer to first zero joint
+  //size_t zero_joint_offset;
+  // Specifies if the joint is revolute or prismatic
+  int joint_type;
   float inv_mass;
   // Shortcut for dot(s'I_hat_A, s_hat)
   float s_inner_I_dot_s;
@@ -161,8 +185,10 @@ typedef struct entity {
   size_t cons_size;
   // Location, rotation and scale matricies for each bone
   mat4 (*bone_mats)[3];
-  // "Narrow" physics data for each collider
+  // Physics data for each collider
   P_DATA *np_data;
+  // Physics data for zero-joints that provide additional dofs to colliders
+  // ZERO_JOINT *zj_data;
   // Model matrix for each bone, including those inherited by parent bones
   mat4 *final_b_mats;
   // Physics system status

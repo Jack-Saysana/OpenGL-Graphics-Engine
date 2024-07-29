@@ -138,6 +138,7 @@ typedef struct p_data {
   vec3 joint_to_com;
   // External forces exerted on the joint
   vec3 e_force;
+  int joint_type;
   float inv_mass;
   // Shortcut for dot(s'I_hat_A, s_hat)
   float s_inner_I_dot_s;

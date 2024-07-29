@@ -420,7 +420,9 @@ void integrate_ent(ENTITY *ent) {
                    ent->final_b_mats[cur_bone]);
 
       int parent_bone = ent->model->bones[cur_bone].parent;
-      if (parent_bone != -1) {
+      // TODO: Account for zero-joints
+      if (parent_bone != -1 &&
+          ent->np_data[cur_col].joint_type != JOINT_PRISMATIC) {
         vec3 base_loc = GLM_VEC3_ZERO_INIT;
         glm_mat4_mulv3(ent->final_b_mats[cur_bone],
                        ent->model->bones[cur_bone].base, 1.0, base_loc);
@@ -439,7 +441,7 @@ void integrate_ent(ENTITY *ent) {
         glm_mat4_mul(anchor_mat, ent->bone_mats[cur_bone][LOCATION],
                      ent->bone_mats[cur_bone][LOCATION]);
       }
-    } else {
+    } else if (ent->np_data[cur_col].joint_type != JOINT_PRISMATIC) {
       glm_mat4_copy(ent->final_b_mats[collider_root_bone],
                     ent->final_b_mats[cur_bone]);
     }
@@ -891,6 +893,13 @@ int entity_in_range(SIMULATION *sim, ENTITY *ent, vec3 origin, float range) {
   }
 
   return 1;
+}
+
+int is_moving(ENTITY *ent, size_t col) {
+  return (fabs(ent->np_data[col].vel_angle) > ZERO_THRESHOLD ||
+          fabs(ent->np_data[col].v[X]) > ZERO_THRESHOLD ||
+          fabs(ent->np_data[col].v[Y]) > ZERO_THRESHOLD ||
+          fabs(ent->np_data[col].v[Z]) > ZERO_THRESHOLD);
 }
 
 // =========================== BOOK KEEPING HELPERS ==========================
