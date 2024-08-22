@@ -25,6 +25,7 @@ ENTITY *init_entity(MODEL *model) {
       free(ent);
       return NULL;
     }
+    ent->zj_data = NULL;
 
     for (size_t i = 0; i < model->num_colliders; i++) {
       mat6_zero(ent->np_data[i].I_hat);
@@ -47,6 +48,8 @@ ENTITY *init_entity(MODEL *model) {
       glm_vec3_zero(ent->np_data[i].from_parent_lin);
       glm_vec3_zero(ent->np_data[i].joint_to_com);
       glm_vec3_zero(ent->np_data[i].e_force);
+      ent->np_data[i].zero_joint_offset = INVALID_INDEX;
+      ent->np_data[i].num_z_joints = 0;
       ent->np_data[i].joint_type = JOINT_REVOLUTE;
       ent->np_data[i].inv_mass = 0.0;
       ent->np_data[i].s_inner_I_dot_s = 0.0;
@@ -126,6 +129,7 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
   }
 
   draw_bones(entity->model);
+  draw_axes(shader, entity->model);
 }
 
 void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {

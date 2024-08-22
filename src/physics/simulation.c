@@ -342,6 +342,7 @@ void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
 }
 
 void integrate_ent(ENTITY *ent) {
+  float delta = 0.0;
   for (int cur_bone = 0; cur_bone < ent->model->num_bones; cur_bone++) {
     int cur_col = ent->model->bone_collider_links[cur_bone];
     if (cur_col == -1) {
@@ -350,8 +351,16 @@ void integrate_ent(ENTITY *ent) {
 
     int collider_root_bone = ent->model->collider_bone_links[cur_col];
     if (collider_root_bone == cur_bone) {
-      // Integrate acceleration
-      float delta = ent->np_data[cur_col].accel_angle * DELTA_TIME;
+      // Integrate acceleration of zero joints
+      for (size_t i = 0; i < ent->np_data[cur_col].num_z_joints; i++) {
+        size_t cur_zj = ent->np_data[cur_col].zero_joint_offset + i;
+        delta = ent->zj_data[cur_zj].accel_angle * DELTA_TIME;
+        ent->zj_data[cur_zj].vel_angle *= 0.999;
+        ent->zj_data[cur_zj].vel_angle += delta;
+        remove_noise(ent->zj_data[cur_zj].vel_angle, 0.0001);
+      }
+      // Integrate acceleration of main joint
+      delta = ent->np_data[cur_col].accel_angle * DELTA_TIME;
       ent->np_data[cur_col].vel_angle *= 0.999;
       ent->np_data[cur_col].vel_angle += delta;
       remove_noise(ent->np_data[cur_col].vel_angle, 0.0001);
@@ -371,7 +380,13 @@ void integrate_ent(ENTITY *ent) {
                    ent->np_data[cur_col].ang_v);
       vec3_remove_noise(ent->np_data[cur_col].ang_v, 0.0001);
 
-      // Integrate velocity
+      // Integrate velocity of zero joints
+      for (size_t i = 0; i < ent->np_data[cur_col].num_z_joints; i++) {
+        size_t cur_zj = ent->np_data[cur_col].zero_joint_offset + i;
+        delta = ent->zj_data[cur_zj].vel_angle * DELTA_TIME;
+        ent->zj_data[cur_zj].joint_angle += delta;
+      }
+      // Integrate velocity of main joint
       delta = ent->np_data[cur_col].vel_angle * DELTA_TIME;
       ent->np_data[cur_col].joint_angle += delta;
 
