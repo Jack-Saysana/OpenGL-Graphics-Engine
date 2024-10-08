@@ -40,6 +40,7 @@ ENTITY *init_entity(MODEL *model) {
       vec6_zero(ent->np_data[i].a_hat);
       vec6_zero(ent->np_data[i].v_hat);
       vec6_zero(ent->np_data[i].s_inner_I);
+      vec6_zero(ent->np_data[i].e_force);
       glm_vec3_zero(ent->np_data[i].a);
       glm_vec3_zero(ent->np_data[i].ang_a);
       glm_vec3_zero(ent->np_data[i].v);

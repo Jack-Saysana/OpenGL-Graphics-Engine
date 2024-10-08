@@ -54,6 +54,7 @@
 #define ANGULAR_DAMP_FACTOR (0.97)
 #define JOINT_PRISMATIC (0)
 #define JOINT_REVOLUTE (1)
+#define MOVING_THRESHOLD (0.000001)
 
 // Math Constants
 #define MAX_SVD_ITERATIONS (30)

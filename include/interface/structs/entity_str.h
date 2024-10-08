@@ -149,6 +149,8 @@ typedef struct p_data {
   vec6 v_hat;
   // Shortcut of s'I_hat_A
   vec6 s_inner_I;
+  // External forces exerted on the joint
+  vec6 e_force;
   // Read-only world-space linear/angular accleration/velocity
   vec3 a;
   vec3 ang_a;
@@ -160,8 +162,6 @@ typedef struct p_data {
   vec3 from_parent_lin;
   // Vector pointing from link's joint to link's COM in bone space
   vec3 joint_to_com;
-  // External forces exerted on the joint
-  vec3 e_force;
   // Offset in entity zero-joint buffer to first zero joint
   size_t zero_joint_offset;
   size_t num_z_joints;

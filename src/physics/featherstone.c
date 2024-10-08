@@ -108,8 +108,6 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
                                         z_data[cur_zj].ST_to_parent);
         calc_spatial_vel(z_data[cur_zj].ST_from_parent,
                          p_data[parent_col].v_hat, z_data[cur_zj].dof,
-                         //p_data[parent_col].v_hat, ent_zj_dof,
-                         //(vec3) { 0.0, 0.01, 0.0 }, GLM_VEC3_ZERO,
                          z_data[cur_zj].joint_to_com, GLM_VEC3_ZERO,
                          z_data[cur_zj].vel_angle, z_data[cur_zj].joint_type,
                          z_data[cur_zj].s_hat, z_data[cur_zj].c_hat,
@@ -119,7 +117,8 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
         glm_mat4_ins3(bones[root_bone].coordinate_matrix, c_bone_to_world);
         glm_mat3_copy(bones[root_bone].coordinate_matrix,
                       z_data[cur_zj].bone_to_world);
-        glm_vec3_zero(c_coords);
+        glm_mat4_mulv3(body->final_b_mats[root_bone], bones[root_bone].base,
+                       1.0, c_coords);
       }
 
       // Accumulate spatial velocity across intermediate zero joints
@@ -148,8 +147,6 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
                                         z_data[cur_zj].ST_to_parent);
         calc_spatial_vel(z_data[cur_zj].ST_from_parent,
                          z_data[cur_zj - 1].v_hat, z_data[cur_zj].dof,
-                         //z_data[cur_zj - 1].v_hat, ent_zj_dof,
-                         //(vec3) { 0.0, 0.01, 0.0 }, GLM_VEC3_ZERO,
                          z_data[cur_zj].joint_to_com, GLM_VEC3_ZERO,
                          z_data[cur_zj].vel_angle, z_data[cur_zj].joint_type,
                          z_data[cur_zj].s_hat, z_data[cur_zj].c_hat,
@@ -369,10 +366,19 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
                  bone_to_world);
     glm_mat3_mulv(bone_to_world, p_data[cur_col].a_hat,
                   p_data[cur_col].ang_a);
-    glm_mat3_mulv(bone_to_world, ((float *)p_data[cur_col].a_hat)+3,
-                  p_data[cur_col].a);
+    vec3 lin_accel = GLM_VEC3_ZERO_INIT;
+    glm_vec3_cross(p_data[cur_col].a_hat, p_data[cur_col].joint_to_com,
+                   lin_accel);
+    glm_vec3_add(lin_accel, ((float *)p_data[cur_col].a_hat)+3, lin_accel);
+    glm_mat3_mulv(bone_to_world, lin_accel, p_data[cur_col].a);
   }
 
+  /*
+  fprintf(stderr, "a: %f, %f, %f\n", p_data[0].a[0], p_data[0].a[1],
+          p_data[0].a[2]);
+  fprintf(stderr, "ang_a: %f, %f, %f\n", p_data[0].ang_a[0],
+          p_data[0].ang_a[1], p_data[0].ang_a[2]);
+  */
   return 0;
 }
 
@@ -525,8 +531,12 @@ void compute_spatial_velocity(int cur_col, int parent_col, mat4 bone_to_world,
   // Calculate world-space velocity
   mat3 b_to_w = GLM_MAT3_IDENTITY_INIT;
   glm_mat4_pick3(bone_to_world, b_to_w);
-  glm_mat3_mulv(b_to_w, v, p_data[cur_col].v);
-  glm_mat3_mulv(b_to_w, va, p_data[cur_col].ang_v);
+  glm_mat3_mulv(b_to_w, p_data[cur_col].v_hat, p_data[cur_col].ang_v);
+  vec3 lin_accel = GLM_VEC3_ZERO_INIT;
+  glm_vec3_cross(p_data[cur_col].v_hat, p_data[cur_col].joint_to_com,
+                 lin_accel);
+  glm_vec3_add(lin_accel, ((float *)p_data[cur_col].v_hat)+3, lin_accel);
+  glm_mat3_mulv(b_to_w, lin_accel, p_data[cur_col].v);
 }
 
 void calc_spatial_vel(mat6 from_parent, vec6 p_v_hat, vec3 u, vec3 d, vec3 r,
@@ -634,7 +644,7 @@ void calc_coriolis(vec3 va, vec3 u, vec3 r, vec3 d, float vel_angle,
 }
 
 void calc_IZ_hat(mat3 ent_to_world, mat3 bone_to_ent, mat3 inv_inertia,
-                 vec3 grav, vec3 e_forces, vec3 ang_vel, float inv_mass,
+                 vec3 grav, vec6 e_forces, vec3 ang_vel, float inv_mass,
                  mat6 i_dest, vec6 z_dest) {
   // M
   float mass = 1.0 / inv_mass;
@@ -659,13 +669,8 @@ void calc_IZ_hat(mat3 ent_to_world, mat3 bone_to_ent, mat3 inv_inertia,
   vec3 gravity = GLM_VEC3_ZERO_INIT;
   glm_mat3_mulv(world_to_bone, grav, gravity);
 
-  // Convert external force to bone space
-  vec3 e_force = GLM_VEC3_ZERO_INIT;
-  glm_mat3_mulv(world_to_bone, e_forces, e_force);
-
   vec3 za_linear = GLM_VEC3_ZERO_INIT;
   glm_vec3_scale(gravity, -mass, za_linear);
-  glm_vec3_sub(za_linear, e_force, za_linear);
 
   vec3 za_ang = GLM_VEC3_ZERO_INIT;
   glm_mat3_mulv(inertia_tensor, ang_vel, za_ang);
@@ -674,6 +679,16 @@ void calc_IZ_hat(mat3 ent_to_world, mat3 bone_to_ent, mat3 inv_inertia,
 
   // Z_hat
   vec6_compose(za_linear, za_ang, z_dest);
+
+  // Convert external force to bone space
+  vec6 e_force = GLM_VEC3_ZERO_INIT;
+  mat6 mat6_to_bone = MAT6_ZERO_INIT;
+  mat6_compose(world_to_bone, GLM_MAT3_ZERO, GLM_MAT3_ZERO, world_to_bone,
+               mat6_to_bone);
+  mat6_mulv(mat6_to_bone, e_forces, e_force);
+
+  // Apply external force
+  vec6_sub(z_dest, e_force, z_dest);
 }
 
 void calc_articulated_child(mat6 to_parent, mat6 from_parent, mat6 I_hat_A,

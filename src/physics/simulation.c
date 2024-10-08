@@ -246,16 +246,24 @@ size_t save_sim_state(SIMULATION *sim, SIM_STATE **state) {
   }
 
   ENTITY *cur_ent = NULL;
+  P_DATA *p_data = NULL;
+  ZERO_JOINT *z_data = NULL;
   for (size_t i = 0; i < sim->num_ent_moving; i++) {
     cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
+    p_data = cur_ent->np_data;
+    z_data = cur_ent->zj_data;
     sim_state[i].bone_mats = malloc(sizeof(mat4) * 3 *
                                     cur_ent->model->num_bones);
     if (sim_state[i].bone_mats == NULL) {
       free_sim_state(sim_state, i);
       return INVALID_INDEX;
     }
+    size_t num_joints = cur_ent->model->num_colliders;
+    for (size_t j = 0; j < cur_ent->model->num_colliders; j++) {
+      num_joints += p_data[j].num_z_joints;
+    }
     sim_state[i].col_state = malloc(sizeof(struct collider_state) *
-                                    cur_ent->model->num_colliders);
+                                    num_joints);
     if (sim_state[i].col_state == NULL) {
       free(sim_state[i].bone_mats);
       free_sim_state(sim_state, i);
@@ -264,9 +272,17 @@ size_t save_sim_state(SIMULATION *sim, SIM_STATE **state) {
 
     memcpy(sim_state[i].bone_mats, cur_ent->bone_mats, sizeof(mat4) * 3 *
            cur_ent->model->num_bones);
+    size_t jnt = 0;
     for (size_t j = 0; j < cur_ent->model->num_colliders; j++) {
-      sim_state[i].col_state[j].joint_angle = cur_ent->np_data[j].joint_angle;
-      sim_state[i].col_state[j].vel_angle = cur_ent->np_data[j].vel_angle;
+      for (size_t k = 0; k < p_data[j].num_z_joints; k++) {
+        size_t z_offset = p_data[j].zero_joint_offset + k;
+        sim_state[i].col_state[jnt].joint_angle = z_data[z_offset].joint_angle;
+        sim_state[i].col_state[jnt].vel_angle = z_data[z_offset].vel_angle;
+        jnt++;
+      }
+      sim_state[i].col_state[jnt].joint_angle = p_data[j].joint_angle;
+      sim_state[i].col_state[jnt].vel_angle = p_data[j].vel_angle;
+      jnt++;
     }
   }
 
@@ -276,13 +292,25 @@ size_t save_sim_state(SIMULATION *sim, SIM_STATE **state) {
 
 void restore_sim_state(SIMULATION *sim, SIM_STATE *state) {
   ENTITY *cur_ent = NULL;
+  P_DATA *p_data = NULL;
+  ZERO_JOINT *z_data = NULL;
   for (size_t i = 0; i < sim->num_ent_moving; i++) {
     cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
+    p_data = cur_ent->np_data;
+    z_data = cur_ent->zj_data;
     memcpy(cur_ent->bone_mats, state[i].bone_mats, sizeof(mat4) * 3 *
            cur_ent->model->num_bones);
+    size_t jnt = 0;
     for (size_t j = 0; j < cur_ent->model->num_colliders; j++) {
-      cur_ent->np_data[j].joint_angle = state[i].col_state[j].joint_angle;
-      cur_ent->np_data[j].vel_angle = state[i].col_state[j].vel_angle;
+      for (size_t k = 0; k < p_data[j].num_z_joints; k++) {
+        size_t z_offset = p_data[j].zero_joint_offset + k;
+        z_data[z_offset].joint_angle = state[i].col_state[jnt].joint_angle;
+        z_data[z_offset].vel_angle = state[i].col_state[jnt].vel_angle;
+        jnt++;
+      }
+      p_data[j].joint_angle = state[i].col_state[jnt].joint_angle;
+      p_data[j].vel_angle = state[i].col_state[jnt].vel_angle;
+      jnt++;
     }
   }
 
@@ -357,28 +385,48 @@ void integrate_ent(ENTITY *ent) {
         delta = ent->zj_data[cur_zj].accel_angle * DELTA_TIME;
         ent->zj_data[cur_zj].vel_angle *= 0.999;
         ent->zj_data[cur_zj].vel_angle += delta;
-        remove_noise(ent->zj_data[cur_zj].vel_angle, 0.0001);
+        remove_noise(ent->zj_data[cur_zj].vel_angle, ZERO_THRESHOLD);
       }
       // Integrate acceleration of main joint
       delta = ent->np_data[cur_col].accel_angle * DELTA_TIME;
       ent->np_data[cur_col].vel_angle *= 0.999;
       ent->np_data[cur_col].vel_angle += delta;
-      remove_noise(ent->np_data[cur_col].vel_angle, 0.0001);
+      remove_noise(ent->np_data[cur_col].vel_angle, ZERO_THRESHOLD);
 
+      ///*
+      //fprintf(stderr, "a: %f, %f, %f\n", ent->np_data[cur_col].a[0],
+      //        ent->np_data[cur_col].a[1], ent->np_data[cur_col].a[2]);
       vec3 delta_vec3 = GLM_VEC3_ZERO_INIT;
       glm_vec3_scale(ent->np_data[cur_col].a, DELTA_TIME, delta_vec3);
+      //fprintf(stderr, "d_v: %f, %f, %f\n", delta_vec3[0], delta_vec3[1],
+      //        delta_vec3[2]);
+      //fprintf(stderr, "v before: %f, %f, %f\n", ent->np_data[cur_col].v[0],
+      //        ent->np_data[cur_col].v[1], ent->np_data[cur_col].v[2]);
       glm_vec3_scale(ent->np_data[cur_col].v, 0.999,
                      ent->np_data[cur_col].v);
       glm_vec3_add(ent->np_data[cur_col].v, delta_vec3,
                    ent->np_data[cur_col].v);
-      vec3_remove_noise(ent->np_data[cur_col].v, 0.0001);
+      vec3_remove_noise(ent->np_data[cur_col].v, ZERO_THRESHOLD);
+      //fprintf(stderr, "v after: %f, %f, %f\n", ent->np_data[cur_col].v[0],
+      //        ent->np_data[cur_col].v[1], ent->np_data[cur_col].v[2]);
 
+      //fprintf(stderr, "ang_a: %f, %f, %f\n", ent->np_data[cur_col].ang_a[0],
+      //        ent->np_data[cur_col].ang_a[1], ent->np_data[cur_col].ang_a[2]);
       glm_vec3_scale(ent->np_data[cur_col].ang_a, DELTA_TIME, delta_vec3);
+      //fprintf(stderr, "d_v: %f, %f, %f\n", delta_vec3[0], delta_vec3[1],
+      //        delta_vec3[2]);
+      //fprintf(stderr, "ang_v before: %f, %f, %f\n",
+      //        ent->np_data[cur_col].ang_v[0], ent->np_data[cur_col].ang_v[1],
+      //        ent->np_data[cur_col].ang_v[2]);
       glm_vec3_scale(ent->np_data[cur_col].ang_v, 0.999,
                      ent->np_data[cur_col].ang_v);
       glm_vec3_add(ent->np_data[cur_col].ang_v, delta_vec3,
                    ent->np_data[cur_col].ang_v);
-      vec3_remove_noise(ent->np_data[cur_col].ang_v, 0.0001);
+      vec3_remove_noise(ent->np_data[cur_col].ang_v, ZERO_THRESHOLD);
+      //fprintf(stderr, "ang_v after: %f, %f, %f\n\n",
+      //        ent->np_data[cur_col].ang_v[0], ent->np_data[cur_col].ang_v[1],
+      //        ent->np_data[cur_col].ang_v[2]);
+      //*/
 
       // Integrate velocity of zero joints
       for (size_t i = 0; i < ent->np_data[cur_col].num_z_joints; i++) {
@@ -386,10 +434,10 @@ void integrate_ent(ENTITY *ent) {
         delta = ent->zj_data[cur_zj].vel_angle * DELTA_TIME;
         ent->zj_data[cur_zj].joint_angle += delta;
       }
+
       // Integrate velocity of main joint
       delta = ent->np_data[cur_col].vel_angle * DELTA_TIME;
       ent->np_data[cur_col].joint_angle += delta;
-
       glm_vec3_scale(ent->np_data[cur_col].v, DELTA_TIME, delta_vec3);
       glm_translate(ent->bone_mats[cur_bone][LOCATION], delta_vec3);
 
@@ -434,29 +482,28 @@ void integrate_ent(ENTITY *ent) {
                    ent->final_b_mats[cur_bone],
                    ent->final_b_mats[cur_bone]);
 
+      // "Anchor" revolute joints so they are not affected by translational
+      // drift
       int parent_bone = ent->model->bones[cur_bone].parent;
-      // TODO: Account for zero-joints
+      vec3 anchor = GLM_VEC3_ZERO_INIT;
       if (parent_bone != -1 &&
           ent->np_data[cur_col].joint_type != JOINT_PRISMATIC) {
         vec3 base_loc = GLM_VEC3_ZERO_INIT;
         glm_mat4_mulv3(ent->final_b_mats[cur_bone],
                        ent->model->bones[cur_bone].base, 1.0, base_loc);
-
         vec3 p_head_loc = GLM_VEC3_ZERO_INIT;
         glm_mat4_mulv3(ent->final_b_mats[parent_bone],
                        ent->model->bones[parent_bone].head, 1.0,
                        p_head_loc);
-
-        vec3 anchor = GLM_VEC3_ZERO_INIT;
         glm_vec3_sub(p_head_loc, base_loc, anchor);
-        mat4 anchor_mat = GLM_MAT4_IDENTITY_INIT;
-        glm_translate(anchor_mat, anchor);
-        glm_mat4_mul(anchor_mat, ent->final_b_mats[cur_bone],
-                     ent->final_b_mats[cur_bone]);
-        glm_mat4_mul(anchor_mat, ent->bone_mats[cur_bone][LOCATION],
-                     ent->bone_mats[cur_bone][LOCATION]);
       }
-    } else if (ent->np_data[cur_col].joint_type != JOINT_PRISMATIC) {
+      mat4 anchor_mat = GLM_MAT4_IDENTITY_INIT;
+      glm_translate(anchor_mat, anchor);
+      glm_mat4_mul(anchor_mat, ent->final_b_mats[cur_bone],
+                   ent->final_b_mats[cur_bone]);
+      glm_mat4_mul(anchor_mat, ent->bone_mats[cur_bone][LOCATION],
+                   ent->bone_mats[cur_bone][LOCATION]);
+    } else {
       glm_mat4_copy(ent->final_b_mats[collider_root_bone],
                     ent->final_b_mats[cur_bone]);
     }
@@ -621,19 +668,13 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
   return buf_len;
 }
 
-void impulse_resolution(SIMULATION *sim, COLLISION col) {
+void impulse_resolution(SIMULATION *sim, COLLISION col, vec3 a_dest_vel,
+                        vec3 b_dest_vel) {
   COL_ARGS a_args;
-  a_args.c_buff = &col.a_ent->p_cons;
-  a_args.c_len = &col.a_ent->num_cons;
-  a_args.c_size = &col.a_ent->cons_size;
+  a_args.vel_dest = a_dest_vel;
   a_args.velocity = col.a_ent->np_data[col.a_offset].v;
   a_args.ang_velocity = col.a_ent->np_data[col.a_offset].ang_v;
   a_args.collider = col.a_offset;
-  if (col.a_world_col.type == POLY) {
-    glm_vec3_copy(col.a_world_col.data.center_of_mass, a_args.center_of_mass);
-  } else {
-    glm_vec3_copy(col.a_world_col.data.center, a_args.center_of_mass);
-  }
   a_args.type = col.a_ent->type;
   int bone = col.a_ent->model->collider_bone_links[col.a_offset];
   glm_mat4_quat(col.a_ent->bone_mats[bone][ROTATION], a_args.rotation);
@@ -645,19 +686,15 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
   } else {
     glm_mat4_zero(a_args.inv_inertia);
   }
+  glm_mat4_mulv3(col.a_ent->final_b_mats[bone],
+                 col.a_ent->model->bones[bone].base, 1.0,
+                 a_args.center_of_rotation);
 
   COL_ARGS b_args;
-  b_args.c_buff = &col.b_ent->p_cons;
-  b_args.c_len = &col.b_ent->num_cons;
-  b_args.c_size = &col.b_ent->cons_size;
+  b_args.vel_dest = b_dest_vel;
   b_args.velocity = col.b_ent->np_data[col.b_offset].v;
   b_args.ang_velocity = col.b_ent->np_data[col.b_offset].ang_v;
   b_args.collider = col.b_offset;
-  if (col.b_world_col.type == POLY) {
-    glm_vec3_copy(col.b_world_col.data.center_of_mass, b_args.center_of_mass);
-  } else {
-    glm_vec3_copy(col.b_world_col.data.center, b_args.center_of_mass);
-  }
   b_args.type = col.b_ent->type;
   bone = col.b_ent->model->collider_bone_links[col.b_offset];
   glm_mat4_quat(col.b_ent->bone_mats[bone][ROTATION], b_args.rotation);
@@ -669,6 +706,9 @@ void impulse_resolution(SIMULATION *sim, COLLISION col) {
   } else {
     glm_mat4_zero(b_args.inv_inertia);
   }
+  glm_mat4_mulv3(col.b_ent->final_b_mats[bone],
+                 col.b_ent->model->bones[bone].base, 1.0,
+                 b_args.center_of_rotation);
 
   solve_collision(&a_args, &b_args, col.col_dir, col.col_point, sim->forces);
 }
@@ -864,8 +904,6 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
         new_col->b_ent = candidate_ent;
         new_col->a_offset = collider_offset;
         new_col->b_offset = p_obj->collider_offset;
-        new_col->a_world_col = s_world_col;
-        new_col->b_world_col = c_world_col;
         glm_vec3_copy(collision_dir, new_col->col_dir);
         glm_vec3_copy(col_point, new_col->col_point);
         //glm_vec3_copy(col_point, test_col_pt);
@@ -911,10 +949,10 @@ int entity_in_range(SIMULATION *sim, ENTITY *ent, vec3 origin, float range) {
 }
 
 int is_moving(ENTITY *ent, size_t col) {
-  return (fabs(ent->np_data[col].vel_angle) > ZERO_THRESHOLD ||
-          fabs(ent->np_data[col].v[X]) > ZERO_THRESHOLD ||
-          fabs(ent->np_data[col].v[Y]) > ZERO_THRESHOLD ||
-          fabs(ent->np_data[col].v[Z]) > ZERO_THRESHOLD);
+  return (fabs(ent->np_data[col].vel_angle) > MOVING_THRESHOLD ||
+          fabs(ent->np_data[col].v[X]) > MOVING_THRESHOLD ||
+          fabs(ent->np_data[col].v[Y]) > MOVING_THRESHOLD ||
+          fabs(ent->np_data[col].v[Z]) > MOVING_THRESHOLD);
 }
 
 // =========================== BOOK KEEPING HELPERS ==========================

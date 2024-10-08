@@ -75,22 +75,18 @@ typedef struct collision_list {
   ENTITY *b_ent;
   size_t a_offset;
   size_t b_offset;
-  COLLIDER a_world_col;
-  COLLIDER b_world_col;
-  vec3 col_dir;
+  vec3 col_dir; // Penetration vector in the direction of A into B
   vec3 col_point;
 } COLLISION;
 
 typedef struct collision_args {
-  J_CONS **c_buff;
-  size_t *c_len;
-  size_t *c_size;
+  float *vel_dest;
   float *velocity;
   float *ang_velocity;
   size_t collider;
   mat4 inv_inertia;
   versor rotation;
-  vec3 center_of_mass;
+  vec3 center_of_rotation;
   float inv_mass;
   int type;
 } COL_ARGS;

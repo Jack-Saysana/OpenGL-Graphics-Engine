@@ -21,7 +21,7 @@ void calc_spatial_vel(mat6 from_parent, vec6 p_v_hat, vec3 u, vec3 d, vec3 r,
 void calc_coriolis(vec3 va_parent, vec3 u, vec3 r, vec3 d, float vel_angle,
                    int joint_type, vec6 dest);
 void calc_IZ_hat(mat3 ent_to_world, mat3 bone_to_ent, mat3 inv_inertia,
-                 vec3 grav, vec3 e_forces, vec3 ang_vel, float inv_mass,
+                 vec3 grav, vec6 e_forces, vec3 ang_vel, float inv_mass,
                  mat6 i_dest, vec6 z_dest);
 void calc_articulated_child(mat6 to_parent, mat6 from_parent, mat6 I_hat_A,
                             vec6 Z_hat_A, vec6 c_hat, vec6 s_hat, float Q,

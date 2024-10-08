@@ -25,7 +25,8 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
 size_t save_sim_state(SIMULATION *sim, SIM_STATE **state);
 void restore_sim_state(SIMULATION *sim, SIM_STATE *state);
 void free_sim_state(SIM_STATE *state, size_t num_ents);
-void impulse_resolution(SIMULATION *sim, COLLISION col);
+void impulse_resolution(SIMULATION *sim, COLLISION col, vec3 a_dest_vel,
+                        vec3 b_dest_vel);
 void prep_refresh(SIMULATION *sim, ENTITY *ent);
 void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset);
 

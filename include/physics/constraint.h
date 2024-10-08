@@ -5,6 +5,7 @@
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
 void calc_world_accel(ENTITY *, vec3, size_t, vec3);
+void calc_force_vec(ENTITY *, vec3, size_t, vec3, vec6);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
