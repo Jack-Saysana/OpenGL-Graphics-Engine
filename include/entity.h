@@ -12,3 +12,4 @@
 void draw_model(unsigned int shader, MODEL *model);
 void draw_bones(MODEL *model);
 void draw_axes(unsigned int shader, MODEL *model);
+void set_vec3(char *loc, vec3 vec, unsigned int shader);

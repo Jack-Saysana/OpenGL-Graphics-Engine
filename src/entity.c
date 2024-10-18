@@ -129,6 +129,7 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
                        (float *) entity->final_b_mats[i]);
   }
 
+  set_vec3("col", (vec3) {1.0, 1.0, 0.0}, shader);
   draw_bones(entity->model);
   draw_axes(shader, entity->model);
 }
