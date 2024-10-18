@@ -1,7 +1,7 @@
 #ifndef __OCT_TREE_STR_H__
 #define __OCT_TREE_STR_H__
 
-#include "./entity_str.h"
+#include "./models/entity_str.h"
 
 typedef enum {
   X_Y_Z = 0,

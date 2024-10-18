@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glad/glad.h>
-#include <structs/model_data_str.h>
+#include <structs/models/model_data_str.h>
 
 // ============================= LOCAL CONSTANTS =============================
 

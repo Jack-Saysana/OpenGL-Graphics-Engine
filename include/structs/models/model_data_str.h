@@ -1,7 +1,7 @@
 #ifndef __MODEL_DATA_STR_H__
 #define __MODEL_DATA_STR_H__
 
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 
 typedef struct vbo {
   float vertex[3];

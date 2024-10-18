@@ -2,7 +2,7 @@
 #define __ENGINE_SIMULATION_H__
 
 #include "./structs/simulation_str.h"
-#include "./structs/entity_str.h"
+#include "./structs/models/entity_str.h"
 
 SIMULATION *init_sim(float max_extent, unsigned int max_depth);
 void free_sim(SIMULATION *sim);

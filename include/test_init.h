@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 #include <structs/font_str.h>
 
 #define DIR "./"

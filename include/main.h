@@ -8,7 +8,7 @@
 #include <globals.h>
 #include <const.h>
 #include <structs/ui_component_str.h>
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 #include <structs/simulation_str.h>
 #include <structs/font_str.h>
 

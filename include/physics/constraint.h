@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 #include <structs/physics/constraint_str.h>
 #include <structs/math/amat_str.h>
 

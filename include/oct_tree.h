@@ -5,7 +5,7 @@
 #include <float.h>
 #include <cglm/affine.h>
 #include <const.h>
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 #include <structs/oct_tree_str.h>
 
 static vec3 X_DIR = { 1.0, 0.0, 0.0 };
