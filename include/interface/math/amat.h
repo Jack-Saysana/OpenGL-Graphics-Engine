@@ -5,6 +5,7 @@
 
 // ================================ FUNCTIONS ================================
 
+// Initialize matrix with m rows and n cols
 amat init_amat(float *data, int m, int n);
 void free_amat(amat a);
 // Matrix copy
@@ -38,9 +39,12 @@ int amat_ins(amat a, amat dest, int m, int n);
 // Print matrix
 void print_amat(amat a);
 void print_amat2(amat a);
+// Zero digits after xth decimal place
+void amat_remove_noise(amat a, int x);
 
 // ================================== MACROS =================================
 
+// Returns value at ith column in the jth row
 #define AMAT_GET(a, i, j) ((a).data[((i)*(a).m)+(j)])
 
 #endif

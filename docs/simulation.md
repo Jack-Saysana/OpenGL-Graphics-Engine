@@ -166,7 +166,7 @@ A finalizing function to update the state of a simulation's oct-tree with the po
 
 ### void integrate_sim(SIMULATION *sim, vec3 origin, float range)
 
-For each `COLLIDER` in `sim` which is withing `range` from `origin`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
+For each `ENTITY` in `sim` which is withing `range` from `origin`, its velocity and acceleration are integrated to ultimately update the colliders position in the simulation.
 
 **Arguements**
 
@@ -176,21 +176,19 @@ For each `COLLIDER` in `sim` which is withing `range` from `origin`, its velocit
 
 - `float range`: Max distance an object can be from `origin` for it to be integrated. Can be set to `SIM_RANGE_INF` to consider all objects in the simulation.
 
-### void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col)
+### void prep_refresh(SIMULATION *sim, ENTITY *)
 
-Integrate a single collider inside of a simulation. A more fine-grained version of `integrate_sim()`.
+For a given simulation, this function marks an entity as unmoving. This should be called before refreshing an entity's colliders via `refresh_collider()`, since `refresh_collider()` will not mark an entity as unmoving if all of the colliders of an entity are found to be unmoving.
 
 **Arguments**
 
-- `SIMULATION *sim`: Simulation to which the entity belongs
+- `SIMULATION *sim`: Simulation in which to mark the entity
 
-- `ENTITY *ent`: Entity to integrate
-
-- `size_t col`: Index of collider of entity to integrate
+- `ENTITY *entity`: Entity to mark as unmoving
 
 ### void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset)
 
-For the given collider, it's status in the simulation is refreshed. This call is necesarry in the case where an object exists within multiple different simulations, a and b. In the event simulation a causes the object to begin moving, `refresh_collider()` must be called on the collider with simulation b to ensure simulation b is synced with the current status of the collider.
+For the given collider, it's status as moving in the simulation is refreshed. This call is necesarry in the case where an object exists within multiple different simulations, a and b. In the event simulation a causes the object to begin moving, `refresh_collider()` must be called on the collider with simulation b to ensure simulation b is synced with the current moving status of the collider. Additionally, if the given collider is found to be moving, the entity will be marked as moving as well. However, in the event no collider of the entity is moving, this function does NOT mark the entity as unmoving. As such, it is advised t ocall `prep_refresh()` before refreshing the colliders of an entity.
 
 **Arguments**
 

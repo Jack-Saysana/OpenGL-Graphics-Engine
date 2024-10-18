@@ -31,6 +31,9 @@
 #define ALLOW_HURT_BOXES (0x2)
 #define ALLOW_HIT_BOXES  (0x4)
 
+// Physics constants
+#define JOINT_PRISMATIC (0)
+#define JOINT_REVOLUTE (1)
 #define GRAVITY (10.0)
 
 // Misc

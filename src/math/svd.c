@@ -135,6 +135,7 @@ void calc_r1(amat a, int offset, int size, amat dest) {
   amat_ins(b, dest, offset, offset);
   amat_transpose(dest, dest);
 
+  free_amat(b);
   free_amat(bt);
   free_amat(temp);
 }

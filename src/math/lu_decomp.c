@@ -51,24 +51,14 @@ void lu_decomp(amat a, amat l, amat u) {
     AMAT_GET(l, i, i) = 1.0;
   }
 
-  float sum = 0.0;
-  for (int j = 0; j < a.m; j++) {
-    for (int i = 0; i <= j; i++) {
-      sum = 0.0;
-      for (int k = 0; k < i; k++) {
-        sum += (AMAT_GET(l, k, i) * AMAT_GET(u, j, k));
+  // Separate into l and u
+  for (int i = 0; i < l.m; i++) { // Row
+    for (int j = 0; j < l.m; j++) { // Col
+      if (j >= i) {
+        AMAT_GET(u, j, i) = AMAT_GET(a, j, i);
+      } else {
+        AMAT_GET(l, j, i) = AMAT_GET(a, j, i);
       }
-
-      AMAT_GET(u, j, i) = AMAT_GET(a, j, i) - sum;
-    }
-
-    for (int i = j+1; i < a.m; i++) {
-      sum = 0.0;
-      for (int k = 0; k < j; k++) {
-        sum += (AMAT_GET(l, k, i) * AMAT_GET(u, j, k));
-      }
-
-      AMAT_GET(l, j, i) = (AMAT_GET(a, j, i) - sum) / AMAT_GET(u, j, j);
     }
   }
 }
@@ -79,8 +69,9 @@ void partial_pivot(amat a, amat b) {
     return;
   }
 
-  // Calculate implicit scaling of each row of a, so pivot comparison can be
-  // normalized
+  // Calculate implicit scaling of each row of a, The implicit scaling is 1
+  // divided by the largest element in the row. This is done so pivot
+  // comparison can be normalized
   float cur = 0.0;
   for (int i = 0; i < a.m; i++) {
     implicit_scales[i] = 0.0;
@@ -98,11 +89,16 @@ void partial_pivot(amat a, amat b) {
   }
 
   // Swap rows such that diagonal is populated with large values
+  // (NOTE: We can swap rows freely without having to save a log of our swaps,
+  //  since a row-wise permutation does not affect the solution vector)
   float max = 0.0;
   int swap = -1;
   for (int i = 0; i < a.m; i++) {
     max = 0.0;
     swap = -1;
+    // Find row, whose normalized value in the ith column is largest
+    // (NOTE: Only search through rows i and above, since we've already found
+    //  final pivot for rows before i)
     for (int j = i; j < a.m; j++) {
       cur = implicit_scales[j] * fabs(AMAT_GET(a, i, j));
       if (cur > max) {
@@ -114,12 +110,21 @@ void partial_pivot(amat a, amat b) {
       free(implicit_scales);
       return;
     } else if (swap != i) {
+      // Swap row if largest normalized value in ith column is not in ith row
       amat_swap_row(a, a, i, swap);
       amat_swap_row(b, b, i, swap);
 
       cur = implicit_scales[i];
       implicit_scales[i] = implicit_scales[swap];
       implicit_scales[swap] = cur;
+    }
+    // Perform actual lu-decomposition
+    for (int j = i + 1; j < a.m; j++) {
+      AMAT_GET(a, i, j) /= AMAT_GET(a, i, i);
+      float temp = AMAT_GET(a, i, j);
+      for (int k = i+1; k < a.m; k++) {
+        AMAT_GET(a, k, j) -= (temp * AMAT_GET(a, k, i));
+      }
     }
   }
 

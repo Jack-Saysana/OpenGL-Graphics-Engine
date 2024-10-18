@@ -45,6 +45,8 @@ int amat_ins(amat a, amat dest, int m, int n);
 // Print matrix
 void print_amat(amat a);
 void print_amat2(amat a);
+// Zero digits after xth decimal place
+void amat_remove_noise(amat a, int x);
 
 // ================================== MACROS =================================
 

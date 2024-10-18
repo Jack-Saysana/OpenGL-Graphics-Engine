@@ -6,6 +6,9 @@
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
+void preprocess_system(amat, amat, amat, amat *, amat *, amat *, int *, int *);
+void postprocess_sol(amat, amat, int *);
+
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 int lu_solve(amat a, amat b, amat x);

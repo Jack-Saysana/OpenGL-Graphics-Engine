@@ -288,6 +288,31 @@ Draws an entity to the screen, using the model that was used to initialize the e
 
 - `ENTITY *entity`: Pointer to the entity to render
 
+### void draw_skeleton(unsigned int shader, ENTITY *entity)
+
+Draws the bone hierachy of an entity to the screen. The drawn bones will automatically follow the current joint angles of each respective bone.
+
+**Arguments**
+
+- `unsigned int shader`: The ID of the shader program used to render the skeleton
+  - For an example of a valid vertex shader, see [src/shaders/bone/shader.vs](../src/shaders/bone/shader.vs)
+  - For an example of a valid fragment shader which contains only the required uniforms, see [src/shaders/basic/shader.fs](../src/shaders/basic/shader.fs)
+  - No geometry shader required
+- `ENTITY *entity`: Pointer to the entity of the skeleton to render
+
+### void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere)
+
+Draws the colliders of an entity to the screen. The drawn colliders will automatically follow the current orientation of the bones.
+
+**Arguments**
+
+- `unsigned int shader`: The ID of the shader program used to render the colliders
+  - For an example of a valid vertex shader, see [src/shaders/basic/shader.vs](../src/shaders/basic/shader.vs)
+  - For an example of a valid fragment shader, see [src/shaders/basic/shader.fs](../src/shaders/basic/shader.fs)
+  - No geometry shader required
+- `ENTITY *entity`: Pointer to the entity of the collider to render
+- `MODEL *sphere`: Pointer to a sphere model which will be used as the base model for rendering spherical hit boxes. Should be a sphere of unit radius, centered at the origin.
+
 ## Cleanup
 
 Upon concluding their usage, both entities and models must be deallocated with their respective functions.

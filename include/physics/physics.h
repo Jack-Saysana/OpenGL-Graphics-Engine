@@ -9,8 +9,6 @@
 #include <globals.h>
 
 //#define FRICTION
-#define BUFF_STARTING_LEN (10)
-
 #define COLLISION (1)
 #define POSSIBLE (0)
 #define REMOVED (-1)
@@ -18,8 +16,6 @@
 #define POINT_COL (1)
 #define EDGE_COL (2)
 #define FACE_COL (3)
-
-#define DAMP_FACTOR (0.999)
 
 #define MAX_GJK_ITERATIONS (1000)
 #define MAX_EPA_ITERATIONS (1000)

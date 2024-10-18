@@ -28,7 +28,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
     return -1;
   }
   b_buff_len = BUFF_STARTING_LEN;
-  b_len = 0;
+  // Account for default "root bone" which all entities have
+  b_len = 1;
+  glm_mat3_identity(bones[0].coordinate_matrix);
+  glm_vec3_copy((vec3) {0.0, 1.0, 0.0}, bones[0].head);
+  glm_vec3_zero(bones[0].base);
+  bones[0].parent = -1;
+  bones[0].num_children = 0;
 
   bone_ids = malloc(sizeof(int) * 4 * BUFF_STARTING_LEN);
   if (bone_ids == NULL) {
@@ -262,6 +268,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
                           bones[b_len].coordinate_matrix[2] + 2,
                           &(bones[b_len].parent),
                           &(bones[b_len].num_children));
+      if (bones[b_len].parent != -1) {
+        bones[b_len].parent++;
+      }
       b_len++;
       if (b_len == b_buff_len) {
         size_t old_buff_len = b_buff_len;
@@ -312,6 +321,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                     colliders[col_len].data.verts[7],
                                     colliders[col_len].data.verts[7]+1,
                                     colliders[col_len].data.verts[7]+2);
+      // Account for root bone at beginning of bone list
+      bone_links[col_len]++;
 
       vec3 *verts = colliders[col_len].data.verts;
       vec3 center_of_mass = GLM_VEC3_ZERO_INIT;
@@ -347,6 +358,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
              colliders[col_len].data.center + 1,
              colliders[col_len].data.center + 2,
              &(colliders[col_len].data.radius));
+      // Account for root bone at beginning of bone list
+      bone_links[col_len]++;
 
       col_len++;
       if (col_len == col_buff_len) {
@@ -564,11 +577,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     }
   }
-  for (int i = 0; i < b_len; i++) {
+  // Iterate over all mapped bones, then map all un-mapped children bones
+  // to the same collider
+  for (int i = 1; i < b_len; i++) {
     if (collider_links[i] == -1) {
       continue;
     }
-    for (int j = 0; j < b_len; j++) {
+    for (int j = 1; j < b_len; j++) {
       if (bones[j].parent == i && collider_links[j] == -1) {
         collider_links[j] = collider_links[i];
       }
@@ -834,7 +849,7 @@ int sort_colliders() {
   // Write sorted collider trees of each parent collider in the armature
   for (size_t cur_bone = 0; cur_bone < b_len; cur_bone++) {
     // Find root bone of root collider
-    if (bones[cur_bone].parent == -1) {
+    if (bones[cur_bone].parent == -1 && collider_links[cur_bone] != -1) {
       // Add root collider to sorted list
       int cur_col = collider_links[cur_bone];
       swap_colliders(cur_col, cur_pos);

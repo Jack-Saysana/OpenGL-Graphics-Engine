@@ -14,6 +14,7 @@
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
 
+// Simulation constants
 #define NUM_PROPS (5)
 #define DEFAULT (0)
 #define HIT_BOX (1)
@@ -22,10 +23,6 @@
 #define T_DYNAMIC (0x1)
 #define T_DRIVING (0x2)
 #define T_IMMUTABLE (0x4)
-
-#define PHYS_TREE (0)
-#define HIT_TREE (1)
-#define EVENT_TREE (2)
 
 #define SIM_RANGE_INF (0xFFFFFFFF)
 #define ALLOW_DEFAULT    (0x1)
@@ -36,6 +33,9 @@
 #define INVALID_TEX (0xFFFFFFFF)
 
 #define GRAVITY (10.0)
+
+#define L_TYPE_ENTITY (0)
+#define L_TYPE_COLLIDER (1)
 
 // Simulation hash-map constants
 #define HASH_MAGIC_NUM (0.618033988749894)
@@ -52,9 +52,18 @@
 // Physics Constants
 #define LINEAR_DAMP_FACTOR (0.99)
 #define ANGULAR_DAMP_FACTOR (0.97)
+#define JOINT_PRISMATIC (0)
+#define JOINT_REVOLUTE (1)
+#define MOVING_THRESHOLD (0.01)
+#define CONSTRAINT_ERROR_THRESHOLD (0.4)
 
 // Math Constants
 #define MAX_SVD_ITERATIONS (30)
+#define MAX_LCP_ITERATIONS (100)
 #define ZERO_THRESHOLD (0.00001)
+#define LCP_C (0)
+#define LCP_NC (1)
+#define LCP_EQ (0)
+#define LCP_GEQ (1)
 
 #endif
