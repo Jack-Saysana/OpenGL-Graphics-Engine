@@ -229,3 +229,27 @@ int solve_lower(amat a, amat b, amat x) {
 
   return 0;
 }
+
+/*
+  Checks the soltion vector C to the equation AX=B, given some degree of
+  tolerance
+  Arguments:
+  - amat a: A matrix of size m x n
+  - amat b: B matrix of size m x 1
+  - amat c: Solution matrix of size m x 1
+  Returns:
+  1 if solution is accepted, 0 if solution is invalid
+*/
+int check_sol(amat a, amat b, amat c, float tolerance) {
+  amat got = init_amat(NULL, b.m, b.n);
+  amat_mul(a, c, got);
+  for (int i = 0; i < b.m; i++) {
+    if (fabs(AMAT_GET(b, 0, i) - AMAT_GET(got, 0, i)) > tolerance) {
+      free_amat(got);
+      return 0;
+    }
+  }
+
+  free_amat(got);
+  return 1;
+}

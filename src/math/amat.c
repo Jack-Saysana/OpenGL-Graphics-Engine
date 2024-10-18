@@ -11,8 +11,8 @@
 /*
   Initilizes an m x n matrix
   Arguments:
-  - float *data: Initial content of new matrix. NULL if matrix should be zeroed
-                 out.
+  - float *data: Initial content of new matrix. NULL if matrix should be
+                  zeroed out.
   - int m: Number of rows
   - int n: Number of columns
   Returns:
@@ -432,7 +432,7 @@ void print_amat2(amat a) {
   for (int i = 0; i < a.m; i++) {
     fprintf(stderr,"{");
     for (int j = 0; j < a.n; j++) {
-      fprintf(stderr, "%.4f", AMAT_GET(a, j, i));
+      fprintf(stderr, "%f", AMAT_GET(a, j, i));
       if (j < a.n-1) {
         fprintf(stderr,",");
       }
@@ -444,4 +444,13 @@ void print_amat2(amat a) {
     }
   }
   fprintf(stderr,"}\n");
+}
+
+// Zero digits after xth decimal place
+void amat_remove_noise(amat a, int x) {
+  int mul = pow(10, x);
+  for (int i = 0; i < a.m * a.n; i++) {
+    int val = (((float) mul) * a.data[i]);
+    a.data[i] = ((float) val) / ((float) mul);
+  }
 }

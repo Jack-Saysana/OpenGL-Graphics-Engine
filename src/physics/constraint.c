@@ -51,16 +51,32 @@ void apply_constraints(ENTITY *entity, J_CONS *constraints,
 
   // Solve linear system
   solve_system(A, B, C);
-
-  // Apply constraint forces
-  for (size_t i = 0; i < num_constr; i++) {
-    col_idx = constraints[i].col_idx;
-    vec3 e_force = GLM_VEC3_ZERO_INIT;
-    e_force[0] = AMAT_GET(C, 0, (i*3));
-    e_force[1] = AMAT_GET(C, 0, (i*3)+1);
-    e_force[2] = AMAT_GET(C, 0, (i*3)+2);
-    calc_force_vec(entity, constraints[i].pt, constraints[i].col_idx,
-                   e_force, entity->np_data[col_idx].e_force);
+  /*
+  fprintf(stderr, "A:\n");
+  print_amat2(A);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "B:\n");
+  print_amat2(B);
+  fprintf(stderr, "C:\n");
+  print_amat2(C);
+  */
+  // Check if the calculated soltuion is accurate given some error threshold
+  if (!check_sol(A, B, C, CONSTRAINT_ERROR_THRESHOLD)) {
+    // Solution is corrupted due to numerical instability. Better to drop the
+    // constraints
+    //fprintf(stderr, "DROPPING CONSTRAINTS\n");
+    vec6_zero(entity->np_data[col_idx].e_force);
+  } else {
+    // Apply constraint forces
+    for (size_t i = 0; i < num_constr; i++) {
+      col_idx = constraints[i].col_idx;
+      vec3 e_force = GLM_VEC3_ZERO_INIT;
+      e_force[0] = AMAT_GET(C, 0, (i*3));
+      e_force[1] = AMAT_GET(C, 0, (i*3)+1);
+      e_force[2] = AMAT_GET(C, 0, (i*3)+2);
+      calc_force_vec(entity, constraints[i].pt, constraints[i].col_idx,
+                     e_force, entity->np_data[col_idx].e_force);
+    }
   }
 
   free_amat(A);

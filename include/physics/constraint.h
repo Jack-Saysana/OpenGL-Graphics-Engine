@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <structs/entity_str.h>
 #include <structs/physics/constraint_str.h>
 #include <structs/math/amat_str.h>
@@ -12,3 +13,4 @@ void calc_force_vec(ENTITY *, vec3, size_t, vec3, vec6);
 int featherstone_abm(ENTITY *, vec3);
 void solve_system(amat, amat, amat);
 void lcp(amat, amat, amat);
+int check_sol(amat, amat, amat, float);

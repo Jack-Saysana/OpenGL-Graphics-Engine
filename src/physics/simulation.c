@@ -949,10 +949,15 @@ int entity_in_range(SIMULATION *sim, ENTITY *ent, vec3 origin, float range) {
 }
 
 int is_moving(ENTITY *ent, size_t col) {
-  return (fabs(ent->np_data[col].vel_angle) > MOVING_THRESHOLD ||
-          fabs(ent->np_data[col].v[X]) > MOVING_THRESHOLD ||
-          fabs(ent->np_data[col].v[Y]) > MOVING_THRESHOLD ||
-          fabs(ent->np_data[col].v[Z]) > MOVING_THRESHOLD);
+  float mag = ent->np_data[col].vel_angle * ent->np_data[col].vel_angle;
+  size_t zj_offset = ent->np_data[col].zero_joint_offset;
+  size_t num_zj = ent->np_data[col].num_z_joints;
+  for (size_t i = 0; i < num_zj; i++) {
+    mag += (ent->zj_data[zj_offset + i].vel_angle *
+            ent->zj_data[zj_offset + i].vel_angle);
+  }
+  mag = sqrt(mag);
+  return mag > MOVING_THRESHOLD;
 }
 
 // =========================== BOOK KEEPING HELPERS ==========================

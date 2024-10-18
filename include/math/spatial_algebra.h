@@ -57,6 +57,8 @@ void vec6_spatial_transpose_mulv(vec6 a, vec6 b, mat6 dest);
 // b = [b1, b2, b3, b4, b5, b6]
 // dest = a1 * b1 + a2 * b2 + a3 * b3 + a4 * b4 + a5 * b5 + a6 * b6
 float vec6_dot(vec6 a, vec6 b);
+// |a|
+float vec6_norm(vec6 a);
 // a = [a1, a2]
 // b = [b1, b2]
 // = a'b = a2*b1 + a1*b2
