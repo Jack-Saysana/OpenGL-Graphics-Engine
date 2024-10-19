@@ -3,6 +3,9 @@
 #include <string.h>
 #include <glad/glad.h>
 
-unsigned int init_shader_prog(char *, char *, char *);
+// ====================== INTERNALLY DEFINED FUNCTIONS =======================
+
 long gen_shader(const char *, GLenum);
 char *load_source(char *);
+
+// ====================== EXTERNALLY DEFINED FUNCTIONS =======================

@@ -8,11 +8,15 @@
 #define Y (1)
 #define Z (2)
 
-#define BUFF_START_LEN (5)
+#define LINE_BUFF_STARTING_LEN (50)
+#define FILE_CONTENTS_STARTING_LEN (500)
 
 #define HASH_MAP_STARTING_LEN (50)
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
+
+// Material constants
+#define NUM_PROPS (5)
 
 // Simulation constants
 #define NUM_PROPS (5)

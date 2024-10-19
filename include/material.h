@@ -1,35 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <const.h>
+#include <structs/material_str.h>
+#include <structs/line_buffer_str.h>
 
-typedef enum {
-  NO_OP = -2,
-  NEWMTL = -1,
-  AMB = 0,
-  DIFF = 1,
-  SPEC = 2,
-  SPEC_EXPONENT = 3,
-  BUMP = 4
-} PROP_TYPE;
+// ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-#define NUM_PROPS (5)
-
-typedef struct line_buffer {
-  char *dir;
-  char *filename;
-  char **buffer;
-  size_t len;
-} LINE_BUFFER;
-
-typedef struct material {
-  size_t name;
-  char *mat_paths[NUM_PROPS];
-} MATERIAL;
-
-int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
-                 char *dir, char *lib);
 PROP_TYPE get_op(char **cur_line);
-void free_materials(MATERIAL *buffer, size_t buf_len);
+
+// ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 LINE_BUFFER *get_lines(char *);
