@@ -5,7 +5,7 @@
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-long gen_shader(const char *, GLenum);
-char *load_source(char *);
+long gen_shader(const char *source, GLenum type);
+char *load_source(char *path);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================

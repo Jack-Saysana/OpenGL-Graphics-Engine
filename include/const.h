@@ -11,12 +11,16 @@
 #define LINE_BUFF_STARTING_LEN (50)
 #define FILE_CONTENTS_STARTING_LEN (500)
 
-#define HASH_MAP_STARTING_LEN (50)
-#define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
 
 // Material constants
 #define NUM_PROPS (5)
+#define TEX_TAB_STARTING_LEN (20)
+#define VERTEX_BUFF_STARTING_LEN (10)
+#define NORMAL_BUFF_STARTING_LEN (10)
+#define TEX_COORD_BUFF_STARTING_LEN (10)
+#define VBO_STARTING_LEN (10)
+#define INDEX_BUFF_STARTING_LEN (20)
 
 // Simulation constants
 #define NUM_PROPS (5)
@@ -41,7 +45,10 @@
 #define L_TYPE_ENTITY (0)
 #define L_TYPE_COLLIDER (1)
 
+#define OCT_TREE_STARTING_LEN (25)
+
 // Simulation hash-map constants
+#define HASH_MAP_STARTING_LEN (50)
 #define HASH_MAGIC_NUM (0.618033988749894)
 #define LEDGER_FREE (0)
 #define LEDGER_OCCUPIED (1)
@@ -49,6 +56,7 @@
 
 // UI constants
 #define ROOT_UI_DEPTH (-10.0)
+#define STK_SIZE_INIT (10)
 
 // Misc constants
 //#define DEBUG_OCT_TREE (1)

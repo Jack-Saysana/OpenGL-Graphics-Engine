@@ -41,6 +41,6 @@ void update_node_emptiness(OCT_TREE *tree, size_t node_offset);
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
-void global_collider(ENTITY *, size_t, COLLIDER *dest);
-void draw_model(unsigned int, MODEL *);
-int get_lsb(int);
+void global_collider(ENTITY *entity, size_t col, COLLIDER *dest);
+void draw_model(unsigned int shader, MODEL *model);
+int get_lsb(int val);

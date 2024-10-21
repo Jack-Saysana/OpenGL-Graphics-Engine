@@ -13,6 +13,6 @@ PROP_TYPE get_op(char **cur_line);
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
-LINE_BUFFER *get_lines(char *);
-void free_line_buffer(LINE_BUFFER *);
+LINE_BUFFER *get_lines(char *path);
+void free_line_buffer(LINE_BUFFER *lb);
 size_t get_str_hash(char *str);

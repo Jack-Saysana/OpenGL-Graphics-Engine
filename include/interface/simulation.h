@@ -11,9 +11,9 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter);
 int sim_remove_entity(SIMULATION *sim, ENTITY *entity);
 void sim_add_force(SIMULATION *sim, vec3 force);
 void sim_clear_force(SIMULATION* sim);
-void prep_sim_movement(SIMULATION *);
+void prep_sim_movement(SIMULATION *sim);
 //void update_sim_movement(SIMULATION *, int);
-void update_sim_movement(SIMULATION *);
+void update_sim_movement(SIMULATION *sim);
 size_t peek_integration(SIMULATION *sim, SIM_STATE **state, vec3 origin,
                         float range);
 void integrate_sim(SIMULATION *sim, vec3 origin, float range);

@@ -5,10 +5,6 @@
 #include <stb/stb_image.h>
 #include <structs/models/model_data_str.h>
 
-// ============================= LOCAL CONSTANTS =============================
-
-#define TEX_TAB_STARTING_LEN (20)
-
 // ============================== LOCAL STRUCTS ==============================
 
 typedef struct texture_table {
@@ -20,23 +16,13 @@ static TEX_TAB *tex_tab = NULL;
 static size_t tex_tab_len = 0;
 static size_t tex_tab_size = 0;
 
-// =============================== LOCAL ENUMS ===============================
-
-typedef enum {
-  AMB = 0,
-  DIFF = 1,
-  SPEC = 2,
-  SPEC_EXPONENT = 3,
-  BUMP = 4
-} TEX_TYPE;
-
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-size_t tex_tab_add(char *);
-size_t tex_tab_search(char *);
+size_t tex_tab_add(char *path);
+size_t tex_tab_search(char *path);
 int resize_tex_tab();
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
-size_t get_str_hash(char *);
-char *remove_double_dot(char *);
+size_t get_str_hash(char *str);
+char *remove_double_dot(char *path);
