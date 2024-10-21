@@ -5,6 +5,7 @@
  * collision detection. Refer to personal notes for in-depth details.
  */
 int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
+  // TODO Num used is always 8
   if (a == NULL || b == NULL || (a->type == POLY && a->data.num_used > 8) ||
       (b->type == POLY && b->data.num_used > 8) || (a->type == SPHERE &&
       a->data.radius < 0.0) || (b->type == SPHERE && b->data.radius < 0.0)) {
@@ -260,6 +261,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
   vec3 ap_vec = GLM_VEC3_ZERO_INIT;
   glm_vec3_normalize_to(p_vec, ap_vec);
   float face_test = 0.0;
+  // TODO Num used is always 8
   unsigned int num_used = a->data.num_used;
   unsigned int starting_index = max_dot(a->data.verts, num_used, ap_vec);
   unsigned int cur_index = 0;
@@ -315,6 +317,7 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest) {
 
   vec3 bp_vec;
   glm_vec3_negate_to(ap_vec, bp_vec);
+  // TODO Num used is always 8
   num_used = b->data.num_used;
   starting_index = max_dot(b->data.verts, num_used, bp_vec);
 
@@ -633,6 +636,7 @@ int triangle_check(vec3 a, vec3 b, vec3 c, unsigned int *num_used, vec3 dir) {
 }
 
 void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
+  // TODO Num used is always 8
   if (a == NULL || b == NULL || dir == NULL || dest == NULL ||
       (a->type == POLY && a->data.num_used > 8) ||
       (b->type == POLY && b->data.num_used > 8) || (a->type == SPHERE &&
@@ -648,6 +652,7 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
     glm_vec3_scale_as(dir, a->data.radius, max_a);
     glm_vec3_add(max_a, a->data.center, max_a);
   } else {
+    // TODO Num used is always 8
     glm_vec3_copy(a->data.verts[max_dot(a->data.verts, a->data.num_used, dir)],
                   max_a);
   }
@@ -657,6 +662,7 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
     glm_vec3_scale_as(temp, b->data.radius, max_b);
     glm_vec3_add(max_b, b->data.center, max_b);
   } else {
+    // TODO Num used is always 8
     glm_vec3_copy(b->data.verts[max_dot(b->data.verts, b->data.num_used,
                   temp)], max_b);
   }
@@ -1090,6 +1096,7 @@ void calc_inertia_tensor(ENTITY *ent, size_t col_offset, float inv_mass,
     }
     */
     vec3 *verts = raw_col->data.verts;
+    // TODO Num used is always 8
     unsigned int num_raw = raw_col->data.num_used;
 
     float height = ent->bone_mats[bone][SCALE][1][1] *
@@ -1122,6 +1129,7 @@ float get_width(COLLIDER *col, vec3 dir) {
     glm_vec3_negate_to(dir, neg_dir);
 
     vec3 *verts = col->data.verts;
+    // TODO Num used is always 8
     vec3 *a = verts + max_dot(verts, col->data.num_used, dir);
     vec3 *b = verts + max_dot(verts, col->data.num_used, neg_dir);
     return glm_vec3_distance(*a, *b);

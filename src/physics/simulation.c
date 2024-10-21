@@ -761,6 +761,7 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
   dest->children_offset = 0;
   dest->num_children = 0;
   if (dest->type == POLY) {
+    // TODO Num used is always 8
     dest->data.num_used = raw_col->data.num_used;
     for (int i = 0; i < raw_col->data.num_used; i++) {
       glm_mat4_mulv3(bone_to_entity, raw_col->data.verts[i], 1.0,

@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <cglm/quat.h>
 #include <cglm/affine.h>
 #include <structs/models/entity_str.h>
