@@ -4,7 +4,7 @@ The engine also supports font importing capabilities for usage during text rende
 
 ## Functions
 
-### int import_font(char *bin_path, char *tex_path, F_GLYPH **)
+### `int import_font(char *bin_path, char *tex_path, F_GLYPH **dest)`
 
 **Arguments**
 
@@ -12,7 +12,7 @@ The engine also supports font importing capabilities for usage during text rende
 
 - `char *tex_path`: The path to the png texture to be used by the font
 
-- `F_GLYPH **`: The location where the font should be allocated at
+- `F_GLYPH **dest`: The location where the font should be allocated at. A double pointer is used here, since to the engine, a font is simply an array of `F_GLYPH` structs. The populated array can then be used anywhere fonts are required in the engine.
 
 **Returns**
 

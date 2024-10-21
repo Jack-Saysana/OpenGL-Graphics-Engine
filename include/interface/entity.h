@@ -1,7 +1,7 @@
 #ifndef __ENGINE_ENTITY_H__
 #define __ENGINE_ENTITY_H__
 
-#include "./structs/model_data_str.h"
+#include "./structs/models/model_data_str.h"
 
 unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path);
 MODEL_DATA *load_model_data(char *path);

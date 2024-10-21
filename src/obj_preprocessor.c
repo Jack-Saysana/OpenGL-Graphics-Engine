@@ -20,23 +20,23 @@ int preprocess_lines(LINE_BUFFER *lb) {
   }
   free(bin_path);
 
-  bones = malloc(sizeof(BONE) * BUFF_STARTING_LEN);
+  BONE *bones = malloc(sizeof(BONE) * BUFF_STARTING_LEN);
   if (bones == NULL) {
     free_line_buffer(lb);
     fclose(file);
     fprintf(stderr, "Unable to allocate bone buffer\n");
     return -1;
   }
-  b_buff_len = BUFF_STARTING_LEN;
+  size_t b_buff_len = BUFF_STARTING_LEN;
   // Account for default "root bone" which all entities have
-  b_len = 1;
+  size_t b_len = 1;
   glm_mat3_identity(bones[0].coordinate_matrix);
   glm_vec3_copy((vec3) {0.0, 1.0, 0.0}, bones[0].head);
   glm_vec3_zero(bones[0].base);
   bones[0].parent = -1;
   bones[0].num_children = 0;
 
-  bone_ids = malloc(sizeof(int) * 4 * BUFF_STARTING_LEN);
+  ivec4 *bone_ids = malloc(sizeof(ivec4) * BUFF_STARTING_LEN);
   if (bone_ids == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -45,7 +45,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     return -1;
   }
 
-  bone_weights = malloc(sizeof(float) * 4 * BUFF_STARTING_LEN);
+  vec4 *bone_weights = malloc(sizeof(vec4) * BUFF_STARTING_LEN);
   if (bone_weights == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -55,7 +55,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     return -1;
   }
 
-  collider_links = malloc(sizeof(int) * 4 * BUFF_STARTING_LEN);
+  int *collider_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
   if (collider_links == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -66,7 +66,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     return -1;
   }
 
-  verticies = malloc(sizeof(float) * 3 * BUFF_STARTING_LEN);
+  vec3 *verticies = malloc(sizeof(vec3) * BUFF_STARTING_LEN);
   if (verticies == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -77,10 +77,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate vertex buffer\n");
     return -1;
   }
-  v_buff_len = BUFF_STARTING_LEN;
-  v_len = 0;
+  size_t v_buff_len = BUFF_STARTING_LEN;
+  size_t v_len = 0;
 
-  normals = malloc(sizeof(float) * 3 * BUFF_STARTING_LEN);
+  vec3 *normals = malloc(sizeof(vec3) * BUFF_STARTING_LEN);
   if (normals == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -92,10 +92,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate normal buffer\n");
     return -1;
   }
-  n_buff_len = BUFF_STARTING_LEN;
-  n_len = 0;
+  size_t n_buff_len = BUFF_STARTING_LEN;
+  size_t n_len = 0;
 
-  tex_coords = malloc(sizeof(float) * 2 * BUFF_STARTING_LEN);
+  vec2 *tex_coords = malloc(sizeof(vec2) * BUFF_STARTING_LEN);
   if (tex_coords == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -108,10 +108,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate tex coord buffer\n");
     return -1;
   }
-  t_buff_len = BUFF_STARTING_LEN;
-  t_len = 0;
+  size_t t_buff_len = BUFF_STARTING_LEN;
+  size_t t_len = 0;
 
-  vbo_index_combos = malloc(sizeof(int) * 3 * BUFF_STARTING_LEN);
+  ivec3 *vbo_index_combos = malloc(sizeof(ivec3) * BUFF_STARTING_LEN);
   if (vbo_index_combos == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -125,10 +125,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate vbo index combos\n");
     return -1;
   }
-  vbo_buff_len = BUFF_STARTING_LEN;
-  vbo_len = 0;
+  size_t vbo_buff_len = BUFF_STARTING_LEN;
+  size_t vbo_len = 0;
 
-  faces = malloc(sizeof(int) * 3 * BUFF_STARTING_LEN);
+  ivec3 *faces = malloc(sizeof(ivec3) * BUFF_STARTING_LEN);
   if (faces == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -143,10 +143,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate face buffer\n");
     return -1;
   }
-  face_buff_len = BUFF_STARTING_LEN;
-  f_len = 0;
+  size_t face_buff_len = BUFF_STARTING_LEN;
+  size_t f_len = 0;
 
-  materials = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
+  MATERIAL *materials = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
   if (materials == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -162,10 +162,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate material buffer\n");
     return -1;
   }
-  mat_buff_len = BUFF_STARTING_LEN;
-  mat_len = 0;
+  size_t mat_buff_len = BUFF_STARTING_LEN;
+  size_t mat_len = 0;
 
-  animations = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
+  ANIMATION *animations = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
   if (animations == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -182,10 +182,10 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate animations buffer\n");
     return -1;
   }
-  a_buff_len = BUFF_STARTING_LEN;
-  a_len = 0;
+  size_t a_buff_len = BUFF_STARTING_LEN;
+  size_t a_len = 0;
 
-  colliders = malloc(sizeof(COLLIDER) * BUFF_STARTING_LEN);
+  COLLIDER *colliders = malloc(sizeof(COLLIDER) * BUFF_STARTING_LEN);
   if (colliders == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -203,7 +203,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate colliders buffer\n");
     return -1;
   }
-  bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
+  int *bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
   if (bone_links == NULL) {
     free_line_buffer(lb);
     fclose(file);
@@ -222,8 +222,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
     fprintf(stderr, "Unable to allocate bone_links buffer\n");
     return -1;
   }
-  col_buff_len = BUFF_STARTING_LEN;
-  col_len = 0;
+  size_t col_buff_len = BUFF_STARTING_LEN;
+  size_t col_len = 0;
 
   size_t total_chains = 0;
   size_t total_keyframes = 0;
@@ -242,7 +242,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
     cur_line = lb->buffer[i];
 
     if (cur_line[0] == 'f') {
-      status = preprocess_face(file, cur_line + 2);
+      status = preprocess_face(verticies, normals, &vbo_index_combos, &vbo_len,
+                               &vbo_buff_len, &faces, &f_len, &face_buff_len,
+                               v_len, t_len, n_len, file, cur_line + 2);
     } else if (cur_line[0] == 'b') {
       memset(bones + b_len, 0, sizeof(BONE));
       sscanf(cur_line, "b %f %f %f \
@@ -590,7 +592,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
-  status = sort_colliders();
+  status = sort_colliders(bones, colliders, collider_links, bone_links,
+                          b_len, col_len);
   if (status != 0) {
     fclose(file);
     free_line_buffer(lb);
@@ -815,12 +818,14 @@ int preprocess_lines(LINE_BUFFER *lb) {
   return 0;
 }
 
-int sort_colliders() {
+int sort_colliders(BONE *bones, COLLIDER *colliders, int *collider_links,
+                   int *bone_links, size_t b_len, size_t col_len) {
   size_t cur_pos = 0;
   // Bring all non-skeletal colliders to the front of the array
   for (size_t cur_col = 0; cur_col < col_len; cur_col++) {
     if (colliders[cur_col].category != HURT_BOX || bone_links[cur_col] == -1) {
-      swap_colliders(cur_col, cur_pos);
+      swap_colliders(colliders, collider_links, bone_links, b_len, cur_col,
+                     cur_pos);
       cur_pos++;
     }
   }
@@ -852,7 +857,8 @@ int sort_colliders() {
     if (bones[cur_bone].parent == -1 && collider_links[cur_bone] != -1) {
       // Add root collider to sorted list
       int cur_col = collider_links[cur_bone];
-      swap_colliders(cur_col, cur_pos);
+      swap_colliders(colliders, collider_links, bone_links, b_len, cur_col,
+                     cur_pos);
       cur_pos++;
 
       // Enqueue root bone of collider
@@ -883,7 +889,8 @@ int sort_colliders() {
               if (bone_links[collider_links[cur_child]] == cur_child &&
                   collider_links[cur_child] != collider_links[popped_bone]) {
                 cur_col = collider_links[cur_child];
-                swap_colliders(cur_col, cur_pos);
+                swap_colliders(colliders, collider_links, bone_links, b_len,
+                               cur_col, cur_pos);
 
                 // Update child info of popped bone
                 int parent_col = collider_links[popped_bone];
@@ -917,7 +924,8 @@ int sort_colliders() {
   return 0;
 }
 
-void swap_colliders(size_t cur, size_t dest) {
+void swap_colliders(COLLIDER *colliders, int *collider_links, int *bone_links,
+                    size_t b_len, size_t cur, size_t dest) {
   if (cur != dest) {
     COLLIDER temp_collider;
     memcpy(&temp_collider, colliders + dest, sizeof(COLLIDER));
@@ -938,14 +946,17 @@ void swap_colliders(size_t cur, size_t dest) {
   }
 }
 
-int preprocess_face(FILE *file, char *line) {
+int preprocess_face(vec3 *vertices, vec3 *normals, ivec3 **vbo_index_combos,
+                    size_t *vbo_len, size_t *vbo_buff_len, ivec3 **faces,
+                    size_t *f_len, size_t *face_buff_len, size_t v_len,
+                    size_t t_len, size_t n_len, FILE *file, char *line) {
   FACE_VERT *face_list_head = NULL;
   FACE_VERT *face_list_tail = NULL;
   size_t num_verts = 0;
 
   int status = 0;
-  //                      v   t   n
-  int index_combo[3] = { -1, -1, -1 };
+  //                     v   t   n
+  ivec3 index_combo = { -1, -1, -1 };
   int cur_attrib = 0;
   char *cur_num = line;
   int read_index = 0;
@@ -995,24 +1006,22 @@ int preprocess_face(FILE *file, char *line) {
       }
 
       int found = -1;
-      for (int i = 0; i < vbo_len && found == -1; i++) {
-        if (vbo_index_combos[i][0] == index_combo[0] &&
-            vbo_index_combos[i][1] == index_combo[1] &&
-            vbo_index_combos[i][2] == index_combo[2]) {
+      for (int i = 0; i < *vbo_len && found == -1; i++) {
+        if ((*vbo_index_combos)[i][X] == index_combo[X] &&
+            (*vbo_index_combos)[i][Y] == index_combo[Y] &&
+            (*vbo_index_combos)[i][Z] == index_combo[Z]) {
           found = i;
         }
       }
 
       if (found == -1) {
-        vbo_index_combos[vbo_len][0] = index_combo[0];
-        vbo_index_combos[vbo_len][1] = index_combo[1];
-        vbo_index_combos[vbo_len][2] = index_combo[2];
-        found = vbo_len;
-        vbo_len++;
+        glm_ivec3_copy(index_combo, (*vbo_index_combos)[*vbo_len]);
+        found = *vbo_len;
+        (*vbo_len)++;
 
-        if (vbo_len == vbo_buff_len) {
-          status = double_buffer((void **) &vbo_index_combos, &vbo_buff_len,
-                                 sizeof(int) * 3);
+        if (*vbo_len == *vbo_buff_len) {
+          status = double_buffer((void **) vbo_index_combos, vbo_buff_len,
+                                 sizeof(ivec3));
         }
 
         if (status != 0) {
@@ -1039,22 +1048,21 @@ int preprocess_face(FILE *file, char *line) {
       num_verts++;
 
       cur_attrib = 0;
-      index_combo[0] = -1;
-      index_combo[1] = -1;
-      index_combo[2] = -1;
+      index_combo[X] = -1;
+      index_combo[Y] = -1;
+      index_combo[Z] = -1;
     }
   }
   face_list_tail->next = face_list_head;
   face_list_head->prev = face_list_tail;
 
   if (num_verts == 3) {
-    faces[f_len][0] = face_list_head->prev->index;
-    faces[f_len][1] = face_list_head->index;
-    faces[f_len][2] = face_list_head->next->index;
-    f_len++;
-    if (f_len == face_buff_len) {
-      status = double_buffer((void **) &faces, &face_buff_len,
-                             sizeof(int) * 3);
+    (*faces)[*f_len][X] = face_list_head->prev->index;
+    (*faces)[*f_len][Y] = face_list_head->index;
+    (*faces)[*f_len][Z] = face_list_head->next->index;
+    (*f_len)++;
+    if (*f_len == *face_buff_len) {
+      status = double_buffer((void **) faces, face_buff_len, sizeof(ivec3));
       if (status != 0) {
         fprintf(stderr, "Unable to reallocate face buffer\n");
         return -1;
@@ -1069,39 +1077,41 @@ int preprocess_face(FILE *file, char *line) {
     }
     free(face_list_head);
   } else {
-    status = triangulate_polygon(file, face_list_head, num_verts);
+    status = triangulate_polygon(vertices, normals, *vbo_index_combos, faces,
+                                 f_len, face_buff_len, file, face_list_head,
+                                 num_verts);
   }
 
   return status;
 }
 
-int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
-  float poly_normal[3] = {
-    normals[vbo_index_combos[head->index][2]][0],
-    normals[vbo_index_combos[head->index][2]][1],
-    normals[vbo_index_combos[head->index][2]][2]
+int triangulate_polygon(vec3 *vertices, vec3 *normals, ivec3 *vbo_index_combos,
+                        ivec3 **faces, size_t *f_len, size_t *face_buff_len,
+                        FILE *file, FACE_VERT *head, size_t num_verts) {
+  vec3 poly_normal = {
+    normals[vbo_index_combos[head->index][2]][X],
+    normals[vbo_index_combos[head->index][2]][Y],
+    normals[vbo_index_combos[head->index][2]][Z]
   };
 
   int verts_left = num_verts;
-  int cur_triangle[3] = { -1, -1, -1 };
+  ivec3 cur_triangle = { -1, -1, -1 };
 
   int status = 0;
 
   FACE_VERT *cur_vert = head;
   FACE_VERT *temp = NULL;
   while (verts_left > 3) {
-    cur_triangle[0] = cur_vert->next->index;
-    cur_triangle[1] = cur_vert->index;
-    cur_triangle[2] = cur_vert->prev->index;
+    cur_triangle[X] = cur_vert->next->index;
+    cur_triangle[Y] = cur_vert->index;
+    cur_triangle[Z] = cur_vert->prev->index;
 
-    if (is_ear(cur_triangle, cur_vert, poly_normal) == 0) {
-      faces[f_len][0] = cur_triangle[0];
-      faces[f_len][1] = cur_triangle[1];
-      faces[f_len][2] = cur_triangle[2];
-      f_len++;
-      if (f_len == face_buff_len) {
-        status = double_buffer((void **) &faces, &face_buff_len,
-                               sizeof(int) * 3);
+    if (is_ear(vertices, vbo_index_combos, cur_triangle, cur_vert,
+               poly_normal) == 0) {
+      glm_ivec3_copy(cur_triangle, (*faces)[*f_len]);
+      (*f_len)++;
+      if (*f_len == *face_buff_len) {
+        status = double_buffer((void **) faces, face_buff_len, sizeof(ivec3));
         if (status != 0) {
           fprintf(stderr, "Unable to reallocate face buffer\n");
           return -1;
@@ -1119,12 +1129,12 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
     }
   }
 
-  faces[f_len][0] = cur_vert->next->index;
-  faces[f_len][1] = cur_vert->index;
-  faces[f_len][2] = cur_vert->prev->index;
-  f_len++;
-  if (f_len == face_buff_len) {
-    status = double_buffer((void **) &faces, &face_buff_len, sizeof(int) * 3);
+  (*faces)[*f_len][X] = cur_vert->next->index;
+  (*faces)[*f_len][Y] = cur_vert->index;
+  (*faces)[*f_len][Z] = cur_vert->prev->index;
+  (*f_len)++;
+  if (*f_len == *face_buff_len) {
+    status = double_buffer((void **) faces, face_buff_len, sizeof(ivec3));
     if (status != 0) {
       fprintf(stderr, "Unable to reallocate face buffer\n");
       return -1;
@@ -1138,86 +1148,67 @@ int triangulate_polygon(FILE *file, FACE_VERT *head, size_t num_verts) {
   return 0;
 }
 
-int is_ear(int *triangle, FACE_VERT *ref_vert, float *polygon_normal) {
-  // Triangle[0]: Vertex A
-  // Triangle[1]: Focus of triangle
-  // Triangle[2]: Vertex B
+int is_ear(vec3 *verticies, ivec3 *vbo_index_combos, ivec3 triangle,
+           FACE_VERT *ref_vert, float *polygon_normal) {
+  vec3 origin = { 0.0, 0.0, 0.0 };
+  vec3 A = GLM_VEC3_ZERO_INIT;
+  vec3 B = GLM_VEC3_ZERO_INIT;
+  vec3 focus = GLM_VEC3_ZERO_INIT;
+  glm_vec3_copy(verticies[vbo_index_combos[triangle[0]][0]], A);
+  glm_vec3_copy(verticies[vbo_index_combos[triangle[1]][0]], focus);
+  glm_vec3_copy(verticies[vbo_index_combos[triangle[2]][0]], B);
 
-  float origin[3] = { 0.0, 0.0, 0.0 };
   // Translate Vertex A as if focus was at the origin
-  float first_vert[3] = {
-    verticies[vbo_index_combos[triangle[0]][0]][0]-verticies[vbo_index_combos[triangle[1]][0]][0],
-    verticies[vbo_index_combos[triangle[0]][0]][1]-verticies[vbo_index_combos[triangle[1]][0]][1],
-    verticies[vbo_index_combos[triangle[0]][0]][2]-verticies[vbo_index_combos[triangle[1]][0]][2]
-  };
+  vec3 first_vert = GLM_VEC3_ZERO_INIT;
+  glm_vec3_sub(A, focus, first_vert);
   // Translate Vertex B as if focus was at origin
-  float second_vert[3] = {
-    verticies[vbo_index_combos[triangle[2]][0]][0]-verticies[vbo_index_combos[triangle[1]][0]][0],
-    verticies[vbo_index_combos[triangle[2]][0]][1]-verticies[vbo_index_combos[triangle[1]][0]][1],
-    verticies[vbo_index_combos[triangle[2]][0]][2]-verticies[vbo_index_combos[triangle[1]][0]][2]
-  };
+  vec3 second_vert = GLM_VEC3_ZERO_INIT;
+  glm_vec3_sub(B, focus, second_vert);
 
-  float *coords[3] = {
-    origin,
-    first_vert,
-    second_vert
-  };
+  vec3 coords[3];
+  glm_vec3_copy(origin, coords[0]);
+  glm_vec3_copy(first_vert, coords[1]);
+  glm_vec3_copy(second_vert, coords[2]);
 
-  float u[3] = {
-    coords[1][0] - coords[0][0],
-    coords[1][1] - coords[0][1],
-    coords[1][2] - coords[0][2]
-  };
+  vec3 u = GLM_VEC3_ZERO_INIT;
+  glm_vec3_sub(coords[1], coords[0], u);
 
-  float v[3] = {
-    coords[2][0] - coords[0][0],
-    coords[2][1] - coords[0][1],
-    coords[2][2] - coords[0][2]
-  };
+  vec3 v = GLM_VEC3_ZERO_INIT;
+  glm_vec3_sub(coords[2], coords[0], v);
 
-  float u_cross_v[3] = {
-    (u[1] * v[2]) - (u[2] * v[1]),
-    (u[2] * v[0]) - (u[0] * v[2]),
-    (u[0] * v[1]) - (u[1] * v[0])
-  };
-
-  /*float mult = 0;
-  if (u_cross_v[0] != 0) {
-    mult = polygon_normal[0] / u_cross_v[0];
-  } else if (u_cross_v[1] != 0) {
-    mult = polygon_normal[1] / u_cross_v[1];
-  } else if (u_cross_v[2] != 0) {
-    mult = polygon_normal[2] / u_cross_v[2];
-  } else {
-    // U x V IS (0, 0, 0) NEED SPECIAL CONSIDERATION
-    return -1;
-  }
-
-  for (int i = 0; i < 3; i++) {
-    if (u_cross_v[i] * mult != polygon_normal[i]) {
-      return -1;
-    }
-  }*/
+  vec3 u_cross_v = GLM_VEC3_ZERO_INIT;
+  glm_vec3_cross(u, v, u_cross_v);
 
   float a = 0.0;
   float b = 0.0;
   float c = 0.0;
-  float p[3] = { 0.0, 0.0, 0.0 };
+  vec3 p = { 0.0, 0.0, 0.0 };
 
   FACE_VERT *cur_vert = ref_vert->next->next;
   while (cur_vert != ref_vert->prev) {
-    p[0] = verticies[vbo_index_combos[cur_vert->index][0]][0] - verticies[vbo_index_combos[triangle[1]][0]][0] - coords[0][0];
-    p[1] = verticies[vbo_index_combos[cur_vert->index][0]][1] - verticies[vbo_index_combos[triangle[1]][0]][1] - coords[0][1];
-    p[2] = verticies[vbo_index_combos[cur_vert->index][0]][2] - verticies[vbo_index_combos[triangle[1]][0]][2] - coords[0][2];
+    glm_vec3_sub(verticies[vbo_index_combos[cur_vert->index][0]],
+                 verticies[vbo_index_combos[triangle[1]][0]], p);
+    glm_vec3_sub(p, coords[0], p);
 
-    c = ((u[0]*v[1]*p[2])-(u[0]*v[2]*p[1])+(v[0]*u[2]*p[1])-(v[0]*u[1]*p[2])-(u[2]*v[1]*p[0])+(v[2]*u[1]*p[0])) /
-        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+(v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-(u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
+    c = ((u[0]*v[1]*p[2])-(u[0]*v[2]*p[1])+(v[0]*u[2]*p[1])-(v[0]*u[1]*p[2])-
+        (u[2]*v[1]*p[0])+(v[2]*u[1]*p[0])) /
+        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+
+         (v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-
+         (u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
 
-    a = ((v[0]*u_cross_v[2]*p[1])+(v[0]*u_cross_v[1]*p[2])+(u_cross_v[0]*v[2]*p[1])-(u_cross_v[0]*v[1]*p[2])-(v[2]*u_cross_v[1]*p[0])+(u_cross_v[2]*v[1]*p[0])) /
-        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+(v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-(u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
+    a = ((v[0]*u_cross_v[2]*p[1])+(v[0]*u_cross_v[1]*p[2])+
+         (u_cross_v[0]*v[2]*p[1])-(u_cross_v[0]*v[1]*p[2])-
+         (v[2]*u_cross_v[1]*p[0])+(u_cross_v[2]*v[1]*p[0])) /
+        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+
+         (v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-
+         (u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
 
-    b = ((u[0]*u_cross_v[2]*p[1])-(u[0]*u_cross_v[1]*p[2])-(u_cross_v[0]*u[2]*p[1])+(u_cross_v[0]*u[1]*p[2])+(u[2]*u_cross_v[1]*p[0])-(u_cross_v[2]*u[1]*p[0])) /
-        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+(v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-(u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
+    b = ((u[0]*u_cross_v[2]*p[1])-(u[0]*u_cross_v[1]*p[2])-
+         (u_cross_v[0]*u[2]*p[1])+(u_cross_v[0]*u[1]*p[2])+
+         (u[2]*u_cross_v[1]*p[0])-(u_cross_v[2]*u[1]*p[0])) /
+        ((u[0]*u_cross_v[2]*v[1])-(u[0]*v[2]*u_cross_v[1])+
+         (v[0]*u[2]*u_cross_v[1])-(v[0]*u_cross_v[2]*u[1])-
+         (u_cross_v[0]*u[2]*v[1])+(u_cross_v[0]*v[2]*u[1]));
 
     if (c == 0.0 && a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 &&
         a + b <= 1.0) {

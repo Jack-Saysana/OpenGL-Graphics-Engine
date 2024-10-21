@@ -1,7 +1,7 @@
 #ifndef __OCT_TREE_STR_H__
 #define __OCT_TREE_STR_H__
 
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 
 /*
 typedef enum {

@@ -125,12 +125,12 @@ int draw_text(char *str, size_t str_len, vec3 col, TEXT_ANCHOR txt_anc,
               vec3 pos, float screen_width, float screen_height, float width,
               float line_height, F_GLYPH* font, unsigned int shader) {
   // Calculate the number of lines in the text and the length of each line
-  float *line_widths = malloc(sizeof(float) * BUFF_START_LEN);
+  float *line_widths = malloc(sizeof(float) * BUFF_STARTING_LEN);
   if (line_widths == NULL) {
     fprintf(stderr, "Error: Failed to allocate text line buffer\n");
     return -1;
   }
-  size_t line_buf_size = BUFF_START_LEN;
+  size_t line_buf_size = BUFF_STARTING_LEN;
   size_t num_lines = 0;
   line_widths[num_lines] = 0.0;
 

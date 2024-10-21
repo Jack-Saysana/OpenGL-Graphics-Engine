@@ -1,8 +1,7 @@
-#ifndef __MODEL_DATA_STR_H__
-#define __MODEL_DATA_STR_H__
+#ifndef __ENGINE_MODEL_DATA_STR_H__
+#define __ENGINE_MODEL_DATA_STR_H__
 
-#include "./entity_str.h"
-
+#include "entity_str.h"
 
 typedef struct vbo {
   float vertex[3];

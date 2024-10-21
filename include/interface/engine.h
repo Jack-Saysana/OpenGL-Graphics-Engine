@@ -3,7 +3,7 @@
 
 #include "./animation.h"
 #include "./entity.h"
-#include "./structs/entity_str.h"
+#include "./structs/models/entity_str.h"
 #include "./globals.h"
 #include "./helpers.h"
 #include "./init.h"

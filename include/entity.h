@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <cglm/quat.h>
 #include <cglm/affine.h>
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
