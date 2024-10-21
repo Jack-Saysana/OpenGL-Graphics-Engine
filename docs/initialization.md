@@ -15,7 +15,7 @@ The main features include:
 
 ## Functions:
 
-### GLFWwindow *init_gl(char *name)
+### `GLFWwindow *init_gl(char *name)`
 
 Wrapper window initializer, which initializes the new GLFW window while also allocating the neccesarry resources for providing the wrapper services.
 
@@ -27,11 +27,11 @@ Wrapper window initializer, which initializes the new GLFW window while also all
 
 - The newly initialized `GLFWwindow` pointer for rendering
 
-### void cleanup_gl()
+### `void cleanup_gl()`
 
 Terminates GLFW and cleans up any wrapper resources
 
-### int register_fb_size_callback(void (*cb)(GLFWwindow *, int, int))
+### `int register_fb_size_callback(void (*cb)(GLFWwindow *, int, int))`
 
 **Arguments**
 
@@ -41,7 +41,7 @@ Terminates GLFW and cleans up any wrapper resources
 
 0 if successful, -1 if an error occured
 
-### int register_mouse_movement_callback(void (*cb)(GLFWwindow *, double, double))
+### `int register_mouse_movement_callback(void (*cb)(GLFWwindow *, double, double))`
 
 **Arguments**
 
@@ -51,7 +51,7 @@ Terminates GLFW and cleans up any wrapper resources
 
 0 if successful, -1 if an error occured
 
-### int register_scroll_callback(void (*cb)(GLFWwindow *, double, double))
+### `int register_scroll_callback(void (*cb)(GLFWwindow *, double, double))`
 
 **Arguments**
 
@@ -61,7 +61,7 @@ Terminates GLFW and cleans up any wrapper resources
 
 0 if successful, -1 if an error occured
 
-### int register_mouse_button_callback(void (*cb)(GLFWwindow *, int, int, int))
+### `int register_mouse_button_callback(void (*cb)(GLFWwindow *, int, int, int))`
 
 **Arguments**
 
