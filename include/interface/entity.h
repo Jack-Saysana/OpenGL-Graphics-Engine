@@ -16,5 +16,7 @@ void draw_model(unsigned int shader, MODEL *model);
 void free_model(MODEL *model);
 void free_entity(ENTITY *entity);
 void free_textures();
+void write_model_obj(MODEL_DATA *md, char *path);
+void write_model_bin(MODEL_DATA *md, char *path);
 
 #endif

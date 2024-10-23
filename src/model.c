@@ -110,7 +110,10 @@ void draw_axes(unsigned int shader, MODEL *model) {
       axis_data[(i*2)].coords[2] = model->bones[i].base[2];
       axis_data[(i*2)].bone_id = i;
 
-      glm_vec3_add(axis_data[i*2].coords, model->bones[i].coordinate_matrix[j],
+      vec6 axis_head = GLM_VEC3_ZERO_INIT;
+      glm_vec3_copy(model->bones[i].coordinate_matrix[j], axis_head);
+      glm_vec3_scale(axis_head, 0.1, axis_head);
+      glm_vec3_add(axis_data[i*2].coords, axis_head,
                    axis_data[(i*2)+1].coords);
       axis_data[(i*2)+1].bone_id = i;
     }
