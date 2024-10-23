@@ -356,4 +356,18 @@ void print_mat4(mat4 m) {
   }
 }
 
+/*
+  The following functions are helpers to concisely compare vectors
+*/
 
+int comp_vec2(vec2 a, vec2 b) {
+  return a[X] == b[X] && a[Y] == b[Y];
+}
+
+int comp_vec3(vec3 a, vec3 b) {
+  return a[X] == b[X] && a[Y] == b[Y] && a[Z] == b[Z];
+}
+
+int comp_vec4(vec4 a, vec4 b) {
+  return a[X] == b[X] && a[Y] == b[Y] && a[Z] == b[Z] && a[W] == b[W];
+}
