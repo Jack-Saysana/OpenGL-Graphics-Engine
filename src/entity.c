@@ -19,53 +19,53 @@ ENTITY *init_entity(MODEL *model) {
   ent->cons_size = BUFF_STARTING_LEN;
 
   if (model->num_colliders > 0) {
+    size_t num_zj = 0;
+    for (size_t i = 0; i < model->num_colliders; i++) {
+      num_zj += model->colliders[i].num_dofs - 1;
+    }
     ent->np_data = malloc(sizeof(P_DATA) * model->num_colliders);
     if (ent->np_data == NULL) {
       free(ent->p_cons);
       free(ent);
       return NULL;
     }
-    ent->zj_data = NULL;
+    if (num_zj) {
+      ent->zj_data = malloc(sizeof(ZERO_JOINT) * num_zj);
+      if (ent->zj_data == NULL) {
+        free(ent->np_data);
+        free(ent->p_cons);
+        free(ent);
+        return NULL;
+      }
+    } else {
+      ent->zj_data = NULL;
+    }
 
+    size_t cur_zj = 0;
+    memset(ent->np_data, 0, sizeof(P_DATA) * model->num_colliders);
+    memset(ent->zj_data, 0, sizeof(ZERO_JOINT) * num_zj);
     for (size_t i = 0; i < model->num_colliders; i++) {
-      mat6_zero(ent->np_data[i].I_hat);
-      mat6_zero(ent->np_data[i].I_hat_A);
-      mat6_zero(ent->np_data[i].ST_to_parent);
-      mat6_zero(ent->np_data[i].ST_from_parent);
       glm_mat4_identity(ent->np_data[i].inv_inertia);
-      vec6_zero(ent->np_data[i].s_hat);
-      vec6_zero(ent->np_data[i].Z_hat);
-      vec6_zero(ent->np_data[i].Z_hat_A);
-      vec6_zero(ent->np_data[i].coriolis_vector);
-      vec6_zero(ent->np_data[i].a_hat);
-      vec6_zero(ent->np_data[i].v_hat);
-      vec6_zero(ent->np_data[i].s_inner_I);
-      vec6_zero(ent->np_data[i].e_force);
-      glm_vec3_zero(ent->np_data[i].a);
-      glm_vec3_zero(ent->np_data[i].ang_a);
-      glm_vec3_zero(ent->np_data[i].v);
-      glm_vec3_zero(ent->np_data[i].ang_v);
-      glm_vec3_zero(ent->np_data[i].dof);
-      glm_vec3_zero(ent->np_data[i].from_parent_lin);
-      glm_vec3_zero(ent->np_data[i].joint_to_com);
-      glm_vec3_zero(ent->np_data[i].e_force);
-      ent->np_data[i].zero_joint_offset = INVALID_INDEX;
-      ent->np_data[i].num_z_joints = 0;
-      ent->np_data[i].joint_type = JOINT_REVOLUTE;
-      ent->np_data[i].inv_mass = 0.0;
-      ent->np_data[i].s_inner_I_dot_s = 0.0;
-      ent->np_data[i].SZI = 0.0;
-      ent->np_data[i].accel_angle = 0.0;
-      ent->np_data[i].vel_angle = 0.0;
-      ent->np_data[i].joint_angle = 0.0;
+      ent->np_data[i].zero_joint_offset = cur_zj;
+      ent->np_data[i].num_z_joints = model->colliders[i].num_dofs - 1;
+      glm_vec3_copy(model->colliders[i].dofs[0], ent->np_data[i].dof);
+      ent->np_data[i].joint_type = model->colliders[i].dofs[0][W];
+
+      for (int j = 1; j < model->colliders[i].num_dofs; j++) {
+        glm_vec3_copy(model->colliders[i].dofs[j], ent->zj_data[cur_zj].dof);
+        ent->zj_data[cur_zj].joint_type = model->colliders[i].dofs[j][W];
+        cur_zj++;
+      }
     }
   } else {
     ent->np_data = NULL;
+    ent->zj_data = NULL;
   }
 
   if (model->num_bones > 0) {
     ent->bone_mats = malloc(sizeof(mat4) * 3 * model->num_bones);
     if (ent->bone_mats == NULL) {
+      free(ent->zj_data);
       free(ent->np_data);
       free(ent->p_cons);
       free(ent);
@@ -75,6 +75,7 @@ ENTITY *init_entity(MODEL *model) {
     ent->final_b_mats = malloc(sizeof(mat4) * model->num_bones);
     if (ent->final_b_mats == NULL) {
       free(ent->bone_mats);
+      free(ent->zj_data);
       free(ent->np_data);
       free(ent->p_cons);
       free(ent);
@@ -194,6 +195,7 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
       glBindVertexArray(VAO);
       glGenBuffers(1, &VBO);
       glBindBuffer(GL_ARRAY_BUFFER, VBO);
+      // TODO Num used should be 8
       glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 *
                    entity->model->colliders[i].data.num_used,
                    entity->model->colliders[i].data.verts, GL_STATIC_DRAW);
@@ -204,13 +206,12 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
       glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
                          (float *) bone_to_world);
 
+      // TODO Num used should be 8
       if (entity->model->colliders[i].data.num_used == 8) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
       } else {
         glDrawArrays(GL_POINTS, 0, entity->model->colliders[i].data.num_used);
-      }
-      if (entity->model->colliders[i].data.num_used == 8) {
       }
       glBindVertexArray(0);
       glDeleteVertexArrays(1, &VAO);

@@ -16,7 +16,6 @@ typedef struct zero_joint_data {
   vec6 s_inner_I;
   vec3 dof;
   vec3 joint_to_com;
-  size_t next_offset;
   int joint_type;
   float s_inner_I_dot_s;
   float SZI;

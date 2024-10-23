@@ -237,15 +237,18 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   MATERIAL *cur_mat = NULL;
   char *cur_line = NULL;
+
   int status = 0;
   for (int i = 0; i < lb->len; i++) {
     cur_line = lb->buffer[i];
 
     if (cur_line[0] == 'f') {
+      // Face
       status = preprocess_face(verticies, normals, &vbo_index_combos, &vbo_len,
                                &vbo_buff_len, &faces, &f_len, &face_buff_len,
                                v_len, t_len, n_len, file, cur_line + 2);
     } else if (cur_line[0] == 'b') {
+      // Bone
       memset(bones + b_len, 0, sizeof(BONE));
       sscanf(cur_line, "b %f %f %f \
                           %f %f %f \
@@ -284,10 +287,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 'p' &&
                cur_line[2] == ' ') {
+      // Octahedral Collider
       memset(colliders + col_len, 0, sizeof(COLLIDER));
       colliders[col_len].type = POLY;
       colliders[col_len].children_offset = -1;
       colliders[col_len].num_children = 0;
+      colliders[col_len].num_dofs = 0;
+      // TODO Num used is always 8
       sscanf(cur_line, "hp %d %d %d %f %f %f \
                                     %f %f %f \
                                     %f %f %f \
@@ -349,10 +355,12 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'h' && cur_line[1] == 's' &&
                cur_line[2] == ' ') {
+      // Spherical Collider
       memset(colliders + col_len, 0, sizeof(COLLIDER));
       colliders[col_len].type = SPHERE;
       colliders[col_len].children_offset = -1;
       colliders[col_len].num_children = 0;
+      colliders[col_len].num_dofs = 0;
       sscanf(cur_line, "hs %d %d %f %f %f %f",
              &(colliders[col_len].category),
              bone_links + col_len,
@@ -373,8 +381,32 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                  sizeof(int));
         }
       }
+    } else if (cur_line[0] == 'd' && cur_line[1] == 'o' &&
+               cur_line[2] == 'f' && cur_line[3] == ' ') {
+      int col = -1;
+      int type = 0;
+      vec4 dof = GLM_VEC4_ZERO_INIT;
+      sscanf(cur_line, "dof %d %d %f %f %f",
+             &col,
+             &type,
+             dof + X,
+             dof + Y,
+             dof + Z);
+      if (col >= col_len || col < 0) {
+        fprintf(stderr, "Invalid dof: %f %f %f for collider: %d\n",
+                dof[X], dof[Y], dof[Z], col);
+        status = -1;
+      } else if (colliders[col].num_dofs >= 6) {
+        fprintf(stderr, "Cannot specify more than 6 dofs for collider: %d\n",
+               col);
+        status = -1;
+      } else {
+        dof[W] = type;
+        glm_vec4_copy(dof, colliders[col].dofs[colliders[col].num_dofs++]);
+      }
     } else if (cur_line[0] == 'v' && cur_line[1] == 't' &&
                cur_line[2] == ' ') {
+      // Texture coordinate
       sscanf(cur_line, "vt %f %f",
             tex_coords[t_len],
             tex_coords[t_len] + 1
@@ -385,6 +417,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                sizeof(float) * 2);
       }
     } else if (cur_line[0] == 'v' && cur_line[1] == 'n' && cur_line[2] == ' ') {
+      // Normal
       sscanf(cur_line, "vn %f %f %f",
             normals[n_len],
             normals[n_len] + 1,
@@ -396,6 +429,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
                                sizeof(float) * 3);
       }
     } else if (cur_line[0] == 'v' && cur_line[1] == ' ') {
+      // Vertex
       sscanf(cur_line, "v %f %f %f %d:%f %d:%f %d:%f %d:%f",
             verticies[v_len],
             verticies[v_len] + 1,
@@ -428,11 +462,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
     } else if (cur_line[0] == 'm' && cur_line[1] == 't' && cur_line[2] == 'l'
                && cur_line[3] == 'l' && cur_line[4] == 'i' && cur_line[5] =='b'
                && cur_line[6] == ' ') {
+      // Import material library
       status = parse_mtllib(materials, &mat_buff_len, &mat_len, lb->dir,
                             cur_line + 7);
     } else if (cur_line[0] == 'u' && cur_line[1] == 's' && cur_line[2] == 'e'
                && cur_line[3] == 'm' && cur_line[4] == 't' &&
                cur_line[5] == 'l' && cur_line[6] == ' ') {
+      // Use material library
       cur_mat = NULL;
       size_t hash = get_str_hash(cur_line + 7);
       for (int i = 0; i < mat_len; i++) {
@@ -468,6 +504,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
       }
     } else if (cur_line[0] == 'c' && (cur_line[1] == 'l' || cur_line[1] == 'r'
                || cur_line[1] == 's')) {
+      // Animation chain
       if (cur_anim == NULL) {
         fprintf(stderr, "No animation defined\n");
         status = -1;
@@ -508,6 +545,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
         }
       }
     } else if (cur_line[0] == 'k' && cur_line[1] == 'p') {
+      // Keyframe
       if (cur_chain == NULL) {
         fprintf(stderr, "No keyframe chain defined\n");
         status = -1;
@@ -564,6 +602,36 @@ int preprocess_lines(LINE_BUFFER *lb) {
       free(animations);
 
       fprintf(stderr, "Parse error at line %d\n", i);
+      return -1;
+    }
+  }
+
+  // Ensure all colliders have at least 1 dof
+  for (int i = 0; i < col_len; i++) {
+    if (colliders[i].num_dofs == 0) {
+      free_line_buffer(lb);
+      fclose(file);
+      free(bones);
+      free(bone_ids);
+      free(bone_weights);
+      free(collider_links);
+      free(verticies);
+      free(normals);
+      free(tex_coords);
+      free(vbo_index_combos);
+      free(faces);
+      free_materials(materials, mat_len);
+      free(colliders);
+      free(bone_links);
+
+      for (int i = 0; i < a_len; i++) {
+        for (int j = 0; j < animations[i].num_chains; j++) {
+          free(animations[i].keyframe_chains[j].chain);
+        }
+        free(animations[i].keyframe_chains);
+      }
+      free(animations);
+      fprintf(stderr, "No dofs specified for collider: %d\n", i);
       return -1;
     }
   }
@@ -634,6 +702,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
     { 1.0, -1.0, 1.0}
   };
   vec3 unsorted[8];
+  // TODO Num used is always 8
   for (int i = 0; i < col_len; i++) {
     int root_bone = bone_links[i];
     if (root_bone != -1 && colliders[i].type == POLY) {
@@ -821,9 +890,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
 int sort_colliders(BONE *bones, COLLIDER *colliders, int *collider_links,
                    int *bone_links, size_t b_len, size_t col_len) {
   size_t cur_pos = 0;
-  // Bring all non-skeletal colliders to the front of the array
+  // Bring colliders mapped to the default bone to the front of the array
   for (size_t cur_col = 0; cur_col < col_len; cur_col++) {
-    if (colliders[cur_col].category != HURT_BOX || bone_links[cur_col] == -1) {
+    if (bone_links[cur_col] == 0) {
       swap_colliders(colliders, collider_links, bone_links, b_len, cur_col,
                      cur_pos);
       cur_pos++;
@@ -857,9 +926,11 @@ int sort_colliders(BONE *bones, COLLIDER *colliders, int *collider_links,
     if (bones[cur_bone].parent == -1 && collider_links[cur_bone] != -1) {
       // Add root collider to sorted list
       int cur_col = collider_links[cur_bone];
-      swap_colliders(colliders, collider_links, bone_links, b_len, cur_col,
-                     cur_pos);
-      cur_pos++;
+      if (cur_pos < cur_col) {
+        swap_colliders(colliders, collider_links, bone_links, b_len, cur_col,
+                       cur_pos);
+        cur_pos++;
+      }
 
       // Enqueue root bone of collider
       collider_queue[end] = cur_bone;

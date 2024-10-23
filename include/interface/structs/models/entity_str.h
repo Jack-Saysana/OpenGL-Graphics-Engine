@@ -18,7 +18,7 @@ typedef struct entity {
   size_t cons_size;
   // Location, rotation and scale matricies for each bone
   mat4 (*bone_mats)[3];
-  // "Narrow" physics data for each collider
+  // Physics data for each collider
   P_DATA *np_data;
   // Physics data for zero-joints that provide additional dofs to colliders
   ZERO_JOINT *zj_data;
