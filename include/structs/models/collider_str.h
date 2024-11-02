@@ -26,7 +26,10 @@ typedef struct collider {
   // [ DOF.X, DOF.Y, DOF.Z, TYPE ]
   // The first 3 floats indicate the actual axis of motion, while the last
   // indicates the type of joint, i.e JOINT_REVOLUTE or JOINT_PRISMATIC
-  vec4 dofs[6];
+  // **note**: There are 7 dofs instead of 6 because featherstone's algo will
+  // lock the highest dof in a chain. As such, a the number of "true" degrees
+  // of freedom is num_dofs - 1
+  vec4 dofs[7];
   size_t num_children;
   // Position in the model collider buffer of the colliders child list
   int children_offset;

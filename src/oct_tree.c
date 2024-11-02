@@ -84,7 +84,7 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
 
   if (obj.type == POLY) {
     vec3 *verts = obj.data.verts;
-    // TODO should laways be 8
+    // TODO should always be 8
     unsigned int num_used = obj.data.num_used;
     max_extents[0] = obj.data.verts[max_dot(verts, num_used, X_DIR)][0];
     max_extents[1] = obj.data.verts[max_dot(verts, num_used, NEG_X_DIR)][0];

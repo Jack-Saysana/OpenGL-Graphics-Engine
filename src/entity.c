@@ -48,10 +48,12 @@ ENTITY *init_entity(MODEL *model) {
       glm_mat4_identity(ent->np_data[i].inv_inertia);
       ent->np_data[i].zero_joint_offset = cur_zj;
       ent->np_data[i].num_z_joints = model->colliders[i].num_dofs - 1;
-      glm_vec3_copy(model->colliders[i].dofs[0], ent->np_data[i].dof);
-      ent->np_data[i].joint_type = model->colliders[i].dofs[0][W];
 
-      for (int j = 1; j < model->colliders[i].num_dofs; j++) {
+      int joint_dof = model->colliders[i].num_dofs - 1;
+      glm_vec3_copy(model->colliders[i].dofs[joint_dof], ent->np_data[i].dof);
+      ent->np_data[i].joint_type = model->colliders[i].dofs[joint_dof][W];
+
+      for (int j = 0; j < joint_dof; j++) {
         glm_vec3_copy(model->colliders[i].dofs[j], ent->zj_data[cur_zj].dof);
         ent->zj_data[cur_zj].joint_type = model->colliders[i].dofs[j][W];
         cur_zj++;
@@ -135,96 +137,106 @@ void draw_skeleton(unsigned int shader, ENTITY *entity) {
   draw_axes(shader, entity->model);
 }
 
+void draw_bone(unsigned int shader, ENTITY *entity, size_t bone) {
+  if (entity == NULL || entity->bone_mats == NULL) {
+    return;
+  }
+
+  glUseProgram(shader);
+  char var_name[50];
+#ifdef __linux__
+  sprintf(var_name, "bone_mats[%ld]", bone);
+#else
+  sprintf(var_name, "bone_mats[%lld]", bone);
+#endif
+  glUniformMatrix4fv(glGetUniformLocation(shader, var_name), 1, GL_FALSE,
+                     (float *) entity->final_b_mats[bone]);
+  set_vec3("col", (vec3) {1.0, 1.0, 0.0}, shader);
+  L_VBO bone_data[2];
+  glm_vec3_copy(entity->model->bones[bone].base, bone_data[0].coords);
+  glm_vec3_copy(entity->model->bones[bone].head, bone_data[1].coords);
+  bone_data[0].id = bone;
+  bone_data[1].id = bone;
+
+  draw_lines(bone_data, 1);
+}
+
+void draw_bone_axis(unsigned int shader, ENTITY *entity, size_t bone) {
+  if (entity == NULL || entity->bone_mats == NULL) {
+    return;
+  }
+
+  glUseProgram(shader);
+  char var_name[50];
+#ifdef __linux__
+  sprintf(var_name, "bone_mats[%ld]", bone);
+#else
+  sprintf(var_name, "bone_mats[%lld]", bone);
+#endif
+  glUniformMatrix4fv(glGetUniformLocation(shader, var_name), 1, GL_FALSE,
+                     (float *) entity->final_b_mats[bone]);
+
+  L_VBO axis_data[2];
+  for (int i = 0; i < 3; i++) {
+    glm_vec3_copy(entity->model->bones[bone].base, axis_data[0].coords);
+    axis_data[0].id = i;
+
+    vec3 axis_head = GLM_VEC3_ZERO_INIT;
+    glm_vec3_copy(entity->model->bones[bone].coordinate_matrix[i], axis_head);
+    glm_vec3_scale(axis_head, 0.1, axis_head);
+    glm_vec3_add(axis_data[0].coords, axis_head, axis_data[1].coords);
+    axis_data[1].id = i;
+
+    vec3 col = GLM_VEC3_ZERO_INIT;
+    col[i] = 1.0;
+    set_vec3("col", col, shader);
+
+    draw_lines(axis_data, 1);
+  }
+}
+
 void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere) {
   if (entity == NULL) {
     return;
   }
 
-  glUseProgram(shader);
-  int bone = 0;
-  COL_TYPE type = POLY;
-
-  unsigned int VAO;
-  unsigned int VBO;
-  unsigned int indicies[] = {
-    //TOP
-    0, 1, 2,
-    2, 3, 0,
-    //BOTTOM
-    4, 5, 6,
-    6, 7, 4,
-    //LEFT
-    1, 6, 5,
-    5, 2, 1,
-    //RIGHT
-    0, 3, 4,
-    4, 7, 0,
-    //FORWARD
-    0, 7, 6,
-    6, 1, 0,
-    //BACK
-    2, 5, 4,
-    4, 3, 2
-  };
-  unsigned int EBO;
-  glGenBuffers(1, &EBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies,
-               GL_STATIC_DRAW);
-
   for (int i = 0; i < entity->model->num_colliders; i++) {
-    bone = entity->model->collider_bone_links[i];
-    type = entity->model->colliders[i].type;
-
-    mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
-                  bone_to_entity);
-    if (type == POLY) {
-      glm_vec3_copy(entity->model->colliders[i].data.center_of_mass,
-                    bone_to_entity[3]);
-    } else {
-      glm_vec3_copy(entity->model->colliders[i].data.center,
-                    bone_to_entity[3]);
-    }
-
-    mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_mul(entity->final_b_mats[bone], bone_to_entity, bone_to_world);
-
-    if (type == POLY) {
-      glGenVertexArrays(1, &VAO);
-      glBindVertexArray(VAO);
-      glGenBuffers(1, &VBO);
-      glBindBuffer(GL_ARRAY_BUFFER, VBO);
-      // TODO Num used should be 8
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 *
-                   entity->model->colliders[i].data.num_used,
-                   entity->model->colliders[i].data.verts, GL_STATIC_DRAW);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3,
-                            (void *) 0);
-      glEnableVertexAttribArray(0);
-
-      glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
-                         (float *) bone_to_world);
-
-      // TODO Num used should be 8
-      if (entity->model->colliders[i].data.num_used == 8) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-      } else {
-        glDrawArrays(GL_POINTS, 0, entity->model->colliders[i].data.num_used);
-      }
-      glBindVertexArray(0);
-      glDeleteVertexArrays(1, &VAO);
-      glDeleteBuffers(1, &VBO);
-    } else if (type == SPHERE) {
-      glm_translate(bone_to_world, entity->model->colliders[i].data.center);
-      glm_scale_uni(bone_to_world, entity->model->colliders[i].data.radius);
-      glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
-                       (float *) bone_to_world);
-      draw_model(shader, sphere);
-    }
+    draw_collider(shader, entity, i, sphere);
   }
-  glDeleteBuffers(1, &EBO);
+}
+
+void draw_collider(unsigned int shader, ENTITY *entity, size_t col,
+                   MODEL *sphere) {
+
+  int bone = entity->model->collider_bone_links[col];
+  COL_TYPE type = entity->model->colliders[col].type;
+
+  mat4 bone_to_entity = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_ins3(entity->model->bones[bone].coordinate_matrix,
+                bone_to_entity);
+  if (type == POLY) {
+    glm_vec3_copy(entity->model->colliders[col].data.center_of_mass,
+                  bone_to_entity[3]);
+  } else {
+    glm_vec3_copy(entity->model->colliders[col].data.center,
+                  bone_to_entity[3]);
+  }
+
+  mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
+  glm_mat4_mul(entity->final_b_mats[bone], bone_to_entity, bone_to_world);
+
+  if (type == POLY) {
+    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
+                       (float *) bone_to_world);
+    draw_poly(entity->model->colliders[col].data.verts);
+  } else if (type == SPHERE) {
+    glm_translate(bone_to_world, entity->model->colliders[col].data.center);
+    glm_scale_uni(bone_to_world, entity->model->colliders[col].data.radius);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
+                     (float *) bone_to_world);
+    // TODO Kill need to have sphere model: Render sphere and poly primitives
+    draw_model(shader, sphere);
+  }
 }
 
 void free_entity(ENTITY *entity) {

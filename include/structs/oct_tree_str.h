@@ -3,20 +3,6 @@
 
 #include <structs/models/entity_str.h>
 
-/*
-typedef enum {
-  X_Y_Z = 0,
-  X_Y_negZ = 1,
-  X_negY_Z = 2,
-  X_negY_negZ = 3,
-  negX_Y_Z = 4,
-  negX_Y_negZ = 5,
-  negX_negY_Z = 6,
-  negX_negY_negZ = 7,
-  MULTIPLE = -1
-} OCTANT;
-*/
-
 #define X_Y_Z          (0)
 #define X_Y_negZ       (1)
 #define X_negY_Z       (2)
@@ -41,7 +27,7 @@ typedef struct physics_object {
 #endif
   ENTITY *entity;
   size_t collider_offset;
-  // Index of
+  // Index of oct tree node which contains the given PHYS_OBJ
   size_t node_offset;
   // Index of next PHYS_OBJ residing in the same node in data_buffer
   size_t next_offset;

@@ -29,47 +29,21 @@ void draw_bones(MODEL *model) {
     return;
   }
 
-  unsigned int VAO;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
-
-  typedef struct b_vbo {
-    float coords[3];
-    int bone_id;
-  } B_VBO;
-
-  B_VBO *bone_data = malloc(sizeof(B_VBO) * model->num_bones * 2);
+  L_VBO *bone_data = malloc(sizeof(L_VBO) * model->num_bones * 2);
   for (int i = 0; i < model->num_bones; i++) {
     // bone vertices
     bone_data[(i*2)].coords[0] = model->bones[i].base[0];
     bone_data[(i*2)].coords[1] = model->bones[i].base[1];
     bone_data[(i*2)].coords[2] = model->bones[i].base[2];
-    bone_data[(i*2)].bone_id = i;
+    bone_data[(i*2)].id = i;
 
     bone_data[(i*2)+1].coords[0] = model->bones[i].head[0];
     bone_data[(i*2)+1].coords[1] = model->bones[i].head[1];
     bone_data[(i*2)+1].coords[2] = model->bones[i].head[2];
-    bone_data[(i*2)+1].bone_id = i;
+    bone_data[(i*2)+1].id = i;
   }
 
-  unsigned int VBO;
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(B_VBO) * model->num_bones * 2,
-               bone_data, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(B_VBO),
-                        (void *) 0);
-  glVertexAttribIPointer(1, 1, GL_INT, sizeof(B_VBO),
-                        (void *) (3 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-
-  glDrawArrays(GL_LINES, 0, model->num_bones * 2);
-  glBindVertexArray(0);
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  free(bone_data);
+  draw_lines(bone_data, model->num_bones);
 }
 
 void draw_axes(unsigned int shader, MODEL *model) {
@@ -77,29 +51,7 @@ void draw_axes(unsigned int shader, MODEL *model) {
     return;
   }
 
-  unsigned int VAO;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
-
-  typedef struct a_vbo {
-    float coords[3];
-    int bone_id;
-  } A_VBO;
-
-  A_VBO *axis_data = malloc(sizeof(A_VBO) * model->num_bones * 2);
-  unsigned int VBO;
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(A_VBO) * model->num_bones * 2,
-               axis_data, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(A_VBO),
-                        (void *) 0);
-  glVertexAttribIPointer(1, 1, GL_INT, sizeof(A_VBO),
-                        (void *) (3 * sizeof(GLfloat)));
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-
+  L_VBO *axis_data = malloc(sizeof(L_VBO) * 2 * model->num_bones);
   // One draw call for each coordinate axis (red x, green y, blue z)
   // Could theoretically do this in one draw call with a separate shader, but
   // this allows us to render the bone axes using the same shader as the bones
@@ -108,27 +60,21 @@ void draw_axes(unsigned int shader, MODEL *model) {
       axis_data[(i*2)].coords[0] = model->bones[i].base[0];
       axis_data[(i*2)].coords[1] = model->bones[i].base[1];
       axis_data[(i*2)].coords[2] = model->bones[i].base[2];
-      axis_data[(i*2)].bone_id = i;
+      axis_data[(i*2)].id = i;
 
-      vec6 axis_head = GLM_VEC3_ZERO_INIT;
+      vec3 axis_head = GLM_VEC3_ZERO_INIT;
       glm_vec3_copy(model->bones[i].coordinate_matrix[j], axis_head);
       glm_vec3_scale(axis_head, 0.1, axis_head);
       glm_vec3_add(axis_data[i*2].coords, axis_head,
                    axis_data[(i*2)+1].coords);
-      axis_data[(i*2)+1].bone_id = i;
+      axis_data[(i*2)+1].id = i;
     }
-    glBufferData(GL_ARRAY_BUFFER, sizeof(A_VBO) * model->num_bones * 2,
-                 axis_data, GL_STATIC_DRAW);
     vec3 col = GLM_VEC3_ZERO_INIT;
     col[j] = 1.0;
     set_vec3("col", col, shader);
-    glDrawArrays(GL_LINES, 0, model->num_bones * 2);
-  }
 
-  glBindVertexArray(0);
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  free(axis_data);
+    draw_lines(axis_data, model->num_bones);
+  }
 }
 
 void free_model(MODEL *model) {

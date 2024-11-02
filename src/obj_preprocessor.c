@@ -396,8 +396,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
         fprintf(stderr, "Invalid dof: %f %f %f for collider: %d\n",
                 dof[X], dof[Y], dof[Z], col);
         status = -1;
-      } else if (colliders[col].num_dofs >= 6) {
-        fprintf(stderr, "Cannot specify more than 6 dofs for collider: %d\n",
+      } else if (colliders[col].num_dofs >= 7) {
+        fprintf(stderr, "Cannot specify more than 7 dofs for collider: %d\n",
                col);
         status = -1;
       } else {
