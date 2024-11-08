@@ -3,17 +3,20 @@ CC = gcc
 BUILD_DIR = ./bin
 SRC_DIR = ./src
 FILES = $(wildcard ./src/*.c ./src/*/*.c)
-SRC_FILES = $(filter-out ./src/test.c, $(FILES))
-TEST_FILES = $(filter-out ./src/main.c, $(FILES))
-LIB_FILES = $(filter-out ./src/main.c ./src/test.c ./src/test_init.c, $(FILES))
+OBJS = $(files:%=$(BUILD_DIR)/%.o)
+#SRC_FILES = $(filter-out ./src/test.c, $(FILES))
+#TEST_FILES = $(filter-out ./src/main.c, $(FILES))
+#LIB_FILES = $(filter-out ./src/main.c ./src/test.c ./src/test_init.c, $(FILES))
 #SRC_OBJS = $(SRC_FILES:%=$(BUILD_DIR)/$(notdir %).o)
-SRC_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
+#SRC_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
 #TEST_OBJS = $(TEST_FILES:%=$(BUILD_DIR)/$(notdir %).o)
-TEST_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(TEST_FILES))
-#LIB_OBJS = $(LIB_FILES:%=$(BUILD_DIR)/$(notdir %).l)
-LIB_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.l,$(LIB_FILES))
+#TEST_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(TEST_FILES))
+LIB_OBJS = $(FILES:%=$(BUILD_DIR)/$(notdir %).o)
+LIB_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(FILES))
 DEPS = $(OBJS:.o=.d)
 DFLAGS = -g -O0 -Wall -MMD -MP
+
+export LD_LIBRARY_PATH = $(PWD)/lib
 
 ifeq ($(OS),Windows_NT)
 	DEVICE += -DWINDOWS
@@ -40,40 +43,29 @@ test: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_TEST
 main: ./bin/src $(BUILD_DIR)/$(PROJ_NAME)_MAIN
 
 $(BUILD_DIR)/$(PROJ_NAME): $(LIB_OBJS)
-#	$(CC) $(LIBS) -shared -o $(BUILD_DIR)/libengine.so $(LIB_OBJS) $(LINK)
-	ar rcs $(BUILD_DIR)/libengine.a $(LIB_OBJS)
-	cp -r ./include/interface/* $(BUILD_DIR)/include/engine
-
-$(BUILD_DIR)/$(PROJ_NAME)_TEST: $(TEST_OBJS)
-	$(CC) $(LIBS) $(TEST_OBJS) $(DEVICE) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
-
-$(BUILD_DIR)/$(PROJ_NAME)_MAIN: $(SRC_OBJS)
-	$(CC) $(LIBS) $(SRC_OBJS) -o $(BUILD_DIR)/$(PROJ_NAME) $(LINK)
+	@ar rcs $(BUILD_DIR)/libengine.a $(LIB_OBJS)
+	@cp -r ./include/interface/* $(BUILD_DIR)/include/engine
+	@echo "Created library"
 
 $(BUILD_DIR)/%.o: %.c
-	$(CC) $(DFLAGS) $(DEVICE) $(INCLUDE) -c $< -o $@
-
-$(BUILD_DIR)/%.l: %.c
-	$(CC) $(DFLAGS) $(INCLUDE) -c -fPIC -o $@ $<
+	@$(CC) $(DFLAGS) $(INCLUDE) -c -fPIC -o $@ $<
+	@echo "--> Compiled: " $<
 
 ./bin/src:
-	mkdir -p ./bin/src
-	mkdir -p ./bin/src/math
-	mkdir -p ./bin/src/physics
+	@mkdir -p ./bin/src
+	@mkdir -p ./bin/src/math
+	@mkdir -p ./bin/src/physics
+	@echo "Created build directory"
 
 ./bin/include:
-	mkdir ./bin/include
-	mkdir ./bin/include/engine
+	@mkdir ./bin/include
+	@mkdir ./bin/include/engine
+	@echo "Created library header directories"
 
 clean:
-	rm -rf ./resources/*/*.obj.bin*
-	rm -rf $(BUILD_DIR)
-
-run:
-	@./bin/$(PROJ_NAME)
-
-debug:
-	gdb ./bin/$(PROJ_NAME)
+	@rm -rf ./resources/*/*.obj.bin*
+	@rm -rf $(BUILD_DIR)
+	@echo "Cleaned ./bin"
 
 -include $(DEPS)
 

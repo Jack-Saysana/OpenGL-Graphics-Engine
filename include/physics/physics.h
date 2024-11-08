@@ -4,7 +4,7 @@
 #include <cglm/ivec3.h>
 #include <cglm/quat.h>
 #include <const.h>
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 #include <structs/simulation_str.h>
 #include <globals.h>
 

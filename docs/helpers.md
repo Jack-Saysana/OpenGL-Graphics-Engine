@@ -8,7 +8,7 @@ The engine also provides a variety of helper functions that are useful for in ma
 
 These functions will automatically set uniform variables of shaders
 
-### void set_mat4(char *name, mat4 mat, unsigned int shader)
+### `void set_mat4(char *name, mat4 mat, unsigned int shader)`
 
 **Arguments**
 
@@ -18,7 +18,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_mat4(char *name, mat3 mat, unsigned int shader)
+### `void set_mat4(char *name, mat3 mat, unsigned int shader)`
 
 **Arguments**
 
@@ -28,7 +28,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_vec4(char *name, vec4 vec, unsigned int shader)
+### `void set_vec4(char *name, vec4 vec, unsigned int shader)`
 
 **Arguments**
 
@@ -38,7 +38,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_vec3(char *name, vec3 vec, unsigned int shader)
+### `void set_vec3(char *name, vec3 vec, unsigned int shader)`
 
 **Arguments**
 
@@ -48,7 +48,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_vec2(char *name, vec2 vec, unsigned int shader)
+### `void set_vec2(char *name, vec2 vec, unsigned int shader)`
 
 **Arguments**
 
@@ -58,7 +58,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_float(char *name, float f, unsigned int shader)
+### `void set_float(char *name, float f, unsigned int shader)`
 
 **Arguments**
 
@@ -68,7 +68,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_int(char *name, int i, unsigned int shader)
+### `void set_int(char *name, int i, unsigned int shader)`
 
 **Arguments**
 
@@ -78,7 +78,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_uint(char *name, unsigned int ui, unsigned int shader)
+### `void set_uint(char *name, unsigned int ui, unsigned int shader)`
 
 **Arguments**
 
@@ -88,7 +88,7 @@ These functions will automatically set uniform variables of shaders
 
 - `unsigned int shader`: ID of shader program
 
-### void set_i_arr(char *name, int *iarr, size_t len, unsigned int shader)
+### `void set_i_arr(char *name, int *iarr, size_t len, unsigned int shader)`
 
 **Arguments**
 
@@ -102,7 +102,7 @@ These functions will automatically set uniform variables of shaders
 
 ### Math
 
-### int max_dot(vec3 *verts, unsigned int len, vec3 dir)
+### `int max_dot(vec3 *verts, unsigned int len, vec3 dir)`
 
 Given a set of vertices and an arbitrary direction, dir, max_dot will find which vertex in verts has the highest dot product with dir.
 
@@ -118,7 +118,7 @@ Given a set of vertices and an arbitrary direction, dir, max_dot will find which
 
 The index of the vertex in `verts` whose dot product is the maximum with `dir`
 
-### void vec3_remove_noise(vec3 v, float threshold)
+### `void vec3_remove_noise(vec3 v, float threshold)`
 
 Each element in `v` is checked. If it falls between -threshold and threshold, it is simply set to 0
 
@@ -128,7 +128,7 @@ Each element in `v` is checked. If it falls between -threshold and threshold, it
 
 - `float threshold`: Threshold value for zeroing
 
-### void remove_noise(float f, float threshold)
+### `void remove_noise(float f, float threshold)`
 
 If `f` falls between `-threshold` and `threshold`, zero is returned. Otherwise, the value of f is returned
 
@@ -144,17 +144,17 @@ If `f` falls between `-threshold` and `threshold`, zero is returned. Otherwise, 
 
 ### Misc
 
-### int double_buffer(void **buffer, size_t *buff_size, size_t unit_size)
+### `int double_buffer(void **buffer, size_t *buff_size, size_t unit_size)`
 
-Reallocates a dynamically allocated buffer to twice its size
+Reallocates a dynamically allocated buffer to twice its size. I.e (*buffer) is reallocated to a buffer of size: `2 * (*buff_size) * unit_size`. The old contents of (*buffer) are copied to the new buffer.
 
 **Arguments**
 
 - `void **buffer`: Pointer to buffer to reallocate
 
-- `size_t *buff_size`: Pointer to size value of buffer
+- `size_t *buff_size`: Pointer to size value of buffer. This does NOT indicate the size of the buffer in bytes, but instead in terms of how many "items" are contained in the buffer. The total size of the buffer in bytes is calculated as follows: `(*buff_size) * unit_size`.
 
-- `size_t unit_size`: Size of each element in the buffer
+- `size_t unit_size`: Size of each element in the buffer in bytes
 
 **Returns**
 

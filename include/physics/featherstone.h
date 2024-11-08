@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <cglm/cglm.h>
 #include <const.h>
-#include <structs/entity_str.h>
+#include <structs/models/entity_str.h>
 
 static mat3 MAT3_ZERO = GLM_MAT3_ZERO_INIT;
 
