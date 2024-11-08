@@ -16,10 +16,6 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
 
   // Calculate spatial velocities from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
-    if (colliders[cur_col].category != HURT_BOX) {
-      continue;
-    }
-
     root_bone = bone_from_col[cur_col];
     parent_bone = bones[root_bone].parent;
 
@@ -199,10 +195,6 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
   // TODO I_hat can be precomputed
   // Calculate I-hat and Z-hat from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
-    if (colliders[cur_col].category != HURT_BOX) {
-      continue;
-    }
-
     // Calculate Z-hat of zero joints, leave I-hat zero
     if (p_data[cur_col].num_z_joints) {
       int cur_zj = 0;
@@ -236,10 +228,6 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
 
   // Calculate I-hat-A and Z-hat-A from outbound to inbound
   for (int cur_col = num_links - 1; cur_col >= 0; cur_col--) {
-    if (colliders[cur_col].category != HURT_BOX) {
-      continue;
-    }
-
     mat6_copy(p_data[cur_col].I_hat, p_data[cur_col].I_hat_A);
     vec6_copy(p_data[cur_col].Z_hat, p_data[cur_col].Z_hat_A);
 
@@ -311,10 +299,6 @@ int featherstone_abm(ENTITY *body, vec3 grav) {
 
   // Calculate q** and spatial acceleration from inbound to outbound
   for (int cur_col = 0; cur_col < num_links; cur_col++) {
-    if (colliders[cur_col].category != HURT_BOX) {
-      continue;
-    }
-
     vec6_zero(p_data[cur_col].a_hat);
     int root_bone = bone_from_col[cur_col];
     parent_bone = bones[root_bone].parent;

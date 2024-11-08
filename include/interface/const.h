@@ -9,6 +9,7 @@
 #define X (0)
 #define Y (1)
 #define Z (2)
+#define W (3)
 
 // Base lenge for allocating buffers
 #define BUFF_START_LEN (5)

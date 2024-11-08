@@ -7,6 +7,7 @@
 #define X (0)
 #define Y (1)
 #define Z (2)
+#define W (3)
 
 #define LINE_BUFF_STARTING_LEN (50)
 #define FILE_CONTENTS_STARTING_LEN (500)
