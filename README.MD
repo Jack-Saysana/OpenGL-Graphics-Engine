@@ -13,6 +13,8 @@ This repository serves as a codebase for my OpenGL based graphics engine, initia
 
 - Impulse-based collision resolution
 
+- Constraint-based ragdoll and general physics
+
 - UI Menu building
 
 - 6D Vector and algebra
@@ -47,7 +49,6 @@ With the library built and ready to use, be sure to read the documentation to le
 
 ## In progress / future plans:
 
-- Ragdoll Physics implementation (WIP)
 - Inverse kinematics (Planned)
 
 ## Libraries used:
