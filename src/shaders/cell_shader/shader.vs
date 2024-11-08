@@ -19,7 +19,6 @@ struct BONE {
 //uniform mat4 bone_mats[26][3];
 uniform mat4 bone_mats[50];
 
-uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 camera_pos;
@@ -38,7 +37,7 @@ void main() {
     bone_transformation = vec4(in_pos, 1.0);
   }
 
-  gl_Position = projection * view * model * bone_transformation;
+  gl_Position = projection * view * bone_transformation;
 
   frag_pos = model * bone_transformation;
   tex_coords = in_tex_coords;

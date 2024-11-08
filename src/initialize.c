@@ -2,26 +2,26 @@
 
 GLFWwindow *init_gl(char *win_name) {
   fb_size_callbacks = malloc(sizeof(void (**)(GLFWwindow *, int, int)) *
-                             BUFF_START_LEN);
+                             BUFF_STARTING_LEN);
   if (fb_size_callbacks == NULL) {
     fprintf(stderr, "Error: Failed to allocate callback buffer\n");
     return NULL;
   }
   fbs_len = 0;
-  fbs_size = BUFF_START_LEN;
+  fbs_size = BUFF_STARTING_LEN;
 
   mouse_mov_callbacks = malloc(sizeof(void (**)(GLFWwindow *, double, double)) *
-                               BUFF_START_LEN);
+                               BUFF_STARTING_LEN);
   if (mouse_mov_callbacks == NULL) {
     fprintf(stderr, "Error: Failed to allocate callback buffer\n");
     free(fb_size_callbacks);
     return NULL;
   }
   mm_len = 0;
-  mm_size = BUFF_START_LEN;
+  mm_size = BUFF_STARTING_LEN;
 
   scroll_callbacks = malloc(sizeof(void (**)(GLFWwindow *, double, double)) *
-                            BUFF_START_LEN);
+                            BUFF_STARTING_LEN);
   if (scroll_callbacks == NULL) {
     fprintf(stderr, "Error: Failed to allocate callback buffer\n");
     free(fb_size_callbacks);
@@ -29,11 +29,11 @@ GLFWwindow *init_gl(char *win_name) {
     return NULL;
   }
   s_len = 0;
-  s_size = BUFF_START_LEN;
+  s_size = BUFF_STARTING_LEN;
 
   mouse_button_callbacks = malloc(sizeof(void(**)
                                          (GLFWwindow *, int, int, int)) *
-                                  BUFF_START_LEN);
+                                  BUFF_STARTING_LEN);
   if (mouse_button_callbacks == NULL) {
     fprintf(stderr, "Error: Failed to allocate callback buffer\n");
     free(fb_size_callbacks);
@@ -42,7 +42,7 @@ GLFWwindow *init_gl(char *win_name) {
     return NULL;
   }
   mb_len = 0;
-  mb_size = BUFF_START_LEN;
+  mb_size = BUFF_STARTING_LEN;
 
   GLFWwindow *window = NULL;
 

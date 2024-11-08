@@ -77,21 +77,7 @@ This section will specify the `ENTITY`, `MODEL` and their main supporting struct
 
 - `MODEL *model`: Pointer to the model the entity is an instance of
 
-- `P_DATA *np_data`: Array of `P_DATA` structs, reperenting the "narrow" physics data of each collider of the entity. This allows each collider to have its own physics properties, which can be used in features such as ragdolls.
-
-- `mat4 inv_inertia`: The inverse of the inertia tensor which represents the *whole* entity. This represents a part of the entity's "broad" physics data, which is represntative of the entity as a whole, not just a single collider.
-
-- `versor rotation`: The rotation quaternion of the entity.
-
-- `vec3 scale`: The scale vector of the entity
-
-- `vec3 translation`: The translation vector of the entity. Can be thought of as the position of the entity in world space
-
-- `vec3 velocity`: The "broad" physics velocity vector of the entity
-
-- `vec3 ang_velocity`: The "broad" physics angular velocity of the entity
-
-- `vec3 inv_mass`: The "board" physics inverse of the entity's mass
+- `P_DATA *np_data`: Array of `P_DATA` structs, reperenting the physics data of each collider of the entity. For models made up of multiple colliders, this allows each collider to have its own physics properties, which can be used in features such as ragdolls.
 
 - `int type`: A bitfield specifying the "type" of the entity and how it should be treated during simulation. The options are:
   - `T_DYNAMIC`: A flag used to denote that the entity is currently moving. When simulated, this flag is automatically updated by the simulation, and is used to save computation time.
@@ -102,9 +88,7 @@ This section will specify the `ENTITY`, `MODEL` and their main supporting struct
 
 - Entities can be thought of as "instances" of models, with their own world-space info that can be applied to their model's colliders and bones
 
-- The main fields for manipulating an entity through space are the `rotation`, `translation`, and `scale` fields
-
-- The main fields for manipulating an entity's physical attributes are the `inv_mass` and `inv_inertia` fields
+- Entity physics data is stored on a per-collider basis in the `np_data` field
 
 - The `data` field acts as a linkage of the entity to external, application-specific systems, such as a `player` or `enemy` struct
 
@@ -116,9 +100,7 @@ Colliders are unique in that their structure depends on their `type` due to the 
   - `DEFAULT`: This can be thought of as the "bounding" box of an entity, and represents an entire entity rather than a single part of the entity. This is typically used in event-triggering and broad collision detection
   - `HURT_BOX`: This can be thought of as a collider for a singular bone/segment of the entity. This is typically used in "narrow" physics and combat simulation.
   - `HIT_BOX`: This is another more "narrow" colliders used to represent a segment of the entity that might actually deal damage. Typically used in combat simulation.
-  - **note**: The assignment of these categories to a colliders is largely up to the developer, and does not have to perfectly follow the general descriptions above. i.e a collider assigned to be a `HIT_BOX` does not "have" to be used to deal damage, and a `HURT_BOX` can technically represent an entire entity. They are provided as they are purly because these types of categories are conducive to many game paradigms. However, the simulation will treat colliders of different categories differently. In particular:
-    - If a bone is linked to a `HURT_BOX` of `HIT_BOX`, the simulation integration and impulse resolution function will only work with the collider's "narrow" physics info, NOT the broad physics info of the entity.
-    - Similarly, if a collider is categorized as `DEFAULT`, the simulation will automatically work with "broad" physics and state info, regardless of if the collider is linked to a bone
+  - **note**: The assignment of these categories to a colliders is largely up to the developer, and does not have to perfectly follow the general descriptions above. i.e a collider assigned to be a `HIT_BOX` does not "have" to be used to deal damage, and a `HURT_BOX` can technically represent an entire entity. They are provided simply because these types of categories are conducive to many game paradigms, and they act as a way for developers to simulate multiple entities of the same model in various different ways, depeneding on context.
 
 - `COL_TYPE type`: The shape of the collider. The options are:
   - `POLY`: The collider is a polyhedron of 8 vertices
@@ -142,21 +124,13 @@ Colliders are unique in that their structure depends on their `type` due to the 
 
 - Misc relationship info: Members linking the bone to its parent and children
 
-```P_DATA```
-
-- Misc ragdoll physics members: A collection of members used only for usage in the WIP ragdoll simulation. Can be safely ignored.
-
-- `vec3 velocity`: Velocity of the collider
-
-- `vec3 ang_velocity`: Angular velocity of the collider
-
 ## Loading
 
 A model can be loaded via the `load_model` function. These models are read from modified .obj files. These files are similar in format to Wavefront .obj files. However, they are expanded to contain bone, animation and collider data. These files may be exported from blender utilizing a [custom python script](https://github.com/Jack-Saysana/Blender-Custom-Obj-Exporter). These files are preprocessed by the engine to create a model binary, which contains the same information as these .obj files, but may be read at much faster speeds in the future. However, the binaries are not guarenteed to be portable across systems.
 
 ### Functions
 
-### MODEL *load_model(char *path)
+### `MODEL *load_model(char *path)`
 
 Loads a model from a modified .obj file. If no preprocessed binary of the same name with a ".bin" extention exists in the directory in which the .obj file resides, the engine will also preprocess the file and create a preprocessed binary for quick reading.
 
@@ -168,7 +142,7 @@ Loads a model from a modified .obj file. If no preprocessed binary of the same n
 
 A pointer to the imported model or NULL if an error has occured.
 
-### MODEL_DATA *load_model_data(char *path)
+### `MODEL_DATA *load_model_data(char *path)`
 
 Performs the same functionality as `load_model()`, minus the initialization of the OpenGL VAO, VBO and EBO. The final `MODEL` struct can then be later initialized using the `gen_model()` function. This function may be used in the instance where the OpenGL object buffers should not be instantly initialized, such as the case where models are loaded in a separate thread from the thread belonging to the current OpenGL context.
 
@@ -180,7 +154,7 @@ Performs the same functionality as `load_model()`, minus the initialization of t
 
 A pointer to the imported `MODEL_DATA` struct or NULL if an error has occured.
 
-### MODEL *gen_model(MODEL_DATA *md)
+### `MODEL *gen_model(MODEL_DATA *md)`
 
 Initializes a model from some given `MODEL_DATA`.
 
@@ -192,7 +166,7 @@ Initializes a model from some given `MODEL_DATA`.
 
 A pointer to the initialized model or NULL if an error has occured.
 
-### int gen_cubemap(char **paths, unsigned int *dest)
+### `int gen_cubemap(char **paths, unsigned int *dest)`
 
 Generates an OpenGL cubemap.
 
@@ -212,7 +186,7 @@ Once imported, models can be instanced to create "entities" with their own anima
 
 ### Functions
 
-### ENTITY *init_entity(MODEL *model)
+### `ENTITY *init_entity(MODEL *model)`
 
 Creates an instance of a model with its own animation, physics and spatial state.
 
@@ -230,7 +204,7 @@ Given an entity's model is properly rigged and contains animations, an entity's 
 
 ### Functions
 
-### int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame)
+### `int animate(ENTITY *entity, unsigned int animation_index, unsigned int frame)`
 
 Manipulates an entity's bone matricies such that they display a given frame of a given animation.
 
@@ -254,7 +228,7 @@ To learn about quickly importing the shaders to use during render, refer to [thi
 
 ### Functions
 
-### void draw_model(unsigned int shader, MODEL *model)
+### `void draw_model(unsigned int shader, MODEL *model)`
 
 Draws a model to the screen. By default, the mesh will be rendered as it appears straight from the binary file, so the matricies used to render the model must be manually set.
 
@@ -271,7 +245,7 @@ Draws a model to the screen. By default, the mesh will be rendered as it appears
 
 - `MODEL *model`: Pointer to the model to be render
 
-### void draw_entity(unsigned int shader, ENTITY *entity)
+### `void draw_entity(unsigned int shader, ENTITY *entity)`
 
 Draws an entity to the screen, using the model that was used to initialize the entity. The physics, general position, bone orientation, and transformation data is automatically applied to the model upon rendering the entity, so no model matricies must be manually set.
 
@@ -288,13 +262,38 @@ Draws an entity to the screen, using the model that was used to initialize the e
 
 - `ENTITY *entity`: Pointer to the entity to render
 
+### `void draw_skeleton(unsigned int shader, ENTITY *entity)`
+
+Draws the bone hierachy of an entity to the screen. The drawn bones will automatically follow the current joint angles of each respective bone.
+
+**Arguments**
+
+- `unsigned int shader`: The ID of the shader program used to render the skeleton
+  - For an example of a valid vertex shader, see [src/shaders/bone/shader.vs](../src/shaders/bone/shader.vs)
+  - For an example of a valid fragment shader which contains only the required uniforms, see [src/shaders/basic/shader.fs](../src/shaders/basic/shader.fs)
+  - No geometry shader required
+- `ENTITY *entity`: Pointer to the entity of the skeleton to render
+
+### `void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere)`
+
+Draws the colliders of an entity to the screen. The drawn colliders will automatically follow the current orientation of the bones.
+
+**Arguments**
+
+- `unsigned int shader`: The ID of the shader program used to render the colliders
+  - For an example of a valid vertex shader, see [src/shaders/basic/shader.vs](../src/shaders/basic/shader.vs)
+  - For an example of a valid fragment shader, see [src/shaders/basic/shader.fs](../src/shaders/basic/shader.fs)
+  - No geometry shader required
+- `ENTITY *entity`: Pointer to the entity of the collider to render
+- `MODEL *sphere`: Pointer to a sphere model which will be used as the base model for rendering spherical hit boxes. Should be a sphere of unit radius, centered at the origin.
+
 ## Cleanup
 
 Upon concluding their usage, both entities and models must be deallocated with their respective functions.
 
 ### Functions
 
-### void free_model(MODEL *model)
+### `void free_model(MODEL *model)`
 
 Deallocates a model
 
@@ -302,10 +301,10 @@ Deallocates a model
 
 `MODEL *model`: Pointer to model to be deallocated
 
-### void free_entity(ENTITY *entity)
+### `void free_entity(ENTITY *entity)`
 
 Deallocates an entity. Does **NOT** deallocate the model which the entity is an instance of.
 
-### void free_textures()
+### `void free_textures()`
 
 Deallocates all currently cached textures in memory. Should be called only when all currently textured objects (UI components, models, etc...) are deallocated. Usage is recommended for memory management in situations where asset variety is high, as the allocated textures in memory can stack up as different models are initialized.

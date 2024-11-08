@@ -23,11 +23,11 @@ static size_t mb_size = 0;
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-static void fbs_callback(GLFWwindow *, int, int);
-static void mm_callback(GLFWwindow *, double, double);
-static void s_callback(GLFWwindow *, double, double);
-static void mb_callback(GLFWwindow *, int, int, int);
+static void fbs_callback(GLFWwindow *window, int width, int height);
+static void mm_callback(GLFWwindow *window, double x_pos, double y_pos);
+static void s_callback(GLFWwindow *window, double x_offset, double y_offset);
+static void mb_callback(GLFWwindow *window, int button, int action, int mods);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
-int double_buffer(void **, size_t *, size_t);
+int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);

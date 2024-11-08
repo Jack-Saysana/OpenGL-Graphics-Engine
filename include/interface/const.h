@@ -9,6 +9,7 @@
 #define X (0)
 #define Y (1)
 #define Z (2)
+#define W (3)
 
 // Base lenge for allocating buffers
 #define BUFF_START_LEN (5)
@@ -31,6 +32,9 @@
 #define ALLOW_HURT_BOXES (0x2)
 #define ALLOW_HIT_BOXES  (0x4)
 
+// Physics constants
+#define JOINT_PRISMATIC (0)
+#define JOINT_REVOLUTE (1)
 #define GRAVITY (10.0)
 
 // Misc

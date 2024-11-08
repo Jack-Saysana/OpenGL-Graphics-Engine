@@ -1,16 +1,12 @@
 #include <glad/glad.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <entity_str.h>
+#include <structs/models/entity_str.h>
+#include <structs/models/render_primitives_str.h>
 
-typedef enum {
-  AMB = 0,
-  DIFF = 1,
-  SPEC = 2,
-  SPEC_EXPONENT = 3,
-  BUMP = 4
-} TEX_TYPE;
+// ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-void draw_model(unsigned int shader, MODEL *model);
-void draw_bones(MODEL *model);
-void free_model(MODEL *model);
+// ====================== EXTERNALLY DEFINED FUNCTIONS =======================
+
+void set_vec3(char *loc, vec3 vec, unsigned int shader);
+void draw_lines(L_VBO *lines, size_t num_lines);

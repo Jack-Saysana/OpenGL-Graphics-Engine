@@ -332,3 +332,42 @@ void set_texture(char *name, unsigned int tex, unsigned int shader, int unit) {
   glUniform1i(glGetUniformLocation(shader, name), unit);
 }
 
+/*
+  The following functions are helpers to concisely print out the vector and
+  matrix types provided by cglm
+*/
+void print_vec3(vec3 v) {
+  printf("%f %f %f\n", v[0], v[1], v[2]);
+}
+
+void print_vec4(vec4 v) {
+  printf("%f %f %f %f\n", v[0], v[1], v[2], v[3]);
+}
+
+void print_mat3(mat3 m) {
+  for (int i = 0; i < 3; i++) {
+    printf("|%f %f %f|\n", m[0][i], m[1][i], m[2][i]);
+  }
+}
+
+void print_mat4(mat4 m) {
+  for (int i = 0; i < 4; i++) {
+    printf("|%f %f %f %f|\n", m[0][i], m[1][i], m[2][i], m[3][i]);
+  }
+}
+
+/*
+  The following functions are helpers to concisely compare vectors
+*/
+
+int comp_vec2(vec2 a, vec2 b) {
+  return a[X] == b[X] && a[Y] == b[Y];
+}
+
+int comp_vec3(vec3 a, vec3 b) {
+  return a[X] == b[X] && a[Y] == b[Y] && a[Z] == b[Z];
+}
+
+int comp_vec4(vec4 a, vec4 b) {
+  return a[X] == b[X] && a[Y] == b[Y] && a[Z] == b[Z] && a[W] == b[W];
+}
