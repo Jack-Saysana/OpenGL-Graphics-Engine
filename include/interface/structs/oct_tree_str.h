@@ -6,6 +6,8 @@
 typedef struct physics_object {
 //  COLLIDER add_state;
   ENTITY *entity;
+  void (*move_cb)(ENTITY *, vec3);
+  int (*is_moving_cb)(ENTITY *, size_t);
   size_t collider_offset;
   // Index of oct tree node which contains the given PHYS_OBJ
   size_t node_offset;

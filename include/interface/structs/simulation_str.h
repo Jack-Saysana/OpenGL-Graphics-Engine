@@ -6,6 +6,8 @@
 
 typedef struct simulation_collider {
   ENTITY *entity;
+  void (*move_cb)(ENTITY *, vec3);
+  int (*is_moving_cb)(ENTITY *, size_t);
   size_t collider_offset;
   size_t index;
   int status;
@@ -14,6 +16,7 @@ typedef struct simulation_collider {
 
 typedef struct simulation_entity {
   ENTITY *entity;
+  void (*move_cb)(ENTITY *, vec3);
   size_t index;
   int status;
   int to_delete;
@@ -28,8 +31,13 @@ typedef union ledger_input {
   struct c_data{
     ENTITY *ent;
     size_t col;
+    void (*move_cb)(ENTITY *, vec3);
+    int (*is_moving_cb)(ENTITY *, size_t);
   } collider;
-  ENTITY *ent;
+  struct e_data {
+    ENTITY *ent;
+    void (*move_cb)(ENTITY *, vec3);
+  } entity;
 } LEDGER_INPUT;
 
 typedef struct simulation {
@@ -63,6 +71,7 @@ typedef struct simulation {
 } SIMULATION;
 
 typedef struct sim_state {
+  ENTITY *entity;
   mat4 (*bone_mats)[3];
   struct collider_state {
     float joint_angle;

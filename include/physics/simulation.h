@@ -7,12 +7,18 @@
 #include <globals.h>
 #include <structs/simulation_str.h>
 
+typedef struct collision_update {
+  COLLISION col;
+  void (*move_cb)(ENTITY *, vec3);
+  int (*is_moving_cb)(ENTITY *, size_t);
+} COL_UPDATE;
+
 typedef struct check_args {
   pthread_mutex_t *col_lock;
   size_t start;
   size_t end;
   SIMULATION *sim;
-  COLLISION **collisions;
+  COL_UPDATE **collisions;
   size_t *buf_len;
   size_t *buf_size;
   vec3 origin;
@@ -27,11 +33,11 @@ int elist_add(SIM_COLLIDER **list, size_t *len, size_t *buff_size,
 void elist_delete(SIM_COLLIDER *list, size_t index, size_t *len);
 void *check_moving_buffer(void *args);
 int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
-                            size_t collider_offset, COLLISION **col,
+                            size_t collider_offset, COL_UPDATE **col,
                             size_t *col_buf_len, size_t *col_buf_size,
                             int get_col_info, pthread_mutex_t *col_lock);
-void global_collider(ENTITY *, size_t, COLLIDER *dest);
-void integrate_ent(ENTITY *);
+void global_collider(ENTITY *ent, size_t, COLLIDER *dest);
+void integrate_ent(ENTITY *ent, vec3 forces);
 int ledger_init(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *);
 int ledger_add(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *,
                LEDGER_INPUT, int);
@@ -48,9 +54,12 @@ OCT_TREE *init_tree(float max_extent, unsigned int max_depth);
 void free_oct_tree(OCT_TREE *tree);
 #ifdef DEBUG_OCT_TREE
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
-                    int birthmark);
+                    void (*move_cb)(ENTITY *, vec3),
+                    int (*is_moving_cb)(ENTITY *, size_t), int birthmark);
 #else
-int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
+int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
+                    void (*move_cb)(ENTITY *, vec3),
+                    int (*is_moving_cb)(ENTITY *, size_t));
 #endif
 int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
