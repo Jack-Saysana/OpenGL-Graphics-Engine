@@ -7,7 +7,9 @@
 SIMULATION *init_sim(float max_extent, unsigned int max_depth);
 void free_sim(SIMULATION *sim);
 
-int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter);
+int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter,
+                   void (*move_cb)(ENTITY *, vec3),
+                   int (*is_moving_cb)(ENTITY *, size_t));
 int sim_remove_entity(SIMULATION *sim, ENTITY *entity);
 void sim_add_force(SIMULATION *sim, vec3 force);
 void sim_clear_force(SIMULATION* sim);
@@ -23,12 +25,10 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
 size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
                       float range);
 size_t save_sim_state(SIMULATION *sim, SIM_STATE **state);
-void restore_sim_state(SIMULATION *sim, SIM_STATE *state);
+void restore_sim_state(SIMULATION *sim, SIM_STATE *state, size_t state_size);
 void free_sim_state(SIM_STATE *state, size_t num_ents);
 void impulse_resolution(SIMULATION *sim, COLLISION col, vec3 a_dest_vel,
                         vec3 b_dest_vel);
-void prep_refresh(SIMULATION *sim, ENTITY *ent);
-void refresh_collider(SIMULATION *sim, ENTITY *entity, size_t collider_offset);
 
 void draw_oct_tree(MODEL *cube, OCT_TREE *tree, vec3 pos, float scale,
                    unsigned int shader, size_t offset, int depth);
