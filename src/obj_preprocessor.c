@@ -524,6 +524,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
         } else {
           sscanf(cur_line, "cl %d", &cur_chain->b_id);
         }
+        cur_chain->b_id++;
 
         cur_chain->chain = malloc(sizeof(KEYFRAME) * BUFF_STARTING_LEN);
         cur_chain->num_frames = 0;

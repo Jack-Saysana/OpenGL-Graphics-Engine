@@ -263,11 +263,11 @@ int write_model_obj(MODEL_DATA *md, char *path) {
     K_CHAIN *chains = md->animations[i].keyframe_chains;
     for (size_t j = 0; j < md->animations[i].num_chains; j++) {
       if (chains[j].type == LOCATION) {
-        fprintf(file, "cl %d\n", chains[j].b_id);
+        fprintf(file, "cl %d\n", chains[j].b_id - 1);
       } else if (chains[j].type == ROTATION) {
-        fprintf(file, "cr %d\n", chains[j].b_id);
+        fprintf(file, "cr %d\n", chains[j].b_id - 1);
       } else {
-        fprintf(file, "cs %d\n", chains[j].b_id);
+        fprintf(file, "cs %d\n", chains[j].b_id - 1);
       }
       for (size_t k = 0; k < chains[j].num_frames; k++) {
         if (chains[j].type == ROTATION) {
