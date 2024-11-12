@@ -12,7 +12,6 @@
 #define W (3)
 
 // Base lenge for allocating buffers
-#define BUFF_START_LEN (5)
 #define OCT_TREE_STARTING_LEN (25)
 #define BUFF_STARTING_LEN (10)
 
