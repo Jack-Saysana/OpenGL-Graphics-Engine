@@ -45,7 +45,7 @@ ENTITY *init_entity(MODEL *model) {
     memset(ent->np_data, 0, sizeof(P_DATA) * model->num_colliders);
     memset(ent->zj_data, 0, sizeof(ZERO_JOINT) * num_zj);
     for (size_t i = 0; i < model->num_colliders; i++) {
-      glm_mat4_identity(ent->np_data[i].inv_inertia);
+      ent->np_data[i].inv_inertia[3][3] = 1.0;
       ent->np_data[i].zero_joint_offset = cur_zj;
       ent->np_data[i].num_z_joints = model->colliders[i].num_dofs - 1;
 
@@ -237,6 +237,11 @@ void draw_collider(unsigned int shader, ENTITY *entity, size_t col,
     // TODO Kill need to have sphere model: Render sphere and poly primitives
     draw_model(shader, sphere);
   }
+}
+
+void set_inv_mass(ENTITY *entity, size_t col, float inv_mass) {
+  entity->np_data[col].inv_mass = inv_mass;
+  calc_inv_inertia(entity, col, entity->np_data[col].inv_inertia);
 }
 
 void free_entity(ENTITY *entity) {

@@ -37,7 +37,6 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t *col_buf_len, size_t *col_buf_size,
                             int get_col_info, pthread_mutex_t *col_lock);
 void global_collider(ENTITY *ent, size_t, COLLIDER *dest);
-void integrate_ent(ENTITY *ent, vec3 forces);
 int ledger_init(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *);
 int ledger_add(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *,
                LEDGER_INPUT, int);
@@ -68,18 +67,11 @@ size_t get_all_colliders(OCT_TREE *tree, PHYS_OBJ **dest);
 int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
-int featherstone_abm(ENTITY *ent, vec3 grav);
-void apply_constraints(ENTITY *ent, J_CONS *cons, size_t num_constr,
-                       vec3 gravity);
 void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
 void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
                      vec3 p_loc, vec3 gravity);
-//void calc_inertia_tensor(ENTITY *ent, size_t col_offset, COLLIDER *collider,
-//                         float inv_mass, mat4 dest);
-void calc_inertia_tensor(ENTITY *ent, size_t col_offset, float inv_mass,
-                         mat4 dest);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 vec, float threshold);
-float remove_noise(float val, float threshold);
 int is_moving(ENTITY *ent, size_t col);
+void integrate_ent(ENTITY *ent, vec3 forces);

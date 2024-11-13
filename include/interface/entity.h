@@ -17,6 +17,8 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere);
 void draw_collider(unsigned int shader, ENTITY *entity, size_t col,
                    MODEL *sphere);
 void draw_model(unsigned int shader, MODEL *model);
+void set_inv_mass(ENTITY *entity, size_t col, float inv_mass);
+void rotate_inv_inertia(ENTITY *ent, size_t col, mat4 dest);
 void free_model(MODEL *model);
 void free_entity(ENTITY *entity);
 void free_textures();

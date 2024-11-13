@@ -20,3 +20,4 @@ void draw_axes(unsigned int shader, MODEL *model);
 void set_vec3(char *loc, vec3 vec, unsigned int shader);
 void draw_poly(vec3 *verts);
 void draw_lines(L_VBO *lines, size_t num_lines);
+void calc_inv_inertia(ENTITY *ent, size_t col, mat4 dest);

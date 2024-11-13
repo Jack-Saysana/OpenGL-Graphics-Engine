@@ -642,8 +642,10 @@ void calc_IZ_hat(mat3 ent_to_world, mat3 bone_to_ent, mat3 inv_inertia,
   glm_mat3_transpose_to(bone_to_world, world_to_bone);
 
   mat3 inertia_tensor = GLM_MAT3_IDENTITY_INIT;
-  glm_mat3_inv(inv_inertia, inertia_tensor);
-  glm_mat3_mul(bone_to_world, inertia_tensor, inertia_tensor);
+  // Because the unrotated inertia tensor of a rectangular prism and cube
+  // is diagonal, it is equivalent to its inverse. As such, there is no need
+  // to inverse/transpose inv_inertia before rotating it
+  glm_mat3_mul(bone_to_world, inv_inertia, inertia_tensor);
   glm_mat3_mul(inertia_tensor, world_to_bone, inertia_tensor);
 
   // I_hat
