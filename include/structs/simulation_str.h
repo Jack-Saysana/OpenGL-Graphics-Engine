@@ -89,6 +89,7 @@ typedef struct collision_list {
 
 typedef struct collision_args {
   float *vel_dest;
+  float *ang_vel_dest;
   float *velocity;
   float *ang_velocity;
   size_t collider;
