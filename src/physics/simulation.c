@@ -540,17 +540,34 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
   col.type = SPHERE;
   col.category = DEFAULT;
 
-  int col_bone_link = -1;
+  BONE bone;
+  memset(&bone, 0, sizeof(BONE));
+  glm_mat3_identity(bone.coordinate_matrix);
+  glm_vec3_copy(pos, bone.base);
+  glm_vec3_add(pos, (vec3) {0.0, 1.0, 0.0}, bone.head);
+  bone.parent = -1;
+  bone.num_children = 0;
+
+  int col_bone_link = 0;
   MODEL model;
   memset(&model, 0, sizeof(MODEL));
   model.colliders = &col;
+  model.bones = &bone;
   model.num_colliders = 1;
+  model.num_bones = 1;
   model.collider_bone_links = &col_bone_link;
+  model.bone_collider_links = &col_bone_link;
 
   ENTITY ent;
+  mat4 bone_mats[3] = { GLM_MAT4_IDENTITY_INIT, GLM_MAT4_IDENTITY_INIT,
+                        GLM_MAT4_IDENTITY_INIT };
+  mat4 final_b_mat = GLM_MAT4_IDENTITY_INIT;
   memset(&ent, 0, sizeof(ENTITY));
   ent.model = &model;
+  ent.bone_mats = &bone_mats;
+  ent.final_b_mats = &final_b_mat;
 
+  // Perform collision check based on spoofed entity
   status = get_collider_collisions(sim, &ent, 0, &collisions, &buf_len,
                                    &buf_size, 0, NULL);
   if (status) {
