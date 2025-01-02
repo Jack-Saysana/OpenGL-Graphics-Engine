@@ -5,8 +5,10 @@
 
 unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path);
 MODEL_DATA *load_model_data(char *path);
-MODEL *gen_model(MODEL_DATA *md);
+MODEL *gen_model(MODEL_DATA *md, int gen_vao);
 MODEL *load_model(char *path);
+MODEL *load_model_vaoless(char *path);
+void init_model_vao(MODEL *model);
 ENTITY *init_entity(MODEL *model);
 int gen_cubemap(char **paths, unsigned int *dest);
 void draw_entity(unsigned int shader, ENTITY *entity);

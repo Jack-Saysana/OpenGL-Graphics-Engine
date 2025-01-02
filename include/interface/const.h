@@ -37,6 +37,6 @@
 #define GRAVITY (10.0)
 
 // Misc
-#define INVALID_INDEX (0xFFFFFFFFFFFFFFFF)
+#define INVALID_INDEX (~0)
 
 #endif

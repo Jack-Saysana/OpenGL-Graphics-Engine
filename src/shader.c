@@ -7,10 +7,10 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
 
   char *v_source = load_source(v_path);
   if (v_source == NULL) {
-    printf("Invalid vertex shader path\n");
+    fprintf(stderr, "Invalid vertex shader path\n");
     return -1;
   }
-  printf("%s:\n", v_path);
+  fprintf(stderr, "%s:\n", v_path);
   vs = gen_shader(v_source, GL_VERTEX_SHADER);
   if (vs == -1) {
     free(v_source);
@@ -20,10 +20,10 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
 
   char *f_source = load_source(f_path);
   if (f_source == NULL) {
-    printf("Invalid fragment shader path\n");
+    fprintf(stderr, "Invalid fragment shader path\n");
     return -1;
   }
-  printf("%s:\n", f_path);
+  fprintf(stderr, "%s:\n", f_path);
   fs = gen_shader(f_source, GL_FRAGMENT_SHADER);
   if (fs == -1) {
     free(f_source);
@@ -34,10 +34,10 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
   if (g_path) {
     char *g_source = load_source(g_path);
     if (g_source == NULL) {
-      printf("Invalid geometry shader path\n");
+      fprintf(stderr, "Invalid geometry shader path\n");
       return -1;
     }
-    printf("%s:\n", g_path);
+    fprintf(stderr, "%s:\n", g_path);
     gs = gen_shader(g_source, GL_GEOMETRY_SHADER);
     if (gs == -1) {
       free(g_source);
@@ -47,12 +47,36 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
   }
 
   unsigned int program = glCreateProgram();
+  if (!program) {
+    fprintf(stderr, "Failed to create shader program\n");
+    return -1;
+  }
+
   glAttachShader(program, vs);
+  GLenum err = glGetError();
+  if (err != GL_NO_ERROR) {
+    fprintf(stderr, "Failed to attach vertex shader\n");
+  }
+
   glAttachShader(program, fs);
+  err = glGetError();
+  if (err != GL_NO_ERROR) {
+    fprintf(stderr, "Failed to attach fragment shader\n");
+  }
+
   if (gs != -1) {
     glAttachShader(program, gs);
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+      fprintf(stderr, "Failed to attach geometry shader\n");
+    }
   }
+
   glLinkProgram(program);
+  err = glGetError();
+  if (err != GL_NO_ERROR) {
+    fprintf(stderr, "Failed to link shader program\n");
+  }
 
   glDeleteShader(vs);
   glDeleteShader(fs);
@@ -65,7 +89,7 @@ unsigned int init_shader_prog(char *v_path, char *g_path, char *f_path) {
 
 long gen_shader(const char *source, GLenum type) {
   if (source == NULL) {
-    printf("Invalid shader source code\n");
+    fprintf(stderr, "Invalid shader source code\n");
     return -1;
   }
 
@@ -82,12 +106,12 @@ long gen_shader(const char *source, GLenum type) {
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_len);
     info_log = malloc(info_log_len);
     if (info_log == NULL) {
-      printf("Shader error. Unable to allocate info log.\n");
+      fprintf(stderr, "Shader error. Unable to allocate info log.\n");
       return -1;
     }
 
     glGetShaderInfoLog(shader, info_log_len, &info_log_len, info_log);
-    printf("%s\n", info_log);
+    fprintf(stderr, "%s\n", info_log);
     free(info_log);
     return -1;
   } else {
@@ -115,7 +139,7 @@ char *load_source(char *path) {
 
   char *source = malloc(file_size + 1);
   if (source == NULL) {
-    printf("Unable to allocate shader program memory\n");
+    fprintf(stderr, "Unable to allocate shader program memory\n");
     return NULL;
   }
   fread(source, file_size, 1, file);

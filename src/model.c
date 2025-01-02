@@ -82,7 +82,9 @@ void free_model(MODEL *model) {
     return;
   }
 
-  glDeleteVertexArrays(1, &(model->VAO));
+  if (model->VAO != INVALID_INDEX) {
+    glDeleteVertexArrays(1, &(model->VAO));
+  }
   glDeleteBuffers(1, &(model->VBO));
   glDeleteBuffers(1, &(model->EBO));
   free(model->k_chain_block);

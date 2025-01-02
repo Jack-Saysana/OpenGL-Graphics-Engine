@@ -33,13 +33,13 @@
 #define T_DRIVING (0x2)
 #define T_IMMUTABLE (0x4)
 
-#define SIM_RANGE_INF (0xFFFFFFFF)
+#define SIM_RANGE_INF (~0)
 #define ALLOW_DEFAULT    (0x1)
 #define ALLOW_HURT_BOXES (0x2)
 #define ALLOW_HIT_BOXES  (0x4)
 
-#define INVALID_INDEX (0xFFFFFFFFFFFFFFFF)
-#define INVALID_TEX (0xFFFFFFFF)
+#define INVALID_INDEX (~0)
+#define INVALID_TEX (~0)
 
 #define GRAVITY (10.0)
 

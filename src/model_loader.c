@@ -295,28 +295,12 @@ MODEL_DATA *load_model_data(char *path) {
   return md;
 }
 
-MODEL *gen_model(MODEL_DATA *md) {
-  MODEL *model = malloc(sizeof(MODEL));
-  if (model == NULL) {
-    printf("Unable to allocate model\n");
-    return NULL;
-  }
-
+void init_model_vao(MODEL *model) {
   unsigned int VAO_id;
   glGenVertexArrays(1, &VAO_id);
   glBindVertexArray(VAO_id);
-
-  unsigned int VBO_id;
-  glGenBuffers(1, &VBO_id);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO_id);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * md->num_vertices, md->vertices,
-               GL_STATIC_DRAW);
-
-  unsigned int EBO_id;
-  glGenBuffers(1, &EBO_id);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_id);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * md->num_indices,
-               md->indices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, model->VBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->EBO);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) 0);
@@ -337,6 +321,28 @@ MODEL *gen_model(MODEL_DATA *md) {
   glBindVertexArray(0);
 
   model->VAO = VAO_id;
+}
+
+MODEL *gen_model(MODEL_DATA *md, int gen_vao) {
+  MODEL *model = malloc(sizeof(MODEL));
+  if (model == NULL) {
+    printf("Unable to allocate model\n");
+    return NULL;
+  }
+
+  unsigned int VBO_id;
+  glGenBuffers(1, &VBO_id);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO_id);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * md->num_vertices, md->vertices,
+               GL_STATIC_DRAW);
+
+  unsigned int EBO_id;
+  glGenBuffers(1, &EBO_id);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_id);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * md->num_indices,
+               md->indices, GL_STATIC_DRAW);
+
+  model->VAO = INVALID_INDEX;
   model->VBO = VBO_id;
   model->EBO = EBO_id;
   model->animations = md->animations;
@@ -362,6 +368,10 @@ MODEL *gen_model(MODEL_DATA *md) {
     }
   }
 
+  if (gen_vao) {
+    init_model_vao(model);
+  }
+
   return model;
 }
 
@@ -370,7 +380,7 @@ MODEL *load_model(char *path) {
   if (md == NULL) {
     return NULL;
   }
-  MODEL *model = gen_model(md);
+  MODEL *model = gen_model(md, 1);
   free(md->vertices);
   free(md->indices);
   free(md);
@@ -378,3 +388,15 @@ MODEL *load_model(char *path) {
   return model;
 }
 
+MODEL *load_model_vaoless(char *path) {
+  MODEL_DATA *md = load_model_data(path);
+  if (md == NULL) {
+    return NULL;
+  }
+  MODEL *model = gen_model(md, 0);
+  free(md->vertices);
+  free(md->indices);
+  free(md);
+
+  return model;
+}
