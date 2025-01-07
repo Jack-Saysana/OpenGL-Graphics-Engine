@@ -764,7 +764,7 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
         (*col_buf_len)++;
         if (*col_buf_len == *col_buf_size) {
           status = double_buffer((void **) col, col_buf_size,
-                                 sizeof(COLLISION));
+                                 sizeof(COL_UPDATE));
           if (status) {
             fprintf(stderr, "Error: Unable to reallocate collision buffer\n");
             free(col_res.list);
