@@ -415,6 +415,16 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
         *dest = NULL;
         return 0;
       }
+
+      input.entity.ent = cur_ent;
+      input.entity.move_cb = move_cb;
+      status = ledger_add(&sim->ment_ledger, &sim->ment_list,
+                          &sim->num_ent_moving, &sim->ment_ledger_size,
+                          &sim->ment_list_size, input, L_TYPE_ENTITY);
+      if (status) {
+        *dest = NULL;
+        return 0;
+      }
     }
   }
 
