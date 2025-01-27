@@ -223,7 +223,16 @@ void draw_collider(unsigned int shader, ENTITY *entity, size_t col,
   }
 
   mat4 bone_to_world = GLM_MAT4_IDENTITY_INIT;
-  glm_mat4_mul(entity->final_b_mats[bone], bone_to_entity, bone_to_world);
+  if (bone != 0) {
+    // The collider is paired with a non-default bone. Ensure that it acts as
+    // a child of the default bone
+    glm_mat4_mul(entity->final_b_mats[0], bone_to_entity, bone_to_world);
+  } else {
+    // Since the collider is paired to the default bone, do not redundantly
+    // apply the default bone's matrix twice
+    glm_mat4_copy(bone_to_entity, bone_to_world);
+  }
+  glm_mat4_mul(entity->final_b_mats[bone], bone_to_world, bone_to_world);
 
   if (type == POLY) {
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
