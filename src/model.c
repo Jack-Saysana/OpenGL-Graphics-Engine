@@ -44,6 +44,7 @@ void draw_bones(MODEL *model) {
   }
 
   draw_lines(bone_data, model->num_bones);
+  free(bone_data);
 }
 
 void draw_axes(unsigned int shader, MODEL *model) {
@@ -75,6 +76,7 @@ void draw_axes(unsigned int shader, MODEL *model) {
 
     draw_lines(axis_data, model->num_bones);
   }
+  free(axis_data);
 }
 
 void free_model(MODEL *model) {
