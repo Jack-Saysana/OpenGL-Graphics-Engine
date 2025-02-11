@@ -68,8 +68,6 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
 void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
-void solve_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
-                     vec3 p_loc, vec3 gravity);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 vec, float threshold);

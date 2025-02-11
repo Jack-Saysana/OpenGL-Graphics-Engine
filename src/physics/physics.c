@@ -173,7 +173,7 @@ void impulse_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 #endif
 
   // Dampen and update ang velocity
-  glm_vec3_scale(a_ang_vel, LINEAR_DAMP_FACTOR, a_ang_vel);
+  glm_vec3_scale(a_ang_vel, ANGULAR_DAMP_FACTOR, a_ang_vel);
   glm_vec3_add(a_ang_vel, delta_ang_va, a_ang_vel);
   vec3_remove_noise(a_ang_vel, 0.0001);
 
@@ -205,7 +205,7 @@ void impulse_collision(COL_ARGS *a_args, COL_ARGS *b_args, vec3 p_dir,
 #endif
 
   // Dampen and update ang velocity
-  glm_vec3_scale(b_ang_vel, LINEAR_DAMP_FACTOR, b_ang_vel);
+  glm_vec3_scale(b_ang_vel, ANGULAR_DAMP_FACTOR, b_ang_vel);
   glm_vec3_sub(b_ang_vel, delta_ang_vb, b_ang_vel);
   vec3_remove_noise(b_ang_vel, 0.0001);
 

@@ -64,7 +64,7 @@
 
 // Physics Constants
 #define LINEAR_DAMP_FACTOR (0.99)
-#define ANGULAR_DAMP_FACTOR (0.97)
+#define ANGULAR_DAMP_FACTOR (0.9999)
 #define JOINT_PRISMATIC (0)
 #define JOINT_REVOLUTE (1)
 #define MOVING_THRESHOLD (0.01)
