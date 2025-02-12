@@ -98,6 +98,8 @@ ENTITY *init_entity(MODEL *model) {
 
   ent->model = model;
   ent->data = NULL;
+  ent->move_cb = integrate_ent;
+  ent->is_moving_cb = is_moving;
   ent->type = 0;
 
   return ent;

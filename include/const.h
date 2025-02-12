@@ -24,6 +24,7 @@
 #define INDEX_BUFF_STARTING_LEN (20)
 
 // Simulation constants
+#define MAX_LINKED_SIMS (8)
 #define NUM_PROPS (5)
 #define DEFAULT (0)
 #define HIT_BOX (1)

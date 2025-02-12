@@ -7,9 +7,9 @@
 SIMULATION *init_sim(float max_extent, unsigned int max_depth);
 void free_sim(SIMULATION *sim);
 
-int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter,
-                   void (*move_cb)(ENTITY *, vec3),
-                   int (*is_moving_cb)(ENTITY *, size_t));
+int link_sim(SIMULATION *sim, SIMULATION *target);
+int unlink_sim(SIMULATION *sim, SIMULATION *target);
+int sim_add_entity(SIMULATION *sim, ENTITY *entity, size_t collider_filter);
 int sim_remove_entity(SIMULATION *sim, ENTITY *entity);
 void sim_add_force(SIMULATION *sim, vec3 force);
 void sim_clear_force(SIMULATION* sim);

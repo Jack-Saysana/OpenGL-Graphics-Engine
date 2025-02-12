@@ -63,12 +63,9 @@ void free_oct_tree(OCT_TREE *tree) {
 
 #ifdef DEBUG_OCT_TREE
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
-                    void (*move_cb)(ENTITY *, vec3),
-                    int (*is_moving_cb)(ENTITY *, size_t), int birthmark) {
+                    int birthmark) {
 #else
-int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
-                    void (*move_cb)(ENTITY *, vec3),
-                    int (*is_moving_cb)(ENTITY *, size_t)) {
+int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset) {
 #endif
   if (tree == NULL || entity == NULL ||
       collider_offset >= entity->model->num_colliders) {
@@ -121,10 +118,9 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
       inserting = 0;
 #ifdef DEBUG_OCT_TREE
       status = append_buffer(tree, cur_offset, entity, collider_offset,
-                             move_cb, is_moving_cb, birthmark, obj);
+                             birthmark, obj);
 #else
-      status = append_buffer(tree, cur_offset, entity, collider_offset,
-                             move_cb, is_moving_cb);
+      status = append_buffer(tree, cur_offset, entity, collider_offset);
 #endif
       if (status != 0) {
         printf("Unable to allocate tree data\n");
@@ -138,10 +134,9 @@ int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
         inserting = 0;
 #ifdef DEBUG_OCT_TREE
         status = append_buffer(tree, cur_offset, entity, collider_offset,
-                               move_cb, is_moving_cb, birthmark, obj);
+                               birthmark, obj);
 #else
-        status = append_buffer(tree, cur_offset, entity, collider_offset,
-                               move_cb, is_moving_cb);
+        status = append_buffer(tree, cur_offset, entity, collider_offset);
 #endif
         if (status != 0) {
           printf("Unable to allocate tree data\n");
@@ -414,13 +409,10 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
 
 #ifdef DEBUG_OCT_TREE
 int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset, void (*move_cb)(ENTITY *, vec3),
-                  int (*is_moving_cb)(ENTITY *, size_t), int birthmark,
-                  COLLIDER col) {
+                  size_t collider_offset, int birthmark, COLLIDER col) {
 #else
 int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset, void (*move_cb)(ENTITY *, vec3),
-                  int (*is_moving_cb)(ENTITY *, size_t)) {
+                  size_t collider_offset) {
 #endif
   size_t buff_len = tree->data_buff_len;
   add_to_list(tree, buff_len, node_offset);
@@ -428,8 +420,6 @@ int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
   tree->data_buffer[buff_len].node_offset = node_offset;
   tree->data_buffer[buff_len].collider_offset = collider_offset;
   tree->data_buffer[buff_len].entity = entity;
-  tree->data_buffer[buff_len].move_cb = move_cb;
-  tree->data_buffer[buff_len].is_moving_cb = is_moving_cb;
 #ifdef DEBUG_OCT_TREE
   tree->data_buffer[buff_len].birthmark = birthmark;
   tree->data_buffer[buff_len].add_state = col;
