@@ -30,11 +30,12 @@ typedef union ledger_input {
   struct c_data{
     ENTITY *ent;
     size_t col;
+    void *data;
   } collider;
   struct e_data {
     ENTITY *ent;
+    void *data;
   } entity;
-  void *data;
 } LEDGER_INPUT;
 
 typedef struct simulation {
