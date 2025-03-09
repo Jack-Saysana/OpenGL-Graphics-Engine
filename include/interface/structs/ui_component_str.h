@@ -73,8 +73,8 @@ typedef enum text_anchor {
 } TEXT_ANCHOR;
 
 typedef struct ui_component {
-  void (*on_click)(struct ui_component *, void *);
-  void (*on_release)(struct ui_component *, void *);
+  void (*on_click)(struct ui_component *, int, void *);
+  void (*on_release)(struct ui_component *, int, void *);
   void (*on_hover)(struct ui_component *, void *);
   void (*on_no_hover)(struct ui_component *, void *);
   void *click_args;

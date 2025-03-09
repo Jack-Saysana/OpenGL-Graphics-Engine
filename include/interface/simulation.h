@@ -23,7 +23,7 @@ void integrate_sim_collider(SIMULATION *sim, ENTITY *ent, size_t col);
 size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
                           float range, int get_col_info);
 size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
-                      float range);
+                      float range, int get_col_info);
 size_t save_sim_state(SIMULATION *sim, SIM_STATE **state);
 void restore_sim_state(SIMULATION *sim, SIM_STATE *state, size_t state_size);
 void free_sim_state(SIM_STATE *state, size_t num_ents);

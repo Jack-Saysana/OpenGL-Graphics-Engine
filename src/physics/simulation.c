@@ -76,6 +76,8 @@ void free_sim(SIMULATION *sim) {
   }
 
   free_oct_tree(sim->oct_tree);
+  free(sim->ent_ledger);
+  free(sim->ent_list);
   free(sim->ment_ledger);
   free(sim->ment_list);
   free(sim->mcol_ledger);
@@ -577,7 +579,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
 }
 
 size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
-                      float range) {
+                      float range, int get_col_info) {
   COL_UPDATE *collisions = malloc(sizeof(COL_UPDATE) * BUFF_STARTING_LEN);
   size_t buf_len = 0;
   size_t buf_size = BUFF_STARTING_LEN;
@@ -623,7 +625,7 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
 
   // Perform collision check based on spoofed entity
   status = get_collider_collisions(sim, &ent, 0, &collisions, &buf_len,
-                                   &buf_size, 0, NULL);
+                                   &buf_size, get_col_info, NULL);
   if (status) {
     *dest = NULL;
     return 0;

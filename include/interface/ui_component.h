@@ -9,6 +9,7 @@ int init_ui(char *quad_path, char *ui_vs, char *ui_fs, char *text_vs,
 int free_ui();
 
 int import_font(char *bin_path, char *tex_path, F_GLYPH **dest);
+void free_font(F_GLYPH *glyphs, int num_glyphs);
 
 UI_COMP *add_ui_comp(UI_COMP *parent, vec2 pos, float width, float height,
                      int options);
@@ -29,8 +30,10 @@ void set_ui_texture(UI_COMP *comp, char *path);
 void set_ui_texture_unit(UI_COMP *comp, unsigned int tex);
 void set_ui_options(UI_COMP *compc, int options);
 void set_ui_enabled(UI_COMP *comp, int enabled);
-void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *);
-void set_ui_on_release(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *);
+void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, int, void *),
+                     void *);
+void set_ui_on_release(UI_COMP *comp, void (*cb)(UI_COMP *, int, void *),
+                       void *);
 void set_ui_on_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *);
 void set_ui_no_hover(UI_COMP *comp, void (*cb)(UI_COMP *, void *), void *);
 
