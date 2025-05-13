@@ -652,6 +652,9 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
   mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
   int bone = ent->model->collider_bone_links[collider_offset];
   glm_mat4_copy(ent->final_b_mats[bone], entity_to_world);
+  if (bone != 0) {
+    glm_mat4_mul(ent->final_b_mats[0], entity_to_world, entity_to_world);
+  }
   glm_mat4_ins3(ent->model->bones[bone].coordinate_matrix, bone_to_entity);
   if (raw_col->type == POLY) {
     glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
@@ -676,11 +679,9 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
                    dest->data.center_of_mass);
   } else if (dest->type == SPHERE) {
     dest->data.radius = raw_col->data.radius;
+    dest->data.radius *= ent->bone_mats[bone][SCALE][0][0];
     glm_mat4_mulv3(entity_to_world, raw_col->data.center, 1.0,
                    dest->data.center);
-  }
-  if (ent->model->colliders[collider_offset].type == SPHERE) {
-    dest->data.radius *= ent->bone_mats[bone][SCALE][0][0];
   }
 }
 
