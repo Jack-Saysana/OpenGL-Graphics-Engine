@@ -2,6 +2,7 @@
 #define __ENGINE_ENTITY_H__
 
 #include "./structs/models/model_data_str.h"
+#include "./structs/models/render_primitives_str.h"
 
 unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path);
 MODEL_DATA *load_model_data(char *path);
@@ -19,6 +20,8 @@ void draw_colliders(unsigned int shader, ENTITY *entity, MODEL *sphere);
 void draw_collider(unsigned int shader, ENTITY *entity, size_t col,
                    MODEL *sphere);
 void draw_model(unsigned int shader, MODEL *model);
+void draw_poly(vec3 *verts);
+void draw_lines(L_VBO *lines, size_t num_lines);
 void set_inv_mass(ENTITY *entity, size_t col, float inv_mass);
 void rotate_inv_inertia(ENTITY *ent, size_t col, mat4 dest);
 void free_model(MODEL *model);
