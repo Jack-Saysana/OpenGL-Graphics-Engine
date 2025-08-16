@@ -47,6 +47,7 @@ GLFWwindow *init_gl(char *win_name) {
   GLFWwindow *window = NULL;
 
   if (!glfwInit()) {
+    fprintf(stderr, "Error: Failed to initialize glfw\n");
     free(fb_size_callbacks);
     free(mouse_mov_callbacks);
     free(scroll_callbacks);
