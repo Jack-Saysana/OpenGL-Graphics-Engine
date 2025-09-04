@@ -788,9 +788,9 @@ int sort_ui_components(UI_COMP **comp, size_t comp_len) {
     buff[pivot] = temp;
 
     stk_top += 2;
-    if (stk_top == stk_size) {
+    if (stk_top >= stk_size - 1) {
       int status = double_buffer((void **) &sort_stk, &stk_size,
-                                 sizeof(UI_COMP *));
+                                 sizeof(SORT_ARGS));
       if (status) {
         free(sort_stk);
         return -1;
