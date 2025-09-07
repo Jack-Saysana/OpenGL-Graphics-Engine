@@ -296,15 +296,7 @@ MODEL_DATA *load_model_data(char *path) {
 }
 
 int serialize_model_data(char *path, MODEL_DATA *md) {
-  char *bin_path = malloc(strlen(path) + 5);
-  if (!bin_path) {
-    return -1;
-  }
-
-  sprintf(bin_path, "%s.bin", path);
-  FILE *file = fopen(bin_path, "rb");
-  free(bin_path);
-
+  FILE *file = fopen(path, "wb");
   if (file == NULL) {
     return -1;
   }
