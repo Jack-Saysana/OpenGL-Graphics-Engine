@@ -10,7 +10,7 @@
     data
 
   Returns:
-  number of glyphs generated from font binary
+  the number of glyphs of the font, if successful, -1 if not
 */
 int import_font(char *bin_path, char *tex_path, F_GLYPH **dest) {
   FILE *in_file = fopen(bin_path, "rb");
@@ -104,7 +104,7 @@ int import_font(char *bin_path, char *tex_path, F_GLYPH **dest) {
     gen_texture_id(tex_path, &cur_char->texture);
   }
 
-  return 0;
+  return num_glyphs;
 }
 
 /*

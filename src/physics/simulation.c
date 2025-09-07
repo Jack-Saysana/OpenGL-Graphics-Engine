@@ -6,54 +6,67 @@ SIMULATION *init_sim(float max_extent, unsigned int max_depth) {
   SIMULATION *sim = malloc(sizeof(SIMULATION));
   if (sim == NULL) {
     fprintf(stderr, "Error: Unable to allocate simulation\n");
-    return NULL;
+    goto err_init;
   }
+  memset(sim->linked_sims, 0, sizeof(SIMULATION *) * MAX_LINKED_SIMS);
+  sim->num_linked_sims = 0;
 
   sim->oct_tree = init_tree(max_extent, max_depth);
   if (sim->oct_tree == NULL) {
-    free(sim);
     fprintf(stderr, "Error: Unable to initailize simulation oct-tree\n");
-    return NULL;
+    goto err_oct_tree;
   }
 
   int status = ledger_init(&sim->ment_ledger, &sim->ment_list,
                            &sim->num_ent_moving, &sim->ment_ledger_size,
                            &sim->ment_list_size);
   if (status) {
-    free_oct_tree(sim->oct_tree);
-    free(sim);
     fprintf(stderr, "Error: Unable to allocate simulation ledgers\n");
-    return NULL;
+    goto err_ment;
   }
 
   status = ledger_init(&sim->mcol_ledger, &sim->mcol_list,
                        &sim->num_col_moving, &sim->mcol_ledger_size,
                        &sim->mcol_list_size);
   if (status) {
-    free(sim->ment_ledger);
-    free(sim->ment_list);
-    free_oct_tree(sim->oct_tree);
-    free(sim);
     fprintf(stderr, "Error: Unable to allocate simulation ledgers\n");
-    return NULL;
+    goto err_mcol;
   }
 
   status = ledger_init(&sim->dcol_ledger, &sim->dcol_list,
                        &sim->num_col_driving, &sim->dcol_ledger_size,
                        &sim->dcol_list_size);
   if (status) {
-    free(sim->ment_ledger);
-    free(sim->ment_list);
-    free(sim->mcol_ledger);
-    free(sim->mcol_list);
-    free_oct_tree(sim->oct_tree);
-    free(sim);
     fprintf(stderr, "Error: Unable to allocate simulation ledgers\n");
-    return NULL;
+    goto err_dcol;
+  }
+
+  status = ledger_init(&sim->ent_ledger, &sim->ent_list, &sim->num_ent,
+                       &sim->ent_ledger_size, &sim->ent_list_size);
+  if (status) {
+    fprintf(stderr, "Error: Unable to allocate simulation ledgers\n");
+    goto err_ent;
   }
 
   glm_vec3_zero(sim->forces);
+  goto ret;
 
+err_ent:
+  free(sim->dcol_ledger);
+  free(sim->dcol_list);
+err_dcol:
+  free(sim->mcol_ledger);
+  free(sim->mcol_list);
+err_mcol:
+  free(sim->ment_ledger);
+  free(sim->ment_list);
+err_ment:
+  free_oct_tree(sim->oct_tree);
+err_oct_tree:
+  free(sim);
+err_init:
+  return NULL;
+ret:
   return sim;
 }
 
@@ -63,6 +76,8 @@ void free_sim(SIMULATION *sim) {
   }
 
   free_oct_tree(sim->oct_tree);
+  free(sim->ent_ledger);
+  free(sim->ent_list);
   free(sim->ment_ledger);
   free(sim->ment_list);
   free(sim->mcol_ledger);
@@ -74,9 +89,35 @@ void free_sim(SIMULATION *sim) {
 
 // ============================ SIMULATION HELPERS ===========================
 
-int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter,
-                   void (*move_cb)(ENTITY *, vec3),
-                   int (*is_moving_cb)(ENTITY *, size_t)) {
+int link_sim(SIMULATION *sim, SIMULATION *target) {
+  if (!sim || sim->num_linked_sims >= MAX_LINKED_SIMS) {
+    return -1;
+  }
+
+  sim->linked_sims[sim->num_linked_sims] = target;
+  sim->num_linked_sims++;
+
+  return 0;
+}
+
+int unlink_sim(SIMULATION *sim, SIMULATION *target) {
+  if (!sim) {
+    return -1;
+  }
+
+  for (int i = 0; i < sim->num_linked_sims; i++) {
+    if (sim->linked_sims[i] == target) {
+      sim->num_linked_sims--;
+      sim->linked_sims[i] = sim->linked_sims[sim->num_linked_sims];
+      sim->linked_sims[sim->num_linked_sims] = NULL;
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+int sim_add_entity(SIMULATION *sim, ENTITY *entity, size_t collider_filter) {
   if (entity == NULL || sim == NULL) {
     return -1;
   }
@@ -84,21 +125,22 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter,
   int status = 0;
   LEDGER_INPUT input;
 
+  input.entity.ent = entity;
+  input.entity.data = (void *) collider_filter;
+  status = ledger_add(&sim->ent_ledger, &sim->ent_list, &sim->num_ent,
+                      &sim->ent_ledger_size, &sim->ent_list_size, input,
+                      L_TYPE_ENTITY);
+  if (status) {
+    fprintf(stderr, "Error: Unable to reallocate simulation ledger\n");
+    return -1;
+  }
+
   // Add desired colliders to the simulation
   COLLIDER *cur_col = NULL;
   for (size_t i = 0; i < entity->model->num_colliders; i++) {
     input.collider.ent = entity;
     input.collider.col = i;
-    if (move_cb) {
-      input.collider.move_cb = move_cb;
-    } else {
-      input.collider.move_cb = integrate_ent;
-    }
-    if (is_moving_cb) {
-      input.collider.is_moving_cb = is_moving_cb;
-    } else {
-      input.collider.is_moving_cb = is_moving;
-    }
+    input.collider.data = NULL;
 
     cur_col = entity->model->colliders + i;
     if (((collider_filter & ALLOW_DEFAULT) &&
@@ -119,7 +161,7 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter,
       }
 
       // Check if collider is currently moving
-      if (input.collider.is_moving_cb(entity, i)) {
+      if (entity->is_moving_cb(entity, i)) {
         status = ledger_add(&sim->mcol_ledger, &sim->mcol_list,
                             &sim->num_col_moving, &sim->mcol_ledger_size,
                             &sim->mcol_list_size, input, L_TYPE_COLLIDER);
@@ -129,11 +171,7 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter,
         }
 
         input.entity.ent = entity;
-        if (move_cb) {
-          input.entity.move_cb = move_cb;
-        } else {
-          input.entity.move_cb = integrate_ent;
-        }
+        input.entity.data = NULL;
         status = ledger_add(&sim->ment_ledger, &sim->ment_list,
                             &sim->num_ent_moving, &sim->ment_ledger_size,
                             &sim->ment_list_size, input, L_TYPE_ENTITY);
@@ -141,17 +179,18 @@ int sim_add_entity(SIMULATION *sim, ENTITY *entity, int collider_filter,
           fprintf(stderr, "Error: Unable to reallocate simulation ledger\n");
           return -1;
         }
+
+        status = propagate_new_mcol(sim, entity, i);
+        if (status) {
+          return -1;
+        }
       }
 
       // Insert collider into oct-tree
 #ifdef DEBUG_OCT_TREE
-      status = oct_tree_insert(sim->oct_tree, entity, i,
-                               input.collider.move_cb,
-                               input.collider.is_moving_cb, 1);
+      status = oct_tree_insert(sim->oct_tree, entity, i, 1);
 #else
-      status = oct_tree_insert(sim->oct_tree, entity, i,
-                               input.collider.move_cb,
-                               input.collider.is_moving_cb);
+      status = oct_tree_insert(sim->oct_tree, entity, i);
 #endif
       if (status) {
         fprintf(stderr,
@@ -173,6 +212,8 @@ int sim_remove_entity(SIMULATION *sim, ENTITY *entity) {
   input.entity.ent = entity;
   ledger_delete(sim->ment_ledger, sim->ment_list, sim->ment_ledger_size,
                 &sim->num_ent_moving, input, L_TYPE_ENTITY);
+  ledger_delete(sim->ent_ledger, sim->ent_list, sim->ent_ledger_size,
+                &sim->num_ent, input, L_TYPE_ENTITY);
 
   // TODO perhaps filter colliders better
   input.collider.ent = entity;
@@ -248,7 +289,7 @@ void update_sim_movement(SIMULATION *sim, int birthmark) {
   for (size_t i = 0; i < sim->num_col_moving; i++) {
     item = sim->mcol_ledger + sim->mcol_list[i];
     oct_tree_insert(sim->oct_tree, item->col.entity, item->col.collider_offset,
-                    item->col.move_cb, item->col.is_moving_cb, birthmark);
+                    birthmark);
   }
 }
 #else
@@ -256,8 +297,8 @@ void update_sim_movement(SIMULATION *sim) {
   SIM_ITEM *item = NULL;
   for (size_t i = 0; i < sim->num_col_moving; i++) {
     item = sim->mcol_ledger + sim->mcol_list[i];
-    oct_tree_insert(sim->oct_tree, item->col.entity, item->col.collider_offset,
-                    item->col.move_cb, item->col.is_moving_cb);
+    oct_tree_insert(sim->oct_tree, item->col.entity,
+                    item->col.collider_offset);
   }
 }
 #endif
@@ -357,7 +398,7 @@ size_t peek_integration(SIMULATION *sim, SIM_STATE **state, vec3 origin,
   void (*move_cb)(ENTITY *, vec3) = NULL;
   for (size_t i = 0; i < sim->num_ent_moving; i++) {
     cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
-    move_cb = sim->ment_ledger[sim->ment_list[i]].ent.move_cb;
+    move_cb = cur_ent->move_cb;
     if (range == SIM_RANGE_INF ||
         entity_in_range(sim, cur_ent, origin, range)) {
       move_cb(cur_ent, sim->forces);
@@ -372,7 +413,7 @@ void integrate_sim(SIMULATION *sim, vec3 origin, float range) {
   void (*move_cb)(ENTITY *, vec3) = NULL;
   for (size_t i = 0; i < sim->num_ent_moving; i++) {
     cur_ent = sim->ment_ledger[sim->ment_list[i]].ent.entity;
-    move_cb = sim->ment_ledger[sim->ment_list[i]].ent.move_cb;
+    move_cb = cur_ent->move_cb;
     if (range == SIM_RANGE_INF ||
         entity_in_range(sim, cur_ent, origin, range)) {
       move_cb(cur_ent, sim->forces);
@@ -392,7 +433,6 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   int status = 0;
   ENTITY *cur_ent = NULL;
   size_t collider_offset = 0;
-  void (*move_cb)(ENTITY *, vec3) = NULL;
   int (*is_moving_cb)(ENTITY *, size_t) = NULL;
 
   // Update placement of neccesarry driving entities
@@ -400,14 +440,12 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
   for (size_t i = 0; i < sim->num_col_driving; i++) {
     cur_ent = sim->dcol_ledger[sim->dcol_list[i]].col.entity;
     collider_offset = sim->dcol_ledger[sim->dcol_list[i]].col.collider_offset;
-    move_cb = sim->dcol_ledger[sim->dcol_list[i]].col.move_cb;
-    is_moving_cb = sim->dcol_ledger[sim->dcol_list[i]].col.is_moving_cb;
+    is_moving_cb = cur_ent->is_moving_cb;
 
     if (is_moving_cb(cur_ent, collider_offset)) {
       input.collider.ent = cur_ent;
       input.collider.col = collider_offset;
-      input.collider.move_cb = move_cb;
-      input.collider.is_moving_cb = is_moving_cb;
+      input.collider.data = NULL;
       status = ledger_add(&sim->mcol_ledger, &sim->mcol_list,
                           &sim->num_col_moving, &sim->mcol_ledger_size,
                           &sim->mcol_list_size, input, L_TYPE_COLLIDER);
@@ -417,10 +455,16 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
       }
 
       input.entity.ent = cur_ent;
-      input.entity.move_cb = move_cb;
+      input.entity.data = NULL;
       status = ledger_add(&sim->ment_ledger, &sim->ment_list,
                           &sim->num_ent_moving, &sim->ment_ledger_size,
                           &sim->ment_list_size, input, L_TYPE_ENTITY);
+      if (status) {
+        *dest = NULL;
+        return 0;
+      }
+
+      status = propagate_new_mcol(sim, cur_ent, collider_offset);
       if (status) {
         *dest = NULL;
         return 0;
@@ -495,6 +539,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
       ledger_delete_direct(sim->mcol_ledger, sim->mcol_list,
                            &sim->num_col_moving, i, L_TYPE_COLLIDER);
       i--;
+      propagate_rm_mcol(sim, cur_ent, collider_offset);
     }
   }
   // Clean up moving entity buffer
@@ -503,6 +548,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
       ledger_delete_direct(sim->ment_ledger, sim->ment_list,
                            &sim->num_ent_moving, i, L_TYPE_ENTITY);
       i--;
+      propagate_rm_ment(sim, cur_ent);
     }
   }
 
@@ -516,16 +562,16 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
 
     input.collider.ent = collisions[i].col.b_ent;
     input.collider.col = collisions[i].col.b_offset;
-    input.collider.move_cb = collisions[i].move_cb;
-    input.collider.is_moving_cb = collisions[i].is_moving_cb;
     ledger_add(&sim->mcol_ledger, &sim->mcol_list, &sim->num_col_moving,
                &sim->mcol_ledger_size, &sim->mcol_list_size, input,
                L_TYPE_COLLIDER);
     input.entity.ent = collisions[i].col.b_ent;
-    input.entity.move_cb = collisions[i].move_cb;
     ledger_add(&sim->ment_ledger, &sim->ment_list, &sim->num_ent_moving,
                &sim->ment_ledger_size, &sim->ment_list_size, input,
                L_TYPE_ENTITY);
+
+    propagate_new_mcol(sim, collisions[i].col.b_ent,
+                       collisions[i].col.b_offset);
   }
   free(collisions);
 
@@ -533,7 +579,7 @@ size_t get_sim_collisions(SIMULATION *sim, COLLISION **dest, vec3 origin,
 }
 
 size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
-                      float range) {
+                      float range, int get_col_info) {
   COL_UPDATE *collisions = malloc(sizeof(COL_UPDATE) * BUFF_STARTING_LEN);
   size_t buf_len = 0;
   size_t buf_size = BUFF_STARTING_LEN;
@@ -579,7 +625,7 @@ size_t sim_get_nearby(SIMULATION *sim, COLLISION **dest, vec3 pos,
 
   // Perform collision check based on spoofed entity
   status = get_collider_collisions(sim, &ent, 0, &collisions, &buf_len,
-                                   &buf_size, 0, NULL);
+                                   &buf_size, get_col_info, NULL);
   if (status) {
     *dest = NULL;
     return 0;
@@ -606,6 +652,9 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
   mat4 entity_to_world = GLM_MAT4_IDENTITY_INIT;
   int bone = ent->model->collider_bone_links[collider_offset];
   glm_mat4_copy(ent->final_b_mats[bone], entity_to_world);
+  if (bone != 0) {
+    glm_mat4_mul(ent->final_b_mats[0], entity_to_world, entity_to_world);
+  }
   glm_mat4_ins3(ent->model->bones[bone].coordinate_matrix, bone_to_entity);
   if (raw_col->type == POLY) {
     glm_vec4(raw_col->data.center_of_mass, 1.0, bone_to_entity[3]);
@@ -630,11 +679,9 @@ void global_collider(ENTITY *ent, size_t collider_offset, COLLIDER *dest) {
                    dest->data.center_of_mass);
   } else if (dest->type == SPHERE) {
     dest->data.radius = raw_col->data.radius;
+    dest->data.radius *= ent->bone_mats[bone][SCALE][0][0];
     glm_mat4_mulv3(entity_to_world, raw_col->data.center, 1.0,
                    dest->data.center);
-  }
-  if (ent->model->colliders[collider_offset].type == SPHERE) {
-    dest->data.radius *= ent->bone_mats[bone][SCALE][0][0];
   }
 }
 
@@ -663,7 +710,7 @@ void *check_moving_buffer(void *args) {
   for (size_t i = arg_data.start; i < arg_data.end; i++) {
     cur_ent = sim->mcol_ledger[sim->mcol_list[i]].col.entity;
     collider_offset = sim->mcol_ledger[sim->mcol_list[i]].col.collider_offset;
-    is_moving_cb = sim->mcol_ledger[sim->mcol_list[i]].col.is_moving_cb;
+    is_moving_cb = cur_ent->is_moving_cb;
 
     // Only consider collider if it is within range
     global_collider(cur_ent, collider_offset, &cur_col);
@@ -768,8 +815,6 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
         new_col->b_offset = p_obj->collider_offset;
         glm_vec3_copy(collision_dir, new_col->col_dir);
         glm_vec3_copy(col_point, new_col->col_point);
-        (*col)[*col_buf_len].move_cb = p_obj->move_cb;
-        (*col)[*col_buf_len].is_moving_cb = p_obj->is_moving_cb;
 
         (*col_buf_len)++;
         if (*col_buf_len == *col_buf_size) {
@@ -824,6 +869,81 @@ int is_moving(ENTITY *ent, size_t col) {
   return mag > MOVING_THRESHOLD;
 }
 
+int propagate_new_mcol(SIMULATION *sim, ENTITY *ent, size_t col) {
+  SIMULATION *cur_sim = NULL;
+  LEDGER_INPUT input;
+  input.entity.ent = ent;
+
+  int status = 0;
+  size_t ent_idx = INVALID_INDEX;
+  size_t collider_filter = 0;
+  int col_cat = ent->model->colliders[col].category;
+  for (int i = 0; i < sim->num_linked_sims; i++) {
+    cur_sim = sim->linked_sims[i];
+    ent_idx = ledger_search(cur_sim->ent_ledger, cur_sim->ent_ledger_size,
+                            input, L_TYPE_ENTITY);
+    if (ent_idx == INVALID_INDEX) {
+      continue;
+    }
+
+    collider_filter = (size_t) cur_sim->ent_ledger[ent_idx].ent.data;
+    if ((col_cat == DEFAULT && !(collider_filter & ALLOW_DEFAULT)) ||
+        (col_cat == HIT_BOX && !(collider_filter & ALLOW_HIT_BOXES)) ||
+        (col_cat == HURT_BOX && !(collider_filter & ALLOW_HURT_BOXES))) {
+      continue;
+    }
+
+    input.collider.ent = ent;
+    input.collider.col = col;
+    input.collider.data = NULL;
+    status = ledger_add(&cur_sim->mcol_ledger, &cur_sim->mcol_list,
+                        &cur_sim->num_col_moving, &cur_sim->mcol_ledger_size,
+                        &cur_sim->mcol_list_size, input, L_TYPE_COLLIDER);
+    if (status) {
+      fprintf(stderr,
+              "Error: Unable to reallocate linked simulation ledger\n");
+      return -1;
+    }
+
+    input.entity.ent = ent;
+    input.entity.data = NULL;
+    status = ledger_add(&cur_sim->ment_ledger, &cur_sim->ment_list,
+                        &cur_sim->num_ent_moving, &cur_sim->ment_ledger_size,
+                        &cur_sim->ment_list_size, input, L_TYPE_ENTITY);
+    if (status) {
+      fprintf(stderr,
+              "Error: Unable to reallocate linked simulation ledger\n");
+      return -1;
+    }
+  }
+  return 0;
+}
+
+void propagate_rm_mcol(SIMULATION *sim, ENTITY *ent, size_t col) {
+  LEDGER_INPUT input;
+  input.collider.ent = ent;
+  input.collider.col = col;
+  SIMULATION *cur_sim = NULL;
+  for (int i = 0; i < sim->num_linked_sims; i++) {
+    cur_sim = sim->linked_sims[i];
+    ledger_delete(cur_sim->mcol_ledger, cur_sim->mcol_list,
+                  cur_sim->mcol_ledger_size, &cur_sim->num_col_moving, input,
+                  L_TYPE_COLLIDER);
+  }
+}
+
+void propagate_rm_ment(SIMULATION *sim, ENTITY *ent) {
+  LEDGER_INPUT input;
+  input.entity.ent = ent;
+  SIMULATION *cur_sim = NULL;
+  for (int i = 0; i < sim->num_linked_sims; i++) {
+    cur_sim = sim->linked_sims[i];
+    ledger_delete(cur_sim->ment_ledger, cur_sim->ment_list,
+                  cur_sim->ment_ledger_size, &cur_sim->num_ent_moving, input,
+                  L_TYPE_ENTITY);
+  }
+}
+
 // =========================== BOOK KEEPING HELPERS ==========================
 
 int ledger_init(SIM_ITEM **ledger, size_t **l_list, size_t *num_items,
@@ -871,7 +991,7 @@ int ledger_add(SIM_ITEM **ledger, size_t **l_list,
     if (l_type == L_TYPE_ENTITY) {
       if ((*ledger)[index].ent.status != LEDGER_OCCUPIED) {
         (*ledger)[index].ent.entity = l_data.entity.ent;
-        (*ledger)[index].ent.move_cb = l_data.entity.move_cb;
+        (*ledger)[index].ent.data = l_data.entity.data;
         (*ledger)[index].ent.index = *num_items;
         (*ledger)[index].ent.status = LEDGER_OCCUPIED;
         (*ledger)[index].ent.to_delete = 0;
@@ -880,9 +1000,8 @@ int ledger_add(SIM_ITEM **ledger, size_t **l_list,
     } else {
       if ((*ledger)[index].col.status != LEDGER_OCCUPIED) {
         (*ledger)[index].col.entity = l_data.collider.ent;
+        (*ledger)[index].col.data = l_data.collider.data;
         (*ledger)[index].col.collider_offset = l_data.collider.col;
-        (*ledger)[index].col.move_cb = l_data.collider.move_cb;
-        (*ledger)[index].col.is_moving_cb = l_data.collider.is_moving_cb;
         (*ledger)[index].col.index = *num_items;
         (*ledger)[index].col.status = LEDGER_OCCUPIED;
         (*ledger)[index].col.to_delete = 0;
@@ -1003,21 +1122,19 @@ int resize_ledger(SIM_ITEM **ledger, size_t *l_list, size_t *ledger_size,
   size_t index = 0;
   ENTITY *cur_ent = NULL;
   size_t cur_col = 0;
-  void (*move_cb)(ENTITY *, vec3) = NULL;
-  int (*is_moving_cb)(ENTITY *, size_t) = NULL;
+  void *data = NULL;
   int cur_del = 0;
   double key = 0.0;
   for (size_t i = 0; i < num_items; i++) {
     if (l_type == L_TYPE_ENTITY) {
       cur_ent = (*ledger)[l_list[i]].ent.entity;
-      move_cb = (*ledger)[l_list[i]].ent.move_cb;
+      data = (*ledger)[l_list[i]].ent.data;
       cur_del = (*ledger)[l_list[i]].ent.to_delete;
       key = (size_t) cur_ent;
     } else {
       cur_ent = (*ledger)[l_list[i]].col.entity;
+      data = (*ledger)[l_list[i]].col.data;
       cur_col = (*ledger)[l_list[i]].col.collider_offset;
-      move_cb = (*ledger)[l_list[i]].col.move_cb;
-      is_moving_cb = (*ledger)[l_list[i]].col.is_moving_cb;
       cur_del = (*ledger)[l_list[i]].col.to_delete;
       key = ((size_t) cur_ent) + cur_col;
     }
@@ -1028,7 +1145,7 @@ int resize_ledger(SIM_ITEM **ledger, size_t *l_list, size_t *ledger_size,
       if (l_type == L_TYPE_ENTITY) {
         if (new_ledger[index].ent.status != LEDGER_OCCUPIED) {
           new_ledger[index].ent.entity = cur_ent;
-          new_ledger[index].ent.move_cb = move_cb;
+          new_ledger[index].ent.data = data;
           new_ledger[index].ent.index = i;
           new_ledger[index].ent.status = LEDGER_OCCUPIED;
           new_ledger[index].ent.to_delete = cur_del;
@@ -1037,9 +1154,8 @@ int resize_ledger(SIM_ITEM **ledger, size_t *l_list, size_t *ledger_size,
       } else {
         if (new_ledger[index].col.status != LEDGER_OCCUPIED) {
           new_ledger[index].col.entity = cur_ent;
+          new_ledger[index].col.data = data;
           new_ledger[index].col.collider_offset = cur_col;
-          new_ledger[index].col.move_cb = move_cb;
-          new_ledger[index].col.is_moving_cb = is_moving_cb;
           new_ledger[index].col.index = i;
           new_ledger[index].col.status = LEDGER_OCCUPIED;
           new_ledger[index].col.to_delete = cur_del;

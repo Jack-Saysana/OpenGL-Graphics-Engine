@@ -21,3 +21,5 @@ void set_vec3(char *loc, vec3 vec, unsigned int shader);
 void draw_poly(vec3 *verts);
 void draw_lines(L_VBO *lines, size_t num_lines);
 void calc_inv_inertia(ENTITY *ent, size_t col, mat4 dest);
+int is_moving(ENTITY *ent, size_t col);
+void integrate_ent(ENTITY *ent, vec3 forces);

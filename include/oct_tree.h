@@ -23,13 +23,10 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
 int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
 #ifdef DEBUG_OCT_TREE
 int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset, void (*move_cb)(ENTITY *, vec3),
-                  int (*is_moving_cb)(ENTITY *, size_t), int birthmark,
-                  COLLIDER col);
+                  size_t collider_offset, int birthmark, COLLIDER col);
 #else
 int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset, void (*move_cb)(ENTITY *, vec3),
-                  int (*is_moving_cb)(ENTITY *, size_t));
+                  size_t collider_offset);
 #endif
 int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset);
 int remove_from_list(OCT_TREE *tree, size_t obj_offset);

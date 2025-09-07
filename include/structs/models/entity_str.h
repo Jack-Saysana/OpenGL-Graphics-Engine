@@ -11,6 +11,10 @@
 typedef struct entity {
   // Pointer to miscelaneous data to link entity to other information
   void *data;
+  // Callback function to integrate the entity in simulations
+  void (*move_cb)(struct entity *, vec3);
+  // Callback function to check if the entity is moving
+  int (*is_moving_cb)(struct entity *, size_t);
   MODEL *model;
   // Physics constraint buffer to be applied for the current frame
   J_CONS *p_cons;

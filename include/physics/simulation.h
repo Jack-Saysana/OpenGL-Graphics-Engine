@@ -36,6 +36,9 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
                             size_t collider_offset, COL_UPDATE **col,
                             size_t *col_buf_len, size_t *col_buf_size,
                             int get_col_info, pthread_mutex_t *col_lock);
+int propagate_new_mcol(SIMULATION *sim, ENTITY *ent, size_t col);
+void propagate_rm_mcol(SIMULATION *sim, ENTITY *ent, size_t col);
+void propagate_rm_ment(SIMULATION *sim, ENTITY *ent);
 void global_collider(ENTITY *ent, size_t, COLLIDER *dest);
 int ledger_init(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *);
 int ledger_add(SIM_ITEM **, size_t **, size_t *, size_t *, size_t *,
@@ -53,12 +56,9 @@ OCT_TREE *init_tree(float max_extent, unsigned int max_depth);
 void free_oct_tree(OCT_TREE *tree);
 #ifdef DEBUG_OCT_TREE
 int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
-                    void (*move_cb)(ENTITY *, vec3),
-                    int (*is_moving_cb)(ENTITY *, size_t), int birthmark);
+                    int birthmark);
 #else
-int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset,
-                    void (*move_cb)(ENTITY *, vec3),
-                    int (*is_moving_cb)(ENTITY *, size_t));
+int oct_tree_insert(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 #endif
 int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
@@ -71,5 +71,3 @@ void collision_point(COLLIDER *a, COLLIDER *b, vec3 p_vec, vec3 dest);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
 void vec3_remove_noise(vec3 vec, float threshold);
-int is_moving(ENTITY *ent, size_t col);
-void integrate_ent(ENTITY *ent, vec3 forces);

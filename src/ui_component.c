@@ -91,8 +91,8 @@ int init_ui_comp(UI_COMP *comp, char *text, vec3 text_col, vec3 pos,
                  int manual_layer, PIVOT pivot, TEXT_ANCHOR txt_anc,
                  int opts, int enabled, int display, int textured,
                  unsigned int texture,
-                 void (*on_click)(UI_COMP *, void *),
-                 void (*on_release)(UI_COMP *, void *),
+                 void (*on_click)(UI_COMP *, int, void *),
+                 void (*on_release)(UI_COMP *, int, void *),
                  void (*on_hover)(UI_COMP *, void *),
                  void (*on_no_hover)(UI_COMP *, void *),
                  void *click_args, void *release_args, void *hover_args,
@@ -372,13 +372,13 @@ void set_ui_options(UI_COMP *comp, int options) {
   comp->numerical_options = options;
 }
 
-void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
+void set_ui_on_click(UI_COMP *comp, void (*cb)(UI_COMP *, int, void *),
                      void *args) {
   comp->on_click = cb;
   comp->click_args = args;
 }
 
-void set_ui_on_release(UI_COMP *comp, void (*cb)(UI_COMP *, void *),
+void set_ui_on_release(UI_COMP *comp, void (*cb)(UI_COMP *, int, void *),
                        void *args) {
   comp->on_release = cb;
   comp->release_args = args;
@@ -618,9 +618,9 @@ void on_click_callback(GLFWwindow *window, int button, int action, int mods) {
           mouse_pos[Y] <= child_middle[Y] + (cur_child->pix_height * 0.5) &&
           mouse_pos[Y] >= child_middle[Y] - (cur_child->pix_height * 0.5)) {
         if (cur_child->on_click && action == GLFW_PRESS) {
-          cur_child->on_click(cur_child, cur_child->click_args);
+          cur_child->on_click(cur_child, button, cur_child->click_args);
         } else if (cur_child->on_release && action == GLFW_RELEASE) {
-          cur_child->on_release(cur_child, cur_child->release_args);
+          cur_child->on_release(cur_child, button, cur_child->release_args);
         }
       }
 
@@ -788,9 +788,9 @@ int sort_ui_components(UI_COMP **comp, size_t comp_len) {
     buff[pivot] = temp;
 
     stk_top += 2;
-    if (stk_top == stk_size) {
+    if (stk_top >= stk_size - 1) {
       int status = double_buffer((void **) &sort_stk, &stk_size,
-                                 sizeof(UI_COMP *));
+                                 sizeof(SORT_ARGS));
       if (status) {
         free(sort_stk);
         return -1;
