@@ -20,6 +20,7 @@ MODEL_DATA *load_model_data(char *path) {
       return NULL;
     }
   }
+  free(bin_path);
 
   size_t b_len = 0;
   size_t col_len = 0;
@@ -271,7 +272,6 @@ MODEL_DATA *load_model_data(char *path) {
     }
   }
   fclose(file);
-  free(bin_path);
 
   md->animations = animations;
   md->k_chain_block = k_chain_block;
@@ -295,30 +295,151 @@ MODEL_DATA *load_model_data(char *path) {
   return md;
 }
 
+int serialize_model_data(char *path, MODEL_DATA *md) {
+  FILE *file = fopen(path, "wb");
+  if (file == NULL) {
+    return -1;
+  }
+
+  size_t total_chains = 0;
+  size_t total_keyframes = 0;
+  size_t total_frames = 0;
+  for (size_t i = 0; i < md->num_animations; i++) {
+    total_chains += md->animations[i].num_chains;
+    total_frames += (md->animations[i].duration *
+                     md->animations[i].num_chains);
+    for (int j = 0; j < md->animations[i].num_chains; j++) {
+      total_keyframes += md->animations[i].keyframe_chains[j].num_frames;
+    }
+  }
+
+  int mat_flag = 0;
+  for (int i = 0; i < NUM_PROPS; i++) {
+    if (md->mat_paths[i]) {
+      mat_flag = 1;
+      break;
+    }
+  }
+
+  fwrite(&md->num_bones, sizeof(size_t), 1, file);
+  fwrite(&md->num_colliders, sizeof(size_t), 1, file);
+  fwrite(&md->num_vertices, sizeof(size_t), 1, file);
+  fwrite(&md->num_indices, sizeof(size_t), 1, file);
+  fwrite(&md->num_animations, sizeof(size_t), 1, file);
+  fwrite(&total_chains, sizeof(size_t), 1, file);
+  fwrite(&total_keyframes, sizeof(size_t), 1, file);
+  fwrite(&total_frames, sizeof(size_t), 1, file);
+  fwrite(&mat_flag, sizeof(int), 1, file);
+  if (mat_flag) {
+    int cur_path_len = 0;
+    for (int i = 0; i < NUM_PROPS; i++) {
+      if (md->mat_paths[i] == NULL) {
+        cur_path_len = 0;
+      } else {
+        cur_path_len = strlen(md->mat_paths[i]) + 1;
+      }
+      fwrite(&cur_path_len, sizeof(int), 1, file);
+      if (cur_path_len > 0) {
+        fwrite(md->mat_paths[i], sizeof(char), cur_path_len, file);
+      }
+    }
+  }
+  fwrite(md->bones, sizeof(BONE), md->num_bones, file);
+  fwrite(md->bone_collider_links, sizeof(int), md->num_bones, file);
+  fwrite(md->colliders, sizeof(COLLIDER), md->num_colliders, file);
+  fwrite(md->collider_bone_links, sizeof(int), md->num_colliders, file);
+  fwrite(md->vertices, sizeof(VBO), md->num_vertices, file);
+  fwrite(md->indices, sizeof(int), md->num_indices, file);
+
+  for (size_t i = 0; i < md->num_animations; i++) {
+    fwrite(&(md->animations[i].num_chains), sizeof(size_t), 1, file);
+    fwrite(&(md->animations[i].duration), sizeof(size_t), 1, file);
+    for (size_t j = 0; j < md->animations[i].num_chains; j++) {
+      K_CHAIN cur = md->animations[i].keyframe_chains[j];
+      fwrite(&(cur.b_id), sizeof(unsigned int), 1, file);
+      fwrite(&(cur.type), sizeof(C_TYPE), 1, file);
+      fwrite(&(cur.num_frames), sizeof(size_t), 1, file);
+      for (size_t k = 0; k < cur.num_frames; k++) {
+        fwrite(cur.chain[k].offset, sizeof(float), 4, file);
+        fwrite(&(cur.chain[k].frame), sizeof(int), 1, file);
+      }
+    }
+  }
+
+  fclose(file);
+  return 0;
+}
+
 void init_model_vao(MODEL *model) {
+  int error = 0;
   unsigned int VAO_id;
   glGenVertexArrays(1, &VAO_id);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ALLOCATE VAO: %d\n", error);
+  }
   glBindVertexArray(VAO_id);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO BIND VAO: %d\n", error);
+  }
   glBindBuffer(GL_ARRAY_BUFFER, model->VBO);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO BIND VBO: %d\n", error);
+  }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model->EBO);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO BIND EBO: %d\n", error);
+  }
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) 0);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO SET ATTRIB 0: %d\n", error);
+  }
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) (sizeof(float) * 3));
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO SET ATTRIB 1: %d\n", error);
+  }
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) (sizeof(float) * 6));
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO SET ATTRIB 2: %d\n", error);
+  }
   glVertexAttribIPointer(3, 4, GL_INT, sizeof(VBO),
                         (void *) (sizeof(float) * 8));
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO SET ATTRIB 3: %d\n", error);
+  }
   glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) ((sizeof(float) * 8) + (sizeof(int) * 4)));
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO SET ATTRIB 4: %d\n", error);
+  }
 
   glEnableVertexAttribArray(0);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ENABLE ATTRIB 0: %d\n", error);
+  }
   glEnableVertexAttribArray(1);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ENABLE ATTRIB 1: %d\n", error);
+  }
   glEnableVertexAttribArray(2);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ENABLE ATTRIB 2: %d\n", error);
+  }
   glEnableVertexAttribArray(3);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ENABLE ATTRIB 3: %d\n", error);
+  }
   glEnableVertexAttribArray(4);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ENABLE ATTRIB 4: %d\n", error);
+  }
   glBindVertexArray(0);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO UNBIND VAO: %d\n", error);
+  }
 
   model->VAO = VAO_id;
 }
@@ -330,17 +451,66 @@ MODEL *gen_model(MODEL_DATA *md, int gen_vao) {
     return NULL;
   }
 
+  int error = 0;
   unsigned int VBO_id;
   glGenBuffers(1, &VBO_id);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ALLOCATE VBO: %d\n", error);
+  }
   glBindBuffer(GL_ARRAY_BUFFER, VBO_id);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO BIND VBO: %d\n", error);
+  }
   glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * md->num_vertices, md->vertices,
                GL_STATIC_DRAW);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO POPULATE VBO: %d\n", error);
+  }
 
   unsigned int EBO_id;
   glGenBuffers(1, &EBO_id);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ALLOCATE EBO: %d\n", error);
+  }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_id);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO BIND EBO: %d\n", error);
+  }
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * md->num_indices,
                md->indices, GL_STATIC_DRAW);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO POPULATE EBO: %d\n", error);
+  }
+
+  if (!md->num_bones) {
+    // Create root bone of model if one does not exist already
+    md->num_bones = 1;
+    md->bones = malloc(sizeof(BONE));
+    if (!md->bones) {
+      fprintf(stderr, "Failed to allocate root bone\n");
+      return NULL;
+    }
+
+    md->bone_collider_links = malloc(sizeof(int));
+    if (!md->bone_collider_links) {
+      fprintf(stderr, "Failed to allocate bone to collider linkage\n");
+      return NULL;
+    }
+    md->bone_collider_links[0] = -1;
+
+    if (md->num_colliders) {
+      md->bone_collider_links[0] = 0;
+      for (size_t i = 0; i < md->num_colliders; i++) {
+        md->collider_bone_links[i] = 0;
+      }
+    }
+
+    glm_mat3_identity(md->bones[0].coordinate_matrix);
+    glm_vec3_copy((vec3) {0.0, 1.0, 0.0}, md->bones[0].head);
+    glm_vec3_zero(md->bones[0].base);
+    md->bones[0].parent = -1;
+    md->bones[0].num_children = 0;
+  }
 
   model->VAO = INVALID_INDEX;
   model->VBO = VBO_id;

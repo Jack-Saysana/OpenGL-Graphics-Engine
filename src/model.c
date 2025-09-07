@@ -11,6 +11,10 @@ void draw_model(unsigned int shader, MODEL *model) {
                              "material.bump_map" };
 
   for (int i = 0; i < NUM_PROPS; i++) {
+    if (model->textures[i] == INVALID_INDEX) {
+      continue;
+    }
+
     glActiveTexture(GL_TEXTURE0 + i);
     glBindTexture(GL_TEXTURE_2D, model->textures[i]);
     uniform_loc = glGetUniformLocation(shader, uniform_names[i]);
