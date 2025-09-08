@@ -34,6 +34,4 @@ typedef struct model {
   unsigned int num_indicies;
 } MODEL;
 
-
-
 #endif

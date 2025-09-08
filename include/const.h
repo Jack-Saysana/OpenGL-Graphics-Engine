@@ -79,5 +79,6 @@
 #define LCP_NC (1)
 #define LCP_EQ (0)
 #define LCP_GEQ (1)
+#define PI (3.1415)
 
 #endif
