@@ -55,6 +55,8 @@ $(BUILD_DIR)/%.o: %.c
 	@mkdir -p ./bin/src
 	@mkdir -p ./bin/src/math
 	@mkdir -p ./bin/src/physics
+	@mkdir -p ./bin/src/2d
+	@mkdir -p ./bin/src/2d/physics
 	@echo "Created build directory"
 
 ./bin/include:

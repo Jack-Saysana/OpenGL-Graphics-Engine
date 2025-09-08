@@ -1,5 +1,50 @@
 #include <render_primitives.h>
 
+void init_quad() {
+  float verts[] = {
+    // VERTEX        TEX_COORD
+    -1.0,  1.0, 0.0, 0.0, 1.0,
+    -1.0, -1.0, 0.0, 0.0, 0.0,
+     1.0, -1.0, 0.0, 1.0, 0.0,
+     1.0,  1.0, 0.0, 1.0, 1.0
+  };
+  unsigned int indices[] = {
+    0, 1, 2,
+    2, 3, 0
+  };
+
+  glGenBuffers(1, &QUAD_EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD_EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+               GL_STATIC_DRAW);
+
+
+  glGenVertexArrays(1, &QUAD_VAO);
+  glBindVertexArray(QUAD_VAO);
+  glGenBuffers(1, &QUAD_VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, QUAD_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5,
+                        (void *) 0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5,
+                        (void *) (sizeof(GLfloat) * 3));
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(0);
+}
+
+void draw_quad() {
+  if (QUAD_VAO == INVALID_INDEX) {
+    init_quad();
+  }
+
+  glBindVertexArray(QUAD_VAO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD_EBO);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
+}
+
 void draw_lines(L_VBO *lines, size_t num_lines) {
   unsigned int VAO;
   glGenVertexArrays(1, &VAO);

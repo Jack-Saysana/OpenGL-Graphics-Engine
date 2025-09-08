@@ -10,7 +10,7 @@ typedef struct entity_2d {
   COLLIDER_2D *cols;
   size_t num_cols;
 
-  mat4 ent_to_world;
+  vec3 pos;
 } ENTITY_2D;
 
 #endif
