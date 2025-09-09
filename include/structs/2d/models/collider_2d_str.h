@@ -8,7 +8,15 @@ typedef enum collider_type_2d {
 
 typedef struct collider_2d {
   vec2 center;
-  float radius;
+  union {
+    struct {
+      float width;
+      float height;
+    };
+    struct {
+      float radius;
+    };
+  } data;
 
   COL_TYPE_2D type;
   int category;

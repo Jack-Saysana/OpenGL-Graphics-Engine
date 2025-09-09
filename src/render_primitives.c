@@ -114,7 +114,7 @@ void draw_poly(vec3 *verts) {
   glDeleteBuffers(1, &EBO);
 }
 
-void draw_square(vec2 center, float half_len) {
+void draw_square(vec2 center, float half_w, float half_h) {
   L_VBO points[8];
   memset(points, 0, sizeof(points));
 
@@ -123,13 +123,13 @@ void draw_square(vec2 center, float half_len) {
   vec3 bottom_left = GLM_VEC3_ZERO_INIT;
   vec3 top_left = GLM_VEC3_ZERO_INIT;
 
-  glm_vec3_copy((vec3) { center[X] + half_len, center[Y] + half_len, 0.0 },
+  glm_vec3_copy((vec3) { center[X] + half_w, center[Y] + half_h, 0.0 },
                 top_right);
-  glm_vec3_copy((vec3) { center[X] + half_len, center[Y] - half_len, 0.0 },
+  glm_vec3_copy((vec3) { center[X] + half_w, center[Y] - half_h, 0.0 },
                 bottom_right);
-  glm_vec3_copy((vec3) { center[X] - half_len, center[Y] - half_len, 0.0 },
+  glm_vec3_copy((vec3) { center[X] - half_w, center[Y] - half_h, 0.0 },
                 bottom_left);
-  glm_vec3_copy((vec3) { center[X] - half_len, center[Y] + half_len, 0.0 },
+  glm_vec3_copy((vec3) { center[X] - half_w, center[Y] + half_h, 0.0 },
                 top_left);
 
   glm_vec3_copy(top_right, points[0].coords);
