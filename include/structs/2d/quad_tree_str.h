@@ -3,7 +3,17 @@
 
 #include <structs/2d/models/entity_2d_str.h>
 
-ypedef struct physics_object_2d {
+#define X_Y       (0)
+#define X_negY    (1)
+#define negX_Y    (2)
+#define negX_negY (3)
+
+#define QUAD_X_Y           (0x1)
+#define QUAD_X_negY        (0x2)
+#define QUAD_negX_Y        (0x4)
+#define QUAD_negX_negY     (0x8)
+
+typedef struct physics_object_2d {
   ENTITY_2D *ent;
   size_t collider_offset;
   // Index of oct tree node which contains the given PHYS_OBJ
@@ -39,10 +49,10 @@ typedef struct quad_tree {
   unsigned int max_depth;
 } QUAD_TREE;
 
-typedef struct 2d_collision_result {
+typedef struct collision_result_2d {
   PHYS_OBJ_2D **list;
   size_t list_len;
   size_t list_buff_size;
-} 2D_COLLISION_RES;
+} COLLISION_RES_2D;
 
 #endif

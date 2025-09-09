@@ -48,6 +48,7 @@
 #define L_TYPE_COLLIDER (1)
 
 #define OCT_TREE_STARTING_LEN (25)
+#define QUAD_TREE_STARTING_LEN (20)
 
 // Simulation hash-map constants
 #define HASH_MAP_STARTING_LEN (50)

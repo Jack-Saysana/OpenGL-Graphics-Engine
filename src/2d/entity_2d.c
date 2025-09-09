@@ -13,7 +13,7 @@ void draw_entity_2d(unsigned int shader, ENTITY_2D *ent) {
 
   mat4 model = GLM_MAT4_IDENTITY_INIT;
   glm_scale(model, (vec3) { ent->width / 2.0, ent->height / 2.0, 1.0 });
-  glm_translate(model, (vec3) { ent->pos[X], ent->pos[Y], ent->pos[Z] });
+  glm_translate(model, ent->pos);
   set_mat4("model", model, shader);
   draw_quad();
 }
