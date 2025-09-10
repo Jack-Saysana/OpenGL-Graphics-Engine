@@ -6,7 +6,6 @@
 
 unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path);
 MODEL_DATA *load_model_data(char *path);
-int serialize_model_data(char *path, MODEL_DATA *md);
 MODEL *gen_model(MODEL_DATA *md, int gen_vao);
 MODEL *load_model(char *path);
 MODEL *load_model_vaoless(char *path);
@@ -29,6 +28,6 @@ void free_model(MODEL *model);
 void free_entity(ENTITY *entity);
 void free_textures();
 void write_model_obj(MODEL_DATA *md, char *path);
-void write_model_bin(MODEL_DATA *md, char *path);
+int write_model_bin(MODEL_DATA *md, char *path);
 
 #endif
