@@ -276,6 +276,11 @@ COLLISION_RES_2D quad_tree_search(QUAD_TREE *tree, COLLIDER_2D *col) {
   return res;
 }
 
+size_t get_all_quad_colliders(QUAD_TREE *tree, PHYS_OBJ_2D **dest) {
+  *dest = tree->data_buffer;
+  return tree->data_buff_len;
+}
+
 int init_quad_node(QUAD_TREE *tree, QUAD_NODE *parent) {
   if (tree == NULL || parent == NULL) {
     fprintf(stderr, "Error: Invalid quad-node inputs\n");
