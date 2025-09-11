@@ -44,8 +44,10 @@
 
 #define GRAVITY (10.0)
 
-#define L_TYPE_ENTITY (0)
-#define L_TYPE_COLLIDER (1)
+#define L_TYPE_ENTITY      (0)
+#define L_TYPE_COLLIDER    (1)
+#define L_TYPE_ENTITY_2D   (2)
+#define L_TYPE_COLLIDER_2D (3)
 
 #define OCT_TREE_STARTING_LEN (25)
 #define QUAD_TREE_STARTING_LEN (20)

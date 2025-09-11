@@ -1,6 +1,7 @@
 #include <cglm/cglm.h>
 #include <globals.h>
 #include <structs/models/entity_str.h>
+#include <structs/2d/models/entity_2d_str.h>
 #include <structs/simulation_str.h>
 
 static vec3 U_DIR = { 0.0, 1.0, 0.0 };

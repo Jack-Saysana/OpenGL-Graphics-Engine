@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <const.h>
 #include <globals.h>
+#include <structs/2d/models/entity_2d_str.h>
 #include <structs/simulation_str.h>
 #include <structs/sim_ledger_str.h>
 

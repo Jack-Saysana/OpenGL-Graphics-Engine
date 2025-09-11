@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <structs/models/entity_str.h>
+#include <structs/2d/models/entity_2d_str.h>
 #include <structs/sim_ledger_str.h>
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
