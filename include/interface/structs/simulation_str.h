@@ -2,7 +2,9 @@
 #define __ENGINE_SIMULATION_STR_H__
 
 #include "./oct_tree_str.h"
+#include "./2d/quad_tree_str.h"
 #include "./models/entity_str.h"
+#include "./2d/models/entity_2d_str.h"
 #include "./sim_ledger_str.h"
 
 typedef struct simulation {
