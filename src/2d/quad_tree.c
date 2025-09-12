@@ -281,7 +281,7 @@ size_t get_all_quad_colliders(QUAD_TREE *tree, PHYS_OBJ_2D **dest) {
   return tree->data_buff_len;
 }
 
-int init_quad_node(QUAD_TREE *tree, QUAD_NODE *parent) {
+static int init_quad_node(QUAD_TREE *tree, QUAD_NODE *parent) {
   if (tree == NULL || parent == NULL) {
     fprintf(stderr, "Error: Invalid quad-node inputs\n");
     return -1;
@@ -305,7 +305,7 @@ int init_quad_node(QUAD_TREE *tree, QUAD_NODE *parent) {
   return 0;
 }
 
-int read_quad(QUAD_TREE *tree, QUAD_NODE *node, COLLISION_RES_2D *res) {
+static int read_quad(QUAD_TREE *tree, QUAD_NODE *node, COLLISION_RES_2D *res) {
   if (node->head_offset == INVALID_INDEX) {
     return 0;
   }
@@ -331,8 +331,8 @@ int read_quad(QUAD_TREE *tree, QUAD_NODE *node, COLLISION_RES_2D *res) {
   return 0;
 }
 
-int append_quad_buffer(QUAD_TREE *tree, size_t node_offset, ENTITY_2D *entity,
-                       size_t collider_offset) {
+static int append_quad_buffer(QUAD_TREE *tree, size_t node_offset,
+                              ENTITY_2D *entity, size_t collider_offset) {
   size_t buff_len = tree->data_buff_len;
   add_to_list(tree, buff_len, node_offset);
 
@@ -349,7 +349,8 @@ int append_quad_buffer(QUAD_TREE *tree, size_t node_offset, ENTITY_2D *entity,
   return 0;
 }
 
-int add_to_list(QUAD_TREE *tree, size_t obj_offset, size_t node_offset) {
+static int add_to_list(QUAD_TREE *tree, size_t obj_offset,
+                       size_t node_offset) {
   PHYS_OBJ_2D *obj = tree->data_buffer + obj_offset;
   QUAD_NODE *node = tree->node_buffer + node_offset;
   if (node->head_offset == INVALID_INDEX) {
@@ -372,7 +373,7 @@ int add_to_list(QUAD_TREE *tree, size_t obj_offset, size_t node_offset) {
   return 0;
 }
 
-int remove_from_list(QUAD_TREE *tree, size_t obj_offset) {
+static int remove_from_list(QUAD_TREE *tree, size_t obj_offset) {
   PHYS_OBJ_2D *obj = tree->data_buffer + obj_offset;
   size_t node_offset = obj->node_offset;
   QUAD_NODE *node = tree->node_buffer + node_offset;
@@ -402,8 +403,8 @@ int remove_from_list(QUAD_TREE *tree, size_t obj_offset) {
   return 0;
 }
 
-int detect_quadrant(vec2 min_extent, vec2 max_extent, float quad_len,
-                    COLLIDER_2D *obj) {
+static int detect_quadrant(vec2 min_extent, vec2 max_extent, float quad_len,
+                           COLLIDER_2D *obj) {
   COLLIDER_2D quads[4];
   float hw = quad_len / 2.0;
   memset(quads, 0, sizeof(quads));
@@ -436,8 +437,8 @@ int detect_quadrant(vec2 min_extent, vec2 max_extent, float quad_len,
   return ret;
 }
 
-size_t update_quad_extents(int quad, vec2 min_extent, vec2 max_extent,
-                           float quad_len) {
+static size_t update_quad_extents(int quad, vec2 min_extent, vec2 max_extent,
+                                  float quad_len) {
   if (quad == QUAD_X_Y) {
     min_extent[X] += quad_len;
     min_extent[Y] += quad_len;
@@ -457,7 +458,7 @@ size_t update_quad_extents(int quad, vec2 min_extent, vec2 max_extent,
   }
 }
 
-void update_node_emptiness(QUAD_TREE *tree, size_t node_offset) {
+static void update_node_emptiness(QUAD_TREE *tree, size_t node_offset) {
   QUAD_NODE *cur = tree->node_buffer + node_offset;
   if (cur->head_offset != INVALID_INDEX) {
     cur->empty = 0;
@@ -480,14 +481,15 @@ void update_node_emptiness(QUAD_TREE *tree, size_t node_offset) {
   }
 }
 
-vec3 quad_translate[4] = {
+static vec3 quad_translate[4] = {
                        {  1.0,  1.0 }, //  X,  Y
                        {  1.0, -1.0 }, //  X, -Y
                        { -1.0,  1.0 }, // -X,  Y
                        { -1.0, -1.0 }, // -X, -Y
                       };
-void draw_quad_tree(QUAD_TREE *tree, vec2 pos, float scale,
-                   unsigned int shader, size_t offset, int depth) {
+static void draw_quad_tree_internal(QUAD_TREE *tree, vec2 pos, float scale,
+                                    unsigned int shader, size_t offset,
+                                    int depth) {
   if (tree->node_buffer[offset].head_offset == INVALID_INDEX &&
       tree->node_buffer[offset].tail_offset == INVALID_INDEX) {
     set_vec3("col", (vec3) { 1.0, 1.0, 1.0 }, shader);
@@ -499,13 +501,19 @@ void draw_quad_tree(QUAD_TREE *tree, vec2 pos, float scale,
 
   vec2 temp = { 0.0, 0.0 };
   if (!tree->node_buffer[offset].empty &&
-      tree->node_buffer[offset].next_offset != INVALID_INDEX && depth < 5) {
+      tree->node_buffer[offset].next_offset != INVALID_INDEX &&
+      depth < tree->max_depth) {
     for (int i = 0; i < 4; i++) {
       glm_vec2_scale(quad_translate[i], scale / 2.0, temp);
       glm_vec2_add(pos, temp, temp);
-      draw_quad_tree(tree, temp, scale / 2.0, shader,
-                     tree->node_buffer[offset].next_offset + i, depth + 1);
+      draw_quad_tree_internal(tree, temp, scale / 2.0, shader,
+                              tree->node_buffer[offset].next_offset + i,
+                              depth + 1);
     }
   }
 }
 
+void draw_quad_tree(QUAD_TREE *tree, unsigned int shader) {
+  draw_quad_tree_internal(tree, (vec2) { 0.0, 0.0 }, tree->max_extent, shader,
+                          0, 1);
+}

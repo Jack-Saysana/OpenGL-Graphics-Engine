@@ -7,17 +7,18 @@
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-int init_quad_node(QUAD_TREE *tree, QUAD_NODE *parent);
-int read_quad(QUAD_TREE *tree, QUAD_NODE *node, COLLISION_RES_2D *res);
-int append_quad_buffer(QUAD_TREE *tree, size_t node_offset, ENTITY_2D *entity,
-                       size_t collider_offset);
-int add_to_list(QUAD_TREE *tree, size_t obj_offset, size_t node_offset);
-int remove_from_list(QUAD_TREE *tree, size_t obj_offset);
-int detect_quadrant(vec2 min_extent, vec2 max_extent, float quad_len,
-                    COLLIDER_2D *obj);
-size_t update_quad_extents(int quad, vec2 min_extent, vec2 max_extent,
-                           float quad_len);
-void update_node_emptiness(QUAD_TREE *tree, size_t node_offset);
+static int init_quad_node(QUAD_TREE *tree, QUAD_NODE *parent);
+static int read_quad(QUAD_TREE *tree, QUAD_NODE *node, COLLISION_RES_2D *res);
+static int append_quad_buffer(QUAD_TREE *tree, size_t node_offset,
+                              ENTITY_2D *entity, size_t collider_offset);
+static int add_to_list(QUAD_TREE *tree, size_t obj_offset,
+                          size_t node_offset);
+static int remove_from_list(QUAD_TREE *tree, size_t obj_offset);
+static int detect_quadrant(vec2 min_extent, vec2 max_extent, float quad_len,
+                           COLLIDER_2D *obj);
+static size_t update_quad_extents(int quad, vec2 min_extent, vec2 max_extent,
+                                  float quad_len);
+static void update_node_emptiness(QUAD_TREE *tree, size_t node_offset);
 COLLISION_RES_2D quad_tree_search(QUAD_TREE *tree, COLLIDER_2D *col);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================

@@ -2,7 +2,7 @@
 
 // ========================== CREATION AND DELETION ==========================
 
-SIMULATION *init_sim(float max_extent, unsigned int max_depth) {
+SIMULATION *init_sim(float max_extent, unsigned int max_depth, SIM_TYPE type) {
   SIMULATION *sim = malloc(sizeof(SIMULATION));
   if (sim == NULL) {
     fprintf(stderr, "Error: Unable to allocate simulation\n");
@@ -11,10 +11,18 @@ SIMULATION *init_sim(float max_extent, unsigned int max_depth) {
   memset(sim->linked_sims, 0, sizeof(SIMULATION *) * MAX_LINKED_SIMS);
   sim->num_linked_sims = 0;
 
-  sim->oct_tree = init_tree(max_extent, max_depth);
-  if (sim->oct_tree == NULL) {
-    fprintf(stderr, "Error: Unable to initailize simulation oct-tree\n");
-    goto err_oct_tree;
+  if (type == SIM_3D) {
+    sim->oct_tree = init_tree(max_extent, max_depth);
+    if (sim->oct_tree == NULL) {
+      fprintf(stderr, "Error: Unable to initailize simulation oct-tree\n");
+      goto err_tree;
+    }
+  } else if (type == SIM_2D) {
+    sim->quad_tree = init_quad_tree(max_extent, max_depth);
+    if (sim->quad_tree == NULL) {
+      fprintf(stderr, "Error: Unable to initailize simulation quad-tree\n");
+      goto err_tree;
+    }
   }
 
   int status = ledger_init(&sim->ment_ledger);
@@ -42,6 +50,7 @@ SIMULATION *init_sim(float max_extent, unsigned int max_depth) {
   }
 
   glm_vec3_zero(sim->forces);
+  sim->type = type;
   goto ret;
 
 err_ent:
@@ -51,8 +60,12 @@ err_dcol:
 err_mcol:
   free_ledger(&sim->ment_ledger);
 err_ment:
-  free_oct_tree(sim->oct_tree);
-err_oct_tree:
+  if (type == SIM_3D) {
+    free_oct_tree(sim->oct_tree);
+  } else if (type == SIM_2D) {
+    free_quad_tree(sim->quad_tree);
+  }
+err_tree:
   free(sim);
 err_init:
   return NULL;
@@ -65,7 +78,11 @@ void free_sim(SIMULATION *sim) {
     return;
   }
 
-  free_oct_tree(sim->oct_tree);
+  if (sim->type == SIM_3D) {
+    free_oct_tree(sim->oct_tree);
+  } else if (sim->type == SIM_2D) {
+    free_quad_tree(sim->quad_tree);
+  }
   free_ledger(&sim->ent_ledger);
   free_ledger(&sim->ment_ledger);
   free_ledger(&sim->mcol_ledger);
@@ -76,7 +93,8 @@ void free_sim(SIMULATION *sim) {
 // ============================ SIMULATION HELPERS ===========================
 
 int link_sim(SIMULATION *sim, SIMULATION *target) {
-  if (!sim || sim->num_linked_sims >= MAX_LINKED_SIMS) {
+  if (!sim || sim->num_linked_sims >= MAX_LINKED_SIMS ||
+      sim->type != target->type) {
     return -1;
   }
 

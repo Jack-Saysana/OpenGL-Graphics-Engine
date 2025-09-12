@@ -357,7 +357,7 @@ size_t get_all_colliders(OCT_TREE *tree, PHYS_OBJ **dest) {
 
 // ================================= HELPERS =================================
 
-int init_node(OCT_TREE *tree, OCT_NODE *parent) {
+static int init_node(OCT_TREE *tree, OCT_NODE *parent) {
   if (tree == NULL || parent == NULL) {
     fprintf(stderr, "Error: Invalid oct-node inputs\n");
     return -1;
@@ -381,7 +381,7 @@ int init_node(OCT_TREE *tree, OCT_NODE *parent) {
   return 0;
 }
 
-int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
+static int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
   if (node->head_offset == INVALID_INDEX) {
     return 0;
   }
@@ -408,11 +408,11 @@ int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res) {
 }
 
 #ifdef DEBUG_OCT_TREE
-int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset, int birthmark, COLLIDER col) {
+static int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
+                         size_t collider_offset, int birthmark, COLLIDER col) {
 #else
-int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset) {
+static int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
+                         size_t collider_offset) {
 #endif
   size_t buff_len = tree->data_buff_len;
   add_to_list(tree, buff_len, node_offset);
@@ -434,7 +434,7 @@ int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
   return 0;
 }
 
-int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset) {
+static int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset) {
   PHYS_OBJ *obj = tree->data_buffer + obj_offset;
   OCT_NODE *node = tree->node_buffer + node_offset;
   if (node->head_offset == INVALID_INDEX) {
@@ -457,7 +457,7 @@ int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset) {
   return 0;
 }
 
-int remove_from_list(OCT_TREE *tree, size_t obj_offset) {
+static int remove_from_list(OCT_TREE *tree, size_t obj_offset) {
   PHYS_OBJ *obj = tree->data_buffer + obj_offset;
   size_t node_offset = obj->node_offset;
   OCT_NODE *node = tree->node_buffer + node_offset;
@@ -487,8 +487,8 @@ int remove_from_list(OCT_TREE *tree, size_t obj_offset) {
   return 0;
 }
 
-int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
-                   float oct_len) {
+static int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
+                         float oct_len) {
   int ret = 0;
 
   //  X,  Y,  Z
@@ -567,8 +567,8 @@ int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
   return ret;
 }
 
-size_t update_extents(int oct, vec3 min_extent, vec3 max_extent,
-                      float oct_len) {
+static size_t update_extents(int oct, vec3 min_extent, vec3 max_extent,
+                             float oct_len) {
   if (oct == OCT_X_Y_Z) {
     min_extent[X] += oct_len;
     min_extent[Y] += oct_len;
@@ -612,7 +612,7 @@ size_t update_extents(int oct, vec3 min_extent, vec3 max_extent,
   }
 }
 
-void update_node_emptiness(OCT_TREE *tree, size_t node_offset) {
+static void update_node_emptiness(OCT_TREE *tree, size_t node_offset) {
   OCT_NODE *cur = tree->node_buffer + node_offset;
   if (cur->head_offset != INVALID_INDEX) {
     cur->empty = 0;
@@ -635,7 +635,7 @@ void update_node_emptiness(OCT_TREE *tree, size_t node_offset) {
   }
 }
 
-vec3 quad_translate[8] = {
+static vec3 quad_translate[8] = {
                        { 1.0, 1.0, 1.0 }, //  X, Y, Z
                        { 1.0, 1.0, -1.0 }, //  X, Y,-Z
                        { 1.0, -1.0, 1.0 }, //  X,-Y, Z

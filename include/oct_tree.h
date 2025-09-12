@@ -17,25 +17,24 @@ static vec3 NEG_Z_DIR = { 0.0, 0.0, -1.0 };
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-int init_node(OCT_TREE *tree, OCT_NODE *parent);
+static int init_node(OCT_TREE *tree, OCT_NODE *parent);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *col);
-int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
-int read_all_children(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
+static int read_oct(OCT_TREE *tree, OCT_NODE *node, COLLISION_RES *res);
 #ifdef DEBUG_OCT_TREE
-int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset, int birthmark, COLLIDER col);
+static int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
+                         size_t collider_offset, int birthmark, COLLIDER col);
 #else
-int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
-                  size_t collider_offset);
+static int append_buffer(OCT_TREE *tree, size_t node_offset, ENTITY *entity,
+                         size_t collider_offset);
 #endif
-int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset);
-int remove_from_list(OCT_TREE *tree, size_t obj_offset);
+static int add_to_list(OCT_TREE *tree, size_t obj_offset, size_t node_offset);
+static int remove_from_list(OCT_TREE *tree, size_t obj_offset);
 //OCTANT detect_octant(vec3 min_extent, vec3 max_extent, float *ebj_extents,
 //                     float *oct_len);
-size_t update_extents(int, vec3, vec3, float);
-int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
-                  float oct_len);
-void update_node_emptiness(OCT_TREE *tree, size_t node_offset);
+static size_t update_extents(int, vec3, vec3, float);
+static int detect_octant(vec3 min_extent, vec3 max_extent, float *obj_extents,
+                         float oct_len);
+static void update_node_emptiness(OCT_TREE *tree, size_t node_offset);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 

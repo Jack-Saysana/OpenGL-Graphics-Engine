@@ -2,12 +2,21 @@
 #define __SIMULATION_STR_H__
 
 #include <structs/oct_tree_str.h>
+#include <structs/2d/quad_tree_str.h>
 #include <structs/sim_ledger_str.h>
+
+typedef enum sim_type {
+  SIM_2D,
+  SIM_3D,
+} SIM_TYPE;
 
 typedef struct simulation {
   struct simulation *linked_sims[MAX_LINKED_SIMS];
-  // Oct tree used for collision detection
-  OCT_TREE *oct_tree;
+  // Oct/quad tree used for collision detection
+  union {
+    OCT_TREE *oct_tree;
+    QUAD_TREE *quad_tree;
+  };
 
   SIM_LEDGER ent_ledger;
   SIM_LEDGER ment_ledger;
@@ -17,6 +26,7 @@ typedef struct simulation {
   // Magnitude of net acceleration caused by external forces
   vec3 forces;
   int num_linked_sims;
+  SIM_TYPE type;
 } SIMULATION;
 
 typedef struct sim_state {
@@ -36,6 +46,14 @@ typedef struct collision_list {
   vec3 col_dir; // Penetration vector in the direction of A into B
   vec3 col_point;
 } COLLISION;
+
+typedef struct collision_list_2D {
+  ENTITY_2D *a_ent;
+  ENTITY_2D *b_ent;
+  size_t a_offset;
+  size_t b_offset;
+  vec2 col_dir; // Penetration vector in the direction of A into B
+} COLLISION_2D;
 
 typedef struct collision_args {
   float *vel_dest;

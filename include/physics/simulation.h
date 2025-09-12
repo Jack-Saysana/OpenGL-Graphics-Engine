@@ -59,6 +59,15 @@ int oct_tree_delete(OCT_TREE *tree, ENTITY *entity, size_t collider_offset);
 COLLISION_RES oct_tree_search(OCT_TREE *tree, COLLIDER *hit_box);
 size_t get_all_colliders(OCT_TREE *tree, PHYS_OBJ **dest);
 
+QUAD_TREE *init_quad_tree(float max_extent, unsigned int max_depth);
+void free_quad_tree(QUAD_TREE *tree);
+int quad_tree_insert(QUAD_TREE *tree, ENTITY_2D *entity,
+                     size_t collider_offset);
+int quad_tree_delete(QUAD_TREE *tree, ENTITY_2D *entity,
+                     size_t collider_offset);
+COLLISION_RES_2D quad_tree_search(QUAD_TREE *tree, COLLIDER_2D *col);
+size_t get_all_quad_colliders(QUAD_TREE *tree, PHYS_OBJ_2D **dest);
+
 int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex);
 int epa_response(COLLIDER *a, COLLIDER *b, vec3 *simplex, vec3 p_dir,
                  float *p_depth);
