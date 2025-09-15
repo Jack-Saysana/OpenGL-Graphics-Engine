@@ -141,25 +141,25 @@ void draw_square(vec2 center, float half_w, float half_h) {
   glm_vec3_copy(top_left, points[6].coords);
   glm_vec3_copy(top_right, points[7].coords);
 
-  draw_lines(points, 8);
+  draw_lines(points, 4);
 }
 
 void draw_circle(vec2 center, float radius) {
-  L_VBO points[24];
+  L_VBO points[NUM_CIRCLE_PTS * 2];
   memset(points, 0, sizeof(points));
 
-  vec3 verts[12];
-  for (int i = 0; i < 12; i++) {
-    float angle = 2.0 * PI * ((1.0 / 12.0) * i);
-    verts[i][X] = cos(angle);
-    verts[i][Y] = sin(angle);
+  vec3 verts[NUM_CIRCLE_PTS];
+  for (int i = 0; i < NUM_CIRCLE_PTS; i++) {
+    float angle = 2.0 * PI * ((1.0 / NUM_CIRCLE_PTS) * i);
+    verts[i][X] = radius * cos(angle);
+    verts[i][Y] = radius * sin(angle);
     verts[i][Z] = 0.0;
   }
 
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < NUM_CIRCLE_PTS; i++) {
     glm_vec3_copy(verts[i], points[i*2].coords);
-    glm_vec3_copy(verts[(i+1) % 12], points[(i*2)+1].coords);
+    glm_vec3_copy(verts[(i+1) % NUM_CIRCLE_PTS], points[(i*2)+1].coords);
   }
 
-  draw_lines(points, 12);
+  draw_lines(points, NUM_CIRCLE_PTS);
 }

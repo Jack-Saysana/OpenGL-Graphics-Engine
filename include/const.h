@@ -65,6 +65,7 @@
 
 // Misc constants
 //#define DEBUG_OCT_TREE (1)
+#define NUM_CIRCLE_PTS (24)
 
 // Physics Constants
 #define LINEAR_DAMP_FACTOR (0.99)

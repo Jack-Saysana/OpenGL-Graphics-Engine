@@ -2,7 +2,7 @@
 
 int sim_add_entity_2d(SIMULATION *sim, ENTITY_2D *entity,
                       size_t collider_filter) {
-  if (entity == NULL || sim == NULL || sim->type != SIM_3D) {
+  if (entity == NULL || sim == NULL || sim->type != SIM_2D) {
     return -1;
   }
 
