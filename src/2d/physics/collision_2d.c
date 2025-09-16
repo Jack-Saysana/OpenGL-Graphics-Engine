@@ -60,7 +60,7 @@ static int aabb_circle_collision(vec2 c_center, float c_rad, vec2 b_center,
   float by_max = b_center[Y] + b_hh;
   float by_min = b_center[Y] - b_hh;
   float bx_max = b_center[X] + b_hw;
-  float bx_min = b_center[X] + b_hw;
+  float bx_min = b_center[X] - b_hw;
 
   vec2 closest_aabb_point = {
     fmax(bx_min, fmin(bx_max, c_center[X])),
