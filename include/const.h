@@ -44,10 +44,13 @@
 
 #define GRAVITY (10.0)
 
-#define L_TYPE_ENTITY (0)
-#define L_TYPE_COLLIDER (1)
+#define L_TYPE_ENTITY      (0)
+#define L_TYPE_COLLIDER    (1)
+#define L_TYPE_ENTITY_2D   (2)
+#define L_TYPE_COLLIDER_2D (3)
 
 #define OCT_TREE_STARTING_LEN (25)
+#define QUAD_TREE_STARTING_LEN (20)
 
 // Simulation hash-map constants
 #define HASH_MAP_STARTING_LEN (50)
@@ -62,6 +65,7 @@
 
 // Misc constants
 //#define DEBUG_OCT_TREE (1)
+#define NUM_CIRCLE_PTS (24)
 
 // Physics Constants
 #define LINEAR_DAMP_FACTOR (0.99)
@@ -79,5 +83,6 @@
 #define LCP_NC (1)
 #define LCP_EQ (0)
 #define LCP_GEQ (1)
+#define PI (3.1415)
 
 #endif

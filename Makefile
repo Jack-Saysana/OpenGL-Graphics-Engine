@@ -2,7 +2,7 @@ PROJ_NAME = Jack
 CC = gcc
 BUILD_DIR = ./bin
 SRC_DIR = ./src
-FILES = $(wildcard ./src/*.c ./src/*/*.c)
+FILES = $(wildcard ./src/*.c ./src/*/*.c ./src/*/*/*.c)
 OBJS = $(files:%=$(BUILD_DIR)/%.o)
 #SRC_FILES = $(filter-out ./src/test.c, $(FILES))
 #TEST_FILES = $(filter-out ./src/main.c, $(FILES))
@@ -55,6 +55,8 @@ $(BUILD_DIR)/%.o: %.c
 	@mkdir -p ./bin/src
 	@mkdir -p ./bin/src/math
 	@mkdir -p ./bin/src/physics
+	@mkdir -p ./bin/src/2d
+	@mkdir -p ./bin/src/2d/physics
 	@echo "Created build directory"
 
 ./bin/include:

@@ -1,5 +1,50 @@
 #include <render_primitives.h>
 
+void init_quad() {
+  float verts[] = {
+    // VERTEX        TEX_COORD
+    -1.0,  1.0, 0.0, 0.0, 1.0,
+    -1.0, -1.0, 0.0, 0.0, 0.0,
+     1.0, -1.0, 0.0, 1.0, 0.0,
+     1.0,  1.0, 0.0, 1.0, 1.0
+  };
+  unsigned int indices[] = {
+    0, 1, 2,
+    2, 3, 0
+  };
+
+  glGenBuffers(1, &QUAD_EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD_EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+               GL_STATIC_DRAW);
+
+
+  glGenVertexArrays(1, &QUAD_VAO);
+  glBindVertexArray(QUAD_VAO);
+  glGenBuffers(1, &QUAD_VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, QUAD_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5,
+                        (void *) 0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5,
+                        (void *) (sizeof(GLfloat) * 3));
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(0);
+}
+
+void draw_quad() {
+  if (QUAD_VAO == INVALID_INDEX) {
+    init_quad();
+  }
+
+  glBindVertexArray(QUAD_VAO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, QUAD_EBO);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
+}
+
 void draw_lines(L_VBO *lines, size_t num_lines) {
   unsigned int VAO;
   glGenVertexArrays(1, &VAO);
@@ -69,3 +114,52 @@ void draw_poly(vec3 *verts) {
   glDeleteBuffers(1, &EBO);
 }
 
+void draw_square(vec2 center, float half_w, float half_h) {
+  L_VBO points[8];
+  memset(points, 0, sizeof(points));
+
+  vec3 top_right = GLM_VEC3_ZERO_INIT;
+  vec3 bottom_right = GLM_VEC3_ZERO_INIT;
+  vec3 bottom_left = GLM_VEC3_ZERO_INIT;
+  vec3 top_left = GLM_VEC3_ZERO_INIT;
+
+  glm_vec3_copy((vec3) { center[X] + half_w, center[Y] + half_h, 0.0 },
+                top_right);
+  glm_vec3_copy((vec3) { center[X] + half_w, center[Y] - half_h, 0.0 },
+                bottom_right);
+  glm_vec3_copy((vec3) { center[X] - half_w, center[Y] - half_h, 0.0 },
+                bottom_left);
+  glm_vec3_copy((vec3) { center[X] - half_w, center[Y] + half_h, 0.0 },
+                top_left);
+
+  glm_vec3_copy(top_right, points[0].coords);
+  glm_vec3_copy(bottom_right, points[1].coords);
+  glm_vec3_copy(bottom_right, points[2].coords);
+  glm_vec3_copy(bottom_left, points[3].coords);
+  glm_vec3_copy(bottom_left, points[4].coords);
+  glm_vec3_copy(top_left, points[5].coords);
+  glm_vec3_copy(top_left, points[6].coords);
+  glm_vec3_copy(top_right, points[7].coords);
+
+  draw_lines(points, 4);
+}
+
+void draw_circle(vec2 center, float radius) {
+  L_VBO points[NUM_CIRCLE_PTS * 2];
+  memset(points, 0, sizeof(points));
+
+  vec3 verts[NUM_CIRCLE_PTS];
+  for (int i = 0; i < NUM_CIRCLE_PTS; i++) {
+    float angle = 2.0 * PI * ((1.0 / NUM_CIRCLE_PTS) * i);
+    verts[i][X] = radius * cos(angle);
+    verts[i][Y] = radius * sin(angle);
+    verts[i][Z] = 0.0;
+  }
+
+  for (int i = 0; i < NUM_CIRCLE_PTS; i++) {
+    glm_vec3_copy(verts[i], points[i*2].coords);
+    glm_vec3_copy(verts[(i+1) % NUM_CIRCLE_PTS], points[(i*2)+1].coords);
+  }
+
+  draw_lines(points, NUM_CIRCLE_PTS);
+}
