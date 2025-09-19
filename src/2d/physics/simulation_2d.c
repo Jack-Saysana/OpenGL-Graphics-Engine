@@ -307,7 +307,7 @@ size_t sim_get_nearby_2d(SIMULATION *sim, COLLISION_2D **dest, vec2 pos,
   // Spoof an entity which will act as our search sphere
   COLLIDER_2D col;
   memset(&col, 0, sizeof(COLLIDER_2D));
-  glm_vec3_copy(pos, col.center);
+  glm_vec2_copy(pos, col.center);
   col.data.radius = range;
   col.type = CIRCLE;
   col.category = DEFAULT;
