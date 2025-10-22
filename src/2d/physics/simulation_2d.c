@@ -309,7 +309,7 @@ size_t sim_get_nearby_2d(SIMULATION *sim, COLLISION_2D **dest, vec2 pos,
   memset(&col, 0, sizeof(COLLIDER_2D));
   glm_vec2_copy(pos, col.origin);
   col.data.radius = range;
-  col.type = CIRCLE;
+  col.type = CT_CIRCLE;
   col.category = DEFAULT;
 
   ENTITY_2D ent;
