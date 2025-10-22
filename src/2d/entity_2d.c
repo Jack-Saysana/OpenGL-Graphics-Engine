@@ -54,8 +54,14 @@ void draw_2d_collider(unsigned int shader, COLLIDER_2D *col, vec3 ent_pos) {
 
   if (col->type == SQUARE) {
     draw_square(col->origin, col->data.width / 2.0, col->data.height / 2.0);
-  } else {
+  } else if (col->type == CIRCLE) {
     draw_circle(col->origin, col->data.radius);
+  } else if (col->type == LINE) {
+    L_VBO lines[2];
+    memset(lines, 0, sizeof(lines));
+    glm_vec2_copy(col->origin, lines[0].coords);
+    glm_vec2_copy(col->data.end, lines[1].coords);
+    draw_lines(lines, 1);
   }
 }
 

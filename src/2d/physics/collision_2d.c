@@ -123,6 +123,52 @@ static int aabb_circle_collision(vec2 c_center, float c_rad, vec2 b_center,
 
 static int line_aabb_collision(vec2 a1, vec2 a2, vec2 b_center, float b_hw,
                                float b_hh) {
+  vec2 b_min = { b_center[X] - b_hw, b_center[Y] - b_hh };
+  vec2 b_max = { b_center[X] + b_hw, b_center[Y] + b_hh };
+
+  float tmin = 0.0;
+  float tmax = 1.0;
+  float dx = a2[X] - a1[X];
+  float dy = a2[Y] - a1[Y];
+
+  float p = 0.0;
+  float d = 0.0;
+  float min_b = 0.0;
+  float max_b = 0.0;
+  for (int i = 0; i < 2; i++) {
+    if (i == 0) {
+      p = a1[X];
+      d = dx;
+      min_b = b_min[X];
+      max_b = b_max[X];
+    } else {
+      p = a1[Y];
+      d = dy;
+      min_b = b_min[Y];
+      max_b = b_max[Y];
+    }
+
+    if (!d) {
+      if (p < min_b || p > max_b) {
+        return 0;
+      }
+    } else {
+      float t1 = (min_b - p) / d;
+      float t2 = (max_b - p) / d;
+      float t_enter = fmin(t1, t2);
+      float t_exit = fmax(t1, t2);
+
+      tmin = fmax(tmin, t_enter);
+      tmax = fmin(tmax, t_exit);
+
+      if (tmin > tmax) {
+        return 0;
+      }
+    }
+  }
+
+  return 1;
+
   return 0;
 }
 
