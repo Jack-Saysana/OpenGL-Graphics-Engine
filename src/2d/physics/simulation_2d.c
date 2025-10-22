@@ -307,7 +307,7 @@ size_t sim_get_nearby_2d(SIMULATION *sim, COLLISION_2D **dest, vec2 pos,
   // Spoof an entity which will act as our search sphere
   COLLIDER_2D col;
   memset(&col, 0, sizeof(COLLIDER_2D));
-  glm_vec2_copy(pos, col.center);
+  glm_vec2_copy(pos, col.origin);
   col.data.radius = range;
   col.type = CIRCLE;
   col.category = DEFAULT;
@@ -369,11 +369,11 @@ void *check_moving_buffer_2d(void *args) {
     is_moving_cb = cur_ent->is_moving_cb;
 
     vec2 col_pos = { 0.0, 0.0 };
-    glm_vec2_add(cur_ent->pos, cur_ent->cols[collider_offset].center, col_pos);
+    glm_vec2_add(cur_ent->pos, cur_ent->cols[collider_offset].origin, col_pos);
 
     // Only consider collider if it is within range
     if (range != SIM_RANGE_INF &&
-        glm_vec2_distance(origin, cur_col.center) > range) {
+        glm_vec2_distance(origin, cur_col.origin) > range) {
       continue;
     }
 
@@ -410,8 +410,8 @@ int get_collider_collisions_2d(SIMULATION *sim, ENTITY_2D *subject,
   // Calculate world space collider of subject
   COLLIDER_2D s_world_col;
   s_world_col = subject->cols[collider_offset];
-  glm_vec2_add(subject->cols[collider_offset].center, s_world_col.center,
-               s_world_col.center);
+  glm_vec2_add(subject->cols[collider_offset].origin, s_world_col.origin,
+               s_world_col.origin);
 
   COLLISION_RES_2D col_res = quad_tree_search(sim->quad_tree, &s_world_col);
 
@@ -434,8 +434,8 @@ int get_collider_collisions_2d(SIMULATION *sim, ENTITY_2D *subject,
 
     // Calculate world space collider of candidate
     c_world_col = candidate_ent->cols[candidate_col];
-    glm_vec2_add(candidate_ent->cols[candidate_col].center, c_world_col.center,
-                 c_world_col.center);
+    glm_vec2_add(candidate_ent->cols[candidate_col].origin, c_world_col.origin,
+                 c_world_col.origin);
 
     if (candidate_ent != subject ||
         ((subject->type & T_DRIVING) == 0 &&
@@ -482,7 +482,7 @@ int entity_in_range_2d(SIMULATION *sim, ENTITY_2D *ent, vec2 origin,
   // TODO Might be too out aggressive of a range enforcement
   for (size_t i = 0; i < ent->num_cols; i++) {
     vec2 col_pos = { 0.0, 0.0 };
-    glm_vec2_add(ent->pos, ent->cols[i].center, col_pos);
+    glm_vec2_add(ent->pos, ent->cols[i].origin, col_pos);
 
     // Only consider collider if it is within range
     if (!(range != SIM_RANGE_INF &&
