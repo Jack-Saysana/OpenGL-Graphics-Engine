@@ -423,7 +423,7 @@ static int detect_quadrant(vec2 min_extent, vec2 max_extent, float quad_len,
   for (int i = 0; i < 4; i++) {
     quads[i].data.width = quad_len;
     quads[i].data.height = quad_len;
-    quads[i].type = SQUARE;
+    quads[i].type = CT_SQUARE;
   }
 
   int ret = 0;

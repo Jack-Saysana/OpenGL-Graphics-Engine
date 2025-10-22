@@ -2,28 +2,28 @@
 
 int collision_check_2d(COLLIDER_2D *a, COLLIDER_2D *b, vec2 correction) {
   glm_vec2_zero(correction);
-  if (a->type == SQUARE && b->type == SQUARE) {
+  if (a->type == CT_SQUARE && b->type == CT_SQUARE) {
     return aabb_collision(a->origin, a->data.width / 2.0, a->data.height / 2.0,
                           b->origin, b->data.width / 2.0, b->data.width / 2.0,
                           correction);
   }
-  if (a->type == CIRCLE && b->type == CIRCLE) {
+  if (a->type == CT_CIRCLE && b->type == CT_CIRCLE) {
     return circle_collision(a->origin, a->data.radius, b->origin,
                             b->data.radius, correction);
   }
-  if (a->type == LINE && b->type == LINE) {
+  if (a->type == CT_LINE && b->type == CT_LINE) {
     return line_collision(a->origin, a->data.end, b->origin, b->data.end);
   }
-  if (a->type == SQUARE && b->type == CIRCLE) {
+  if (a->type == CT_SQUARE && b->type == CT_CIRCLE) {
     return aabb_circle_collision(b->origin, b->data.radius, a->origin,
                                  a->data.width / 2.0, a->data.height / 2.0,
                                  correction);
   }
-  if (a->type == SQUARE && b->type == LINE) {
+  if (a->type == CT_SQUARE && b->type == CT_LINE) {
     return line_aabb_collision(b->origin, b->data.end, a->origin,
                                a->data.width / 2.0, a->data.height / 2.0);
   }
-  if (a->type == CIRCLE && b->type == SQUARE) {
+  if (a->type == CT_CIRCLE && b->type == CT_SQUARE) {
     int col = aabb_circle_collision(a->origin, a->data.radius, b->origin,
                                     b->data.width / 2.0, b->data.height / 2.0,
                                     correction);
@@ -31,15 +31,15 @@ int collision_check_2d(COLLIDER_2D *a, COLLIDER_2D *b, vec2 correction) {
     glm_vec2_negate(correction);
     return col;
   }
-  if (a->type == CIRCLE && b->type == LINE) {
+  if (a->type == CT_CIRCLE && b->type == CT_LINE) {
     return line_circle_collision(b->origin, b->data.end, a->origin,
                                  a->data.radius);
   }
-  if (a->type == LINE && b->type == SQUARE) {
+  if (a->type == CT_LINE && b->type == CT_SQUARE) {
     return line_aabb_collision(a->origin, a->data.end, b->origin,
                                b->data.width / 2.0, b->data.height / 2.0);
   }
-  if (a->type == LINE && b->type == CIRCLE) {
+  if (a->type == CT_LINE && b->type == CT_CIRCLE) {
     return line_circle_collision(a->origin, a->data.end, b->origin,
                                  b->data.radius);
   }

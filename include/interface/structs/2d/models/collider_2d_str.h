@@ -2,9 +2,9 @@
 #define __COLLIDER_2D_STR_H__
 
 typedef enum collider_type_2d {
-  SQUARE,
-  CIRCLE,
-  LINE
+  CT_SQUARE,
+  CT_CIRCLE,
+  CT_LINE
 } COL_TYPE_2D;
 
 typedef struct collider_2d {
