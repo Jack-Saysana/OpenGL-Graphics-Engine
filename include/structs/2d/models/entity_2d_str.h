@@ -11,6 +11,7 @@ typedef struct entity_2d {
   size_t num_cols;
 
   vec3 pos;
+  float rot;
   float height;
   float width;
   int type;

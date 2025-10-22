@@ -12,6 +12,10 @@ static int circle_collision(vec2 a_center, float a_rad, vec2 b_center,
                             float b_rad, vec2 correction);
 static int aabb_circle_collision(vec2 c_center, float c_rad, vec2 b_center,
                                  float b_hw, float b_hh, vec2 correction);
+static int line_collision(vec2 a1, vec2 a2, vec2 b1, vec2 b2);
+static int line_aabb_collision(vec2 a1, vec2 a2, vec2 b_center, float b_hw,
+                               float b_hh);
+static int line_circle_collision(vec2 a1, vec2 a2, vec2 b_center, float b_rad);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 

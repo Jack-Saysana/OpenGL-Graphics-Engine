@@ -29,6 +29,7 @@ void draw_entity_2d(unsigned int shader, ENTITY_2D *ent) {
   glm_translate(model, ent->pos);
   // Make sure colliders appear on top of actual quad
   glm_translate(model, (vec3) { 0.0, 0.0, -0.1 });
+  glm_rotate(model, glm_rad(ent->rot), (vec3) { 0.0, 0.0, 1.0 });
   glm_scale(model, (vec3) { ent->width / 2.0, ent->height / 2.0, 1.0 });
   set_mat4("model", model, shader);
   draw_quad();
@@ -52,9 +53,9 @@ void draw_2d_collider(unsigned int shader, COLLIDER_2D *col, vec3 ent_pos) {
   set_mat4("model", col_to_world, shader);
 
   if (col->type == SQUARE) {
-    draw_square(col->center, col->data.width / 2.0, col->data.height / 2.0);
+    draw_square(col->origin, col->data.width / 2.0, col->data.height / 2.0);
   } else {
-    draw_circle(col->center, col->data.radius);
+    draw_circle(col->origin, col->data.radius);
   }
 }
 

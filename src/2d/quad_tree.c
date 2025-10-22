@@ -70,8 +70,8 @@ int quad_tree_insert(QUAD_TREE *tree, ENTITY_2D *entity,
 
   COLLIDER_2D obj;
   memcpy(&obj, entity->cols + collider_offset, sizeof(COLLIDER_2D));
-  glm_vec2_add((vec2) { entity->pos[X], entity->pos[Y] }, obj.center,
-               obj.center);
+  glm_vec2_add((vec2) { entity->pos[X], entity->pos[Y] }, obj.origin,
+               obj.origin);
 
   vec2 max_extent = { tree->max_extent, tree->max_extent };
   vec2 min_extent = { -tree->max_extent, -tree->max_extent };
@@ -133,8 +133,8 @@ int quad_tree_delete(QUAD_TREE *tree, ENTITY_2D *entity,
 
   COLLIDER_2D obj;
   memcpy(&obj, entity->cols + collider_offset, sizeof(COLLIDER_2D));
-  glm_vec2_add((vec2) { entity->pos[X], entity->pos[Y] }, obj.center,
-               obj.center);
+  glm_vec2_add((vec2) { entity->pos[X], entity->pos[Y] }, obj.origin,
+               obj.origin);
 
   COLLISION_RES_2D candidates = quad_tree_search(tree, &obj);
   if (candidates.list == NULL) {
@@ -409,17 +409,17 @@ static int detect_quadrant(vec2 min_extent, vec2 max_extent, float quad_len,
   float hw = quad_len / 2.0;
   memset(quads, 0, sizeof(quads));
   //  X  Y
-  quads[0].center[X] = max_extent[X] - hw;
-  quads[0].center[Y] = max_extent[Y] - hw;
+  quads[0].origin[X] = max_extent[X] - hw;
+  quads[0].origin[Y] = max_extent[Y] - hw;
   //  X -Y
-  quads[1].center[X] = max_extent[X] - hw;
-  quads[1].center[Y] = min_extent[Y] + hw;
+  quads[1].origin[X] = max_extent[X] - hw;
+  quads[1].origin[Y] = min_extent[Y] + hw;
   // -X  Y
-  quads[2].center[X] = min_extent[X] + hw;
-  quads[2].center[Y] = max_extent[Y] - hw;
+  quads[2].origin[X] = min_extent[X] + hw;
+  quads[2].origin[Y] = max_extent[Y] - hw;
   // -X -Y
-  quads[3].center[X] = min_extent[X] + hw;
-  quads[3].center[Y] = min_extent[Y] + hw;
+  quads[3].origin[X] = min_extent[X] + hw;
+  quads[3].origin[Y] = min_extent[Y] + hw;
   for (int i = 0; i < 4; i++) {
     quads[i].data.width = quad_len;
     quads[i].data.height = quad_len;

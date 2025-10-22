@@ -3,18 +3,22 @@
 
 typedef enum collider_type_2d {
   SQUARE,
-  CIRCLE
+  CIRCLE,
+  LINE
 } COL_TYPE_2D;
 
 typedef struct collider_2d {
-  vec2 center;
+  vec2 origin;
   union {
-    struct {
+    struct { // Square
       float width;
       float height;
     };
-    struct {
+    struct { // Circle
       float radius;
+    };
+    struct { // Line
+      vec2 end;
     };
   } data;
 
