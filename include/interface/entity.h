@@ -37,6 +37,7 @@ ENTITY_2D *init_entity_2d(int type, float height, float width);
 void draw_entity_2d(unsigned int shader, ENTITY_2D *ent);
 void draw_2d_colliders(unsigned int shader, ENTITY_2D *ent);
 void draw_2d_collider(unsigned int shader, COLLIDER_2D *col, vec3 ent_pos);
+void free_entity_2d(ENTITY_2D *);
 
 // Render primatives
 void draw_poly(vec3 *verts);
