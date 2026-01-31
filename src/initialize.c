@@ -61,7 +61,10 @@ GLFWwindow *init_gl(char *win_name) {
 
   window = glfwCreateWindow(RES_X, RES_Y, win_name, NULL, NULL);
   if (window == NULL) {
+    const char *err = NULL;
+    glfwGetError(&err);
     fprintf(stderr, "Error: Failed to create GLFW window\n");
+    fprintf(stderr, "  Reason: %s\n", err);
     free(fb_size_callbacks);
     free(mouse_mov_callbacks);
     free(scroll_callbacks);
