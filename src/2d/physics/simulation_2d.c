@@ -410,7 +410,8 @@ int get_collider_collisions_2d(SIMULATION *sim, ENTITY_2D *subject,
   // Calculate world space collider of subject
   COLLIDER_2D s_world_col;
   s_world_col = subject->cols[collider_offset];
-  glm_vec2_add(subject->pos, s_world_col.origin, s_world_col.origin);
+  glm_vec2_add((vec2) { subject->pos[X], subject->pos[Y] }, s_world_col.origin,
+               s_world_col.origin);
 
   COLLISION_RES_2D col_res = quad_tree_search(sim->quad_tree, &s_world_col);
 
@@ -433,7 +434,8 @@ int get_collider_collisions_2d(SIMULATION *sim, ENTITY_2D *subject,
 
     // Calculate world space collider of candidate
     c_world_col = candidate_ent->cols[candidate_col];
-    glm_vec2_add(candidate_ent->pos, c_world_col.origin, c_world_col.origin);
+    glm_vec2_add((vec2) { candidate_ent->pos[X], candidate_ent->pos[Y] },
+                 c_world_col.origin, c_world_col.origin);
 
     if (candidate_ent != subject ||
         ((subject->type & T_DRIVING) == 0 &&
