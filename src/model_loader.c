@@ -295,6 +295,35 @@ MODEL_DATA *load_model_data(char *path) {
   return md;
 }
 
+int export_model_data_obj(MODEL_DATA *d, char *path) {
+  FILE *file = fopen(path, "w");
+  if (file == NULL) {
+    fprintf(stderr, "Failed to open obj file for writing.\n");
+    return -1;
+  }
+
+  for (size_t i = 0; i < d->num_vertices; i++) {
+    fprintf(file, "v %f %f %f\n", d->vertices[i].vertex[X],
+                                  d->vertices[i].vertex[Y],
+                                  d->vertices[i].vertex[Z]);
+    fprintf(file, "vt %f %f\n", d->vertices[i].tex_coord[X],
+                                d->vertices[i].tex_coord[Y]);
+    fprintf(file, "vn %f %f %f\n", d->vertices[i].normal[X],
+                                   d->vertices[i].normal[Y],
+                                   d->vertices[i].normal[Z]);
+  }
+
+  for (size_t i = 0; i < d->num_indices / 3; i++) {
+    fprintf(file, "f %ld/%ld/%ld %ld/%ld/%ld %ld/%ld/%ld\n",
+            (i*3), (i*3), (i*3),
+            (i*3)+1, (i*3)+1, (i*3)+1,
+            (i*3)+2, (i*3)+2, (i*3)+2);
+  }
+
+  fclose(file);
+  return 0;
+}
+
 void init_model_vao(MODEL *model) {
   int error = 0;
   unsigned int VAO_id;

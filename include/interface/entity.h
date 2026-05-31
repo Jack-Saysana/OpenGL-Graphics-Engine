@@ -12,6 +12,7 @@ void free_textures();
 
 // 3D Interface
 MODEL_DATA *load_model_data(char *path);
+int export_model_data_obj(MODEL_DATA *md, char *path);
 MODEL *gen_model(MODEL_DATA *md, int gen_vao);
 MODEL *load_model(char *path);
 MODEL *load_model_vaoless(char *path);
