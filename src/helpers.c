@@ -49,13 +49,11 @@ LINE_BUFFER *get_lines(char *path) {
   int status = 0;
   FILE *file = fopen(path, "r");
   if (file == NULL) {
-    printf("Unable to open file at path: %s\n", path);
     return NULL;
   }
 
   char *file_contents = malloc(FILE_CONTENTS_STARTING_LEN);
   if (file_contents == NULL) {
-    printf("Unable to allocate file contents\n");
     fclose(file);
     return NULL;
   }
@@ -72,7 +70,6 @@ LINE_BUFFER *get_lines(char *path) {
       if (status != 0) {
         free(file_contents);
         fclose(file);
-        printf("Unable to allocate file contents\n");
         return NULL;
       }
     }
@@ -85,7 +82,6 @@ LINE_BUFFER *get_lines(char *path) {
   LINE_BUFFER *lb = malloc(sizeof(LINE_BUFFER));
   if (lb == NULL) {
     free(file_contents);
-    printf("Unable to allocate line buffer struct\n");
     return NULL;
   }
 
@@ -109,7 +105,6 @@ LINE_BUFFER *get_lines(char *path) {
     free(lb->dir);
     free(lb);
     free(file_contents);
-    printf("Unable to allocate line buffer\n");
     return NULL;
   }
   size_t line_buffer_max = LINE_BUFF_STARTING_LEN;
@@ -129,7 +124,6 @@ LINE_BUFFER *get_lines(char *path) {
           free(lb->dir);
           free(lb);
           free(file_contents);
-          printf("Unable to reallocate line buffer\n");
           return NULL;
         }
       }

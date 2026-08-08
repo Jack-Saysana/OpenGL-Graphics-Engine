@@ -8,7 +8,6 @@ MODEL_DATA *load_model_data(char *path) {
   if (file == NULL) {
     LINE_BUFFER *line_buff = get_lines(path);
     if (line_buff == NULL) {
-      printf("Unable to create line buffer\n");
       return NULL;
     }
 
@@ -16,7 +15,6 @@ MODEL_DATA *load_model_data(char *path) {
 
     file = fopen(bin_path, "rb");
     if (file == NULL) {
-      printf("Unable to open preproccessed file\n");
       return NULL;
     }
   }
@@ -62,14 +60,12 @@ MODEL_DATA *load_model_data(char *path) {
     bones = malloc(sizeof(BONE) * b_len);
     if (bones == NULL) {
       fclose(file);
-      printf("Unable to allocate bone buffer\n");
       return NULL;
     }
     collider_links = malloc(sizeof(int) * b_len);
     if (collider_links == NULL) {
       fclose(file);
       free(bones);
-      printf("Unable to allocate collider_links\n");
       return NULL;
     }
   }
@@ -81,7 +77,6 @@ MODEL_DATA *load_model_data(char *path) {
       fclose(file);
       free(bones);
       free(collider_links);
-      printf("Unable to allocate vertex buffer\n");
       return NULL;
     }
   }
@@ -94,7 +89,6 @@ MODEL_DATA *load_model_data(char *path) {
       free(bones);
       free(collider_links);
       free(vertices);
-      printf("Unable to allocate indicies buffer\n");
       return NULL;
     }
   }
@@ -108,7 +102,6 @@ MODEL_DATA *load_model_data(char *path) {
       free(collider_links);
       free(vertices);
       free(indicies);
-      printf("Unable to allocate animation buffer\n");
       return NULL;
     }
   }
@@ -121,7 +114,6 @@ MODEL_DATA *load_model_data(char *path) {
     free(vertices);
     free(indicies);
     free(animations);
-    printf("Unable to allocate model data\n");
     return NULL;
   }
 
@@ -137,7 +129,6 @@ MODEL_DATA *load_model_data(char *path) {
       free(indicies);
       free(animations);
       free(md);
-      printf("Unable to allocate keyframe chains\n");
       return NULL;
     }
   }
@@ -155,7 +146,6 @@ MODEL_DATA *load_model_data(char *path) {
       free(animations);
       free(md);
       free(k_chain_block);
-      printf("Unable to allocate keyframes\n");
       return NULL;
     }
   }
@@ -174,7 +164,6 @@ MODEL_DATA *load_model_data(char *path) {
       free(md);
       free(k_chain_block);
       free(keyframe_block);
-      printf("Unable to allocate keyframe sled\n");
       return NULL;
     }
   }
@@ -194,7 +183,6 @@ MODEL_DATA *load_model_data(char *path) {
       free(k_chain_block);
       free(keyframe_block);
       free(sled_block);
-      printf("Unable to allocate colliders\n");
       return NULL;
     }
     bone_links = malloc(sizeof(int) * col_len);
@@ -210,7 +198,6 @@ MODEL_DATA *load_model_data(char *path) {
       free(keyframe_block);
       free(sled_block);
       free(colliders);
-      printf("Unable to allocate bone links\n");
       return NULL;
     }
   }
@@ -293,35 +280,6 @@ MODEL_DATA *load_model_data(char *path) {
   }
 
   return md;
-}
-
-int export_model_data_obj(MODEL_DATA *d, char *path) {
-  FILE *file = fopen(path, "w");
-  if (file == NULL) {
-    fprintf(stderr, "Failed to open obj file for writing.\n");
-    return -1;
-  }
-
-  for (size_t i = 0; i < d->num_vertices; i++) {
-    fprintf(file, "v %f %f %f\n", d->vertices[i].vertex[X],
-                                  d->vertices[i].vertex[Y],
-                                  d->vertices[i].vertex[Z]);
-    fprintf(file, "vt %f %f\n", d->vertices[i].tex_coord[X],
-                                d->vertices[i].tex_coord[Y]);
-    fprintf(file, "vn %f %f %f\n", d->vertices[i].normal[X],
-                                   d->vertices[i].normal[Y],
-                                   d->vertices[i].normal[Z]);
-  }
-
-  for (size_t i = 0; i < d->num_indices / 3; i++) {
-    fprintf(file, "f %ld/%ld/%ld %ld/%ld/%ld %ld/%ld/%ld\n",
-            (i*3), (i*3), (i*3),
-            (i*3)+1, (i*3)+1, (i*3)+1,
-            (i*3)+2, (i*3)+2, (i*3)+2);
-  }
-
-  fclose(file);
-  return 0;
 }
 
 void init_model_vao(MODEL *model) {
@@ -524,3 +482,194 @@ MODEL *load_model_vaoless(char *path) {
 
   return model;
 }
+
+int export_model_data_obj(MODEL_DATA *d, char *path) {
+  FILE *file = fopen(path, "w");
+  if (file == NULL) {
+    fprintf(stderr, "Failed to open obj file for writing.\n");
+    goto ERR_FILE;
+  }
+
+  vec3 *v = malloc(sizeof(vec3) * BUFF_STARTING_LEN);
+  size_t v_len = 0;
+  size_t v_size = BUFF_STARTING_LEN;
+  if (!v) {
+    goto ERR_V;
+  }
+
+  vec2 *vt = malloc(sizeof(vec2) * BUFF_STARTING_LEN);
+  size_t vt_len = 0;
+  size_t vt_size = BUFF_STARTING_LEN;
+  if (!vt) {
+    goto ERR_VT;
+  }
+
+  vec3 *vn = malloc(sizeof(vec3) * BUFF_STARTING_LEN);
+  size_t vn_len = 0;
+  size_t vn_size = BUFF_STARTING_LEN;
+  if (!vn) {
+    goto ERR_VN;
+  }
+
+  int status = 0;
+
+  fprintf(stderr, "Exporting Vertex Coordinates...\n");
+  fprintf(file, "# Vertex Coordinates\n");
+  for (size_t i = 0; i < d->num_vertices; i++) {
+    int found = 0;
+    for (size_t j = 0; j < v_len; j++) {
+      if (v[j][X] == d->vertices[i].vertex[X] &&
+          v[j][Y] == d->vertices[i].vertex[Y] &&
+          v[j][Z] == d->vertices[i].vertex[Z]) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      glm_vec3_copy(d->vertices[i].vertex, v[v_len]);
+      fprintf(file, "v %f %f %f\n", v[v_len][X], v[v_len][Y], v[v_len][Z]);
+      v_len++;
+      if (v_len == v_size) {
+        status = double_buffer((void **) &v, &v_size, sizeof(vec3));
+        if (status) {
+          goto ERR_REALLOC;
+        }
+      }
+    }
+  }
+
+  fprintf(stderr, "Exporting Texture Coordinates...\n");
+  fprintf(file, "# Texture Coordinates\n");
+  for (size_t i = 0; i < d->num_vertices; i++) {
+    int found = 0;
+    for (size_t j = 0; j < vt_len; j++) {
+      if (vt[j][X] == d->vertices[i].tex_coord[X] &&
+          vt[j][Y] == d->vertices[i].tex_coord[Y]) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      glm_vec2_copy(d->vertices[i].tex_coord, vt[vt_len]);
+      fprintf(file, "vt %f %f\n", vt[vt_len][X], vt[vt_len][Y]);
+      vt_len++;
+      if (vt_len == vt_size) {
+        status = double_buffer((void **) &vt, &vt_size, sizeof(vec2));
+        if (status) {
+          goto ERR_REALLOC;
+        }
+      }
+    }
+  }
+
+  fprintf(stderr, "Exporting Normals...\n");
+  fprintf(file, "# Normals\n");
+  for (size_t i = 0; i < d->num_vertices; i++) {
+    int found = 0;
+    for (size_t j = 0; j < vn_len; j++) {
+      if (vn[j][X] == d->vertices[i].tex_coord[X] &&
+          vn[j][Y] == d->vertices[i].tex_coord[Y]) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      glm_vec3_copy(d->vertices[i].normal, vn[vn_len]);
+      fprintf(file, "vn %f %f %f\n", vn[vn_len][X], vn[vn_len][Y],
+              vn[vn_len][Z]);
+      vn_len++;
+      if (vn_len == vn_size) {
+        status = double_buffer((void **) &vn, &vn_size, sizeof(vec3));
+        if (status) {
+          goto ERR_REALLOC;
+        }
+      }
+    }
+  }
+
+  fprintf(stderr, "Exporting Facess...\n");
+  for (size_t i = 0; i < d->num_indices / 3; i++) {
+    ivec3 f = { d->indices[(i*3)], d->indices[(i*3)+1], d->indices[(i*3)+2] };
+    fprintf(file, "f");
+    for (int j = 0; j < 3; j++) {
+      vec3 vert = { d->vertices[f[j]].vertex[X],
+                    d->vertices[f[j]].vertex[Y],
+                    d->vertices[f[j]].vertex[Z] };
+      vec2 tex = { d->vertices[f[j]].tex_coord[X],
+                   d->vertices[f[j]].tex_coord[Y] };
+      vec3 norm = { d->vertices[f[j]].normal[X],
+                    d->vertices[f[j]].normal[Y],
+                    d->vertices[f[j]].normal[Z] };
+
+      for (size_t k = 0; k < v_len; k++) {
+        if (v[k][X] == vert[X] && v[k][Y] == vert[Y] && v[k][Z] == vert[Z]) {
+          fprintf(file, " %ld/", k + 1);
+          break;
+        }
+      }
+      for (size_t k = 0; k < vt_len; k++) {
+        if (vt[k][X] == tex[X] && vt[k][Y] == tex[Y] && vt[k][Z] == tex[Z]) {
+          fprintf(file, "%ld", k + 1);
+          break;
+        }
+      }
+      for (size_t k = 0; k < vn_len; k++) {
+        if (vn[k][X] == norm[X] && vn[k][Y] == norm[Y] &&
+            vn[k][Z] == norm[Z]) {
+          fprintf(file, "/%ld", k + 1);
+          break;
+        }
+      }
+    }
+    fprintf(file, "\n");
+  }
+
+  fprintf(stderr, "Wavefront OBJ Export Finished.\n");
+  free(v);
+  free(vt);
+  free(vn);
+  fclose(file);
+  return 0;
+
+  /*
+  for (size_t i = 0; i < d->num_vertices; i++) {
+    fprintf(file, "v %f %f %f\n", d->vertices[i].vertex[X],
+                                  d->vertices[i].vertex[Y],
+                                  d->vertices[i].vertex[Z]);
+  }
+
+  for (size_t i = 0; i < d->num_vertices; i++) {
+    fprintf(file, "vt %f %f\n", d->vertices[i].tex_coord[X],
+                                d->vertices[i].tex_coord[Y]);
+  }
+
+  for (size_t i = 0; i < d->num_vertices; i++) {
+    fprintf(file, "vn %f %f %f\n", d->vertices[i].normal[X],
+                                   d->vertices[i].normal[Y],
+                                   d->vertices[i].normal[Z]);
+  }
+
+  for (size_t i = 0; i < d->num_indices / 3; i++) {
+    fprintf(file, "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
+            d->indices[(i*3)]+1, d->indices[(i*3)]+1, d->indices[(i*3)]+1,
+            d->indices[(i*3)+1]+1, d->indices[(i*3)+1]+1,
+            d->indices[(i*3)+1]+1, d->indices[(i*3)+2]+1,
+            d->indices[(i*3)+2]+1, d->indices[(i*3)+2]+1);
+  }
+  fclose(file);
+  return 0;
+  */
+
+ERR_REALLOC:
+  free(vn);
+ERR_VN:
+  free(vt);
+ERR_VT:
+  free(v);
+ERR_V:
+  fclose(file);
+ERR_FILE:
+  return -1;
+}
+
+
