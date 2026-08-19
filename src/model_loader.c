@@ -59,14 +59,11 @@ MODEL_DATA *load_model_data(char *path) {
   if (b_len) {
     bones = malloc(sizeof(BONE) * b_len);
     if (bones == NULL) {
-      fclose(file);
-      return NULL;
+      goto ERR_BONES;
     }
     collider_links = malloc(sizeof(int) * b_len);
     if (collider_links == NULL) {
-      fclose(file);
-      free(bones);
-      return NULL;
+      goto ERR_COL_LINKS;
     }
   }
 
@@ -74,10 +71,7 @@ MODEL_DATA *load_model_data(char *path) {
   if (v_len) {
     vertices = malloc(sizeof(VBO) * v_len);
     if (vertices == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      return NULL;
+      goto ERR_VERTS;
     }
   }
 
@@ -85,11 +79,7 @@ MODEL_DATA *load_model_data(char *path) {
   if (i_len) {
     indicies = malloc(sizeof(int) * 3 * i_len);
     if (indicies == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      return NULL;
+      goto ERR_INDS;
     }
   }
 
@@ -97,24 +87,13 @@ MODEL_DATA *load_model_data(char *path) {
   if (a_len) {
     animations = malloc(sizeof(ANIMATION) * a_len);
     if (animations == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      free(indicies);
-      return NULL;
+      goto ERR_ANIMS;
     }
   }
 
   MODEL_DATA *md = malloc(sizeof(MODEL_DATA));
   if (md == NULL) {
-    fclose(file);
-    free(bones);
-    free(collider_links);
-    free(vertices);
-    free(indicies);
-    free(animations);
-    return NULL;
+    goto ERR_MD;
   }
 
   K_CHAIN *k_chain_block = NULL;
@@ -122,14 +101,7 @@ MODEL_DATA *load_model_data(char *path) {
   if (total_chains) {
     k_chain_block = malloc(sizeof(K_CHAIN) * total_chains);
     if (k_chain_block == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      free(indicies);
-      free(animations);
-      free(md);
-      return NULL;
+      goto ERR_K_CHAIN;
     }
   }
 
@@ -138,15 +110,7 @@ MODEL_DATA *load_model_data(char *path) {
   if (total_keyframes) {
     keyframe_block = malloc(sizeof(KEYFRAME) * total_keyframes);
     if (keyframe_block == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      free(indicies);
-      free(animations);
-      free(md);
-      free(k_chain_block);
-      return NULL;
+      goto ERR_KF_BLOCK;
     }
   }
 
@@ -155,16 +119,7 @@ MODEL_DATA *load_model_data(char *path) {
   if (total_frames) {
     sled_block = malloc(sizeof(int) * total_frames);
     if (sled_block == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      free(indicies);
-      free(animations);
-      free(md);
-      free(k_chain_block);
-      free(keyframe_block);
-      return NULL;
+      goto ERR_SLED_BLK;
     }
   }
 
@@ -173,32 +128,11 @@ MODEL_DATA *load_model_data(char *path) {
   if (col_len) {
     colliders = malloc(sizeof(COLLIDER) * col_len);
     if (colliders == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      free(indicies);
-      free(animations);
-      free(md);
-      free(k_chain_block);
-      free(keyframe_block);
-      free(sled_block);
-      return NULL;
+      goto ERR_COLS;
     }
     bone_links = malloc(sizeof(int) * col_len);
     if (bone_links == NULL) {
-      fclose(file);
-      free(bones);
-      free(collider_links);
-      free(vertices);
-      free(indicies);
-      free(animations);
-      free(md);
-      free(k_chain_block);
-      free(keyframe_block);
-      free(sled_block);
-      free(colliders);
-      return NULL;
+      goto ERR_BL;
     }
   }
 
@@ -258,7 +192,14 @@ MODEL_DATA *load_model_data(char *path) {
       }
     }
   }
-  fclose(file);
+
+  // Ensure read colliders have valid winding order and faces
+  for (int i = 0; i < col_len; i++) {
+    if (!validate_collider(colliders + i)) {
+      fprintf(stderr, "ERR: Invalid collider (id:%d) for model: %s\n", i, path);
+      goto ERR_BL;
+    }
+  }
 
   md->animations = animations;
   md->k_chain_block = k_chain_block;
@@ -279,7 +220,32 @@ MODEL_DATA *load_model_data(char *path) {
     md->mat_paths[i] = mat_paths[i];
   }
 
+  fclose(file);
   return md;
+
+ERR_BL:
+  free(colliders);
+ERR_COLS:
+  free(sled_block);
+ERR_SLED_BLK:
+  free(keyframe_block);
+ERR_KF_BLOCK:
+  free(k_chain_block);
+ERR_K_CHAIN:
+  free(md);
+ERR_MD:
+  free(animations);
+ERR_ANIMS:
+  free(indicies);
+ERR_INDS:
+  free(vertices);
+ERR_VERTS:
+  free(collider_links);
+ERR_COL_LINKS:
+  free(bones);
+ERR_BONES:
+  fclose(file);
+  return NULL;
 }
 
 void init_model_vao(MODEL *model) {
@@ -671,5 +637,3 @@ ERR_V:
 ERR_FILE:
   return -1;
 }
-
-

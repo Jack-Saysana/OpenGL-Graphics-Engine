@@ -14,4 +14,6 @@ int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 int gen_texture_id(char *tex_path, unsigned int *dest);
 LINE_BUFFER *get_lines(char *path);
 int preprocess_lines(LINE_BUFFER *lb);
+int validate_collider(COLLIDER *c);
+void sort_col_verts(COLLIDER *);
 

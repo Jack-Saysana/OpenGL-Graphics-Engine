@@ -39,3 +39,4 @@ void free_line_buffer(LINE_BUFFER *lb);
 void free_materials(void *buffer, size_t buf_len);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 int max_dot(vec3 *verts, unsigned int len, vec3 dir);
+int sort_col_verts(COLLIDER *);

@@ -365,3 +365,16 @@ int comp_vec3(vec3 a, vec3 b) {
 int comp_vec4(vec4 a, vec4 b) {
   return a[X] == b[X] && a[Y] == b[Y] && a[Z] == b[Z] && a[W] == b[W];
 }
+
+// Compare two floating point values with a scaled epsilon
+int fcmp(double a, double b, double abs_e, double rel_e) {
+  double eps_scale = fmax(fabs(a), fabs(b));
+  double diff = a - b;
+
+  double tolerance = fmax(abs_e, rel_e * eps_scale);
+  if (fabs(diff) < tolerance) {
+    return 0;
+  }
+
+  return diff > 0.0 ? 1 : -1;
+}

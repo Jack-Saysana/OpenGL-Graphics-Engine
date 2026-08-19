@@ -15,17 +15,14 @@ int preprocess_lines(LINE_BUFFER *lb) {
   if (file == NULL) {
     fprintf(stderr, "Unable to open preprocessed file\n");
     free(bin_path);
-    free_line_buffer(lb);
-    return -1;
+    goto ERR_FILE;
   }
   free(bin_path);
 
   BONE *bones = malloc(sizeof(BONE) * BUFF_STARTING_LEN);
   if (bones == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
     fprintf(stderr, "Unable to allocate bone buffer\n");
-    return -1;
+    goto ERR_BONES;
   }
   size_t b_buff_len = BUFF_STARTING_LEN;
   // Account for default "root bone" which all entities have
@@ -38,189 +35,87 @@ int preprocess_lines(LINE_BUFFER *lb) {
 
   ivec4 *bone_ids = malloc(sizeof(ivec4) * BUFF_STARTING_LEN);
   if (bone_ids == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
     fprintf(stderr, "Unable to allocate bone id buffer\n");
-    return -1;
+    goto ERR_B_IDS;
   }
 
   vec4 *bone_weights = malloc(sizeof(vec4) * BUFF_STARTING_LEN);
   if (bone_weights == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
     fprintf(stderr, "Unable to allocate bone weight buffer\n");
-    return -1;
+    goto ERR_B_WEIGHTS;
   }
 
   int *collider_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
   if (collider_links == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
     fprintf(stderr, "Unable to allocate collider link buffer\n");
-    return -1;
+    goto ERR_COL_LINKS;
   }
 
   vec3 *verticies = malloc(sizeof(vec3) * BUFF_STARTING_LEN);
   if (verticies == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
     fprintf(stderr, "Unable to allocate vertex buffer\n");
-    return -1;
+    goto ERR_VERTS;
   }
   size_t v_buff_len = BUFF_STARTING_LEN;
   size_t v_len = 0;
 
   vec3 *normals = malloc(sizeof(vec3) * BUFF_STARTING_LEN);
   if (normals == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
     fprintf(stderr, "Unable to allocate normal buffer\n");
-    return -1;
+    goto ERR_NORMALS;
   }
   size_t n_buff_len = BUFF_STARTING_LEN;
   size_t n_len = 0;
 
   vec2 *tex_coords = malloc(sizeof(vec2) * BUFF_STARTING_LEN);
   if (tex_coords == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
     fprintf(stderr, "Unable to allocate tex coord buffer\n");
-    return -1;
+    goto ERR_TEX_COORDS;
   }
   size_t t_buff_len = BUFF_STARTING_LEN;
   size_t t_len = 0;
 
   ivec3 *vbo_index_combos = malloc(sizeof(ivec3) * BUFF_STARTING_LEN);
   if (vbo_index_combos == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
     fprintf(stderr, "Unable to allocate vbo index combos\n");
-    return -1;
+    goto ERR_VBO_IDX;
   }
   size_t vbo_buff_len = BUFF_STARTING_LEN;
   size_t vbo_len = 0;
 
   ivec3 *faces = malloc(sizeof(ivec3) * BUFF_STARTING_LEN);
   if (faces == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
     fprintf(stderr, "Unable to allocate face buffer\n");
-    return -1;
+    goto ERR_FACES;
   }
   size_t face_buff_len = BUFF_STARTING_LEN;
   size_t f_len = 0;
 
   MATERIAL *materials = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
   if (materials == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
     fprintf(stderr, "Unable to allocate material buffer\n");
-    return -1;
+    goto ERR_MATS;
   }
   size_t mat_buff_len = BUFF_STARTING_LEN;
   size_t mat_len = 0;
 
   ANIMATION *animations = malloc(sizeof(MATERIAL) * BUFF_STARTING_LEN);
   if (animations == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free(materials);
     fprintf(stderr, "Unable to allocate animations buffer\n");
-    return -1;
+    goto ERR_ANIMS;
   }
   size_t a_buff_len = BUFF_STARTING_LEN;
   size_t a_len = 0;
 
   COLLIDER *colliders = malloc(sizeof(COLLIDER) * BUFF_STARTING_LEN);
   if (colliders == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free(materials);
-    free(animations);
     fprintf(stderr, "Unable to allocate colliders buffer\n");
-    return -1;
+    goto ERR_COLS;
   }
   int *bone_links = malloc(sizeof(int) * BUFF_STARTING_LEN);
   if (bone_links == NULL) {
-    free_line_buffer(lb);
-    fclose(file);
-    free(bones);
-    free(bone_ids);
-    free(bone_weights);
-    free(collider_links);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free(materials);
-    free(animations);
-    free(colliders);
     fprintf(stderr, "Unable to allocate bone_links buffer\n");
-    return -1;
+    goto ERR_BONE_LINKS;
   }
   size_t col_buff_len = BUFF_STARTING_LEN;
   size_t col_len = 0;
@@ -579,61 +474,16 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
 
     if (status != 0) {
-      free_line_buffer(lb);
-      fclose(file);
-      free(bones);
-      free(bone_ids);
-      free(bone_weights);
-      free(collider_links);
-      free(verticies);
-      free(normals);
-      free(tex_coords);
-      free(vbo_index_combos);
-      free(faces);
-      free_materials(materials, mat_len);
-      free(colliders);
-      free(bone_links);
-
-      for (int i = 0; i < a_len; i++) {
-        for (int j = 0; j < animations[i].num_chains; j++) {
-          free(animations[i].keyframe_chains[j].chain);
-        }
-        free(animations[i].keyframe_chains);
-      }
-      free(animations);
-
       fprintf(stderr, "Parse error at line %d\n", i);
-      return -1;
+      goto ERR_ALL;
     }
   }
 
   // Ensure all colliders have at least 1 dof
   for (int i = 0; i < col_len; i++) {
     if (colliders[i].num_dofs == 0) {
-      free_line_buffer(lb);
-      fclose(file);
-      free(bones);
-      free(bone_ids);
-      free(bone_weights);
-      free(collider_links);
-      free(verticies);
-      free(normals);
-      free(tex_coords);
-      free(vbo_index_combos);
-      free(faces);
-      free_materials(materials, mat_len);
-      free(colliders);
-      free(bone_links);
-
-      for (int i = 0; i < a_len; i++) {
-        for (int j = 0; j < animations[i].num_chains; j++) {
-          free(animations[i].keyframe_chains[j].chain);
-        }
-        free(animations[i].keyframe_chains);
-      }
-      free(animations);
       fprintf(stderr, "No dofs specified for collider: %d\n", i);
-      return -1;
+      goto ERR_ALL;
     }
   }
 
@@ -664,34 +514,13 @@ int preprocess_lines(LINE_BUFFER *lb) {
   status = sort_colliders(bones, colliders, collider_links, bone_links,
                           b_len, col_len);
   if (status != 0) {
-    fclose(file);
-    free_line_buffer(lb);
-    free(bones);
-    free(collider_links);
-    free(bone_ids);
-    free(bone_weights);
-    free(verticies);
-    free(normals);
-    free(tex_coords);
-    free(vbo_index_combos);
-    free(faces);
-    free_materials(materials, mat_len);
-    free(colliders);
-    free(bone_links);
-
-    for (int i = 0; i < a_len; i++) {
-      for (int j = 0; j < animations[i].num_chains; j++) {
-        free(animations[i].keyframe_chains[j].chain);
-      }
-      free(animations[i].keyframe_chains);
-    }
-    free(animations);
     fprintf(stderr, "Collider sorting error\n");
-    return -1;
+    goto ERR_ALL;
   }
 
   // Convert colliders to be given in bone space and "sort" the verticies for
   // polygonal colliders
+  /*
   vec3 dirs[8] = {
     { 1.0, 1.0, 1.0 },
     { -1.0, 1.0, 1.0 },
@@ -743,6 +572,16 @@ int preprocess_lines(LINE_BUFFER *lb) {
           glm_vec3_copy(unsorted[best], unsorted[j]);
           glm_vec3_copy(temp, unsorted[best]);
         }
+      }
+    }
+  }
+  */
+  for (size_t i = 0; i < col_len; i++) {
+    if (colliders[i].type == POLY) {
+      int status = sort_col_verts(colliders + i);
+      if (status) {
+        fprintf(stderr, "Invalid collider (id: %ld)\n", i);
+        goto ERR_ALL;
       }
     }
   }
@@ -886,6 +725,43 @@ int preprocess_lines(LINE_BUFFER *lb) {
   free(animations);
 
   return 0;
+
+ERR_ALL:
+  for (int i = 0; i < a_len; i++) {
+    for (int j = 0; j < animations[i].num_chains; j++) {
+      free(animations[i].keyframe_chains[j].chain);
+    }
+    free(animations[i].keyframe_chains);
+  }
+ERR_BONE_LINKS:
+  free(colliders);
+ERR_COLS:
+  free(animations);
+ERR_ANIMS:
+  free(materials);
+ERR_MATS:
+  free(faces);
+ERR_FACES:
+  free(vbo_index_combos);
+ERR_VBO_IDX:
+  free(tex_coords);
+ERR_TEX_COORDS:
+  free(normals);
+ERR_NORMALS:
+  free(verticies);
+ERR_VERTS:
+  free(collider_links);
+ERR_COL_LINKS:
+  free(bone_weights);
+ERR_B_WEIGHTS:
+  free(bone_ids);
+ERR_B_IDS:
+  free(bones);
+ERR_BONES:
+  fclose(file);
+ERR_FILE:
+  free_line_buffer(lb);
+  return -1;
 }
 
 int sort_colliders(BONE *bones, COLLIDER *colliders, int *collider_links,

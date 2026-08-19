@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <structs/models/entity_str.h>
 #include <structs/models/render_primitives_str.h>
 
