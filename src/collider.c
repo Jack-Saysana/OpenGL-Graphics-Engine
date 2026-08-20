@@ -98,7 +98,7 @@ int sort_col_verts(COLLIDER *col) {
 
         // Check if vertices are colinear
         float n = glm_vec3_norm(norm);
-        if (fcmp(n, 0.0, ABS_EPSILON, REL_EPSILON) == 0) {
+        if (n <= ZERO_THRESHOLD) {
           continue;
         }
         glm_vec3_normalize(norm);
@@ -108,7 +108,7 @@ int sort_col_verts(COLLIDER *col) {
         int found_face = 0;
         for (size_t i = 0; i < num_faces; i++) {
           float n_dot = glm_vec3_dot(norm, faces[i].norm);
-          if (fcmp(fabs(n_dot), 1.0, ABS_EPSILON, REL_EPSILON) == 0) {
+          if (fabs(fabs(n_dot) - 1.0) <= ZERO_THRESHOLD) {
             int num_found = 0;
             if (faces[i].verts[a]) {
               num_found++;
@@ -144,10 +144,9 @@ int sort_col_verts(COLLIDER *col) {
           glm_vec3_sub(v_cur, v_a, temp);
 
           float dot = glm_vec3_dot(temp, norm);
-          int cmp = fcmp(dot, 0, ABS_EPSILON, REL_EPSILON);
-          if (cmp > 0) {
+          if (dot > ZERO_THRESHOLD) {
             pos = 1;
-          } else if (cmp < 0) {
+          } else if (dot < -ZERO_THRESHOLD) {
             neg = 1;
           }
         }
@@ -229,9 +228,7 @@ static void triangulate_col_faces(COLLIDER *col, COL_FACE *faces,
     }
     glm_vec3_sub(col->data.verts[face_inds[i][0]], centroid, temp);
 
-    int cmp = fcmp(glm_vec3_dot(temp, faces[i].norm), 0.0, ABS_EPSILON,
-                   REL_EPSILON);
-    if (cmp < 0) {
+    if (glm_vec3_dot(temp, faces[i].norm) < -ZERO_THRESHOLD) {
       glm_vec3_negate(faces[i].norm);
     }
 
@@ -263,8 +260,7 @@ static void triangulate_col_face(COLLIDER *col, unsigned int *unsorted,
     float y = glm_vec3_dot(temp, v);
     angles[i] = atan2(y, x);
 
-    float cmp = fcmp(angles[i], 0.0, ABS_EPSILON, REL_EPSILON);
-    if (cmp < 0) {
+    if (angles[i] < -ZERO_THRESHOLD) {
       angles[i] += (2.0 * GLM_PI);
     }
   }

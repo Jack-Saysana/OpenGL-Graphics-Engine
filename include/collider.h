@@ -5,9 +5,6 @@
 #include <math.h>
 #include <structs/models/entity_str.h>
 
-#define REL_EPSILON (0.007)
-#define ABS_EPSILON (0.0001)
-
 #define F_TOP    (0)
 #define F_BOTTOM (1)
 #define F_RIGHT  (2)
@@ -18,7 +15,6 @@
 typedef struct {
   unsigned int verts[8];
   vec3 norm;
-  // float dist;
 } COL_FACE;
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
@@ -33,4 +29,3 @@ static void canonicalize_topology(COLLIDER *col, unsigned int(*)[4],
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
-int fcmp(double, double, double, double);

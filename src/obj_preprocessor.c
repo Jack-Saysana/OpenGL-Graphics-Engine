@@ -518,22 +518,9 @@ int preprocess_lines(LINE_BUFFER *lb) {
     goto ERR_ALL;
   }
 
-  // Convert colliders to be given in bone space and "sort" the verticies for
-  // polygonal colliders
-  /*
-  vec3 dirs[8] = {
-    { 1.0, 1.0, 1.0 },
-    { -1.0, 1.0, 1.0 },
-    { -1.0, 1.0, -1.0 },
-    { 1.0, 1.0, -1.0 },
-    { 1.0, -1.0, -1.0 },
-    { -1.0, -1.0, -1.0 },
-    { -1.0, -1.0, 1.0 },
-    { 1.0, -1.0, 1.0}
-  };
-  vec3 unsorted[8];
-  // TODO Num used is always 8
-  for (int i = 0; i < col_len; i++) {
+  // Convert colliders to be given in bone space and "sort" the verticies to
+  // match the canonical collider topology
+  for (size_t i = 0; i < col_len; i++) {
     int root_bone = bone_links[i];
     if (root_bone != -1 && colliders[i].type == POLY) {
       mat4 entity_to_bone = GLM_MAT4_IDENTITY_INIT;
@@ -547,36 +534,8 @@ int preprocess_lines(LINE_BUFFER *lb) {
         glm_mat4_mulv3(entity_to_bone, colliders[i].data.verts[j], 1.0,
                        colliders[i].data.verts[j]);
       }
-
     }
 
-    // Sort verticies to the appropriate winding order
-    if (colliders[i].type == POLY && colliders[i].data.num_used == 8) {
-      for (int j = 0; j < 8; j++) {
-        glm_vec3_sub(colliders[i].data.verts[j],
-                     colliders[i].data.center_of_mass, unsorted[j]);
-        glm_vec3_normalize(unsorted[j]);
-      }
-
-      vec3 temp = GLM_VEC3_ZERO_INIT;
-      int best = 0;
-      for (int j = 0; j < 8; j++) {
-        best = max_dot(unsorted, colliders[i].data.num_used, dirs[j]);
-        if (best != j) {
-          glm_vec3_copy(colliders[i].data.verts[j], temp);
-          glm_vec3_copy(colliders[i].data.verts[best],
-                        colliders[i].data.verts[j]);
-          glm_vec3_copy(temp, colliders[i].data.verts[best]);
-
-          glm_vec3_copy(unsorted[j], temp);
-          glm_vec3_copy(unsorted[best], unsorted[j]);
-          glm_vec3_copy(temp, unsorted[best]);
-        }
-      }
-    }
-  }
-  */
-  for (size_t i = 0; i < col_len; i++) {
     if (colliders[i].type == POLY) {
       int status = sort_col_verts(colliders + i);
       if (status) {
