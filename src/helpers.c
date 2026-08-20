@@ -49,13 +49,11 @@ LINE_BUFFER *get_lines(char *path) {
   int status = 0;
   FILE *file = fopen(path, "r");
   if (file == NULL) {
-    printf("Unable to open file at path: %s\n", path);
     return NULL;
   }
 
   char *file_contents = malloc(FILE_CONTENTS_STARTING_LEN);
   if (file_contents == NULL) {
-    printf("Unable to allocate file contents\n");
     fclose(file);
     return NULL;
   }
@@ -72,7 +70,6 @@ LINE_BUFFER *get_lines(char *path) {
       if (status != 0) {
         free(file_contents);
         fclose(file);
-        printf("Unable to allocate file contents\n");
         return NULL;
       }
     }
@@ -85,7 +82,6 @@ LINE_BUFFER *get_lines(char *path) {
   LINE_BUFFER *lb = malloc(sizeof(LINE_BUFFER));
   if (lb == NULL) {
     free(file_contents);
-    printf("Unable to allocate line buffer struct\n");
     return NULL;
   }
 
@@ -109,7 +105,6 @@ LINE_BUFFER *get_lines(char *path) {
     free(lb->dir);
     free(lb);
     free(file_contents);
-    printf("Unable to allocate line buffer\n");
     return NULL;
   }
   size_t line_buffer_max = LINE_BUFF_STARTING_LEN;
@@ -129,7 +124,6 @@ LINE_BUFFER *get_lines(char *path) {
           free(lb->dir);
           free(lb);
           free(file_contents);
-          printf("Unable to reallocate line buffer\n");
           return NULL;
         }
       }
@@ -370,4 +364,17 @@ int comp_vec3(vec3 a, vec3 b) {
 
 int comp_vec4(vec4 a, vec4 b) {
   return a[X] == b[X] && a[Y] == b[Y] && a[Z] == b[Z] && a[W] == b[W];
+}
+
+// Compare two floating point values with a scaled epsilon
+int fcmp(double a, double b, double abs_e, double rel_e) {
+  double eps_scale = fmax(fabs(a), fabs(b));
+  double diff = a - b;
+
+  double tolerance = fmax(abs_e, rel_e * eps_scale);
+  if (fabs(diff) < tolerance) {
+    return 0;
+  }
+
+  return diff > 0.0 ? 1 : -1;
 }

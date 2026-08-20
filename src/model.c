@@ -103,3 +103,4 @@ void free_model(MODEL *model) {
   free(model->collider_bone_links);
   free(model);
 }
+

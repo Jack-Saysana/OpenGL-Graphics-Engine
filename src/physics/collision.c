@@ -8,7 +8,8 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
   // TODO Num used is always 8
   if (a == NULL || b == NULL || (a->type == POLY && a->data.num_used > 8) ||
       (b->type == POLY && b->data.num_used > 8) || (a->type == SPHERE &&
-      a->data.radius < 0.0) || (b->type == SPHERE && b->data.radius < 0.0)) {
+      a->data.radius < -ZERO_THRESHOLD) ||
+      (b->type == SPHERE && b->data.radius < -ZERO_THRESHOLD)) {
     return 0;
   }
 
@@ -19,14 +20,13 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
   }
 
   vec3 dir = { 1.0, 0.0, 0.0 };
-  //vec3 simplex[4];
   support_func(a, b, dir, simplex[0]);
   glm_vec3_negate_to(simplex[0], dir);
   unsigned int num_used = 1;
 
   for (size_t cur_iter = 0; cur_iter < MAX_GJK_ITERATIONS; cur_iter++) {
     support_func(a, b, dir, simplex[num_used]);
-    if (glm_vec3_dot(dir, simplex[num_used]) <= 0.0) {
+    if (glm_vec3_dot(dir, simplex[num_used]) <= -ZERO_THRESHOLD) {
       return 0;
     }
     for (int i = 0; i < num_used; i++) {
@@ -38,9 +38,11 @@ int collision_check(COLLIDER *a, COLLIDER *b, vec3 *simplex) {
     }
     num_used++;
 
+    // TODO Handle degenerate case where generated line simplex encompasses origin (Currently fails collision)
     if (num_used == LINE) {
       calc_dir_line(simplex[1], simplex[0], dir);
     } else if (num_used == TRIANGLE) {
+    // TODO I think EPA assumes a complete tetrahedron is generated?
       if (triangle_check(simplex[2], simplex[0], simplex[1],
                          &num_used, dir) == COLLISION) {
         return 1;
@@ -549,7 +551,7 @@ int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir) {
   glm_vec3_cross(b_min_a, d_min_a, abd_norm);
   glm_vec3_cross(d_min_a, c_min_a, adc_norm);
 
-  if (glm_vec3_dot(acb_norm, neg_a) > 0) {
+  if (glm_vec3_dot(acb_norm, neg_a) > ZERO_THRESHOLD) {
     // REMOVE D AND RECALC
     simplex[2][0] = simplex[3][0];
     simplex[2][1] = simplex[3][1];
@@ -558,7 +560,7 @@ int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir) {
 
     glm_vec3_copy(acb_norm, dir);
     return REMOVED;
-  } else if (glm_vec3_dot(abd_norm, neg_a) > 0) {
+  } else if (glm_vec3_dot(abd_norm, neg_a) > ZERO_THRESHOLD) {
     // REMOVE C AND RECALC
     simplex[1][0] = simplex[3][0];
     simplex[1][1] = simplex[3][1];
@@ -567,7 +569,7 @@ int tetrahedron_check(vec3 *simplex, unsigned int *num_used, vec3 dir) {
 
     glm_vec3_copy(abd_norm, dir);
     return REMOVED;
-  } else if (glm_vec3_dot(adc_norm, neg_a) > 0) {
+  } else if (glm_vec3_dot(adc_norm, neg_a) > ZERO_THRESHOLD) {
     // REMOVE B AND RECALC
     simplex[0][0] = simplex[3][0];
     simplex[0][1] = simplex[3][1];
@@ -600,7 +602,7 @@ int triangle_check(vec3 a, vec3 b, vec3 c, unsigned int *num_used, vec3 dir) {
   glm_vec3_cross(c_min_a, b_min_a, norm);
 
   glm_vec3_cross(norm, b_min_a, temp);
-  if (glm_vec3_dot(temp, neg_a) > 0) {
+  if (glm_vec3_dot(temp, neg_a) > ZERO_THRESHOLD) {
     c[0] = a[0];
     c[1] = a[1];
     c[2] = a[2];
@@ -613,7 +615,7 @@ int triangle_check(vec3 a, vec3 b, vec3 c, unsigned int *num_used, vec3 dir) {
   glm_vec3_negate(norm);
 
   glm_vec3_cross(norm, c_min_a, temp);
-  if (glm_vec3_dot(temp, neg_a) > 0) {
+  if (glm_vec3_dot(temp, neg_a) > ZERO_THRESHOLD) {
     b[0] = a[0];
     b[1] = a[1];
     b[2] = a[2];
@@ -624,9 +626,9 @@ int triangle_check(vec3 a, vec3 b, vec3 c, unsigned int *num_used, vec3 dir) {
   }
 
   float dot = glm_vec3_dot(norm, neg_a);
-  if (dot == 0) {
+  if (fabs(dot) <= ZERO_THRESHOLD) {
     return COLLISION;
-  } else if (dot < 0) {
+  } else if (dot < -ZERO_THRESHOLD) {
     glm_vec3_negate_to(norm, dir);
   } else {
     glm_vec3_copy(norm, dir);
@@ -640,7 +642,8 @@ void support_func(COLLIDER *a, COLLIDER *b, vec3 dir, vec3 dest) {
   if (a == NULL || b == NULL || dir == NULL || dest == NULL ||
       (a->type == POLY && a->data.num_used > 8) ||
       (b->type == POLY && b->data.num_used > 8) || (a->type == SPHERE &&
-      a->data.radius < 0.0) || (b->type == SPHERE && b->data.radius < 0.0)) {
+      a->data.radius < -ZERO_THRESHOLD) ||
+      (b->type == SPHERE && b->data.radius < -ZERO_THRESHOLD)) {
     return;
   }
 
@@ -707,8 +710,9 @@ float calc_face_dist(vec3 a, vec3 b, vec3 c, vec3 dest_norm) {
 
   // Ensure normal is always point of triangle
   // (Utilizes properties of triangles which contain the origin)
-  float dist = remove_noise(glm_vec3_dot(dest_norm, a), 0.00001);
-  if (dist < 0.0) {
+  // float dist = remove_noise(glm_vec3_dot(dest_norm, a), 0.00001);
+  float dist = glm_vec3_dot(dest_norm, a);
+  if (dist < -ZERO_THRESHOLD) {
     dist *= -1.0;
     glm_vec3_negate(dest_norm);
   }
