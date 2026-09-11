@@ -19,6 +19,7 @@ int validate_collider(COLLIDER *col) {
   vec3 *verts = col->data.verts;
   vec3 temp = GLM_VEC3_ZERO_INIT;
   vec3 temp2 = GLM_VEC3_ZERO_INIT;
+  vec3 temp3 = GLM_VEC3_ZERO_INIT;
   vec3 a = GLM_VEC3_ZERO_INIT;
   vec3 b = GLM_VEC3_ZERO_INIT;
   vec3 c = GLM_VEC3_ZERO_INIT;
@@ -54,12 +55,18 @@ int validate_collider(COLLIDER *col) {
     glm_vec3_copy(verts[faces[cur_face][0]], a);
     glm_vec3_copy(verts[faces[cur_face][1]], b);
     glm_vec3_copy(verts[faces[cur_face][2]], c);
-    glm_vec3_copy(verts[faces[cur_face][2]], d);
+    glm_vec3_copy(verts[faces[cur_face][3]], d);
     glm_vec3_sub(b, a, temp);
+    glm_vec3_normalize(temp);
     glm_vec3_sub(c, a, temp2);
+    glm_vec3_normalize(temp2);
+    glm_vec3_sub(d, a, temp3);
+    glm_vec3_normalize(temp3);
     glm_vec3_cross(temp, temp2, temp);
-    glm_vec3_sub(d, a, temp2);
-    if (fabs(glm_vec3_dot(temp, temp2)) > ZERO_THRESHOLD) {
+    glm_vec3_normalize(temp);
+    glm_vec3_cross(temp3, temp2, temp2);
+    glm_vec3_normalize(temp2);
+    if (fabs(fabs(glm_vec3_dot(temp, temp2)) - 1.0) > DOT_PRODUCT_EPSILON) {
       return 0;
     }
   }

@@ -147,7 +147,7 @@ size_t ledger_search(SIM_LEDGER *ledger, LEDGER_INPUT l_data, int l_type) {
   size_t i = 0;
   size_t index = 0;
   SIM_ITEM *map = ledger->map;
-  while (1) {
+  while (i <= ledger->map_size) {
     index = hash_item(key, i, ledger->map_size);
     if (l_type == L_TYPE_ENTITY) {
       if (map[index].ent.status == LEDGER_FREE) {
