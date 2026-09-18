@@ -169,6 +169,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
                           &(bones[b_len].parent),
                           &(bones[b_len].num_children));
       if (bones[b_len].parent != -1) {
+        // All bones have a parent in the root bone
         bones[b_len].parent++;
       }
       b_len++;
@@ -419,6 +420,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
         } else {
           sscanf(cur_line, "cl %d", &cur_chain->b_id);
         }
+        // Account for root bone at beginning of bone list
         cur_chain->b_id++;
 
         cur_chain->chain = malloc(sizeof(KEYFRAME) * BUFF_STARTING_LEN);
