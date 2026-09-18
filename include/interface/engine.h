@@ -5,6 +5,7 @@
 #include "./entity.h"
 #include "./structs/models/entity_str.h"
 #include "./globals.h"
+#include "./structs/line_buffer_str.h"
 #include "./helpers.h"
 #include "./init.h"
 #include "./simulation.h"

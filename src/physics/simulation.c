@@ -842,22 +842,28 @@ int get_collider_collisions(SIMULATION *sim, ENTITY *subject,
   return 0;
 }
 
+// Returns 1 if entity has colliders within range of origin, 0 otherwise
 int entity_in_range(SIMULATION *sim, ENTITY *ent, vec3 origin, float range) {
-  // TODO Might be too out aggressive of a range enforcement
   COLLIDER cur_col;
   memset(&cur_col, 0, sizeof(COLLIDER));
   for (size_t i = 0; i < ent->model->num_colliders; i++) {
     // Only consider collider if it is within range
     global_collider(ent, i, &cur_col);
+    /*
     if (!(range != SIM_RANGE_INF && cur_col.type == POLY &&
           glm_vec3_distance(origin, cur_col.data.center_of_mass) > range) &&
         !(range != SIM_RANGE_INF && cur_col.type == SPHERE &&
           glm_vec3_distance(origin, cur_col.data.center) > range)) {
-      return 0;
+    */
+    if ((cur_col.type == POLY &&
+         glm_vec3_distance(origin, cur_col.data.center_of_mass) <= range) ||
+        (cur_col.type == SPHERE &&
+         glm_vec3_distance(origin, cur_col.data.center) <= range)) {
+      return 1;
     }
   }
 
-  return 1;
+  return 0;
 }
 
 // Default is_moving callback
