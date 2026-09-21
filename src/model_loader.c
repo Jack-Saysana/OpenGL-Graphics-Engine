@@ -251,6 +251,7 @@ ERR_BONES:
 void init_model_vao(MODEL *model) {
   if (!model->VBO) {
     model->VAO = 0;
+    return;
   }
 
   int error = 0;
