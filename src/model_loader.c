@@ -249,6 +249,10 @@ ERR_BONES:
 }
 
 void init_model_vao(MODEL *model) {
+  if (!model->VBO) {
+    model->VAO = 0;
+  }
+
   int error = 0;
   unsigned int VAO_id;
   glGenVertexArrays(1, &VAO_id);
@@ -330,34 +334,38 @@ MODEL *gen_model(MODEL_DATA *md, int gen_vao) {
   }
 
   int error = 0;
-  unsigned int VBO_id;
-  glGenBuffers(1, &VBO_id);
-  if ((error = glGetError()) != GL_NO_ERROR) {
-    fprintf(stderr, "FAILED TO ALLOCATE VBO: %d\n", error);
-  }
-  glBindBuffer(GL_ARRAY_BUFFER, VBO_id);
-  if ((error = glGetError()) != GL_NO_ERROR) {
-    fprintf(stderr, "FAILED TO BIND VBO: %d\n", error);
-  }
-  glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * md->num_vertices, md->vertices,
-               GL_STATIC_DRAW);
-  if ((error = glGetError()) != GL_NO_ERROR) {
-    fprintf(stderr, "FAILED TO POPULATE VBO: %d\n", error);
+  unsigned int VBO_id = 0;
+  if (md->num_vertices) {
+    glGenBuffers(1, &VBO_id);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, "FAILED TO ALLOCATE VBO: %d\n", error);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_id);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, "FAILED TO BIND VBO: %d\n", error);
+    }
+    glBufferData(GL_ARRAY_BUFFER, sizeof(VBO) * md->num_vertices, md->vertices,
+                 GL_STATIC_DRAW);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, "FAILED TO POPULATE VBO: %d\n", error);
+    }
   }
 
-  unsigned int EBO_id;
-  glGenBuffers(1, &EBO_id);
-  if ((error = glGetError()) != GL_NO_ERROR) {
-    fprintf(stderr, "FAILED TO ALLOCATE EBO: %d\n", error);
-  }
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_id);
-  if ((error = glGetError()) != GL_NO_ERROR) {
-    fprintf(stderr, "FAILED TO BIND EBO: %d\n", error);
-  }
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * md->num_indices,
-               md->indices, GL_STATIC_DRAW);
-  if ((error = glGetError()) != GL_NO_ERROR) {
-    fprintf(stderr, "FAILED TO POPULATE EBO: %d\n", error);
+  unsigned int EBO_id = 0;
+  if (md->num_indices) {
+    glGenBuffers(1, &EBO_id);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, "FAILED TO ALLOCATE EBO: %d\n", error);
+    }
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_id);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, "FAILED TO BIND EBO: %d\n", error);
+    }
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * md->num_indices,
+                 md->indices, GL_STATIC_DRAW);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, "FAILED TO POPULATE EBO: %d\n", error);
+    }
   }
 
   if (!md->num_bones) {

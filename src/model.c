@@ -23,9 +23,11 @@ void draw_model(unsigned int shader, MODEL *model) {
     }
   }
 
-  glBindVertexArray(model->VAO);
-  glDrawElements(GL_TRIANGLES, model->num_indicies, GL_UNSIGNED_INT, 0);
-  glBindVertexArray(0);
+  if (model->VAO) {
+    glBindVertexArray(model->VAO);
+    glDrawElements(GL_TRIANGLES, model->num_indicies, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+  }
 }
 
 void draw_bones(MODEL *model) {
