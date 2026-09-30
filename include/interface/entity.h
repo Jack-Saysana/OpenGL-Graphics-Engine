@@ -7,14 +7,16 @@
 
 unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path);
 int gen_texture_id(char *tex_path, unsigned int *dest);
+void del_texture_id(char *tex_path);
 int gen_cubemap(char **paths, unsigned int *dest);
 void free_textures();
 
 // 3D Interface
-MODEL_DATA *load_model_data(char *path);
+MODEL_DATA *load_model_data(char *path, char *tex_dir);
+int export_model_data_obj(MODEL_DATA *md, char *path);
 MODEL *gen_model(MODEL_DATA *md, int gen_vao);
-MODEL *load_model(char *path);
-MODEL *load_model_vaoless(char *path);
+MODEL *load_model(char *path, char *tex_dir);
+MODEL *load_model_vaoless(char *path, char *tex_dir);
 void init_model_vao(MODEL *model);
 ENTITY *init_entity(MODEL *model);
 void draw_entity(unsigned int shader, ENTITY *entity);

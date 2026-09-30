@@ -8,7 +8,8 @@ typedef enum {
   DIFF = 1,
   SPEC = 2,
   SPEC_EXPONENT = 3,
-  BUMP = 4
+  BUMP = 4,
+  NORM = 5
 } PROP_TYPE;
 
 typedef struct material {

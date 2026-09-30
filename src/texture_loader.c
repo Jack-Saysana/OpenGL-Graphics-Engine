@@ -5,6 +5,7 @@ int gen_texture_id(char *tex_path, unsigned int *dest) {
   size_t tex_index = tex_tab_search(hash_path);
   if (tex_index != INVALID_INDEX) {
     *dest = tex_tab[tex_index].texture;
+    tex_tab[tex_index].ref_count++;
     free(hash_path);
     return 0;
   }
@@ -45,9 +46,23 @@ int gen_texture_id(char *tex_path, unsigned int *dest) {
 
   tex_index = tex_tab_add(hash_path);
   tex_tab[tex_index].texture = texture;
+  tex_tab[tex_index].ref_count = 1;
   *dest = texture;
   free(hash_path);
   return 0;
+}
+
+void del_texture_id(char *tex_path) {
+  char *hash_path = remove_double_dot(tex_path);
+  size_t tex_index = tex_tab_search(hash_path);
+  if (tex_index == INVALID_INDEX) {
+    return;
+  }
+
+  tex_tab[tex_index].ref_count--;
+  if (!tex_tab[tex_index].ref_count) {
+    tex_tab_delete(tex_tab[tex_index].path);
+  }
 }
 
 int gen_cubemap(char **paths, unsigned int *dest) {
@@ -112,12 +127,17 @@ int init_tex_tab() {
   tex_tab_len = 0;
   tex_tab_size = TEX_TAB_STARTING_LEN;
 
+  for (size_t i = 0; i < tex_tab_size; i++) {
+    tex_tab[i].texture = -1;
+  }
   return 0;
 }
 
 void free_textures() {
   for (size_t i = 0; i < tex_tab_size; i++) {
     if (tex_tab[i].status == LEDGER_OCCUPIED) {
+      tex_tab[i].status = LEDGER_DELETED;
+      glDeleteTextures(1, &tex_tab[i].texture);
       free(tex_tab[i].path);
     }
   }
@@ -196,6 +216,8 @@ void tex_tab_delete(char *path) {
     tex_tab[index].status = LEDGER_DELETED;
     glDeleteTextures(1, &tex_tab[index].texture);
     free(tex_tab[index].path);
+    tex_tab[index].texture = -1;
+    tex_tab[index].path = NULL;
   }
 }
 

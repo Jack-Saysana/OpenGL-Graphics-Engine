@@ -4,9 +4,10 @@
 #include "entity_str.h"
 
 typedef struct vbo {
-  float vertex[3];
-  float normal[3];
-  float tex_coord[2];
+  vec3 vertex;
+  vec3 normal;
+  vec3 tangent;
+  vec2 tex_coord;
   int bone_ids[4];
   float weights[4];
 } VBO;

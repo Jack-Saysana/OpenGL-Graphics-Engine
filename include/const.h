@@ -15,17 +15,19 @@
 #define BUFF_STARTING_LEN (10)
 
 // Material constants
-#define NUM_PROPS (5)
+#define NUM_PROPS (6)
 #define TEX_TAB_STARTING_LEN (20)
 #define VERTEX_BUFF_STARTING_LEN (10)
 #define NORMAL_BUFF_STARTING_LEN (10)
 #define TEX_COORD_BUFF_STARTING_LEN (10)
 #define VBO_STARTING_LEN (10)
 #define INDEX_BUFF_STARTING_LEN (20)
+#define V_POS  (0)
+#define V_TEX  (1)
+#define V_NORM (2)
 
 // Simulation constants
 #define MAX_LINKED_SIMS (8)
-#define NUM_PROPS (5)
 #define DEFAULT (0)
 #define HIT_BOX (1)
 #define HURT_BOX (2)
@@ -79,6 +81,7 @@
 #define MAX_SVD_ITERATIONS (30)
 #define MAX_LCP_ITERATIONS (100)
 #define ZERO_THRESHOLD (0.00001)
+#define DOT_PRODUCT_EPSILON (0.0001)
 #define LCP_C (0)
 #define LCP_NC (1)
 #define LCP_EQ (0)

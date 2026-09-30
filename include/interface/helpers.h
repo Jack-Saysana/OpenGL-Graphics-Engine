@@ -17,4 +17,7 @@ void set_int(char *name, int val, unsigned int shader);
 void set_uint(char *name, unsigned int val, unsigned int shader);
 void set_iarr(char *name, int *arr, size_t arr_len, unsigned int shader);
 
+LINE_BUFFER *get_lines(char *);
+void free_line_buffer(LINE_BUFFER *);
+
 #endif

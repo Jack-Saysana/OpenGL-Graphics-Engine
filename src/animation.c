@@ -248,7 +248,9 @@ void apply_bone_mats(ENTITY *entity) {
   vec3 temp = { 0.0, 0.0, 0.0 };
   mat4 to_bone = GLM_MAT4_IDENTITY_INIT;
   mat4 from_bone = GLM_MAT4_IDENTITY_INIT;
-  for (size_t i = 0; i < entity->model->num_bones; i++) {
+  // Start at bone_id 1 since root bone (bone_id 0) cannot have animations
+  // applied to it
+  for (size_t i = 1; i < entity->model->num_bones; i++) {
     parent = entity->model->bones[i].parent;
     glm_vec3_negate_to(entity->model->bones[i].base, temp);
     glm_translate(to_bone, entity->model->bones[i].base);
