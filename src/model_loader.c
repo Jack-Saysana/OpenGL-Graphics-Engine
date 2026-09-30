@@ -1,6 +1,6 @@
 #include <model_loader.h>
 
-MODEL_DATA *load_model_data(char *path) {
+MODEL_DATA *load_model_data(char *path, char *tex_dir) {
   char *bin_path = malloc(strlen(path) + 5);
   sprintf(bin_path, "%s.bin", path);
   FILE *file = fopen(bin_path, "rb");
@@ -11,7 +11,7 @@ MODEL_DATA *load_model_data(char *path) {
       return NULL;
     }
 
-    preprocess_lines(line_buff);
+    preprocess_lines(line_buff, tex_dir);
 
     file = fopen(bin_path, "rb");
     if (file == NULL) {
@@ -283,20 +283,25 @@ void init_model_vao(MODEL *model) {
   if ((error = glGetError()) != GL_NO_ERROR) {
     fprintf(stderr, "FAILED TO SET ATTRIB 1: %d\n", error);
   }
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VBO),
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(VBO),
                         (void *) (sizeof(float) * 6));
   if ((error = glGetError()) != GL_NO_ERROR) {
     fprintf(stderr, "FAILED TO SET ATTRIB 2: %d\n", error);
   }
-  glVertexAttribIPointer(3, 4, GL_INT, sizeof(VBO),
-                        (void *) (sizeof(float) * 8));
+  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VBO),
+                        (void *) (sizeof(float) * 9));
   if ((error = glGetError()) != GL_NO_ERROR) {
     fprintf(stderr, "FAILED TO SET ATTRIB 3: %d\n", error);
   }
-  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(VBO),
-                        (void *) ((sizeof(float) * 8) + (sizeof(int) * 4)));
+  glVertexAttribIPointer(4, 4, GL_INT, sizeof(VBO),
+                        (void *) (sizeof(float) * 11));
   if ((error = glGetError()) != GL_NO_ERROR) {
     fprintf(stderr, "FAILED TO SET ATTRIB 4: %d\n", error);
+  }
+  glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(VBO),
+                        (void *) ((sizeof(float) * 11) + (sizeof(int) * 4)));
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO SET ATTRIB 5: %d\n", error);
   }
 
   glEnableVertexAttribArray(0);
@@ -318,6 +323,10 @@ void init_model_vao(MODEL *model) {
   glEnableVertexAttribArray(4);
   if ((error = glGetError()) != GL_NO_ERROR) {
     fprintf(stderr, "FAILED TO ENABLE ATTRIB 4: %d\n", error);
+  }
+  glEnableVertexAttribArray(5);
+  if ((error = glGetError()) != GL_NO_ERROR) {
+    fprintf(stderr, "FAILED TO ENABLE ATTRIB 5: %d\n", error);
   }
   glBindVertexArray(0);
   if ((error = glGetError()) != GL_NO_ERROR) {
@@ -432,8 +441,8 @@ MODEL *gen_model(MODEL_DATA *md, int gen_vao) {
   return model;
 }
 
-MODEL *load_model(char *path) {
-  MODEL_DATA *md = load_model_data(path);
+MODEL *load_model(char *path, char *tex_dir) {
+  MODEL_DATA *md = load_model_data(path, tex_dir);
   if (md == NULL) {
     return NULL;
   }
@@ -445,8 +454,8 @@ MODEL *load_model(char *path) {
   return model;
 }
 
-MODEL *load_model_vaoless(char *path) {
-  MODEL_DATA *md = load_model_data(path);
+MODEL *load_model_vaoless(char *path, char *tex_dir) {
+  MODEL_DATA *md = load_model_data(path, tex_dir);
   if (md == NULL) {
     return NULL;
   }

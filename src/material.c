@@ -1,7 +1,7 @@
 #include <material.h>
 
 int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
-                 char *dir, char *lib) {
+                 char *dir, char *lib, char *tex_dir) {
   char *lib_path = malloc(strlen(dir) + strlen(lib) + 2);
   if (lib_path == NULL) {
     printf("Unable to allocate mtllib path\n");
@@ -31,6 +31,7 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
       cur_mat->mat_paths[SPEC] = NULL;
       cur_mat->mat_paths[SPEC_EXPONENT] = NULL;
       cur_mat->mat_paths[BUMP] = NULL;
+      cur_mat->mat_paths[NORM] = NULL;
 
       (*mat_len)++;
       if (*mat_len == *mat_buff_len) {
@@ -43,9 +44,8 @@ int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
         }
       }
     } else if (op != NO_OP) {
-      cur_mat->mat_paths[op] = malloc(strlen(lib_lines->dir) + strlen(cur_line)
-                                      + 2);
-      sprintf(cur_mat->mat_paths[op], "%s/%s", lib_lines->dir, cur_line);
+      cur_mat->mat_paths[op] = malloc(strlen(tex_dir) + strlen(cur_line) + 2);
+      sprintf(cur_mat->mat_paths[op], "%s/%s", tex_dir, cur_line);
     }
   }
 
@@ -69,16 +69,18 @@ PROP_TYPE get_op(char **cur_line) {
   PROP_TYPE op = NO_OP;
   if (strncmp(*cur_line, "newmtl", op_len) == 0) {
     op = NEWMTL;
-  } else if(strncmp(*cur_line, "map_Ka", op_len) == 0) {
+  } else if (strncmp(*cur_line, "map_Ka", op_len) == 0) {
     op = AMB;
-  } else if(strncmp(*cur_line, "map_Kd", op_len) == 0) {
+  } else if (strncmp(*cur_line, "map_Kd", op_len) == 0) {
     op = DIFF;
-  } else if(strncmp(*cur_line, "map_Ks", op_len) == 0) {
+  } else if (strncmp(*cur_line, "map_Ks", op_len) == 0) {
     op = SPEC;
-  } else if(strncmp(*cur_line, "map_Ns", op_len) == 0) {
+  } else if (strncmp(*cur_line, "map_Ns", op_len) == 0) {
     op = SPEC_EXPONENT;
-  } else if(strncmp(*cur_line, "map_bump", op_len) == 0) {
+  } else if (strncmp(*cur_line, "map_bump", op_len) == 0) {
     op = BUMP;
+  } else if (strncmp(*cur_line, "norm", op_len) == 0) {
+    op = NORM;
   }
   (*cur_line) += op_len + 1;
 

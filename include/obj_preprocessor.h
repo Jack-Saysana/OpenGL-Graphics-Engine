@@ -14,16 +14,21 @@ typedef struct face_vert {
   int index;
 } FACE_VERT;
 
+typedef struct vert_data {
+  ivec3 vnt;
+  vec3 tangent;
+} V_DATA;
+
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 
-int preprocess_face(vec3 *vertices, vec3 *normals, ivec3 **vbo_index_combos,
+int preprocess_face(vec3 *vertices, vec3 *normals, V_DATA **vbo_index_combos,
                     size_t *vbo_len, size_t *vbo_buff_len, ivec3 **faces,
                     size_t *f_len, size_t *face_buff_len, size_t v_len,
                     size_t t_len, size_t n_len, FILE *file, char *line);
-int triangulate_polygon(vec3 *vertices, vec3 *normals, ivec3 *vbo_index_combos,
+int triangulate_polygon(vec3 *vertices, vec3 *normals, V_DATA *vbo_index_combos,
                         ivec3 **faces, size_t *f_len, size_t *face_buff_len,
                         FILE *file, FACE_VERT *head, size_t num_verts);
-int is_ear(vec3 *verticies, ivec3 *vbo_index_combos, ivec3 triangle,
+int is_ear(vec3 *verticies, V_DATA *vbo_index_combos, ivec3 triangle,
            FACE_VERT *ref_vert, float *polygon_normal);
 int sort_colliders(BONE *bones, COLLIDER *colliders, int *collider_links,
                    int *bone_links, size_t b_len, size_t col_len);
@@ -34,7 +39,7 @@ void swap_colliders(COLLIDER *colliders, int *collider_links, int *bone_links,
 
 size_t get_str_hash(char *str);
 int parse_mtllib(MATERIAL *materials, size_t *mat_buff_len, size_t *mat_len,
-                 char *dir, char *lib);
+                 char *dir, char *lib, char *tex_dir);
 void free_line_buffer(LINE_BUFFER *lb);
 void free_materials(void *buffer, size_t buf_len);
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);

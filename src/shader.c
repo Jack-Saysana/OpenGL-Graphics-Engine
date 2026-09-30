@@ -95,6 +95,10 @@ long gen_shader(const char *source, GLenum type) {
 
   int source_len = strlen(source);
   unsigned int shader = glCreateShader(type);
+  if (shader == 0) {
+    fprintf(stderr, "Unable to create shader object\n");
+    return -1;
+  }
   glShaderSource(shader, 1, &source, &source_len);
   glCompileShader(shader);
 

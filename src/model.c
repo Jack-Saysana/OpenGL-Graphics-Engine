@@ -6,9 +6,11 @@ void draw_model(unsigned int shader, MODEL *model) {
   }
 
   int uniform_loc = -1;
-  char *uniform_names[5] = { "material.amb_map", "material.diff_map",
-                             "material.spec_map", "material.spec_exponent",
-                             "material.bump_map" };
+  char *uniform_names[NUM_PROPS] = { "material.amb_map", "material.diff_map",
+                                     "material.spec_map",
+                                     "material.spec_exponent",
+                                     "material.bump_map",
+                                     "material.norm_map" };
 
   for (int i = 0; i < NUM_PROPS; i++) {
     if (model->textures[i] == INVALID_INDEX) {

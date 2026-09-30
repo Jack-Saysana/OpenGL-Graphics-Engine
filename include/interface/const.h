@@ -16,7 +16,7 @@
 #define BUFF_STARTING_LEN (10)
 
 // Entity constants
-#define NUM_PROPS (5)
+#define NUM_PROPS (6)
 #define DEFAULT (0)
 #define HIT_BOX (1)
 #define HURT_BOX (2)

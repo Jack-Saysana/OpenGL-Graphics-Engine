@@ -1,6 +1,6 @@
 #include <obj_preprocessor.h>
 
-int preprocess_lines(LINE_BUFFER *lb) {
+int preprocess_lines(LINE_BUFFER *lb, char *tex_dir) {
   char *bin_path = malloc(strlen(lb->dir) + strlen(lb->filename) + 6);
   if (bin_path == NULL) {
     fprintf(stderr, "Unable to allocate line buffer path\n");
@@ -75,7 +75,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
   size_t t_buff_len = BUFF_STARTING_LEN;
   size_t t_len = 0;
 
-  ivec3 *vbo_index_combos = malloc(sizeof(ivec3) * BUFF_STARTING_LEN);
+  V_DATA *vbo_index_combos = malloc(sizeof(V_DATA) * BUFF_STARTING_LEN);
   if (vbo_index_combos == NULL) {
     fprintf(stderr, "Unable to allocate vbo index combos\n");
     goto ERR_VBO_IDX;
@@ -360,7 +360,7 @@ int preprocess_lines(LINE_BUFFER *lb) {
                && cur_line[6] == ' ') {
       // Import material library
       status = parse_mtllib(materials, &mat_buff_len, &mat_len, lb->dir,
-                            cur_line + 7);
+                            cur_line + 7, tex_dir);
     } else if (cur_line[0] == 'u' && cur_line[1] == 's' && cur_line[2] == 'e'
                && cur_line[3] == 'm' && cur_line[4] == 't' &&
                cur_line[5] == 'l' && cur_line[6] == ' ') {
@@ -556,6 +556,58 @@ int preprocess_lines(LINE_BUFFER *lb) {
     }
   }
 
+  // Calculate tangent for each vertex
+  for (size_t i = 0; i < f_len; i++) {
+    V_DATA *v0 = vbo_index_combos + faces[i][0];
+    V_DATA *v1 = vbo_index_combos + faces[i][1];
+    V_DATA *v2 = vbo_index_combos + faces[i][2];
+
+    vec3 e1 = GLM_VEC3_ZERO_INIT;
+    glm_vec3_sub(verticies[v1->vnt[V_POS]], verticies[v0->vnt[V_POS]], e1);
+
+    vec3 e2 = GLM_VEC3_ZERO_INIT;
+    glm_vec3_sub(verticies[v2->vnt[V_POS]], verticies[v0->vnt[V_POS]], e2);
+
+    vec2 duv1 = { 0.0, 0.0 };
+    glm_vec2_sub(tex_coords[v1->vnt[V_TEX]], tex_coords[v0->vnt[V_TEX]], duv1);
+
+    vec2 duv2 = { 0.0, 0.0 };
+    glm_vec2_sub(tex_coords[v2->vnt[V_TEX]], tex_coords[v0->vnt[V_TEX]], duv2);
+
+    float det = (duv1[X] * duv2[Y]) - (duv1[Y] * duv2[X]);
+
+    if (fabs(det) > ZERO_THRESHOLD) {
+      vec3 tan = GLM_VEC3_ZERO_INIT;
+      vec3 a = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(e1, duv2[Y], a);
+
+      vec3 b = GLM_VEC3_ZERO_INIT;
+      glm_vec3_scale(e2, duv1[Y], b);
+
+      glm_vec3_sub(a, b, tan);
+      glm_vec3_scale(tan, 1.0 / det, tan);
+      glm_vec3_add(tan, v0->tangent, v0->tangent);
+      glm_vec3_add(tan, v1->tangent, v1->tangent);
+      glm_vec3_add(tan, v2->tangent, v2->tangent);
+    }
+  }
+
+  // Normalize and orthogonalize tangents
+  for (size_t i = 0; i < vbo_len; i++) {
+    vec3 tan = GLM_VEC3_ZERO_INIT;
+    glm_vec3_copy(vbo_index_combos[i].tangent, tan);
+
+    vec3 norm = GLM_VEC3_ZERO_INIT;
+    glm_vec3_copy(normals[vbo_index_combos[i].vnt[V_NORM]], norm);
+
+    float dot = glm_vec3_dot(norm, tan);
+    glm_vec3_scale(norm, dot, norm);
+
+    glm_vec3_sub(tan, norm, tan);
+    glm_vec3_normalize(tan);
+    glm_vec3_copy(tan, vbo_index_combos[i].tangent);
+  }
+
   int material_flag = cur_mat != NULL;
   int cur_path_len = 0;
 
@@ -591,25 +643,31 @@ int preprocess_lines(LINE_BUFFER *lb) {
   fwrite(colliders, sizeof(COLLIDER), col_len, file);
   fwrite(bone_links, sizeof(int), col_len, file);
 
+  // Write complete vertex data to file
   for (size_t i = 0; i < vbo_len; i++) {
-    if (vbo_index_combos[i][0] != -1) {
-      fwrite(verticies[vbo_index_combos[i][0]], sizeof(float), 3, file);
+    if (vbo_index_combos[i].vnt[V_POS] != -1) {
+      fwrite(verticies[vbo_index_combos[i].vnt[V_POS]], sizeof(float), 3,
+             file);
     } else {
       fwrite(GLM_VEC3_ZERO, sizeof(float), 3, file);
     }
-    if (vbo_index_combos[i][2] != -1) {
-      fwrite(normals[vbo_index_combos[i][2]], sizeof(float), 3, file);
+    if (vbo_index_combos[i].vnt[V_NORM] != -1) {
+      fwrite(normals[vbo_index_combos[i].vnt[V_NORM]], sizeof(float), 3,
+             file);
     } else {
       fwrite(GLM_VEC3_ZERO, sizeof(float), 3, file);
     }
-    if (vbo_index_combos[i][1] != -1) {
-      fwrite(tex_coords[vbo_index_combos[i][1]], sizeof(float), 2, file);
+    fwrite(vbo_index_combos[i].tangent, sizeof(float), 3, file);
+    if (vbo_index_combos[i].vnt[V_TEX] != -1) {
+      fwrite(tex_coords[vbo_index_combos[i].vnt[V_TEX]], sizeof(float), 2,
+             file);
     } else {
       fwrite((vec2) { 0.0, 0.0 }, sizeof(float), 2, file);
     }
-    if (vbo_index_combos[i][0] != -1) {
-      fwrite(bone_ids[vbo_index_combos[i][0]], sizeof(int), 4, file);
-      fwrite(bone_weights[vbo_index_combos[i][0]], sizeof(float), 4, file);
+    if (vbo_index_combos[i].vnt[V_POS] != -1) {
+      fwrite(bone_ids[vbo_index_combos[i].vnt[V_POS]], sizeof(int), 4, file);
+      fwrite(bone_weights[vbo_index_combos[i].vnt[V_POS]], sizeof(float), 4,
+             file);
     } else {
       fwrite((ivec4) { 0, 0, 0, 0 }, sizeof(int), 4, file);
       fwrite(GLM_VEC4_ZERO, sizeof(float), 4, file);
@@ -855,7 +913,7 @@ void swap_colliders(COLLIDER *colliders, int *collider_links, int *bone_links,
   }
 }
 
-int preprocess_face(vec3 *vertices, vec3 *normals, ivec3 **vbo_index_combos,
+int preprocess_face(vec3 *vertices, vec3 *normals, V_DATA **vbo_index_combos,
                     size_t *vbo_len, size_t *vbo_buff_len, ivec3 **faces,
                     size_t *f_len, size_t *face_buff_len, size_t v_len,
                     size_t t_len, size_t n_len, FILE *file, char *line) {
@@ -866,7 +924,7 @@ int preprocess_face(vec3 *vertices, vec3 *normals, ivec3 **vbo_index_combos,
   int status = 0;
   //                     v   t   n
   ivec3 index_combo = { -1, -1, -1 };
-  int cur_attrib = 0;
+  int cur_attrib = V_POS;
   char *cur_num = line;
   int read_index = 0;
 
@@ -877,18 +935,18 @@ int preprocess_face(vec3 *vertices, vec3 *normals, ivec3 **vbo_index_combos,
       read_index = atoi(cur_num) - 1;
       cur_num = line + i + 1;
 
-      if (read_index >= 0 && cur_attrib == 0) {
+      if (read_index >= 0 && cur_attrib == V_POS) {
         if (read_index > v_len - 1) {
           fprintf(stderr, "Preprocessor Error: Invalid vertex index\n");
           return -1;
         }
-        index_combo[0] = read_index;
-      } else if (cur_attrib == 1) {
+        index_combo[V_POS] = read_index;
+      } else if (cur_attrib == V_TEX) {
         if (read_index > t_len - 1) {
           fprintf(stderr, "Preprocessor Error: Invalid tex coord index\n");
           return -1;
         }
-        index_combo[1] = read_index;
+        index_combo[V_TEX] = read_index;
       } else if(read_index >= 0) {
         fprintf(stderr,
                 "Preprocessor Error: Invalid number of vertex attributes\n");
@@ -900,37 +958,38 @@ int preprocess_face(vec3 *vertices, vec3 *normals, ivec3 **vbo_index_combos,
       read_index = atoi(cur_num) - 1;
       cur_num = line + i + 1;
 
-      if (cur_attrib == 0) {
+      if (cur_attrib == V_POS) {
         if (read_index > v_len - 1) {
           fprintf(stderr, "Preprocessor Error: Invalid vertex index\n");
           return -1;
         }
-        index_combo[0] = read_index;
+        index_combo[V_POS] = read_index;
       } else {
         if (read_index > n_len - 1) {
           fprintf(stderr, "Preprocessor Error:Invalid normal index\n");
           return -1;
         }
-        index_combo[2] = read_index;
+        index_combo[V_NORM] = read_index;
       }
 
       int found = -1;
       for (int i = 0; i < *vbo_len && found == -1; i++) {
-        if ((*vbo_index_combos)[i][X] == index_combo[X] &&
-            (*vbo_index_combos)[i][Y] == index_combo[Y] &&
-            (*vbo_index_combos)[i][Z] == index_combo[Z]) {
+        if ((*vbo_index_combos)[i].vnt[V_POS] == index_combo[V_POS] &&
+            (*vbo_index_combos)[i].vnt[V_TEX] == index_combo[V_TEX] &&
+            (*vbo_index_combos)[i].vnt[V_NORM] == index_combo[V_NORM]) {
           found = i;
         }
       }
 
       if (found == -1) {
-        glm_ivec3_copy(index_combo, (*vbo_index_combos)[*vbo_len]);
+        glm_ivec3_copy(index_combo, (*vbo_index_combos)[*vbo_len].vnt);
+        glm_vec3_zero((*vbo_index_combos)[*vbo_len].tangent);
         found = *vbo_len;
         (*vbo_len)++;
 
         if (*vbo_len == *vbo_buff_len) {
           status = double_buffer((void **) vbo_index_combos, vbo_buff_len,
-                                 sizeof(ivec3));
+                                 sizeof(V_DATA));
         }
 
         if (status != 0) {
@@ -994,13 +1053,14 @@ int preprocess_face(vec3 *vertices, vec3 *normals, ivec3 **vbo_index_combos,
   return status;
 }
 
-int triangulate_polygon(vec3 *vertices, vec3 *normals, ivec3 *vbo_index_combos,
-                        ivec3 **faces, size_t *f_len, size_t *face_buff_len,
-                        FILE *file, FACE_VERT *head, size_t num_verts) {
+int triangulate_polygon(vec3 *vertices, vec3 *normals,
+                        V_DATA *vbo_index_combos, ivec3 **faces, size_t *f_len,
+                        size_t *face_buff_len, FILE *file, FACE_VERT *head,
+                        size_t num_verts) {
   vec3 poly_normal = {
-    normals[vbo_index_combos[head->index][2]][X],
-    normals[vbo_index_combos[head->index][2]][Y],
-    normals[vbo_index_combos[head->index][2]][Z]
+    normals[vbo_index_combos[head->index].vnt[V_NORM]][X],
+    normals[vbo_index_combos[head->index].vnt[V_NORM]][Y],
+    normals[vbo_index_combos[head->index].vnt[V_NORM]][Z]
   };
 
   int verts_left = num_verts;
@@ -1057,15 +1117,15 @@ int triangulate_polygon(vec3 *vertices, vec3 *normals, ivec3 *vbo_index_combos,
   return 0;
 }
 
-int is_ear(vec3 *verticies, ivec3 *vbo_index_combos, ivec3 triangle,
+int is_ear(vec3 *verticies, V_DATA *vbo_index_combos, ivec3 triangle,
            FACE_VERT *ref_vert, float *polygon_normal) {
   vec3 origin = { 0.0, 0.0, 0.0 };
   vec3 A = GLM_VEC3_ZERO_INIT;
   vec3 B = GLM_VEC3_ZERO_INIT;
   vec3 focus = GLM_VEC3_ZERO_INIT;
-  glm_vec3_copy(verticies[vbo_index_combos[triangle[0]][0]], A);
-  glm_vec3_copy(verticies[vbo_index_combos[triangle[1]][0]], focus);
-  glm_vec3_copy(verticies[vbo_index_combos[triangle[2]][0]], B);
+  glm_vec3_copy(verticies[vbo_index_combos[triangle[0]].vnt[V_POS]], A);
+  glm_vec3_copy(verticies[vbo_index_combos[triangle[1]].vnt[V_POS]], focus);
+  glm_vec3_copy(verticies[vbo_index_combos[triangle[2]].vnt[V_POS]], B);
 
   // Translate Vertex A as if focus was at the origin
   vec3 first_vert = GLM_VEC3_ZERO_INIT;
@@ -1095,8 +1155,8 @@ int is_ear(vec3 *verticies, ivec3 *vbo_index_combos, ivec3 triangle,
 
   FACE_VERT *cur_vert = ref_vert->next->next;
   while (cur_vert != ref_vert->prev) {
-    glm_vec3_sub(verticies[vbo_index_combos[cur_vert->index][0]],
-                 verticies[vbo_index_combos[triangle[1]][0]], p);
+    glm_vec3_sub(verticies[vbo_index_combos[cur_vert->index].vnt[V_POS]],
+                 verticies[vbo_index_combos[triangle[1]].vnt[V_POS]], p);
     glm_vec3_sub(p, coords[0], p);
 
     c = ((u[0]*v[1]*p[2])-(u[0]*v[2]*p[1])+(v[0]*u[2]*p[1])-(v[0]*u[1]*p[2])-
