@@ -209,10 +209,14 @@ void free_ui_comp(UI_COMP *comp) {
     - Option 2: Ratio vs Pixel position unit
       - POS_X_UNIT_RATIO_X: Pos[X] is a ratio of the parent component's width
       - POS_X_UNIT_RATIO_Y: Pos[X] is a ratio of the parent component's height
+      - POS_X_UNIT_ROOT_RATIO_X: Pos[X] is a ratio of the screen's width
+      - POS_X_UNIT_ROOT_RATIO_Y: Pos[X] is a ratio of the screen's height
       - POS_X_UNIT_PIXEL: Pos[Y] is a pixel offset
 
       - POS_Y_UNIT_RATIO_X: Pos[Y] is a ratio of the parent component's width
       - POS_Y_UNIT_RATIO_Y: Pos[Y] is a ratio of the parent component's height
+      - POS_Y_UNIT_ROOT_RATIO_X: Pos[Y] is a ratio of the screen's width
+      - POS_Y_UNIT_ROOT_RATIO_Y: Pos[Y] is a ratio of the screen's height
       - POS_Y_UNIT_PIXEL: Pos[Y] is a pixel offset
 
       - POS_UNIT_RATIO_X: Pos[X] is a ratio of the parent component's width
@@ -223,6 +227,14 @@ void free_ui_comp(UI_COMP *comp) {
                           Pos[Y] is a ratio of the parent component's height
                        (equivalent to POS_X_UNIT_RATIO_Y | POS_Y_UNIT_RATIO_Y)
 
+      - POS_UNIT_ROOT_RATIO_X: Pos[X] is a ratio of the screen's width
+                               Pos[Y] is a ratio of the screen's width
+                       (equivalent to POS_X_UNIT_ROOT_RATIO_X | POS_Y_UNIT_ROOT_RATIO_X)
+
+      - POS_UNIT_ROOT_RATIO_Y: Pos[X] is a ratio of the screen's height
+                               Pos[Y] is a ratio of the screen's height
+                       (equivalent to POS_X_UNIT_ROOT_RATIO_Y | POS_Y_UNIT_ROOT_RATIO_Y)
+
       - POS_UNIT_PIXEL: Pos[X] and pos[Y] are pixel offsets
                        (equivalent to POS_X_UNIT_PIXEL | POS_Y_UNIT_PIXEL)
 
@@ -230,18 +242,28 @@ void free_ui_comp(UI_COMP *comp) {
                         Pos[Y] is a ratio of the parent component's height
                        (equivalent to POS_X_UNIT_RATIO_X | POS_Y_UNIT_RATIO_Y)
 
+      - POS_UNIT_ROOT_RATIO: Pos[X] is a ratio of the screen's width
+                             Pos[Y] is a ratio of the screen's height
+                            (equivalent to POS_X_UNIT_ROOT_RATIO_X | POS_Y_UNIT_ROOT_RATIO_Y)
+
     - Option 3: Ratio vs pixel size unit
       - WIDTH_UNIT_RATIO_X: Width is a ratio of the parent component's width
       - WIDTH_UNIT_RATIO_Y: Width is a ratio of the parent component's height
+      - WIDTH_UNIT_ROOT_RATIO_X: Width is a ratio of the screen's width
+      - WIDTH_UNIT_ROOT_RATIO_Y: Width is a ratio of the screen's height
       - WIDTH_UNIT_PIXEL: Width is in units of pixels
 
       - HEIGHT_UNIT_RATIO_X: Height is a ratio of the parent component's width
       - HEIGHT_UNIT_RATIO_Y: Height is a ratio of the parent component's height
+      - HEIGHT_UNIT_ROOT_RATIO_X: Height is a ratio of the screen's width
+      - HEIGHT_UNIT_ROOT_RATIO_Y: Height is a ratio of the screen's height
       - HEIGHT_UNIT_PIXEL: Height is in units of pixels
 
       - LINE_UNIT_RATIO_X: Text line height is a ratio of the component's width
       - LINE_UNIT_RATIO_Y: Text line height is a ratio of the component's
                            height
+      - LINE_UNIT_ROOT_RATIO_X: Text line height is a ratio of the screen's width
+      - LINE_UNIT_ROOT_RATIO_Y: Text line height is a ratio of the screen's height
       - LINE_UNIT_RATIO_PIXEL: Text line height is in units of pixels
 
       - SIZE_UNIT_RATIO_X: width is a ratio of the parent component's width
@@ -256,6 +278,18 @@ void free_ui_comp(UI_COMP *comp) {
         (equivalent to WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y |
                        LINE_UNIT_RATIO_Y)
 
+      - SIZE_UNIT_ROOT_RATIO_X: width is a ratio of the screen's width
+                                height is a ratio of the screen's width
+                                line height is a ratio of the screen's width
+        (equivalent to WIDTH_UNIT_ROOT_RATIO_X | HEIGHT_UNIT_ROOT_RATIO_X |
+                       LINE_UNIT_ROOT_RATIO_X)
+
+      - SIZE_UNIT_ROOT_RATIO_Y: width is a ratio of the screen's height
+                                height is a ratio of the screen's height
+                                line height is a ratio of the screen's height
+        (equivalent to WIDTH_UNIT_ROOT_RATIO_Y | HEIGHT_UNIT_ROOT_RATIO_Y |
+                       LINE_UNIT_ROOT_RATIO_Y)
+
       - SIZE_UNIT_PIXEL: width, height and line height are in units of pixels
         (equivalent to WIDTH_UNIT_PIXEL | HEIGHT_UNIT_PIXEL |
                        LINE_UNIT_RATIO_PIXEL)
@@ -265,6 +299,11 @@ void free_ui_comp(UI_COMP *comp) {
                          text line height is a ratio of component's height
         (equivalent to WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_Y |
                        LINE_UNIT_RATIO_Y)
+      - SIZE_UNIT_ROOT_RATIO: width is a ratio of the screen's width
+                              height is a ratio of the screen's height
+                              text line height is a ratio of screen's height
+        (equivalent to WIDTH_UNIT_ROOT_RATIO_X | HEIGHT_UNIT_ROOT_RATIO_Y |
+                       LINE_UNIT_ROOT_RATIO_Y)
 
   - PIVOT pivot: Point on the new component which is located at pos
 */
@@ -637,62 +676,92 @@ void calc_pix_stats(UI_COMP *parent, UI_COMP *child, vec2 top_left,
   vec2 cur_offset = GLM_VEC2_ZERO_INIT;
 
   // Calculate child pixel sizing
-  int width_opt = child->numerical_options & WIDTH_UNIT_PIXEL;
+  int width_opt = child->numerical_options & WIDTH_MASK;
   if (width_opt == WIDTH_UNIT_RATIO_X) {
     // Width measured relative to width of parent
     child->pix_width = parent->pix_width * child->width;
   } else if (width_opt == WIDTH_UNIT_RATIO_Y) {
     // Width measured relative to height of parent
     child->pix_width = parent->pix_height * child->width;
+  } else if (width_opt == WIDTH_UNIT_ROOT_RATIO_X) {
+    // Width measured relative to width of screen
+    child->pix_width = RES_X * child->width;
+  } else if (width_opt == WIDTH_UNIT_ROOT_RATIO_Y) {
+    // Width measured relative to height of screen
+    child->pix_width = RES_Y * child->width;
   } else {
     // Width measured in pixels
     child->pix_width = child->width;
   }
 
-  int height_opt = child->numerical_options & HEIGHT_UNIT_PIXEL;
+  int height_opt = child->numerical_options & HEIGHT_MASK;
   if (height_opt == HEIGHT_UNIT_RATIO_X) {
     // Height measured relative to width of parent
     child->pix_height = parent->pix_width * child->height;
   } else if (height_opt == HEIGHT_UNIT_RATIO_Y) {
     // Height measured relative to height of parent
     child->pix_height = parent->pix_height * child->height;
+  } else if (height_opt == HEIGHT_UNIT_ROOT_RATIO_X) {
+    // Height measured relative to width of screen
+    child->pix_height = RES_X * child->height;
+  } else if (height_opt == HEIGHT_UNIT_ROOT_RATIO_Y) {
+    // Height measured relative to height of screen
+    child->pix_height = RES_Y * child->height;
   } else {
     // Height measured in pixels
     child->pix_height = child->height;
   }
 
-  int line_height_opt = child->numerical_options & LINE_UNIT_PIXEL;
+  int line_height_opt = child->numerical_options & LINE_MASK;
   if (line_height_opt == LINE_UNIT_RATIO_X) {
     // Line height measured relative to width of child
     child->pix_line_height = child->pix_width * child->line_height;
   } else if (line_height_opt == LINE_UNIT_RATIO_Y) {
     // Line height measured relative to height of child
     child->pix_line_height = child->pix_height * child->line_height;
+  } else if (line_height_opt == LINE_UNIT_ROOT_RATIO_X) {
+    // Line height measured relative to width of screen
+    child->pix_line_height = RES_X * child->line_height;
+  } else if (line_height_opt == LINE_UNIT_ROOT_RATIO_Y) {
+    // Line height measured relative to height of screen
+    child->pix_line_height = RES_Y * child->line_height;
   } else {
     // Line height measured in pixels
     child->pix_line_height = child->line_height;
   }
 
   // Calculate child pixel offset
-  int pos_x_opt = child->numerical_options & POS_X_UNIT_PIXEL;
+  int pos_x_opt = child->numerical_options & POS_X_MASK;
   if (pos_x_opt == POS_X_UNIT_RATIO_X) {
     // X offset is measured relative to width of parent
     cur_offset[X] = parent->pix_width * child->pos[X];
   } else if (pos_x_opt == POS_X_UNIT_RATIO_Y) {
     // X offset is measured relative to height of parent
     cur_offset[X] = parent->pix_height * child->pos[X];
+  } else if (pos_x_opt == POS_X_UNIT_ROOT_RATIO_X) {
+    // X offset is measured relative to width of screen
+    cur_offset[X] = RES_X * child->pos[X];
+  } else if (pos_x_opt == POS_X_UNIT_ROOT_RATIO_Y) {
+    // X offset is measured relative to height of screen
+    cur_offset[X] = RES_Y * child->pos[X];
   } else {
     // X offset is measured in pixels
     cur_offset[X] = child->pos[X];
   }
 
-  int pos_y_opt = child->numerical_options & POS_Y_UNIT_PIXEL;
+  int pos_y_opt = child->numerical_options & POS_Y_MASK;
   if (pos_y_opt == POS_Y_UNIT_RATIO_X) {
     // Y offset measured relative to width of parent
     cur_offset[Y] = parent->pix_width * child->pos[Y];
   } else if (pos_y_opt == POS_Y_UNIT_RATIO_Y) {
     // Y offset measured relative to height of parent
     cur_offset[Y] = parent->pix_height * child->pos[Y];
+  } else if (pos_y_opt == POS_Y_UNIT_ROOT_RATIO_X) {
+    // Y offset measured relative to width of screen
+    cur_offset[Y] = RES_X * child->pos[Y];
+  } else if (pos_y_opt == POS_Y_UNIT_ROOT_RATIO_Y) {
+    // Y offset measured relative to height of screen
+    cur_offset[Y] = RES_Y * child->pos[Y];
   } else {
     // Y offset measured in pixels
     cur_offset[Y] = child->pos[Y];

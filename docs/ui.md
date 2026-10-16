@@ -88,11 +88,19 @@ The options are as follows:
 
 - **POS_X_UNIT_RATIO_Y**: The x-coordinate of `position` is a decimal ratio of the parent component's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
 
+- **POS_X_UNIT_ROOT_RATIO_X**: The x-coordinate of `position` is a decimal ratio of the screen's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
+
+- **POS_X_UNIT_ROOT_RATIO_Y**: The x-coordinate of `position` is a decimal ratio of the screen's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
+
 - **POS_X_UNIT_PIXEL**: The x-coordinate of `position` is a pixel offset. (1.0 for 1px, 100.0 for 100px, ...)
 
 - **POS_Y_UNIT_RATIO_X**: The y-coordinate of `position` is a decimal ratio of the parent component's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
 
 - **POS_Y_UNIT_RATIO_Y**: The y-coordinate of `position` is a decimal ratio of the parent component's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
+
+- **POS_Y_UNIT_ROOT_RATIO_X**: The y-coordinate of `position` is a decimal ratio of the screen's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
+
+- **POS_Y_UNIT_ROOT_RATIO_Y**: The y-coordinate of `position` is a decimal ratio of the screen's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
 
 - **POS_Y_UNIT_PIXEL**: The y-coordinate of `position` is a pixel offset. (1.0 for 1px, 100.0 for 100px, ...)
 
@@ -102,11 +110,20 @@ The options are as follows:
 - **POS_UNIT_RATIO_Y**: Both coordinates of `position` are a ratio of the parent component's height
   - (equivalent to `POS_X_UNIT_RATIO_Y | POS_Y_UNIT_RATIO_Y`)
 
+- **POS_UNIT_ROOT_RATIO_X**: Both coordinates of `position` are a ratio of the screen's width
+  - (equivalent to `POS_X_UNIT_ROOT_RATIO_X | POS_Y_UNIT_ROOT_RATIO_X`)
+
+- **POS_UNIT_ROOT_RATIO_Y**: Both coordinates of `position` are a ratio of the screen's height
+  - (equivalent to `POS_X_UNIT_ROOT_RATIO_Y | POS_Y_UNIT_ROOT_RATIO_Y`)
+
 - **POS_UNIT_PIXEL**: Both coordinates of `position` are pixel offsets
   - (equivalent to `POS_X_UNIT_PIXEL | POS_Y_UNIT_PIXEL`)
 
 - **POS_UNIT_RATIO**: The x-coordinate of `position` is a ratio of the parent component's width. The y-coordinate is a ratio of the parent component's height.
   - (equivalent to `POS_X_UNIT_RATIO_X | POS_Y_UNIT_RATIO_Y`)
+
+- **POS_UNIT_ROOT_RATIO**: The x-coordinate of `position` is a ratio of the screen's width. The y-coordinate is a ratio of the screen's height.
+  - (equivalent to `POS_X_UNIT_ROOT_RATIO_X | POS_Y_UNIT_ROOT_RATIO_Y`)
 
 **3. Size units**
 
@@ -118,17 +135,29 @@ The options are as follows:
 
 - **WIDTH_UNIT_RATIO_Y**: The UI Component's `width` is a ratio of the parent component's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
 
+- **WIDTH_UNIT_ROOT_RATIO_X**: The UI Component's `width` is a ratio of the screen's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
+
+- **WIDTH_UNIT_ROOT_RATIO_Y**: The UI Component's `width` is a ratio of the screen's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
+
 - **WIDTH_UNIT_PIXEL**: The UI Component's `width` is in units of pixels (1.0 for 1px, 100.0 for 100px, ...)
 
 - **HEIGHT_UNIT_RATIO_X**: The UI Component's `height` is a ratio of the parent component's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
 
 - **HEIGHT_UNIT_RATIO_Y**: The UI Component's `height` is a ratio of the parent component's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
 
+- **HEIGHT_UNIT_ROOT_RATIO_X**: The UI Component's `height` is a ratio of the screen's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
+
+- **HEIGHT_UNIT_ROOT_RATIO_Y**: The UI Component's `height` is a ratio of the screen's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
+
 - **HEIGHT_UNIT_PIXEL**: The UI Component's `height` is in units of pixels (1.0 for 1px, 100.0 for 100px, ...)
 
 - **LINE_UNIT_RATIO_X**: The UI Component's text `line_height` is a ratio of the parent component's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
 
 - **LINE_UNIT_RATIO_Y**: The UI Component's text `line_height` is a ratio of the parent component's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
+
+- **LINE_UNIT_ROOT_RATIO_X**: The UI Component's text `line_height` is a ratio of the screen's width. (0.1 is 10% of parent's width, 1.0 is 100%, and so on...)
+
+- **LINE_UNIT_ROOT_RATIO_Y**: The UI Component's text `line_height` is a ratio of the screen's height. (0.1 is 10% of parent's height, 1.0 is 100%, and so on...)
 
 - **LINE_UNIT_PIXEL**: The UI Component's text `line_height` is in units of pixels (1.0 for 1px, 100.0 for 100px, ...)
 
@@ -138,11 +167,20 @@ The options are as follows:
 - **SIZE_UNIT_RATIO_Y**: `width`, `height` and `line_height` are ratios of the parent component's height.
   - (equivalent to `WIDTH_UNIT_RATIO_Y | HEIGHT_UNIT_RATIO_Y | LINE_UNIT_RATIO_Y`)
 
+- **SIZE_UNIT_ROOT_RATIO_X**: `width`, `height` and `line_height` are ratios of the screen's width.
+  - (equivalent to `WIDTH_UNIT_ROOT_RATIO_X | HEIGHT_UNIT_ROOT_RATIO_X | LINE_UNIT_ROOT_RATIO_X`)
+
+- **SIZE_UNIT_ROOT_RATIO_Y**: `width`, `height` and `line_height` are ratios of the screen's height.
+  - (equivalent to `WIDTH_UNIT_ROOT_RATIO_Y | HEIGHT_UNIT_ROOT_RATIO_Y | LINE_UNIT_ROOT_RATIO_Y`)
+
 - **SIZE_UNIT_PIXEL**: `width`, `height` and `line_height` are in units of pixels.
   - (equivalent to `WIDTH_UNIT_PIXEL | HEIGHT_UNIT_PIXEL | LINE_UNIT_PIXEL`)
 
 - **SIZE_UNIT_RATIO**: `width` is a ratio of the parent component's width. `height` and `line_height` are ratios of the parent component's height.
   - (equivalent to `WIDTH_UNIT_RATIO_X | HEIGHT_UNIT_RATIO_Y | LINE_UNIT_RATIO_Y`)
+
+- **SIZE_UNIT_ROOT_RATIO**: `width` is a ratio of the screen's width. `height` and `line_height` are ratios of the screen's height.
+  - (equivalent to `WIDTH_UNIT_ROOT_RATIO_X | HEIGHT_UNIT_ROOT_RATIO_Y | LINE_UNIT_ROOT_RATIO_Y`)
 
 ### Functions
 

@@ -237,8 +237,8 @@ void draw_collider(unsigned int shader, ENTITY *entity, size_t col,
                        (float *) bone_to_world);
     draw_poly(entity->model->colliders[col].data.verts);
   } else if (type == SPHERE) {
-    glm_translate(bone_to_world, entity->model->colliders[col].data.center);
     glm_scale_uni(bone_to_world, entity->model->colliders[col].data.radius);
+    glm_translate(bone_to_world, entity->model->colliders[col].data.center);
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE,
                      (float *) bone_to_world);
     // TODO Kill need to have sphere model: Render sphere and poly primitives
