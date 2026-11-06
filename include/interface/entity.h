@@ -45,7 +45,7 @@ void free_entity_2d(ENTITY_2D *);
 void draw_poly(vec3 *verts);
 void draw_lines(L_VBO *lines, size_t num_lines);
 void draw_square(vec2 center, float half_w, float half_h);
-void draw_circle(vec2 center, float radius);
+void draw_circle(vec3 center, vec3 normal, float radius);
 void draw_quad();
 
 #endif

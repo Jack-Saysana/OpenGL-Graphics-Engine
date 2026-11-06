@@ -14,7 +14,7 @@ void draw_2d_collider(unsigned int shader, COLLIDER_2D *col, vec3 ent_pos);
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 void draw_square(vec2 center, float half_w, float half_h);
-void draw_circle(vec2 center, float radius);
+void draw_circle(vec3 center, vec3 normal, float radius);
 void draw_lines(L_VBO *lines, size_t num_lines);
 void set_mat4(char *name, mat4 mat, unsigned int shader);
 void draw_quad();
