@@ -72,8 +72,8 @@ int gen_texture_id(char *tex_path, unsigned int *dest) {
     goto ERR_ALL;
   }
 
-  fprintf(stderr, "New texture: %s -> %d, %ld of %ld\n", hash_path, texture,
-          tex_tab_len, tex_tab_size);
+  // fprintf(stderr, "New texture: %s -> %d, %ld of %ld\n", hash_path, texture,
+          // tex_tab_len, tex_tab_size);
   tex_tab[tex_index].texture = texture;
   tex_tab[tex_index].ref_count = 1;
   *dest = texture;
@@ -193,7 +193,6 @@ void free_textures() {
   tex_tab_size = 0;
 }
 
-/*
 size_t tex_tab_add(char *path) {
   if (!tex_tab) {
     init_tex_tab();
@@ -220,7 +219,7 @@ size_t tex_tab_add(char *path) {
 
   double load_factor = ((double) tex_tab_len) / ((double) tex_tab_size);
   if (load_factor > 0.5) {
-    fprintf(stderr, "Resizing tex tab.\n");
+    // fprintf(stderr, "Resizing tex tab.\n");
     int status = resize_tex_tab();
     if (status) {
       tex_tab[index].status = LEDGER_FREE;
@@ -232,40 +231,7 @@ size_t tex_tab_add(char *path) {
 
   return tex_tab_search(path);
 }
-*/
-size_t tex_tab_add(char *path) {
-  size_t index = tex_tab_search(path);
-  if (index != INVALID_INDEX) {
-    return index;
-  }
 
-  for (size_t i = 0; i < tex_tab_size; i++) {
-    if (tex_tab[i].status != LEDGER_OCCUPIED) {
-      index = i;
-      tex_tab[i].status = LEDGER_OCCUPIED;
-      tex_tab[i].texture = INVALID_TEX;
-      tex_tab[i].path = malloc(sizeof(char) * strlen(path) + 1);
-      memcpy(tex_tab[index].path, path, strlen(path) + 1);
-      break;
-    }
-  }
-  tex_tab_len++;
-
-  if (tex_tab_len == tex_tab_size) {
-    int status = double_buffer((void **) &tex_tab, &tex_tab_size,
-                               sizeof(TEX_TAB));
-    if (status) {
-      tex_tab[index].status = LEDGER_FREE;
-      free(tex_tab[index].path);
-      tex_tab_len--;
-      return INVALID_INDEX;
-    }
-  }
-
-  return index;
-}
-
-/*
 size_t tex_tab_search(char *path) {
   if (!tex_tab) {
     init_tex_tab();
@@ -285,21 +251,6 @@ size_t tex_tab_search(char *path) {
   }
   return INVALID_INDEX;
 }
-*/
-size_t tex_tab_search(char *path) {
-  if (!tex_tab) {
-    init_tex_tab();
-  }
-
-  for (size_t i = 0; i < tex_tab_size; i++) {
-    if (tex_tab[i].status == LEDGER_OCCUPIED &&
-        strcmp(path, tex_tab[i].path) == 0) {
-      return i;
-    }
-  }
-
-  return INVALID_INDEX;
-}
 
 void tex_tab_delete(char *path) {
   if (!tex_tab) {
@@ -310,7 +261,7 @@ void tex_tab_delete(char *path) {
   if (index != INVALID_INDEX) {
     tex_tab_len--;
     tex_tab[index].status = LEDGER_DELETED;
-    fprintf(stderr, "Deleting texture: %d\n", tex_tab[index].texture);
+    // fprintf(stderr, "Deleting texture: %d\n", tex_tab[index].texture);
     glDeleteTextures(1, &tex_tab[index].texture);
     free(tex_tab[index].path);
     tex_tab[index].texture = -1;
@@ -318,7 +269,6 @@ void tex_tab_delete(char *path) {
   }
 }
 
-/*
 int resize_tex_tab() {
   if (!tex_tab) {
     init_tex_tab();
@@ -357,5 +307,4 @@ int resize_tex_tab() {
   free(old_tab);
   return 0;
 }
-*/
 
