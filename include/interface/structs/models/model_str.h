@@ -24,6 +24,8 @@ typedef struct model {
   // Each element's index corresponds to the bone of the same index.
   // Element value corresponds to collider represneted by bone
   int *bone_collider_links;
+  // Paths used to populate textures[], NULL once textures is populated
+  char *tex_paths[NUM_PROPS];
   size_t num_animations;
   size_t num_bones;
   size_t num_colliders;

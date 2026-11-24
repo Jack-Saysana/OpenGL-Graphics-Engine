@@ -248,12 +248,13 @@ ERR_BONES:
   return NULL;
 }
 
-void init_model_vao(MODEL *model) {
+void init_sparse_model(MODEL *model) {
   if (!model->VBO) {
     model->VAO = 0;
     return;
   }
 
+  // Init VAO
   int error = 0;
   unsigned int VAO_id;
   glGenVertexArrays(1, &VAO_id);
@@ -334,9 +335,18 @@ void init_model_vao(MODEL *model) {
   }
 
   model->VAO = VAO_id;
+
+  // Allocate Textures
+  for (int i = 0; i < NUM_PROPS; i++) {
+    if (model->tex_paths[i] != NULL) {
+      gen_texture_id(model->tex_paths[i], model->textures + i);
+      free(model->tex_paths[i]);
+      model->tex_paths[i] = NULL;
+    }
+  }
 }
 
-MODEL *gen_model(MODEL_DATA *md, int gen_vao) {
+MODEL *gen_model(MODEL_DATA *md, int full) {
   MODEL *model = malloc(sizeof(MODEL));
   if (model == NULL) {
     printf("Unable to allocate model\n");
@@ -425,17 +435,12 @@ MODEL *gen_model(MODEL_DATA *md, int gen_vao) {
   model->num_indicies = md->num_indices;
 
   for (int i = 0; i < NUM_PROPS; i++) {
+    model->tex_paths[i] = md->mat_paths[i];
     model->textures[i] = INVALID_TEX;
   }
-  for (int i = 0; i < NUM_PROPS; i++) {
-    if (md->mat_paths[i] != NULL) {
-      gen_texture_id(md->mat_paths[i], model->textures + i);
-      free(md->mat_paths[i]);
-    }
-  }
 
-  if (gen_vao) {
-    init_model_vao(model);
+  if (full) {
+    init_sparse_model(model);
   }
 
   return model;
@@ -454,7 +459,7 @@ MODEL *load_model(char *path, char *tex_dir) {
   return model;
 }
 
-MODEL *load_model_vaoless(char *path, char *tex_dir) {
+MODEL *load_sparse_model(char *path, char *tex_dir) {
   MODEL_DATA *md = load_model_data(path, tex_dir);
   if (md == NULL) {
     return NULL;

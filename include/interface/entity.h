@@ -14,10 +14,10 @@ void free_textures();
 // 3D Interface
 MODEL_DATA *load_model_data(char *path, char *tex_dir);
 int export_model_data_obj(MODEL_DATA *md, char *path);
-MODEL *gen_model(MODEL_DATA *md, int gen_vao);
+MODEL *gen_model(MODEL_DATA *md, int full);
 MODEL *load_model(char *path, char *tex_dir);
-MODEL *load_model_vaoless(char *path, char *tex_dir);
-void init_model_vao(MODEL *model);
+MODEL *load_sparse_model(char *path, char *tex_dir);
+void init_sparse_model(MODEL *model);
 ENTITY *init_entity(MODEL *model);
 void draw_entity(unsigned int shader, ENTITY *entity);
 void draw_skeleton(unsigned int shader, ENTITY *entity);
