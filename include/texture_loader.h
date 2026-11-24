@@ -26,5 +26,6 @@ void tex_tab_delete(char *);
 
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
+int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
 size_t get_str_hash(char *str);
 char *remove_double_dot(char *path);

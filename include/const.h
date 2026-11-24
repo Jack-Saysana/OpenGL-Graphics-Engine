@@ -16,7 +16,7 @@
 
 // Material constants
 #define NUM_PROPS (6)
-#define TEX_TAB_STARTING_LEN (20)
+#define TEX_TAB_STARTING_LEN (200)
 #define VERTEX_BUFF_STARTING_LEN (10)
 #define NORMAL_BUFF_STARTING_LEN (10)
 #define TEX_COORD_BUFF_STARTING_LEN (10)
