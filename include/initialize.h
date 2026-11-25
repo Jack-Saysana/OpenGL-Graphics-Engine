@@ -31,3 +31,5 @@ static void mb_callback(GLFWwindow *window, int button, int action, int mods);
 // ====================== EXTERNALLY DEFINED FUNCTIONS =======================
 
 int double_buffer(void **buffer, size_t *buff_size, size_t unit_size);
+int init_tex_tab();
+void free_textures();

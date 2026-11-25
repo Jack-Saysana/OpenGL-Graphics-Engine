@@ -9,7 +9,6 @@ unsigned int init_shader_prog(char *vs_path, char *gs_path, char *fs_path);
 int gen_texture_id(char *tex_path, unsigned int *dest);
 void del_texture_id(char *tex_path);
 int gen_cubemap(char **paths, unsigned int *dest);
-void free_textures();
 
 // 3D Interface
 MODEL_DATA *load_model_data(char *path, char *tex_dir);

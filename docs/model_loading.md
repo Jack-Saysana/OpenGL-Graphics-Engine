@@ -305,6 +305,3 @@ Deallocates a model
 
 Deallocates an entity. Does **NOT** deallocate the model which the entity is an instance of.
 
-### `void free_textures()`
-
-Deallocates all currently cached textures in memory. Should be called only when all currently textured objects (UI components, models, etc...) are deallocated. Usage is recommended for memory management in situations where asset variety is high, as the allocated textures in memory can stack up as different models are initialized.
