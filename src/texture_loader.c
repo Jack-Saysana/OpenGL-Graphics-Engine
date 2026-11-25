@@ -80,7 +80,7 @@ int gen_cubemap(char **paths, unsigned int *dest) {
   int width;
   int height;
   int nrChannels;
-  stbi_set_flip_vertically_on_load(1);
+  stbi_set_flip_vertically_on_load(0);
   for (int i = 0; i < 6; i++) {
     unsigned char *data = stbi_load(paths[i], &width, &height, &nrChannels, 0);
     if (data) {
