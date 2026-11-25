@@ -52,10 +52,11 @@ void draw_2d_collider(unsigned int shader, COLLIDER_2D *col, vec3 ent_pos) {
 
   set_mat4("model", col_to_world, shader);
 
+  vec3 origin = { col->origin[X], col->origin[Y], 0.0 };
   if (col->type == CT_SQUARE) {
     draw_square(col->origin, col->data.width / 2.0, col->data.height / 2.0);
   } else if (col->type == CT_CIRCLE) {
-    draw_circle(col->origin, col->data.radius);
+    draw_circle(origin, (vec3) { 0.0, 0.0, 1.0 }, col->data.radius);
   } else if (col->type == CT_LINE) {
     L_VBO lines[2];
     memset(lines, 0, sizeof(lines));

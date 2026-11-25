@@ -144,21 +144,44 @@ void draw_square(vec2 center, float half_w, float half_h) {
   draw_lines(points, 4);
 }
 
-void draw_circle(vec2 center, float radius) {
+void draw_circle(vec3 center, vec3 normal, float radius) {
   L_VBO points[NUM_CIRCLE_PTS * 2];
   memset(points, 0, sizeof(points));
 
+  vec3 n = GLM_VEC3_ZERO_INIT;
+  glm_vec3_normalize_to(normal, n);
+
+  vec3 A = GLM_VEC3_ZERO_INIT;
+  if (fabs(n[X]) <= fabs(n[Y]) && fabs(n[X]) <= fabs(n[Z])) {
+    glm_vec3_copy((vec3) { 1.0, 0.0, 0.0 }, A);
+  } else if (fabs(n[Y]) <= fabs(n[Z])) {
+    glm_vec3_copy((vec3) { 0.0, 1.0, 0.0 }, A);
+  } else {
+    glm_vec3_copy((vec3) { 0.0, 0.0, 1.0 }, A);
+  }
+
+  vec3 U = GLM_VEC3_ZERO_INIT;
+  glm_vec3_cross(n, A, U);
+  vec3 V = GLM_VEC3_ZERO_INIT;
+  glm_vec3_cross(n, U, V);
+
   vec3 verts[NUM_CIRCLE_PTS];
+  vec3 a = GLM_VEC3_ZERO_INIT;
+  vec3 b = GLM_VEC3_ZERO_INIT;
   for (int i = 0; i < NUM_CIRCLE_PTS; i++) {
     float angle = 2.0 * PI * ((1.0 / NUM_CIRCLE_PTS) * i);
-    verts[i][X] = radius * cos(angle);
-    verts[i][Y] = radius * sin(angle);
-    verts[i][Z] = 0.0;
+    glm_vec3_scale(U, cos(angle), a);
+    glm_vec3_scale(V, sin(angle), b);
+    glm_vec3_add(a, b, verts[i]);
+    glm_vec3_scale(verts[i], radius, verts[i]);
+    // verts[i][X] = radius * cos(angle);
+    // verts[i][Y] = radius * sin(angle);
+    // verts[i][Z] = 0.0;
   }
 
   for (int i = 0; i < NUM_CIRCLE_PTS; i++) {
-    glm_vec3_copy(verts[i], points[i*2].coords);
-    glm_vec3_copy(verts[(i+1) % NUM_CIRCLE_PTS], points[(i*2)+1].coords);
+    glm_vec3_add(verts[i], center, points[i*2].coords);
+    glm_vec3_add(verts[(i+1) % NUM_CIRCLE_PTS], center, points[(i*2)+1].coords);
   }
 
   draw_lines(points, NUM_CIRCLE_PTS);

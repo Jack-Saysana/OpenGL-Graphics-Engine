@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
@@ -16,6 +17,7 @@ typedef struct texture_table {
 static TEX_TAB *tex_tab = NULL;
 static size_t tex_tab_len = 0;
 static size_t tex_tab_size = 0;
+static pthread_mutex_t tex_tab_lock;
 
 // ====================== INTERNALLY DEFINED FUNCTIONS =======================
 

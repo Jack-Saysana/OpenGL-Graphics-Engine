@@ -1,6 +1,12 @@
 #include <initialize.h>
 
 GLFWwindow *init_gl(char *win_name) {
+  int status = init_tex_tab();
+  if (status) {
+    fprintf(stderr, "Error: Failed to initialize texture table\n");
+    return NULL;
+  }
+
   fb_size_callbacks = malloc(sizeof(void (**)(GLFWwindow *, int, int)) *
                              BUFF_STARTING_LEN);
   if (fb_size_callbacks == NULL) {
@@ -96,6 +102,7 @@ GLFWwindow *init_gl(char *win_name) {
 }
 
 void cleanup_gl() {
+  free_textures();
   free(fb_size_callbacks);
   free(mouse_mov_callbacks);
   free(scroll_callbacks);

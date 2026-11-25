@@ -43,7 +43,7 @@ typedef struct collision_list {
   ENTITY *b_ent;
   size_t a_offset;
   size_t b_offset;
-  vec3 col_dir; // Penetration vector in the direction of A into B
+  vec3 col_dir; // Penetration vector that when applied to B solves collision
   vec3 col_point;
 } COLLISION;
 
@@ -52,7 +52,7 @@ typedef struct collision_list_2D {
   ENTITY_2D *b_ent;
   size_t a_offset;
   size_t b_offset;
-  vec2 col_dir; // Penetration vector in the direction of A into B
+  vec2 col_dir; // Penetration vector that when applied to B solves collision
 } COLLISION_2D;
 
 typedef struct collision_args {

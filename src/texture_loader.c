@@ -1,12 +1,14 @@
 #include <texture_loader.h>
 
 int gen_texture_id(char *tex_path, unsigned int *dest) {
+  pthread_mutex_lock(&tex_tab_lock);
   char *hash_path = remove_double_dot(tex_path);
   size_t tex_index = tex_tab_search(hash_path);
   if (tex_index != INVALID_INDEX) {
     *dest = tex_tab[tex_index].texture;
     tex_tab[tex_index].ref_count++;
     free(hash_path);
+    pthread_mutex_unlock(&tex_tab_lock);
     return 0;
   }
 
@@ -40,6 +42,7 @@ int gen_texture_id(char *tex_path, unsigned int *dest) {
   } else {
     fprintf(stderr, "Failed to load texture at: %s\n", tex_path);
     *dest = INVALID_TEX;
+    pthread_mutex_unlock(&tex_tab_lock);
     return -1;
   }
   stbi_image_free(data);
@@ -49,13 +52,16 @@ int gen_texture_id(char *tex_path, unsigned int *dest) {
   tex_tab[tex_index].ref_count = 1;
   *dest = texture;
   free(hash_path);
+  pthread_mutex_unlock(&tex_tab_lock);
   return 0;
 }
 
 void del_texture_id(char *tex_path) {
+  pthread_mutex_lock(&tex_tab_lock);
   char *hash_path = remove_double_dot(tex_path);
   size_t tex_index = tex_tab_search(hash_path);
   if (tex_index == INVALID_INDEX) {
+    pthread_mutex_unlock(&tex_tab_lock);
     return;
   }
 
@@ -63,6 +69,7 @@ void del_texture_id(char *tex_path) {
   if (!tex_tab[tex_index].ref_count) {
     tex_tab_delete(tex_tab[tex_index].path);
   }
+  pthread_mutex_unlock(&tex_tab_lock);
 }
 
 int gen_cubemap(char **paths, unsigned int *dest) {
@@ -73,7 +80,7 @@ int gen_cubemap(char **paths, unsigned int *dest) {
   int width;
   int height;
   int nrChannels;
-  stbi_set_flip_vertically_on_load(1);
+  stbi_set_flip_vertically_on_load(0);
   for (int i = 0; i < 6; i++) {
     unsigned char *data = stbi_load(paths[i], &width, &height, &nrChannels, 0);
     if (data) {
@@ -119,6 +126,7 @@ size_t hash_tex(char *path, size_t i) {
 }
 
 int init_tex_tab() {
+  pthread_mutex_init(&tex_tab_lock, NULL);
   tex_tab = malloc(sizeof(TEX_TAB) * TEX_TAB_STARTING_LEN);
   if (tex_tab == NULL) {
     return -1;
@@ -134,6 +142,7 @@ int init_tex_tab() {
 }
 
 void free_textures() {
+  pthread_mutex_destroy(&tex_tab_lock);
   for (size_t i = 0; i < tex_tab_size; i++) {
     if (tex_tab[i].status == LEDGER_OCCUPIED) {
       tex_tab[i].status = LEDGER_DELETED;
@@ -149,9 +158,9 @@ void free_textures() {
 }
 
 size_t tex_tab_add(char *path) {
-  if (!tex_tab) {
-    init_tex_tab();
-  }
+  // if (!tex_tab) {
+    // init_tex_tab();
+  // }
 
   size_t index = tex_tab_search(path);
   if (index != INVALID_INDEX) {
@@ -186,9 +195,9 @@ size_t tex_tab_add(char *path) {
 }
 
 size_t tex_tab_search(char *path) {
-  if (!tex_tab) {
-    init_tex_tab();
-  }
+  // if (!tex_tab) {
+    // init_tex_tab();
+  // }
 
   size_t i = 0;
   size_t index = 0;
@@ -206,9 +215,9 @@ size_t tex_tab_search(char *path) {
 }
 
 void tex_tab_delete(char *path) {
-  if (!tex_tab) {
-    init_tex_tab();
-  }
+  // if (!tex_tab) {
+    // init_tex_tab();
+  // }
 
   size_t index = tex_tab_search(path);
   if (index != INVALID_INDEX) {
@@ -222,9 +231,9 @@ void tex_tab_delete(char *path) {
 }
 
 int resize_tex_tab() {
-  if (!tex_tab) {
-    init_tex_tab();
-  }
+  // if (!tex_tab) {
+    // init_tex_tab();
+  // }
 
   TEX_TAB *new_tab = malloc(sizeof(TEX_TAB) * 2 * tex_tab_size);
   if (new_tab == NULL) {
